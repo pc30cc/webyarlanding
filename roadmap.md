@@ -25,3 +25,5 @@
 ## فاز ۴ — سرور
 - [ ] server functions جایگزین edge functions
 - [ ] کران وبلاگ خودکار
+
+- [ ] رفع خطاهای typecheck گزارش‌شده در /tmp/observability/build-errors.log پیش از پایان کار

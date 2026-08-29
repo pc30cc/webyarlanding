@@ -1,0 +1,68 @@
+import { createServerFn } from "@tanstack/react-start";
+import { z } from "zod";
+
+const genPostSchema = z.object({
+  topic: z.string().min(2, "موضوع را وارد کنید"),
+  tone: z.string().optional(),
+  length: z.enum(["short", "medium", "long"]).optional(),
+  saveAsDraft: z.boolean().optional().default(false),
+  categoryId: z.string().nullable().optional(),
+  author: z.string().optional(),
+});
+
+function toPersianError(e: unknown): Error {
+  if (e instanceof Error) return e;
+  return new Error("خطای ناشناخته در هوش مصنوعی");
+}
+
+export const generateBlogPost = createServerFn({ method: "POST" })
+  .inputValidator((input: unknown) => genPostSchema.parse(input))
+  .handler(async ({ data }) => {
+    const { requireAdmin } = await import("./auth.server");
+    const { generateBlogPost: run } = await import("./ai.server");
+    await requireAdmin();
+    try {
+      return await run(data);
+    } catch (e) {
+      throw toPersianError(e);
+    }
+  });
+
+export const improveText = createServerFn({ method: "POST" })
+  .inputValidator((input: unknown) => z.object({ text: z.string().min(1), instruction: z.string().min(1) }).parse(input))
+  .handler(async ({ data }) => {
+    const { requireAdmin } = await import("./auth.server");
+    const { improveText: run } = await import("./ai.server");
+    await requireAdmin();
+    try {
+      return { text: await run(data) };
+    } catch (e) {
+      throw toPersianError(e);
+    }
+  });
+
+export const generateSeoMeta = createServerFn({ method: "POST" })
+  .inputValidator((input: unknown) => z.object({ title: z.string().min(1), content: z.string().default("") }).parse(input))
+  .handler(async ({ data }) => {
+    const { requireAdmin } = await import("./auth.server");
+    const { generateSeoMeta: run } = await import("./ai.server");
+    await requireAdmin();
+    try {
+      return await run(data);
+    } catch (e) {
+      throw toPersianError(e);
+    }
+  });
+
+export const generateImage = createServerFn({ method: "POST" })
+  .inputValidator((input: unknown) => z.object({ prompt: z.string().min(2), alt: z.string().optional() }).parse(input))
+  .handler(async ({ data }) => {
+    const { requireAdmin } = await import("./auth.server");
+    const { generateImage: run } = await import("./ai.server");
+    await requireAdmin();
+    try {
+      return await run(data);
+    } catch (e) {
+      throw toPersianError(e);
+    }
+  });

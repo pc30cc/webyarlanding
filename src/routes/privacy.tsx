@@ -1,0 +1,51 @@
+import { createFileRoute } from "@tanstack/react-router";
+import { motion } from "framer-motion";
+import { fetchSettings } from "@/lib/settings.functions";
+import { SiteLayout } from "@/components/site/SiteLayout";
+
+export const Route = createFileRoute("/privacy")({
+  loader: async () => ({ settings: await fetchSettings() }),
+  head: () => ({
+    meta: [
+      { title: "حریم خصوصی | وب‌یار" },
+      { name: "description", content: "سیاست‌های حفظ حریم خصوصی و امنیت اطلاعات کاربران در وب‌یار." },
+      { property: "og:title", content: "حریم خصوصی | وب‌یار" },
+      { property: "og:description", content: "نحوه جمع‌آوری، استفاده و حفاظت از داده‌های شما در وب‌یار." },
+    ],
+  }),
+  component: PrivacyPage,
+});
+
+function sections(brand: string) {
+  return [
+    { title: "جمع‌آوری اطلاعات", content: "ما اطلاعاتی را که شما هنگام ثبت‌نام، استفاده از خدمات یا تماس با ما ارائه می‌دهید جمع‌آوری می‌کنیم." },
+    { title: "استفاده از اطلاعات", content: "اطلاعات جمع‌آوری شده برای ارائه و بهبود خدمات استفاده می‌شود." },
+    { title: "حفاظت از داده‌ها", content: `${brand} از رمزنگاری end-to-end و پروتکل‌های امنیتی پیشرفته استفاده می‌کند.` },
+    { title: "اشتراک‌گذاری اطلاعات", content: "ما اطلاعات شخصی شما را بدون رضایت شما با اشخاص ثالث به اشتراک نمی‌گذاریم." },
+    { title: "کوکی‌ها", content: `${brand} از کوکی‌ها برای بهبود تجربه کاربری استفاده می‌کند.` },
+    { title: "حقوق کاربران", content: "شما حق دسترسی، اصلاح و حذف اطلاعات شخصی خود را دارید." },
+    { title: "نگهداری داده‌ها", content: "اطلاعات حساب شما تا زمانی که حساب فعال باشد نگهداری می‌شود." },
+  ];
+}
+
+function PrivacyPage() {
+  const { settings } = Route.useLoaderData();
+  return (
+    <SiteLayout settings={settings}>
+      <div className="container-page max-w-3xl py-16 sm:py-24">
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
+          <h1 className="mb-2 text-3xl font-extrabold text-foreground sm:text-4xl">حریم خصوصی</h1>
+          <p className="mb-10 text-sm text-muted-foreground">آخرین بروزرسانی: فروردین ۱۴۰۵</p>
+        </motion.div>
+        <div className="space-y-8">
+          {sections(settings.brand.name).map((s, i) => (
+            <motion.section key={s.title} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}>
+              <h2 className="mb-3 text-lg font-bold text-foreground">{s.title}</h2>
+              <p className="text-sm leading-7 text-muted-foreground">{s.content}</p>
+            </motion.section>
+          ))}
+        </div>
+      </div>
+    </SiteLayout>
+  );
+}
