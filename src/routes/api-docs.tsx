@@ -26,12 +26,12 @@ const sections = [
 ];
 
 const endpoints = [
-  { method: "GET", path: "/api/v1/contacts", desc: "لیست مخاطبین" },
-  { method: "POST", path: "/api/v1/contacts", desc: "ایجاد مخاطب جدید" },
-  { method: "GET", path: "/api/v1/conversations", desc: "لیست گفتگوها" },
-  { method: "POST", path: "/api/v1/messages", desc: "ارسال پیام" },
-  { method: "GET", path: "/api/v1/campaigns", desc: "لیست کمپین‌ها" },
-  { method: "POST", path: "/api/v1/webhooks", desc: "ایجاد وب‌هوک" },
+  { method: "GET", path: "/v1/conversations", desc: "لیست گفتگوهای فعال" },
+  { method: "POST", path: "/v1/conversations/:id/messages", desc: "ارسال پیام در یک گفتگو" },
+  { method: "POST", path: "/v1/calls", desc: "شروع یک تماس ویدیویی جدید" },
+  { method: "GET", path: "/v1/contacts", desc: "لیست مخاطبین و بازدیدکنندگان" },
+  { method: "POST", path: "/v1/webhooks", desc: "ایجاد وب‌هوک برای رویدادهای جدید" },
+  { method: "DELETE", path: "/v1/webhooks/:id", desc: "حذف یک وب‌هوک" },
 ];
 
 function ApiDocsPage() {
@@ -79,7 +79,17 @@ function ApiDocsPage() {
                 {endpoints.map((ep) => (
                   <tr key={ep.path + ep.method} className="border-b border-border/50 last:border-0">
                     <td className="px-5 py-3">
-                      <span className={`font-mono text-xs font-bold ${ep.method === "GET" ? "text-success" : "text-warning"}`}>{ep.method}</span>
+                      <span
+                        className={`font-mono text-xs font-bold ${
+                          ep.method === "GET"
+                            ? "text-success"
+                            : ep.method === "DELETE"
+                              ? "text-destructive"
+                              : "text-warning"
+                        }`}
+                      >
+                        {ep.method}
+                      </span>
                     </td>
                     <td dir="ltr" className="px-5 py-3 font-mono text-xs text-foreground">{ep.path}</td>
                     <td className="px-5 py-3 text-xs text-muted-foreground">{ep.desc}</td>

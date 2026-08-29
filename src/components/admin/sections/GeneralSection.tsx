@@ -59,10 +59,10 @@ export default function GeneralSection() {
         <section className="rounded-xl border border-border bg-card p-4 shadow-sm">
           <h2 className="mb-4 text-base font-semibold text-foreground">برند</h2>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <Field label="نام سایت">
+            <Field label="نام برند">
               <Input value={form.brand.name} onChange={(e) => setForm((f) => ({ ...f, brand: { ...f.brand, name: e.target.value } }))} />
             </Field>
-            <Field label="شعار">
+            <Field label="شعار / تگ‌لاین">
               <Input value={form.brand.tagline} onChange={(e) => setForm((f) => ({ ...f, brand: { ...f.brand, tagline: e.target.value } }))} />
             </Field>
             <Field label="آدرس لوگو">

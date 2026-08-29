@@ -2,7 +2,7 @@ import { useState } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { Loader2, Lock, Mail, ShieldCheck } from "lucide-react";
+import { Loader2, Lock, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -43,14 +43,17 @@ function AdminLoginPage() {
   }
 
   return (
-    <div dir="rtl" className="flex min-h-screen items-center justify-center bg-muted/40 px-4">
-      <div className="w-full max-w-sm rounded-xl border border-border bg-card p-8 shadow-sm">
+    <div dir="rtl" className="relative flex min-h-screen items-center justify-center overflow-hidden bg-muted/40 px-4">
+      <div aria-hidden className="pointer-events-none absolute -top-32 -start-40 h-[480px] w-[480px] rounded-full bg-accent/25 blur-3xl" />
+      <div aria-hidden className="pointer-events-none absolute -bottom-32 -end-40 h-[420px] w-[420px] rounded-full bg-primary/25 blur-3xl" />
+
+      <div className="relative w-full max-w-sm rounded-xl border border-border bg-card p-8 shadow-sm">
         <div className="mb-6 flex flex-col items-center gap-2 text-center">
-          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary">
-            <ShieldCheck className="h-6 w-6" />
+          <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-brand">
+            <span className="text-2xl font-black text-primary-foreground">و</span>
           </div>
-          <h1 className="text-xl font-bold text-foreground">ورود مدیریت وب‌یار</h1>
-          <p className="text-sm text-muted-foreground">برای دسترسی به پنل مدیریت وارد شوید</p>
+          <h1 className="text-xl font-bold text-foreground">ورود به پنل مدیریت</h1>
+          <p className="text-sm text-muted-foreground">دسترسی محدود — فقط برای مدیران وب‌یار</p>
         </div>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
@@ -90,7 +93,12 @@ function AdminLoginPage() {
 
           {error && <p className="text-sm text-destructive">{error}</p>}
 
-          <Button type="submit" disabled={loading} className="mt-2 w-full">
+          <Button
+            type="submit"
+            disabled={loading}
+            className="mt-2 w-full text-primary-foreground"
+            style={{ backgroundImage: "var(--gradient-brand)" }}
+          >
             {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "ورود"}
           </Button>
         </form>

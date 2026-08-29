@@ -18,13 +18,12 @@ export const Route = createFileRoute("/terms")({
 
 function sections(brand: string) {
   return [
-    { title: "پذیرش شرایط", content: `با استفاده از خدمات ${brand}، شما شرایط و ضوابط زیر را می‌پذیرید.` },
-    { title: "حساب کاربری", content: "شما مسئول حفظ امنیت حساب کاربری خود هستید." },
-    { title: "استفاده مجاز", content: "استفاده از خدمات باید مطابق با قوانین جاری کشور باشد." },
-    { title: "مالکیت معنوی", content: `تمامی محتوا و کدهای ${brand} تحت حمایت قوانین مالکیت معنوی است.` },
-    { title: "محدودیت مسئولیت", content: `${brand} تلاش می‌کند خدمات را بدون وقفه ارائه دهد اما مسئولیتی در قبال خسارات غیرمستقیم ندارد.` },
-    { title: "تغییرات در شرایط", content: `${brand} حق تغییر شرایط را دارد. تغییرات از طریق وب‌سایت اطلاع‌رسانی می‌شود.` },
-    { title: "قانون حاکم", content: "این توافقنامه تابع قوانین جمهوری اسلامی ایران است." },
+    { title: "۱. پذیرش شرایط", content: `با استفاده از خدمات ${brand}، شما شرایط و ضوابط زیر را می‌پذیرید.` },
+    { title: "۲. حساب کاربری", content: "شما مسئول حفظ امنیت حساب کاربری و اطلاعات ورود خود هستید." },
+    { title: "۳. استفاده مجاز", content: "استفاده از خدمات باید مطابق با قوانین جاری کشور و بدون سوءاستفاده باشد." },
+    { title: "۴. مالکیت معنوی", content: `تمامی محتوا و کدهای ${brand} تحت حمایت قوانین مالکیت معنوی است.` },
+    { title: "۵. محدودیت مسئولیت", content: `${brand} تلاش می‌کند خدمات را بدون وقفه ارائه دهد اما مسئولیتی در قبال خسارات غیرمستقیم ندارد.` },
+    { title: "۶. تغییرات در شرایط", content: `${brand} حق تغییر این شرایط را دارد. تغییرات از طریق وب‌سایت اطلاع‌رسانی می‌شود.` },
   ];
 }
 
@@ -35,7 +34,7 @@ function TermsPage() {
       <div className="container-page max-w-3xl py-16 sm:py-24">
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
           <h1 className="mb-2 text-3xl font-extrabold text-foreground sm:text-4xl">شرایط استفاده</h1>
-          <p className="mb-10 text-sm text-muted-foreground">آخرین بروزرسانی: فروردین ۱۴۰۵</p>
+          <p className="mb-10 text-sm text-muted-foreground">آخرین بروزرسانی: مرداد ۱۴۰۵</p>
         </motion.div>
         <div className="space-y-8">
           {sections(settings.brand.name).map((s, i) => (

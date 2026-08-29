@@ -18,10 +18,10 @@ export const Route = createFileRoute("/sla")({
 });
 
 const slaItems = [
-  { icon: Zap, title: "آپ‌تایم تضمینی", value: "۹۹.۹٪", desc: "تضمین دسترسی به پلتفرم در ۹۹.۹٪ از زمان." },
-  { icon: Clock, title: "زمان پاسخ‌دهی پشتیبانی", value: "<۲ ساعت", desc: "پلن حرفه‌ای: حداکثر ۲ ساعت | پلن رشد: حداکثر ۴ ساعت" },
-  { icon: Shield, title: "بازیابی اطلاعات", value: "<۴ ساعت", desc: "بازیابی اطلاعات از آخرین نسخه پشتیبان ظرف ۴ ساعت." },
-  { icon: CheckCircle2, title: "بروزرسانی‌ها", value: "بدون وقفه", desc: "بروزرسانی‌های پلتفرم بدون نیاز به توقف سرویس." },
+  { icon: Zap, title: "آپ‌تایم تضمینی", value: "۹۹.۹٪", desc: "دسترسی به پلتفرم در ۹۹.۹٪ از زمان" },
+  { icon: Clock, title: "پاسخ‌دهی پشتیبانی", value: "<۲ ساعت", desc: "حداکثر زمان پاسخ برای پلن حرفه‌ای" },
+  { icon: Shield, title: "بازیابی اطلاعات", value: "<۴ ساعت", desc: "بازیابی از آخرین نسخه پشتیبان" },
+  { icon: CheckCircle2, title: "بروزرسانی‌ها", value: "بدون وقفه", desc: "بدون نیاز به توقف سرویس" },
 ];
 
 const compensationTable = [
