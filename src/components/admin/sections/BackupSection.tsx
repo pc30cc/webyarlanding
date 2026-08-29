@@ -1,0 +1,157 @@
+import { useState } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
+import { toast } from "sonner";
+import { Loader2, Download, Upload, Database } from "lucide-react";
+import { getDatabaseInfo, exportBackup, importBackup } from "@/lib/backup.functions";
+import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
+import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogAction, AlertDialogCancel } from "@/components/ui/alert-dialog";
+
+function downloadFile(filename: string, content: string, mime: string) {
+  const blob = new Blob([content], { type: mime });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}
+
+export default function BackupSection() {
+  const infoFn = useServerFn(getDatabaseInfo);
+  const exportFn = useServerFn(exportBackup);
+  const importFn = useServerFn(importBackup);
+  const qc = useQueryClient();
+
+  const { data: info, isLoading } = useQuery({ queryKey: ["backup-info"], queryFn: () => infoFn() });
+  const [pendingRestore, setPendingRestore] = useState<Record<string, unknown[]> | null>(null);
+
+  const exportMutation = useMutation({
+    mutationFn: (kind: "json" | "sql") => exportFn().then((res) => ({ kind, res })),
+    onSuccess: ({ kind, res }) => {
+      const stamp = new Date().toISOString().slice(0, 19).replace(/[:T]/g, "-");
+      if (kind === "json") {
+        downloadFile(`webyar-backup-${stamp}.json`, JSON.stringify({ generatedAt: res.generatedAt, data: res.data }, null, 2), "application/json");
+      } else {
+        downloadFile(`webyar-backup-${stamp}.sql`, res.sql, "application/sql");
+      }
+      toast.success("فایل نسخه‌پشتیبان دانلود شد");
+    },
+    onError: () => toast.error("خطا در تهیه نسخه‌پشتیبان"),
+  });
+
+  const importMutation = useMutation({
+    mutationFn: (data: Record<string, unknown[]>) => importFn({ data: { data } }),
+    onSuccess: (res) => {
+      toast.success(`بازیابی انجام شد — ${res.totalInserted} رکورد درج شد`);
+      qc.invalidateQueries({ queryKey: ["backup-info"] });
+      setPendingRestore(null);
+    },
+    onError: () => toast.error("خطا در بازیابی نسخه‌پشتیبان"),
+  });
+
+  const onFileSelected = async (file: File) => {
+    try {
+      const text = await file.text();
+      const parsed = JSON.parse(text);
+      const data = parsed?.data ?? parsed;
+      if (!data || typeof data !== "object") throw new Error("invalid");
+      setPendingRestore(data);
+    } catch {
+      toast.error("فایل JSON نامعتبر است");
+    }
+  };
+
+  const cronUrl = typeof window !== "undefined" ? `${window.location.origin}/api/public/autoblog-cron` : "/api/public/autoblog-cron";
+
+  return (
+    <div className="flex flex-col gap-6">
+      <div>
+        <h1 className="text-2xl font-bold text-foreground">پشتیبان‌گیری و بازیابی</h1>
+        <p className="text-sm text-muted-foreground">دانلود نسخه‌پشتیبان کامل دیتابیس یا بازیابی از فایل</p>
+      </div>
+
+      <div className="flex flex-col gap-3 rounded-xl border border-border bg-card p-4 shadow-sm">
+        <div className="flex items-center gap-2">
+          <Database className="h-4 w-4 text-muted-foreground" />
+          <h3 className="font-semibold text-foreground">آمار جدول‌ها</h3>
+        </div>
+        {isLoading ? (
+          <Skeleton className="h-32 w-full" />
+        ) : (
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">
+            {info?.tables.map((t) => (
+              <div key={t.name} className="rounded-lg border border-border bg-background p-2 text-center">
+                <p dir="ltr" className="text-xs text-muted-foreground">{t.name}</p>
+                <p className="font-bold text-foreground">{t.rowCount}</p>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      <div className="flex flex-wrap gap-3">
+        <Button disabled={exportMutation.isPending} onClick={() => exportMutation.mutate("json")} className="gap-2">
+          {exportMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
+          دانلود نسخه JSON
+        </Button>
+        <Button variant="outline" disabled={exportMutation.isPending} onClick={() => exportMutation.mutate("sql")} className="gap-2">
+          {exportMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
+          دانلود نسخه SQL (سازگار با phpMyAdmin)
+        </Button>
+        <label className="inline-flex cursor-pointer items-center gap-2 rounded-md border border-border bg-background px-4 py-2 text-sm text-foreground hover:bg-muted">
+          <Upload className="h-4 w-4" />
+          بازیابی از فایل JSON
+          <input
+            type="file"
+            accept="application/json"
+            className="hidden"
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (file) onFileSelected(file);
+              e.target.value = "";
+            }}
+          />
+        </label>
+      </div>
+
+      <div className="flex flex-col gap-3 rounded-xl border border-border bg-card p-4 shadow-sm">
+        <h3 className="font-semibold text-foreground">تنظیم اجرای زمان‌بندی‌شده (Cron)</h3>
+        <p className="text-sm text-muted-foreground">
+          برای اجرای خودکار تولید مقاله، یک سرویس زمان‌بندی خارجی (مانند cron-job.org) را طوری تنظیم کنید که هر ساعت یک درخواست POST به آدرس زیر ارسال کند:
+        </p>
+        <code dir="ltr" className="rounded-md bg-muted p-2 text-xs">{cronUrl}</code>
+        <p className="text-sm text-muted-foreground">
+          هدر زیر را به درخواست اضافه کنید (مقدار آن باید برابر با متغیر محیطی <code dir="ltr">LOVABLE_CRON_SECRET</code> در سرور باشد):
+        </p>
+        <code dir="ltr" className="rounded-md bg-muted p-2 text-xs">Authorization: Bearer YOUR_SECRET</code>
+        <p className="text-xs text-muted-foreground">
+          توجه: این آدرس فقط زمانی مقاله تولید می‌کند که ساعت جاری (UTC) در تنظیمات «تولید خودکار مقاله» فعال باشد.
+        </p>
+      </div>
+
+      <AlertDialog open={!!pendingRestore} onOpenChange={(v) => !v && setPendingRestore(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>بازیابی نسخه‌پشتیبان</AlertDialogTitle>
+            <AlertDialogDescription>
+              با ادامه، تمام داده‌های فعلی جدول‌های موجود در فایل حذف و با داده‌های فایل جایگزین می‌شوند. این عملیات بازگشت‌پذیر نیست.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>انصراف</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={importMutation.isPending}
+              onClick={() => pendingRestore && importMutation.mutate(pendingRestore as Record<string, unknown[]>)}
+            >
+              {importMutation.isPending && <Loader2 className="ml-2 h-4 w-4 animate-spin" />} تایید و بازیابی
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </div>
+  );
+}

@@ -258,7 +258,7 @@ async function buildTableExport(table: TableDef): Promise<Record<string, unknown
       .from(table.name as any)
       .select("*")
       .range(from, from + pageSize - 1);
-    const chunk = (data ?? []) as Record<string, unknown>[];
+    const chunk = (data ?? []) as unknown as Record<string, unknown>[];
     rows.push(...chunk);
     if (chunk.length < pageSize) break;
     from += pageSize;
@@ -305,7 +305,7 @@ export const getDatabaseInfo = createServerFn({ method: "GET" }).handler(async (
   return { tables: results };
 });
 
-export const exportBackup = createServerFn({ method: "GET" }).handler(async () => {
+export const exportBackup = createServerFn({ method: "GET" }).handler(async (): Promise<{ generatedAt: string; tables: string[]; data: Record<string, Record<string, unknown>[]>; sql: string }> => {
   const { requireAdmin } = await import("./auth.server");
   await requireAdmin();
 
