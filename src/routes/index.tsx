@@ -153,11 +153,13 @@ function IndexPage() {
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
 
       {/* HERO */}
-      <section className="container-page relative overflow-hidden pt-16 pb-12 sm:pt-24 sm:pb-16">
-        <div aria-hidden className="pointer-events-none absolute -top-40 -start-48 h-[420px] w-[420px] rounded-full bg-accent/15 blur-3xl" />
-        <div aria-hidden className="pointer-events-none absolute top-32 -end-32 h-[340px] w-[340px] rounded-full bg-primary/15 blur-3xl" />
+      <section className="relative overflow-hidden pt-16 pb-12 sm:pt-24 sm:pb-16">
+        {/* پس‌زمینه — نسبت به کل عرض section (نه ستون محتوا) تا در نمایش‌های عریض هم کامل باشد */}
+        <div aria-hidden className="pointer-events-none absolute inset-0 bg-gradient-to-br from-accent/[0.06] via-transparent to-primary/[0.06]" />
+        <div aria-hidden className="pointer-events-none absolute -top-40 -start-24 h-[420px] w-[420px] rounded-full bg-accent/15 blur-3xl xl:-start-10 xl:h-[560px] xl:w-[560px] 2xl:h-[680px] 2xl:w-[680px]" />
+        <div aria-hidden className="pointer-events-none absolute top-32 -end-16 h-[340px] w-[340px] rounded-full bg-primary/15 blur-3xl xl:top-24 xl:-end-4 xl:h-[460px] xl:w-[460px] 2xl:h-[560px] 2xl:w-[560px]" />
 
-        <div className="relative z-10 grid items-center gap-12 lg:grid-cols-2 lg:gap-16">
+        <div className="container-page relative z-10 grid items-center gap-12 lg:grid-cols-2 lg:gap-16">
           <div>
             <motion.div
               initial={{ opacity: 0, y: 12 }}
