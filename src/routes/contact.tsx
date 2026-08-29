@@ -4,6 +4,8 @@ import { motion } from "framer-motion";
 import { Mail, Phone, MapPin, Send } from "lucide-react";
 import { toast } from "sonner";
 import { fetchSettings } from "@/lib/settings.functions";
+import { getPublicSeoPage } from "@/lib/seo.functions";
+import { buildPageMeta } from "@/lib/seo-meta";
 import { submitContactMessage } from "@/lib/contact.functions";
 import { SiteLayout } from "@/components/site/SiteLayout";
 import { Button } from "@/components/ui/button";
@@ -12,15 +14,20 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 
 export const Route = createFileRoute("/contact")({
-  loader: async () => ({ settings: await fetchSettings() }),
-  head: () => ({
-    meta: [
-      { title: "تماس با ما | وب‌یار" },
-      { name: "description", content: "سوالی دارید؟ ما آماده پاسخ‌گویی هستیم. با تیم وب‌یار در ارتباط باشید." },
-      { property: "og:title", content: "تماس با ما | وب‌یار" },
-      { property: "og:description", content: "فرم تماس با تیم پشتیبانی و فروش وب‌یار." },
-    ],
-  }),
+  loader: async () => {
+    const [settings, seoOverride] = await Promise.all([fetchSettings(), getPublicSeoPage({ data: { path: "/contact" } })]);
+    return { settings, seoOverride };
+  },
+  head: ({ loaderData }) => {
+    if (!loaderData) return {};
+    return buildPageMeta({
+      settings: loaderData.settings,
+      path: "/contact",
+      override: loaderData.seoOverride,
+      fallbackTitle: "تماس با ما | وب‌یار",
+      fallbackDescription: "سوالی دارید؟ ما آماده پاسخ‌گویی هستیم. با تیم وب‌یار در ارتباط باشید.",
+    });
+  },
   component: ContactPage,
 });
 
@@ -93,7 +100,7 @@ function ContactPage() {
           <div className="space-y-4 md:col-span-2">
             {contactInfo.map((c) => (
               <motion.div key={c.label} initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="flex items-start gap-4 rounded-xl border border-border bg-card p-5 shadow-card">
-                <c.icon className="mt-0.5 h-5 w-5 shrink-0 text-brand" />
+                <c.icon className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
                 <div>
                   <div className="text-sm font-semibold text-foreground">{c.label}</div>
                   <div className="mt-1 text-xs text-muted-foreground">{c.value}</div>

@@ -2,22 +2,30 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { motion } from "framer-motion";
 import { Calendar, ArrowRight, Tag as TagIcon, ChevronLeft } from "lucide-react";
 import { fetchSettings } from "@/lib/settings.functions";
+import { getPublicSeoPage } from "@/lib/seo.functions";
+import { buildPageMeta } from "@/lib/seo-meta";
 import { listPublishedPosts } from "@/lib/blog.functions";
 import { SiteLayout } from "@/components/site/SiteLayout";
 
 export const Route = createFileRoute("/tag/$slug")({
   loader: async ({ params }) => {
-    const [settings, posts] = await Promise.all([fetchSettings(), listPublishedPosts({ data: { tagSlug: params.slug } })]);
-    return { settings, posts, slug: params.slug };
+    const [settings, posts, seoOverride] = await Promise.all([
+      fetchSettings(),
+      listPublishedPosts({ data: { tagSlug: params.slug } }),
+      getPublicSeoPage({ data: { path: `/tag/${params.slug}` } }),
+    ]);
+    return { settings, posts, slug: params.slug, seoOverride };
   },
-  head: ({ params }) => ({
-    meta: [
-      { title: `برچسب: ${params.slug} | وب‌یار` },
-      { name: "description", content: `همه‌ی مقالات منتشرشده با برچسب «${params.slug}».` },
-      { property: "og:title", content: `برچسب: ${params.slug} | وب‌یار` },
-      { property: "og:description", content: `جدیدترین مقالات با برچسب «${params.slug}» در وب‌یار.` },
-    ],
-  }),
+  head: ({ params, loaderData }) => {
+    if (!loaderData) return {};
+    return buildPageMeta({
+      settings: loaderData.settings,
+      path: `/tag/${params.slug}`,
+      override: loaderData.seoOverride,
+      fallbackTitle: `برچسب: ${params.slug} | وب‌یار`,
+      fallbackDescription: `همه‌ی مقالات منتشرشده با برچسب «${params.slug}».`,
+    });
+  },
   component: TagPage,
 });
 
@@ -32,7 +40,7 @@ function TagPage() {
         </Link>
 
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="mb-10">
-          <div className="mb-3 inline-flex items-center gap-2 rounded-full bg-primary/10 px-3 py-1 text-sm font-medium text-brand">
+          <div className="mb-3 inline-flex items-center gap-2 rounded-full bg-primary/10 px-3 py-1 text-sm font-medium text-primary">
             <TagIcon className="h-4 w-4" />
             برچسب
           </div>

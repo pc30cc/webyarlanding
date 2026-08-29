@@ -12,6 +12,7 @@ import { useEffect, type ReactNode } from "react";
 import appCss from "../styles.css?url";
 import { Toaster } from "../components/ui/sonner";
 import { reportLovableError } from "../lib/lovable-error-reporting";
+import { fetchSettings } from "../lib/settings.functions";
 
 function NotFoundComponent() {
   return (
@@ -74,24 +75,40 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
 }
 
 export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()({
-  head: () => ({
-    meta: [
-      { charSet: "utf-8" },
-      { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { name: "author", content: "وب‌یار" },
-      { property: "og:type", content: "website" },
-      { property: "og:locale", content: "fa_IR" },
-      { name: "twitter:card", content: "summary_large_image" },
-    ],
-    links: [
-      {
-        rel: "stylesheet",
-        href: appCss,
-      },
-      { rel: "icon", href: "/favicon.png", type: "image/png" },
-      { rel: "apple-touch-icon", href: "/apple-touch-icon.png" },
-    ],
-  }),
+  loader: async () => ({ settings: await fetchSettings() }),
+  head: ({ loaderData }) => {
+    const settings = loaderData?.settings;
+    const base = (settings?.brand.siteUrl || "").replace(/\/$/, "");
+    const twitterHandle = settings?.seo.twitterHandle
+      ? settings.seo.twitterHandle.startsWith("@")
+        ? settings.seo.twitterHandle
+        : `@${settings.seo.twitterHandle}`
+      : "";
+    return {
+      meta: [
+        { charSet: "utf-8" },
+        { name: "viewport", content: "width=device-width, initial-scale=1" },
+        { name: "author", content: "وب‌یار" },
+        { property: "og:type", content: "website" },
+        { property: "og:locale", content: "fa_IR" },
+        { property: "og:site_name", content: settings?.brand.name || "وب‌یار" },
+        { property: "og:image", content: base ? `${base}/og-image.png` : "/og-image.png" },
+        { name: "twitter:card", content: "summary_large_image" },
+        ...(twitterHandle ? [{ name: "twitter:site", content: twitterHandle }] : []),
+        ...(settings?.seo.googleVerification
+          ? [{ name: "google-site-verification", content: settings.seo.googleVerification }]
+          : []),
+      ],
+      links: [
+        {
+          rel: "stylesheet",
+          href: appCss,
+        },
+        { rel: "icon", href: "/favicon.png", type: "image/png" },
+        { rel: "apple-touch-icon", href: "/apple-touch-icon.png" },
+      ],
+    };
+  },
   shellComponent: RootShell,
   component: RootComponent,
   notFoundComponent: NotFoundComponent,
@@ -123,4 +140,3 @@ function RootComponent() {
     </QueryClientProvider>
   );
 }
-

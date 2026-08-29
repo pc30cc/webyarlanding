@@ -3,26 +3,31 @@ import { useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import { Calendar, ChevronLeft, Search } from "lucide-react";
 import { fetchSettings } from "@/lib/settings.functions";
+import { getPublicSeoPage } from "@/lib/seo.functions";
+import { buildPageMeta } from "@/lib/seo-meta";
 import { listPublishedPosts, listCategories } from "@/lib/blog.functions";
 import { SiteLayout } from "@/components/site/SiteLayout";
 
 export const Route = createFileRoute("/blog/")({
   loader: async () => {
-    const [settings, posts, categories] = await Promise.all([
+    const [settings, posts, categories, seoOverride] = await Promise.all([
       fetchSettings(),
       listPublishedPosts({ data: {} }),
       listCategories(),
+      getPublicSeoPage({ data: { path: "/blog" } }),
     ]);
-    return { settings, posts, categories };
+    return { settings, posts, categories, seoOverride };
   },
-  head: () => ({
-    meta: [
-      { title: "بلاگ | وب‌یار" },
-      { name: "description", content: "آخرین مقالات و اخبار وب‌یار درباره چت زنده، CRM، هوش مصنوعی و بازاریابی." },
-      { property: "og:title", content: "بلاگ | وب‌یار" },
-      { property: "og:description", content: "مقالات آموزشی و به‌روز درباره ارتباط با مشتری و ابزارهای وب‌یار." },
-    ],
-  }),
+  head: ({ loaderData }) => {
+    if (!loaderData) return {};
+    return buildPageMeta({
+      settings: loaderData.settings,
+      path: "/blog",
+      override: loaderData.seoOverride,
+      fallbackTitle: "بلاگ | وب‌یار",
+      fallbackDescription: "آخرین مقالات و اخبار وب‌یار درباره چت زنده، CRM، هوش مصنوعی و بازاریابی.",
+    });
+  },
   component: BlogIndexPage,
 });
 

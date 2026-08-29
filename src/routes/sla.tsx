@@ -2,18 +2,25 @@ import { createFileRoute } from "@tanstack/react-router";
 import { motion } from "framer-motion";
 import { CheckCircle2, Clock, Shield, Zap } from "lucide-react";
 import { fetchSettings } from "@/lib/settings.functions";
+import { getPublicSeoPage } from "@/lib/seo.functions";
+import { buildPageMeta } from "@/lib/seo-meta";
 import { SiteLayout } from "@/components/site/SiteLayout";
 
 export const Route = createFileRoute("/sla")({
-  loader: async () => ({ settings: await fetchSettings() }),
-  head: () => ({
-    meta: [
-      { title: "توافقنامه سطح خدمات (SLA) | وب‌یار" },
-      { name: "description", content: "تعهدات وب‌یار برای ارائه خدمات با کیفیت و قابل اتکا، شامل آپ‌تایم و زمان پاسخ‌دهی." },
-      { property: "og:title", content: "توافقنامه سطح خدمات (SLA) | وب‌یار" },
-      { property: "og:description", content: "آپ‌تایم ۹۹.۹٪ و پشتیبانی سریع، تعهد ما به کیفیت خدمات." },
-    ],
-  }),
+  loader: async () => {
+    const [settings, seoOverride] = await Promise.all([fetchSettings(), getPublicSeoPage({ data: { path: "/sla" } })]);
+    return { settings, seoOverride };
+  },
+  head: ({ loaderData }) => {
+    if (!loaderData) return {};
+    return buildPageMeta({
+      settings: loaderData.settings,
+      path: "/sla",
+      override: loaderData.seoOverride,
+      fallbackTitle: "توافقنامه سطح خدمات (SLA) | وب‌یار",
+      fallbackDescription: "تعهدات وب‌یار برای ارائه خدمات با کیفیت و قابل اتکا، شامل آپ‌تایم و زمان پاسخ‌دهی.",
+    });
+  },
   component: SLAPage,
 });
 
@@ -43,7 +50,7 @@ function SLAPage() {
         <div className="mb-12 grid grid-cols-1 gap-6 sm:grid-cols-2">
           {slaItems.map((item, i) => (
             <motion.div key={item.title} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.1 }} className="rounded-xl border border-border bg-card p-6 shadow-card">
-              <item.icon className="mb-3 h-6 w-6 text-brand" />
+              <item.icon className="mb-3 h-6 w-6 text-primary" />
               <div className="mb-1 text-2xl font-extrabold text-foreground">{item.value}</div>
               <div className="mb-2 text-sm font-semibold text-foreground">{item.title}</div>
               <p className="text-xs leading-relaxed text-muted-foreground">{item.desc}</p>

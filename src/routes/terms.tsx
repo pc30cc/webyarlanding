@@ -1,18 +1,25 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { motion } from "framer-motion";
 import { fetchSettings } from "@/lib/settings.functions";
+import { getPublicSeoPage } from "@/lib/seo.functions";
+import { buildPageMeta } from "@/lib/seo-meta";
 import { SiteLayout } from "@/components/site/SiteLayout";
 
 export const Route = createFileRoute("/terms")({
-  loader: async () => ({ settings: await fetchSettings() }),
-  head: () => ({
-    meta: [
-      { title: "شرایط استفاده | وب‌یار" },
-      { name: "description", content: "شرایط و ضوابط استفاده از خدمات وب‌یار را مطالعه کنید." },
-      { property: "og:title", content: "شرایط استفاده | وب‌یار" },
-      { property: "og:description", content: "قوانین و مقررات استفاده از پلتفرم وب‌یار." },
-    ],
-  }),
+  loader: async () => {
+    const [settings, seoOverride] = await Promise.all([fetchSettings(), getPublicSeoPage({ data: { path: "/terms" } })]);
+    return { settings, seoOverride };
+  },
+  head: ({ loaderData }) => {
+    if (!loaderData) return {};
+    return buildPageMeta({
+      settings: loaderData.settings,
+      path: "/terms",
+      override: loaderData.seoOverride,
+      fallbackTitle: "شرایط استفاده | وب‌یار",
+      fallbackDescription: "شرایط و ضوابط استفاده از خدمات وب‌یار را مطالعه کنید.",
+    });
+  },
   component: TermsPage,
 });
 

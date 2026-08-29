@@ -3,19 +3,26 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { motion } from "framer-motion";
 import { Check, CheckCircle2, Zap, Star, Crown, ChevronLeft } from "lucide-react";
 import { fetchSettings } from "@/lib/settings.functions";
+import { getPublicSeoPage } from "@/lib/seo.functions";
+import { buildPageMeta } from "@/lib/seo-meta";
 import { SiteLayout } from "@/components/site/SiteLayout";
 import { StaggerChildren, childVariant } from "@/components/site/animations";
 
 export const Route = createFileRoute("/pricing")({
-  loader: async () => ({ settings: await fetchSettings() }),
-  head: () => ({
-    meta: [
-      { title: "امکانات و قیمت | وب‌یار" },
-      { name: "description", content: "پلن مناسب کسب‌وکار خود را از میان پلن‌های شروع، رشد، حرفه‌ای و سازمانی وب‌یار انتخاب کنید." },
-      { property: "og:title", content: "امکانات و قیمت | وب‌یار" },
-      { property: "og:description", content: "پلن‌های منعطف و مقرون‌به‌صرفه برای هر اندازه از کسب‌وکار." },
-    ],
-  }),
+  loader: async () => {
+    const [settings, seoOverride] = await Promise.all([fetchSettings(), getPublicSeoPage({ data: { path: "/pricing" } })]);
+    return { settings, seoOverride };
+  },
+  head: ({ loaderData }) => {
+    if (!loaderData) return {};
+    return buildPageMeta({
+      settings: loaderData.settings,
+      path: "/pricing",
+      override: loaderData.seoOverride,
+      fallbackTitle: "امکانات و قیمت | وب‌یار",
+      fallbackDescription: "پلن مناسب کسب‌وکار خود را از میان پلن‌های شروع، رشد، حرفه‌ای و سازمانی وب‌یار انتخاب کنید.",
+    });
+  },
   component: PricingPage,
 });
 
@@ -111,7 +118,7 @@ function PricingPage() {
               )}
               <div className="mb-5 flex items-center gap-3">
                 <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-secondary/50">
-                  <plan.icon className="h-5 w-5 text-brand" />
+                  <plan.icon className="h-5 w-5 text-primary" />
                 </div>
                 <div>
                   <h3 className="text-base font-bold text-foreground">{plan.name}</h3>

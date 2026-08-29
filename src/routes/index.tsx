@@ -2,29 +2,30 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { motion } from "framer-motion";
 import {
-  Check, ChevronLeft, Mic, MicOff, PhoneOff, Video, MonitorUp, Send, Clock, Users, MessageSquare,
+  Check, ChevronLeft, Mic, MicOff, PhoneOff, Video, MonitorUp, Send, Clock, Users, MessageSquare, UserRound,
 } from "lucide-react";
 import { fetchSettings } from "@/lib/settings.functions";
+import { getPublicSeoPage } from "@/lib/seo.functions";
+import { buildPageMeta, parseSchemaJson } from "@/lib/seo-meta";
 import { SiteLayout } from "@/components/site/SiteLayout";
 import { ScrollReveal, StaggerChildren, childVariant, FAQItem } from "@/components/site/animations";
 
 export const Route = createFileRoute("/")({
-  loader: async () => ({ settings: await fetchSettings() }),
-  head: () => ({
-    meta: [
-      { title: "وب‌یار | چت زنده و تماس ویدیویی، فقط با یک خط کد" },
-      {
-        name: "description",
-        content:
-          "وب‌یار ابزارک چتی است که روی سایت شما می‌نشیند و امکان گفتگوی زنده و تماس تصویری مستقیم با بازدیدکننده‌ها را فراهم می‌کند.",
-      },
-      { property: "og:title", content: "وب‌یار | چت زنده و تماس ویدیویی، فقط با یک خط کد" },
-      {
-        property: "og:description",
-        content: "نصب در کمتر از ۵ دقیقه، بدون نیاز به برنامه‌نویس. همین حالا شروع کنید.",
-      },
-    ],
-  }),
+  loader: async () => {
+    const [settings, seoOverride] = await Promise.all([fetchSettings(), getPublicSeoPage({ data: { path: "/" } })]);
+    return { settings, seoOverride };
+  },
+  head: ({ loaderData }) => {
+    if (!loaderData) return {};
+    return buildPageMeta({
+      settings: loaderData.settings,
+      path: "/",
+      override: loaderData.seoOverride,
+      fallbackTitle: "وب‌یار | چت زنده و تماس ویدیویی، فقط با یک خط کد",
+      fallbackDescription:
+        "وب‌یار ابزارک چتی است که روی سایت شما می‌نشیند و امکان گفتگوی زنده و تماس تصویری مستقیم با بازدیدکننده‌ها را فراهم می‌کند.",
+    });
+  },
   component: IndexPage,
 });
 
@@ -105,11 +106,68 @@ function eyebrow(text: string) {
   return <div className="mb-3 text-sm font-bold text-primary">{text}</div>;
 }
 
+const waveBars = [10, 18, 26, 16, 22, 12, 20];
+
+/** Abstract, brand-colored "live video call" motion graphic — no stock photos. */
+function VideoCallMock({ className }: { className?: string }) {
+  return (
+    <div className={`relative flex items-center justify-center overflow-hidden bg-brand ${className ?? ""}`}>
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0 opacity-40"
+        style={{ backgroundImage: "radial-gradient(circle at 30% 20%, rgb(255 255 255 / 0.35), transparent 55%)" }}
+      />
+      <div className="relative z-10 flex flex-col items-center gap-4">
+        <div className="relative flex h-14 w-14 items-center justify-center">
+          {[0, 0.8, 1.6].map((delay) => (
+            <motion.span
+              key={delay}
+              aria-hidden
+              className="absolute inset-0 rounded-full border-2 border-primary-foreground/50"
+              animate={{ scale: [1, 2], opacity: [0.55, 0] }}
+              transition={{ duration: 2.4, repeat: Infinity, delay, ease: "easeOut" }}
+            />
+          ))}
+          <div className="flex h-11 w-11 items-center justify-center rounded-full bg-primary-foreground/15">
+            <Video className="h-5 w-5 text-primary-foreground" />
+          </div>
+        </div>
+        <div className="flex items-end gap-1" role="presentation">
+          {waveBars.map((h, i) => (
+            <motion.span
+              key={i}
+              className="w-1 rounded-full bg-primary-foreground/70"
+              style={{ height: h }}
+              animate={{ scaleY: [0.4, 1, 0.4] }}
+              transition={{ duration: 1 + (i % 3) * 0.15, repeat: Infinity, ease: "easeInOut", delay: i * 0.08 }}
+            />
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/** Abstract picture-in-picture "operator" avatar — a soft pulse, not a photo. */
+function OperatorAvatar({ className }: { className?: string }) {
+  return (
+    <div className={`relative flex items-center justify-center overflow-hidden bg-foreground ${className ?? ""}`}>
+      <motion.span
+        aria-hidden
+        className="absolute h-6 w-6 rounded-full bg-background/15"
+        animate={{ scale: [1, 1.6], opacity: [0.5, 0] }}
+        transition={{ duration: 2, repeat: Infinity, ease: "easeOut" }}
+      />
+      <UserRound className="h-4 w-4 text-background/85" />
+    </div>
+  );
+}
+
 function IndexPage() {
-  const { settings } = Route.useLoaderData();
+  const { settings, seoOverride } = Route.useLoaderData();
   const [period, setPeriod] = useState<"monthly" | "yearly">("monthly");
 
-  const jsonLd = {
+  const defaultJsonLd = {
     "@context": "https://schema.org",
     "@type": "SoftwareApplication",
     name: settings.brand.name,
@@ -119,6 +177,7 @@ function IndexPage() {
     offers: [{ "@type": "Offer", price: "0", priceCurrency: "IRR", name: "شروع" }],
     aggregateRating: { "@type": "AggregateRating", ratingValue: "4.8", reviewCount: "340" },
   };
+  const jsonLd = parseSchemaJson(seoOverride?.schemaJson) ?? defaultJsonLd;
 
   return (
     <SiteLayout settings={settings}>
@@ -126,8 +185,8 @@ function IndexPage() {
 
       {/* HERO */}
       <section className="container-page relative overflow-hidden pt-16 pb-12 sm:pt-24 sm:pb-16">
-        <div aria-hidden className="pointer-events-none absolute -top-32 -start-40 h-[480px] w-[480px] rounded-full bg-accent/25 blur-3xl" />
-        <div aria-hidden className="pointer-events-none absolute top-48 -end-24 h-[380px] w-[380px] rounded-full bg-primary/25 blur-3xl" />
+        <div aria-hidden className="pointer-events-none absolute -top-40 -start-48 h-[420px] w-[420px] rounded-full bg-accent/15 blur-3xl" />
+        <div aria-hidden className="pointer-events-none absolute top-32 -end-32 h-[340px] w-[340px] rounded-full bg-primary/15 blur-3xl" />
 
         <div className="relative z-10 grid items-center gap-12 lg:grid-cols-2 lg:gap-16">
           <div>
@@ -209,14 +268,8 @@ function IndexPage() {
 
             <motion.div {...float(1)} className="absolute end-0 bottom-0 w-[280px] rounded-[18px] bg-foreground/90 p-3.5 shadow-2xl">
               <div className="relative h-[150px] overflow-hidden rounded-xl">
-                <img
-                  src="https://i.pravatar.cc/600?img=47"
-                  alt="بازدیدکننده در تماس ویدیویی"
-                  className="h-full w-full object-cover"
-                />
-                <div className="absolute start-2.5 bottom-2.5 h-12 w-16 overflow-hidden rounded-lg border-2 border-background/40">
-                  <img src="https://i.pravatar.cc/160?img=68" alt="اپراتور پشتیبانی" className="h-full w-full object-cover" />
-                </div>
+                <VideoCallMock className="h-full w-full" />
+                <OperatorAvatar className="absolute start-2.5 bottom-2.5 h-12 w-16 rounded-lg border-2 border-background/40" />
               </div>
               <div className="mt-3.5 flex items-center justify-center gap-3.5">
                 <div className="flex h-9 w-9 items-center justify-center rounded-full bg-background/10">
@@ -268,7 +321,7 @@ function IndexPage() {
           </div>
         </ScrollReveal>
 
-        <ScrollReveal className="rounded-3xl bg-secondary/40 p-5 lg:order-2 sm:p-7">
+        <ScrollReveal className="rounded-3xl bg-secondary/30 p-5 lg:order-2 sm:p-7">
           <div className="rounded-2xl bg-card p-5 shadow-card">
             {conversations.map((row, i) => (
               <div key={row.name} className={`flex items-center gap-3 py-3.5 ${i ? "border-t border-border" : ""}`}>
@@ -291,7 +344,7 @@ function IndexPage() {
 
       {/* VIDEO CALL */}
       <section className="relative overflow-hidden bg-foreground px-4 py-20 sm:px-8 sm:py-28">
-        <div aria-hidden className="pointer-events-none absolute -top-24 -end-24 h-[400px] w-[400px] rounded-full bg-primary/25 blur-3xl" />
+        <div aria-hidden className="pointer-events-none absolute -top-24 -end-24 h-[360px] w-[360px] rounded-full bg-primary/20 blur-3xl" />
         <div className="relative z-10 mx-auto grid max-w-7xl items-center gap-12 lg:grid-cols-2 lg:gap-[70px]">
           <ScrollReveal>
             {eyebrow("تماس ویدیویی")}
@@ -318,14 +371,8 @@ function IndexPage() {
 
           <ScrollReveal className="rounded-[20px] bg-background/5 p-4 shadow-2xl">
             <div className="relative h-[280px] overflow-hidden rounded-[14px]">
-              <img
-                src="https://i.pravatar.cc/900?img=32"
-                alt="مشتری در تماس ویدیویی"
-                className="h-full w-full object-cover"
-              />
-              <div className="absolute start-4 bottom-4 h-20 w-28 overflow-hidden rounded-xl border-2 border-background/30">
-                <img src="https://i.pravatar.cc/220?img=68" alt="اپراتور پشتیبانی" className="h-full w-full object-cover" />
-              </div>
+              <VideoCallMock className="h-full w-full" />
+              <OperatorAvatar className="absolute start-4 bottom-4 h-20 w-28 rounded-xl border-2 border-background/30" />
               <div className="absolute top-4 end-4 rounded-full bg-foreground/60 px-2.5 py-1 text-xs text-background">۰۲:۱۴</div>
             </div>
             <div className="mt-4 flex items-center justify-center gap-4">
@@ -449,7 +496,7 @@ function IndexPage() {
         </ScrollReveal>
         <StaggerChildren className="grid gap-7 md:grid-cols-2">
           {testimonials.map((tm) => (
-            <motion.figure key={tm.name} variants={childVariant} className="rounded-[20px] bg-secondary/40 p-8">
+            <motion.figure key={tm.name} variants={childVariant} className="rounded-[20px] bg-secondary/30 p-8">
               <blockquote className="mb-6 text-base leading-[1.9] text-foreground sm:text-lg">«{tm.text}»</blockquote>
               <figcaption className="flex items-center gap-3">
                 <span className="flex h-11 w-11 items-center justify-center rounded-full bg-primary/10 font-bold text-primary">
