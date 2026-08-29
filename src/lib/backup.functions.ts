@@ -305,7 +305,7 @@ export const getDatabaseInfo = createServerFn({ method: "GET" }).handler(async (
   return { tables: results };
 });
 
-export const exportBackup = createServerFn({ method: "GET" }).handler(async (): Promise<{ generatedAt: string; tables: string[]; data: Record<string, Record<string, unknown>[]>; sql: string }> => {
+export const exportBackup = createServerFn({ method: "GET" }).handler(async (): Promise<{ generatedAt: string; tables: string[]; data: Record<string, any[]>; sql: string }> => {
   const { requireAdmin } = await import("./auth.server");
   await requireAdmin();
 

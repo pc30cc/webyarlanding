@@ -65,7 +65,7 @@ export interface GeneratedPost {
 
 export async function generatePostContent(input: {
   topic: string;
-  tone?: string;
+  tone?: string | undefined;
   length?: "short" | "medium" | "long";
 }): Promise<GeneratedPost> {
   const lengthHint =
@@ -103,11 +103,11 @@ export async function generatePostContent(input: {
 
 export async function generateBlogPost(input: {
   topic: string;
-  tone?: string;
+  tone?: string | undefined;
   length?: "short" | "medium" | "long";
-  saveAsDraft?: boolean;
-  categoryId?: string | null;
-  author?: string;
+  saveAsDraft?: boolean | undefined;
+  categoryId?: string | null | undefined;
+  author?: string | undefined;
 }): Promise<GeneratedPost & { postId?: string }> {
   const generated = await generatePostContent(input);
   if (!input.saveAsDraft) return generated;
@@ -165,7 +165,7 @@ export async function generateSeoMeta(input: { title: string; content: string })
   return extractJson<SeoMeta>(raw, { seoTitle: input.title, seoDescription: "", focusKeyword: "" });
 }
 
-export async function generateImage(input: { prompt: string; alt?: string }): Promise<{ id: string; url: string }> {
+export async function generateImage(input: { prompt: string; alt?: string | undefined }): Promise<{ id: string; url: string }> {
   const res = await fetch(GATEWAY_URL, {
     method: "POST",
     headers: {

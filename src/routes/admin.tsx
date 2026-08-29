@@ -85,7 +85,7 @@ function AdminLayout() {
         </div>
         <nav className="flex flex-col gap-1 overflow-y-auto p-3" style={{ maxHeight: "calc(100vh - 4rem)" }}>
           {NAV_ITEMS.map((item) => {
-            const active = item.exact ? pathname === item.to : pathname.startsWith(item.to);
+            const active = "exact" in item && item.exact ? pathname === item.to : pathname.startsWith(item.to);
             const Icon = item.icon;
             return (
               <Link

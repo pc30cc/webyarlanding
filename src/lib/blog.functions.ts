@@ -70,7 +70,7 @@ export type PostInput = z.infer<typeof postInputSchema>;
 
 /** فهرست مقالات منتشرشده (عمومی) */
 export const listPublishedPosts = createServerFn({ method: "GET" })
-  .inputValidator((input: { limit?: number; categorySlug?: string; tagSlug?: string; search?: string } | undefined) => input ?? {})
+  .inputValidator((input: { limit?: number | undefined; categorySlug?: string | undefined; tagSlug?: string | undefined; search?: string | undefined } | undefined) => input ?? {})
   .handler(async ({ data }): Promise<PostDto[]> => {
     const { listPosts } = await import("./blog.server");
     return await listPosts({ ...data, status: "published" });
@@ -99,7 +99,7 @@ export const listTags = createServerFn({ method: "GET" }).handler(async (): Prom
 /* ───────────── مدیریت (نیازمند ورود مدیر) ───────────── */
 
 export const adminListPosts = createServerFn({ method: "GET" })
-  .inputValidator((input: { status?: string; search?: string } | undefined) => input ?? {})
+  .inputValidator((input: { status?: string | undefined; search?: string | undefined } | undefined) => input ?? {})
   .handler(async ({ data }): Promise<PostDto[]> => {
     const { requireAdmin } = await import("./auth.server");
     const { listPosts } = await import("./blog.server");
