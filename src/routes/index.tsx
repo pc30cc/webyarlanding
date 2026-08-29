@@ -208,8 +208,15 @@ function IndexPage() {
             </motion.div>
 
             <motion.div {...float(1)} className="absolute end-0 bottom-0 w-[280px] rounded-[18px] bg-foreground/90 p-3.5 shadow-2xl">
-              <div className="relative h-[150px] overflow-hidden rounded-xl bg-brand opacity-85">
-                <div className="absolute start-2.5 bottom-2.5 h-12 w-16 rounded-lg border-2 border-background/40 bg-background/80" />
+              <div className="relative h-[150px] overflow-hidden rounded-xl">
+                <img
+                  src="https://i.pravatar.cc/600?img=47"
+                  alt="بازدیدکننده در تماس ویدیویی"
+                  className="h-full w-full object-cover"
+                />
+                <div className="absolute start-2.5 bottom-2.5 h-12 w-16 overflow-hidden rounded-lg border-2 border-background/40">
+                  <img src="https://i.pravatar.cc/160?img=68" alt="اپراتور پشتیبانی" className="h-full w-full object-cover" />
+                </div>
               </div>
               <div className="mt-3.5 flex items-center justify-center gap-3.5">
                 <div className="flex h-9 w-9 items-center justify-center rounded-full bg-background/10">
@@ -310,8 +317,15 @@ function IndexPage() {
           </ScrollReveal>
 
           <ScrollReveal className="rounded-[20px] bg-background/5 p-4 shadow-2xl">
-            <div className="relative h-[280px] overflow-hidden rounded-[14px] bg-brand">
-              <div className="absolute start-4 bottom-4 h-20 w-28 rounded-xl border-2 border-background/30 bg-foreground/70" />
+            <div className="relative h-[280px] overflow-hidden rounded-[14px]">
+              <img
+                src="https://i.pravatar.cc/900?img=32"
+                alt="مشتری در تماس ویدیویی"
+                className="h-full w-full object-cover"
+              />
+              <div className="absolute start-4 bottom-4 h-20 w-28 overflow-hidden rounded-xl border-2 border-background/30">
+                <img src="https://i.pravatar.cc/220?img=68" alt="اپراتور پشتیبانی" className="h-full w-full object-cover" />
+              </div>
               <div className="absolute top-4 end-4 rounded-full bg-foreground/60 px-2.5 py-1 text-xs text-background">۰۲:۱۴</div>
             </div>
             <div className="mt-4 flex items-center justify-center gap-4">
