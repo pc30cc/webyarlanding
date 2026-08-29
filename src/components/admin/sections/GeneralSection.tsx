@@ -93,7 +93,7 @@ export default function GeneralSection() {
           <h2 className="mb-4 text-base font-semibold text-foreground">شبکه‌های اجتماعی</h2>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             {(Object.keys(form.social) as (keyof typeof form.social)[]).map((key) => (
-              <Field key={key} label={socialLabels[key]}>
+              <Field key={key} label={socialLabels[key] ?? key}>
                 <Input
                   dir="ltr"
                   value={form.social[key] ?? ""}

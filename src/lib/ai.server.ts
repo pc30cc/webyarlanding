@@ -66,7 +66,7 @@ export interface GeneratedPost {
 export async function generatePostContent(input: {
   topic: string;
   tone?: string | undefined;
-  length?: "short" | "medium" | "long";
+  length?: "short" | "medium" | "long" | undefined;
 }): Promise<GeneratedPost> {
   const lengthHint =
     input.length === "long" ? "حدود ۱۲۰۰ تا ۱۸۰۰ کلمه" : input.length === "short" ? "حدود ۳۰۰ تا ۵۰۰ کلمه" : "حدود ۶۰۰ تا ۹۰۰ کلمه";
@@ -104,7 +104,7 @@ export async function generatePostContent(input: {
 export async function generateBlogPost(input: {
   topic: string;
   tone?: string | undefined;
-  length?: "short" | "medium" | "long";
+  length?: "short" | "medium" | "long" | undefined;
   saveAsDraft?: boolean | undefined;
   categoryId?: string | null | undefined;
   author?: string | undefined;
