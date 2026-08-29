@@ -37,10 +37,10 @@ function ContactPage() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (form.name.trim().length < 2) return toast.error("نام باید حداقل ۲ کاراکتر باشد");
-    if (!/^\S+@\S+\.\S+$/.test(form.email)) return toast.error("ایمیل معتبر نیست");
-    if (form.subject.trim().length < 2) return toast.error("موضوع الزامی است");
-    if (form.message.trim().length < 5) return toast.error("پیام باید حداقل ۵ کاراکتر باشد");
+    if (form.name.trim().length < 2) { toast.error("نام باید حداقل ۲ کاراکتر باشد"); return; }
+    if (!/^\S+@\S+\.\S+$/.test(form.email)) { toast.error("ایمیل معتبر نیست"); return; }
+    if (form.subject.trim().length < 2) { toast.error("موضوع الزامی است"); return; }
+    if (form.message.trim().length < 5) { toast.error("پیام باید حداقل ۵ کاراکتر باشد"); return; }
 
     setSending(true);
     try {
