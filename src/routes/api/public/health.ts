@@ -20,7 +20,7 @@ export const Route = createFileRoute("/api/public/health")({
         } else {
           try {
             const { db } = await import("@/lib/db.server");
-            const { error } = await db.from("settings").select("key").limit(1);
+            const { error } = await db.from("settings").select("setting_key").limit(1);
             database = error ? `error: ${error.message}` : "ok";
           } catch (error) {
             database = `error: ${error instanceof Error ? error.message : String(error)}`;
