@@ -48,7 +48,12 @@ export default function ChatWidgetSection() {
         className="flex flex-col gap-4 rounded-xl border border-border bg-card p-4 shadow-sm max-w-2xl"
       >
         <div className="flex items-center justify-between">
-          <Label>فعال‌سازی ویجت چت</Label>
+          <div className="flex flex-col gap-0.5">
+            <Label>فعال‌سازی ویجت چت</Label>
+            <span className="text-xs text-muted-foreground">
+              {form.chatWidget.enabled ? "ویجت روشن است" : "ویجت خاموش است"}
+            </span>
+          </div>
           <Switch checked={form.chatWidget.enabled} onCheckedChange={(v) => setForm((f) => ({ ...f, chatWidget: { ...f.chatWidget, enabled: v } }))} />
         </div>
         <div className="flex flex-col gap-1.5">
@@ -56,8 +61,11 @@ export default function ChatWidgetSection() {
           <Input dir="ltr" value={form.chatWidget.scriptUrl} onChange={(e) => setForm((f) => ({ ...f, chatWidget: { ...f.chatWidget, scriptUrl: e.target.value } }))} />
         </div>
         <div className="flex flex-col gap-1.5">
-          <Label>اسکریپت داخلی</Label>
+          <Label>کد نصب ابزارک (HTML / JavaScript)</Label>
           <Textarea dir="ltr" rows={4} value={form.chatWidget.inlineScript} onChange={(e) => setForm((f) => ({ ...f, chatWidget: { ...f.chatWidget, inlineScript: e.target.value } }))} />
+          <p className="text-xs text-muted-foreground">
+            این کد را دقیقاً قبل از تگ بسته &lt;/body&gt; سایت خود قرار دهید تا چت و تماس تصویری روی همه صفحات فعال شود.
+          </p>
         </div>
         <div className="flex flex-col gap-1.5">
           <Label>موقعیت</Label>

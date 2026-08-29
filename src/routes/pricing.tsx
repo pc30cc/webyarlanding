@@ -1,9 +1,10 @@
+import { useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { motion } from "framer-motion";
-import { CheckCircle2, Zap, TrendingUp, Star, Crown, ChevronLeft } from "lucide-react";
+import { Check, CheckCircle2, Zap, Star, Crown, ChevronLeft } from "lucide-react";
 import { fetchSettings } from "@/lib/settings.functions";
 import { SiteLayout } from "@/components/site/SiteLayout";
-import { ScrollReveal, StaggerChildren, childVariant, FAQItem } from "@/components/site/animations";
+import { StaggerChildren, childVariant } from "@/components/site/animations";
 
 export const Route = createFileRoute("/pricing")({
   loader: async () => ({ settings: await fetchSettings() }),
@@ -18,42 +19,85 @@ export const Route = createFileRoute("/pricing")({
   component: PricingPage,
 });
 
-const plans = [
-  {
-    slug: "starter", icon: Zap, name: "شروع", desc: "برای سایت‌های کوچک و شروع کار", price: "رایگان",
-    features: ["۱ اپراتور", "۱٬۰۰۰ گفتگو در ماه", "چت زنده نامحدود", "پشتیبانی ایمیلی"],
-  },
-  {
-    slug: "growth", icon: TrendingUp, name: "رشد", desc: "برای تیم‌های کوچک در حال رشد", price: "۲۹۰٬۰۰۰ تومان/ماه",
-    features: ["۳ اپراتور", "تاریخچه ۹۰ روزه", "پیام خودکار", "پشتیبانی چت آنلاین"],
-  },
-  {
-    slug: "professional", icon: Star, name: "حرفه‌ای", desc: "برای تیم‌های در حال رشد", price: "۴۹۰٬۰۰۰ تومان/ماه", popular: true,
-    features: ["۵ اپراتور", "تماس ویدیویی HD", "اشتراک‌گذاری صفحه", "گزارش‌های پیشرفته"],
-  },
-  {
-    slug: "enterprise", icon: Crown, name: "سازمانی", desc: "برای کسب‌وکارهای بزرگ", price: "تماس بگیرید",
-    features: ["اپراتور نامحدود", "SSO و کنترل دسترسی", "SLA اختصاصی", "مدیر حساب اختصاصی"],
-  },
+function getPlans(period: "monthly" | "yearly") {
+  return [
+    {
+      slug: "starter", icon: Zap, name: "شروع", desc: "برای شروع و آزمایش وب‌یار", price: "رایگان", unit: "", cta: "شروع کنید",
+      features: ["۱ اپراتور پشتیبانی", "۵۰ گفتگو در ماه", "بدون تماس ویدیویی"],
+    },
+    {
+      slug: "professional", icon: Star, name: "حرفه‌ای", desc: "برای تیم‌های در حال رشد",
+      price: period === "yearly" ? "۳۹۲٬۰۰۰" : "۴۹۰٬۰۰۰",
+      unit: period === "yearly" ? "تومان / ماه، سالانه" : "تومان / ماه",
+      cta: "شروع رایگان", popular: true,
+      features: ["۵ اپراتور پشتیبانی", "گفتگوی نامحدود", "تماس تصویری HD", "اشتراک‌گذاری صفحه", "گزارش‌گیری کامل"],
+    },
+    {
+      slug: "enterprise", icon: Crown, name: "سازمانی", desc: "برای کسب‌وکارهای بزرگ", price: "تماس بگیرید", unit: "", cta: "تماس با فروش",
+      features: ["اپراتور نامحدود", "چند دامنه هم‌زمان", "پشتیبانی اختصاصی", "امکانات یکپارچه‌سازی ویژه"],
+    },
+  ];
+}
+
+const comparisonRows = [
+  { label: "تعداد اپراتور", free: "۱", pro: "۵", enterprise: "نامحدود" },
+  { label: "گفتگوی ماهانه", free: "۵۰", pro: "نامحدود", enterprise: "نامحدود" },
+  { label: "تماس تصویری", free: false, pro: true, enterprise: true },
+  { label: "اشتراک‌گذاری صفحه", free: false, pro: true, enterprise: true },
+  { label: "چند دامنه", free: false, pro: false, enterprise: true },
+  { label: "پشتیبانی اختصاصی", free: false, pro: false, enterprise: true },
 ];
 
-const faqs = [
-  { q: "آیا می‌توانم پلن را تغییر دهم؟", a: "بله، هر زمان می‌توانید پلن خود را ارتقا یا تنزل دهید." },
-  { q: "آیا بازگشت وجه وجود دارد؟", a: "بله، تا ۳۰ روز پس از خرید امکان بازگشت وجه کامل وجود دارد." },
-  { q: "آیا پلن رایگان محدودیت زمانی دارد؟", a: "خیر، پلن رایگان همیشگی است و محدودیت زمانی ندارد." },
-];
+function ComparisonCell({ value }: { value: string | boolean }) {
+  if (typeof value === "boolean") {
+    return value ? (
+      <Check className="mx-auto h-4 w-4 text-success" />
+    ) : (
+      <span className="text-muted-foreground">—</span>
+    );
+  }
+  return <span>{value}</span>;
+}
 
 function PricingPage() {
   const { settings } = Route.useLoaderData();
+  const [period, setPeriod] = useState<"monthly" | "yearly">("monthly");
+  const plans = getPlans(period);
   return (
     <SiteLayout settings={settings}>
       <div className="container-page max-w-7xl py-16 sm:py-24">
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="mb-16 text-center">
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="mb-10 text-center">
           <h1 className="mb-4 text-3xl font-extrabold text-foreground sm:text-5xl">قیمت‌گذاری</h1>
           <p className="mx-auto max-w-2xl text-base text-muted-foreground">پلن مناسب کسب‌وکار خود را انتخاب کنید</p>
         </motion.div>
 
-        <StaggerChildren className="mb-16 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="mb-14 flex justify-center">
+          <div className="inline-flex rounded-full bg-card p-1.5 shadow-card">
+            {(["monthly", "yearly"] as const).map((p) => (
+              <button
+                key={p}
+                type="button"
+                onClick={() => setPeriod(p)}
+                className={`flex items-center gap-2 rounded-full px-5 py-2.5 text-sm font-bold transition-colors ${
+                  period === p ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                {p === "monthly" ? "ماهانه" : "سالانه"}
+                {p === "yearly" && (
+                  <span
+                    className={`rounded-full px-2 py-0.5 text-xs ${
+                      period === "yearly" ? "bg-primary-foreground/20" : "bg-success/15 text-success"
+                    }`}
+                  >
+                    ۲۰٪ تخفیف
+                  </span>
+                )}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <StaggerChildren className="mb-16 grid grid-cols-1 gap-5 sm:grid-cols-3">
           {plans.map((plan) => (
             <motion.div
               key={plan.slug}
@@ -62,7 +106,7 @@ function PricingPage() {
             >
               {plan.popular && (
                 <div className="absolute -top-3 inset-x-0 mx-auto w-fit rounded-full bg-brand px-4 py-1 text-xs font-bold text-primary-foreground">
-                  محبوب‌ترین
+                  پیشنهادی
                 </div>
               )}
               <div className="mb-5 flex items-center gap-3">
@@ -74,7 +118,10 @@ function PricingPage() {
                   <p className="text-[11px] text-muted-foreground">{plan.desc}</p>
                 </div>
               </div>
-              <div className="mb-5 text-2xl font-black text-foreground">{plan.price}</div>
+              <div className="mb-5 flex items-baseline gap-1.5">
+                <span className="text-2xl font-black text-foreground">{plan.price}</span>
+                {plan.unit && <span className="text-xs text-muted-foreground">{plan.unit}</span>}
+              </div>
               <ul className="mb-6 space-y-2">
                 {plan.features.map((f) => (
                   <li key={f} className="flex items-center gap-2 text-xs text-muted-foreground">
@@ -89,20 +136,37 @@ function PricingPage() {
                   plan.popular ? "bg-brand text-primary-foreground" : "border border-border text-foreground hover:bg-secondary"
                 }`}
               >
-                شروع کنید <ChevronLeft className="h-3.5 w-3.5" />
+                {plan.cta} <ChevronLeft className="h-3.5 w-3.5" />
               </Link>
             </motion.div>
           ))}
         </StaggerChildren>
 
-        <ScrollReveal className="mx-auto max-w-3xl text-center">
-          <h2 className="mb-6 text-xl font-bold text-foreground">سوالات متداول</h2>
-          <div className="space-y-3 text-start">
-            {faqs.map((f) => (
-              <FAQItem key={f.q} q={f.q} a={f.a} />
-            ))}
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
+          <h2 className="mb-6 text-center text-xl font-bold text-foreground">مقایسه امکانات</h2>
+          <div className="overflow-x-auto rounded-xl border border-border bg-card">
+            <table className="w-full min-w-[560px] text-sm">
+              <thead>
+                <tr className="border-b border-border bg-secondary/30">
+                  <th className="px-5 py-3 text-start text-xs font-semibold text-foreground">امکانات</th>
+                  <th className="px-5 py-3 text-center text-xs font-semibold text-foreground">رایگان</th>
+                  <th className="px-5 py-3 text-center text-xs font-semibold text-foreground">حرفه‌ای</th>
+                  <th className="px-5 py-3 text-center text-xs font-semibold text-foreground">سازمانی</th>
+                </tr>
+              </thead>
+              <tbody>
+                {comparisonRows.map((row) => (
+                  <tr key={row.label} className="border-b border-border/50 last:border-0">
+                    <td className="px-5 py-3 text-muted-foreground">{row.label}</td>
+                    <td className="px-5 py-3 text-center text-foreground"><ComparisonCell value={row.free} /></td>
+                    <td className="px-5 py-3 text-center text-foreground"><ComparisonCell value={row.pro} /></td>
+                    <td className="px-5 py-3 text-center text-foreground"><ComparisonCell value={row.enterprise} /></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
-        </ScrollReveal>
+        </motion.div>
       </div>
     </SiteLayout>
   );

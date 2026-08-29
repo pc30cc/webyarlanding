@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { motion } from "framer-motion";
-import { Users, Target, Award, Heart, ChevronLeft } from "lucide-react";
+import { Target, Award, Heart, ChevronLeft } from "lucide-react";
 import { fetchSettings } from "@/lib/settings.functions";
 import { SiteLayout } from "@/components/site/SiteLayout";
 import { ScrollReveal, StaggerChildren, childVariant } from "@/components/site/animations";
@@ -19,25 +19,25 @@ export const Route = createFileRoute("/about")({
 });
 
 const values = [
-  { icon: Target, title: "مأموریت", desc: "ارائه ابزارهای حرفه‌ای مدیریت ارتباط با مشتری به کسب‌وکارهای ایرانی با کیفیت جهانی و قیمت مناسب" },
-  { icon: Heart, title: "ارزش‌ها", desc: "شفافیت، نوآوری، مشتری‌مداری و تعهد به کیفیت در تمام محصولات و خدمات ما" },
-  { icon: Award, title: "چشم‌انداز", desc: "تبدیل شدن به پیشرو‌ترین پلتفرم CRM و ارتباطات مشتری در خاورمیانه" },
-  { icon: Users, title: "تیم", desc: "تیمی از متخصصان با تجربه در حوزه‌های مهندسی نرم‌افزار، طراحی UX و بازاریابی دیجیتال" },
+  { icon: Target, title: "مأموریت", desc: "کمک به کسب‌وکارهای آنلاین برای پاسخ‌گویی سریع‌تر به مشتری، بدون نیاز به ابزارهای پیچیده." },
+  { icon: Heart, title: "ارزش‌ها", desc: "شفافیت، سادگی و پایداری در تمام تصمیم‌های محصول." },
+  { icon: Award, title: "چشم‌انداز", desc: "تبدیل شدن به انتخاب پیش‌فرض کسب‌وکارهای ایرانی برای ارتباط زنده با مشتری." },
 ];
 
 function AboutPage() {
   const { settings } = Route.useLoaderData();
   return (
     <SiteLayout settings={settings}>
-      <div className="container-page max-w-4xl py-16 sm:py-24">
+      <div className="container-page max-w-4xl py-16 text-center sm:py-24">
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
-          <h1 className="mb-6 text-3xl font-extrabold text-foreground sm:text-5xl">درباره {settings.brand.name}</h1>
-          <p className="mb-12 max-w-2xl text-base leading-relaxed text-muted-foreground sm:text-lg">
-            {settings.brand.name} یک پلتفرم جامع مدیریت ارتباط با مشتری است که با هدف توانمندسازی کسب‌وکارهای ایرانی طراحی شده است.
+          <div className="mb-3 text-sm font-bold text-primary">درباره ما</div>
+          <h1 className="mb-6 text-3xl font-extrabold text-foreground sm:text-5xl">داستان {settings.brand.name}</h1>
+          <p className="mx-auto mb-12 max-w-2xl text-base leading-relaxed text-muted-foreground sm:text-lg">
+            {settings.brand.name} برای این ساخته شد که کسب‌وکارهای آنلاین بدون نیاز به تیم فنی بزرگ، بتوانند مثل یک فروشگاه حضوری با مشتری صحبت کنند؛ از طریق چت زنده و تماس تصویری، دقیقاً همان‌جایی که مشتری تصمیم می‌گیرد.
           </p>
         </motion.div>
 
-        <StaggerChildren className="mb-16 grid grid-cols-1 gap-6 sm:grid-cols-2">
+        <StaggerChildren className="grid grid-cols-1 gap-6 text-start sm:grid-cols-3">
           {values.map((v) => (
             <motion.div key={v.title} variants={childVariant} className="rounded-xl border border-border bg-card p-6 shadow-card">
               <v.icon className="mb-4 h-8 w-8 text-brand" />
@@ -46,8 +46,14 @@ function AboutPage() {
             </motion.div>
           ))}
         </StaggerChildren>
+      </div>
 
-        <ScrollReveal className="text-center">
+      <div className="bg-secondary/30 px-4 py-16 text-center sm:px-8 sm:py-24">
+        <ScrollReveal className="mx-auto max-w-2xl">
+          <h2 className="mb-4 text-2xl font-extrabold text-foreground sm:text-4xl">تیم {settings.brand.name}</h2>
+          <p className="mb-10 text-base leading-relaxed text-muted-foreground sm:text-lg">
+            تیمی کوچک از توسعه‌دهندگان و طراحان محصول که هر روز روی سرعت، پایداری و سادگی {settings.brand.name} کار می‌کنند.
+          </p>
           <Link to="/contact" className="inline-flex items-center gap-2 rounded-xl bg-brand px-10 py-4 text-base font-bold text-primary-foreground shadow-lg shadow-primary/30">
             به تیم ما بپیوندید <ChevronLeft className="h-4 w-4" />
           </Link>

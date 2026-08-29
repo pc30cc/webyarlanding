@@ -22,7 +22,8 @@ export function SiteFooter({ settings }: { settings: SiteSettings }) {
           <div>
             <h4 className="mb-3 text-sm font-semibold text-foreground">محصول</h4>
             <nav className="space-y-2 text-sm text-muted-foreground">
-              <Link to="/pricing" className="block transition-colors hover:text-foreground">امکانات و قیمت</Link>
+              <Link to="/" hash="features" className="block transition-colors hover:text-foreground">امکانات</Link>
+              <Link to="/pricing" className="block transition-colors hover:text-foreground">قیمت‌گذاری</Link>
               <Link to="/api-docs" className="block transition-colors hover:text-foreground">مستندات API</Link>
             </nav>
           </div>

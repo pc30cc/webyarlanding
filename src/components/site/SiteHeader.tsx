@@ -6,11 +6,9 @@ import { Button } from "@/components/ui/button";
 import type { SiteSettings } from "@/lib/settings";
 
 const NAV_LINKS = [
-  { to: "/", label: "صفحه اصلی" },
-  { to: "/pricing", label: "امکانات و قیمت" },
+  { to: "/", hash: "features", label: "امکانات" },
+  { to: "/pricing", label: "قیمت‌گذاری" },
   { to: "/blog", label: "بلاگ" },
-  { to: "/about", label: "درباره ما" },
-  { to: "/contact", label: "تماس با ما" },
   { to: "/api-docs", label: "مستندات API" },
 ] as const;
 
@@ -36,15 +34,21 @@ export function SiteHeader({ settings }: { settings: SiteSettings }) {
         </Link>
 
         <nav className="hidden items-center gap-7 text-sm font-medium text-muted-foreground md:flex">
-          {NAV_LINKS.map((link) => (
-            <Link
-              key={link.to}
-              to={link.to}
-              className={`transition-colors hover:text-foreground ${pathname === link.to ? "text-foreground" : ""}`}
-            >
-              {link.label}
-            </Link>
-          ))}
+          {NAV_LINKS.map((link) => {
+            const isHashLink = "hash" in link;
+            const isActive = !isHashLink && pathname === link.to;
+            const hashProps = isHashLink ? { hash: link.hash } : {};
+            return (
+              <Link
+                key={link.label}
+                to={link.to}
+                {...hashProps}
+                className={`transition-colors hover:text-foreground ${isActive ? "text-foreground" : ""}`}
+              >
+                {link.label}
+              </Link>
+            );
+          })}
         </nav>
 
         <div className="flex items-center gap-2">
@@ -88,8 +92,9 @@ export function SiteHeader({ settings }: { settings: SiteSettings }) {
             <div className="space-y-1 px-4 py-4">
               {NAV_LINKS.map((link) => (
                 <Link
-                  key={link.to}
+                  key={link.label}
                   to={link.to}
+                  {...("hash" in link ? { hash: link.hash } : {})}
                   onClick={() => setOpen(false)}
                   className="block rounded-lg px-3 py-2.5 text-sm text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
                 >
