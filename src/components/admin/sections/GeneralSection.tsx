@@ -96,7 +96,7 @@ export default function GeneralSection() {
               <Field key={key} label={socialLabels[key]}>
                 <Input
                   dir="ltr"
-                  value={form.social[key]}
+                  value={form.social[key] ?? ""}
                   onChange={(e) => setForm((f) => ({ ...f, social: { ...f.social, [key]: e.target.value } }))}
                 />
               </Field>
