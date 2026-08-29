@@ -19,4 +19,5 @@ cmds = ["npm run build"]
 
 [start]
 # Nitro node-server output: dist/server/index.mjs serves SSR + dist/client assets.
-cmd = "node dist/server/index.mjs"
+# --env-file-if-exists لود می‌کند .env در صورت وجود؛ متغیرهای Coolify اولویت دارند.
+cmd = "node --env-file-if-exists=.env dist/server/index.mjs"
