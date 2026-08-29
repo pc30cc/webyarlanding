@@ -106,58 +106,27 @@ function eyebrow(text: string) {
   return <div className="mb-3 text-sm font-bold text-primary">{text}</div>;
 }
 
-const waveBars = [10, 18, 26, 16, 22, 12, 20];
-
-/** Abstract, brand-colored "live video call" motion graphic — no stock photos. */
+/** Real, self-hosted looping video of the brand's "live video call" screen — no third-party embed, no stock footage. */
 function VideoCallMock({ className }: { className?: string }) {
   return (
-    <div className={`relative flex items-center justify-center overflow-hidden bg-brand ${className ?? ""}`}>
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-0 opacity-40"
-        style={{ backgroundImage: "radial-gradient(circle at 30% 20%, rgb(255 255 255 / 0.35), transparent 55%)" }}
-      />
-      <div className="relative z-10 flex flex-col items-center gap-4">
-        <div className="relative flex h-14 w-14 items-center justify-center">
-          {[0, 0.8, 1.6].map((delay) => (
-            <motion.span
-              key={delay}
-              aria-hidden
-              className="absolute inset-0 rounded-full border-2 border-primary-foreground/50"
-              animate={{ scale: [1, 2], opacity: [0.55, 0] }}
-              transition={{ duration: 2.4, repeat: Infinity, delay, ease: "easeOut" }}
-            />
-          ))}
-          <div className="flex h-11 w-11 items-center justify-center rounded-full bg-primary-foreground/15">
-            <Video className="h-5 w-5 text-primary-foreground" />
-          </div>
-        </div>
-        <div className="flex items-end gap-1" role="presentation">
-          {waveBars.map((h, i) => (
-            <motion.span
-              key={i}
-              className="w-1 rounded-full bg-primary-foreground/70"
-              style={{ height: h }}
-              animate={{ scaleY: [0.4, 1, 0.4] }}
-              transition={{ duration: 1 + (i % 3) * 0.15, repeat: Infinity, ease: "easeInOut", delay: i * 0.08 }}
-            />
-          ))}
-        </div>
-      </div>
-    </div>
+    <video
+      className={`h-full w-full object-cover ${className ?? ""}`}
+      src="/videos/video-call.mp4"
+      poster="/videos/video-call-poster.jpg"
+      autoPlay
+      muted
+      loop
+      playsInline
+      preload="metadata"
+      aria-label="نمایش تماس ویدیویی زنده در ابزارک وب‌یار"
+    />
   );
 }
 
-/** Abstract picture-in-picture "operator" avatar — a soft pulse, not a photo. */
+/** Picture-in-picture "operator" avatar — a plain static icon, not a photo. */
 function OperatorAvatar({ className }: { className?: string }) {
   return (
-    <div className={`relative flex items-center justify-center overflow-hidden bg-foreground ${className ?? ""}`}>
-      <motion.span
-        aria-hidden
-        className="absolute h-6 w-6 rounded-full bg-background/15"
-        animate={{ scale: [1, 1.6], opacity: [0.5, 0] }}
-        transition={{ duration: 2, repeat: Infinity, ease: "easeOut" }}
-      />
+    <div className={`flex items-center justify-center bg-foreground ${className ?? ""}`}>
       <UserRound className="h-4 w-4 text-background/85" />
     </div>
   );
@@ -268,7 +237,7 @@ function IndexPage() {
 
             <motion.div {...float(1)} className="absolute end-0 bottom-0 w-[280px] rounded-[18px] bg-foreground/90 p-3.5 shadow-2xl">
               <div className="relative h-[150px] overflow-hidden rounded-xl">
-                <VideoCallMock className="h-full w-full" />
+                <VideoCallMock />
                 <OperatorAvatar className="absolute start-2.5 bottom-2.5 h-12 w-16 rounded-lg border-2 border-background/40" />
               </div>
               <div className="mt-3.5 flex items-center justify-center gap-3.5">
@@ -371,9 +340,8 @@ function IndexPage() {
 
           <ScrollReveal className="rounded-[20px] bg-background/5 p-4 shadow-2xl">
             <div className="relative h-[280px] overflow-hidden rounded-[14px]">
-              <VideoCallMock className="h-full w-full" />
+              <VideoCallMock />
               <OperatorAvatar className="absolute start-4 bottom-4 h-20 w-28 rounded-xl border-2 border-background/30" />
-              <div className="absolute top-4 end-4 rounded-full bg-foreground/60 px-2.5 py-1 text-xs text-background">۰۲:۱۴</div>
             </div>
             <div className="mt-4 flex items-center justify-center gap-4">
               <div className="flex h-11 w-11 items-center justify-center rounded-full bg-background/10">
