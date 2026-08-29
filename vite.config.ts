@@ -16,7 +16,12 @@ export default defineConfig({
     // nitro/vite builds from this
     server: { entry: "server" },
   },
-  ...(selfHostPreset ? { nitro: { preset: selfHostPreset } } : {}),
+  ...(selfHostPreset ? {
+        nitro: {
+          preset: selfHostPreset,
+          output: { dir: "dist", serverDir: "dist/server", publicDir: "dist/client" },
+        },
+      } : {}),
   vite: {
     // `vite preview` on a custom domain otherwise rejects the request host.
     preview: { allowedHosts: true },
