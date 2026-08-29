@@ -5,6 +5,8 @@ NIXPACKS_NODE_VERSION = "22"
 NODE_ENV = "production"
 NPM_CONFIG_PRODUCTION = "false"
 CI = "true"
+# Build a plain Node server (dist/server/index.mjs) instead of the Cloudflare bundle.
+NITRO_PRESET = "node-server"
 
 [phases.setup]
 nixPkgs = ["nodejs_22"]
@@ -16,5 +18,5 @@ cmds = ["npm ci --include=dev"]
 cmds = ["npm run build"]
 
 [start]
-# Build output lives in ./dist (dist/client for static assets, dist/server for SSR).
-cmd = "npx vite preview --host 0.0.0.0 --port ${PORT:-3000}"
+# Nitro node-server output: dist/server/index.mjs serves SSR + dist/client assets.
+cmd = "node dist/server/index.mjs"
