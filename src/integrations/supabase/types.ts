@@ -14,108 +14,42 @@ export type Database = {
   }
   public: {
     Tables: {
-      admin_accounts: {
-        Row: {
-          created_at: string
-          display_name: string | null
-          email: string
-          id: string
-          is_active: boolean
-          last_login_at: string | null
-          password_hash: string
-          updated_at: string
-        }
-        Insert: {
-          created_at?: string
-          display_name?: string | null
-          email: string
-          id?: string
-          is_active?: boolean
-          last_login_at?: string | null
-          password_hash: string
-          updated_at?: string
-        }
-        Update: {
-          created_at?: string
-          display_name?: string | null
-          email?: string
-          id?: string
-          is_active?: boolean
-          last_login_at?: string | null
-          password_hash?: string
-          updated_at?: string
-        }
-        Relationships: []
-      }
-      admin_login_attempts: {
-        Row: {
-          created_at: string
-          email: string
-          id: string
-          ip_address: string | null
-          reason: string | null
-          success: boolean
-          user_agent: string | null
-        }
-        Insert: {
-          created_at?: string
-          email: string
-          id?: string
-          ip_address?: string | null
-          reason?: string | null
-          success: boolean
-          user_agent?: string | null
-        }
-        Update: {
-          created_at?: string
-          email?: string
-          id?: string
-          ip_address?: string | null
-          reason?: string | null
-          success?: boolean
-          user_agent?: string | null
-        }
-        Relationships: []
-      }
       autoblog_runs: {
         Row: {
-          details: Json | null
+          details: string | null
           error: string | null
           finished_at: string | null
           id: string
-          locale: string
-          post_ids: string[]
+          post_ids: string
           posts_created: number
           posts_requested: number
           started_at: string
           status: string
-          trigger: string
+          trigger_source: string
         }
         Insert: {
-          details?: Json | null
+          details?: string | null
           error?: string | null
           finished_at?: string | null
-          id?: string
-          locale: string
-          post_ids?: string[]
+          id: string
+          post_ids?: string
           posts_created?: number
           posts_requested?: number
           started_at?: string
           status?: string
-          trigger?: string
+          trigger_source?: string
         }
         Update: {
-          details?: Json | null
+          details?: string | null
           error?: string | null
           finished_at?: string | null
           id?: string
-          locale?: string
-          post_ids?: string[]
+          post_ids?: string
           posts_created?: number
           posts_requested?: number
           started_at?: string
           status?: string
-          trigger?: string
+          trigger_source?: string
         }
         Relationships: []
       }
@@ -124,58 +58,52 @@ export type Database = {
           author: string | null
           category_id: string | null
           created_at: string
-          enabled: boolean
+          enabled: number
           id: string
           last_run_at: string | null
-          locale: string
           master_prompt: string
           next_topic_seed: number
           posts_per_day: number
           publish_status: string
-          run_hour_utc: number
-          run_hours_utc: number[]
-          topic_pool: string[]
+          run_hours: string
+          topic_pool: string
           total_generated: number
           updated_at: string
-          with_image: boolean
+          with_image: number
         }
         Insert: {
           author?: string | null
           category_id?: string | null
           created_at?: string
-          enabled?: boolean
-          id?: string
+          enabled?: number
+          id: string
           last_run_at?: string | null
-          locale: string
           master_prompt?: string
           next_topic_seed?: number
           posts_per_day?: number
           publish_status?: string
-          run_hour_utc?: number
-          run_hours_utc?: number[]
-          topic_pool?: string[]
+          run_hours?: string
+          topic_pool?: string
           total_generated?: number
           updated_at?: string
-          with_image?: boolean
+          with_image?: number
         }
         Update: {
           author?: string | null
           category_id?: string | null
           created_at?: string
-          enabled?: boolean
+          enabled?: number
           id?: string
           last_run_at?: string | null
-          locale?: string
           master_prompt?: string
           next_topic_seed?: number
           posts_per_day?: number
           publish_status?: string
-          run_hour_utc?: number
-          run_hours_utc?: number[]
-          topic_pool?: string[]
+          run_hours?: string
+          topic_pool?: string
           total_generated?: number
           updated_at?: string
-          with_image?: boolean
+          with_image?: number
         }
         Relationships: []
       }
@@ -184,9 +112,10 @@ export type Database = {
           created_at: string
           description: string | null
           id: string
-          locale: string
           name: string
           parent_id: string | null
+          seo_description: string | null
+          seo_title: string | null
           slug: string
           sort_order: number
           updated_at: string
@@ -194,10 +123,11 @@ export type Database = {
         Insert: {
           created_at?: string
           description?: string | null
-          id?: string
-          locale?: string
+          id: string
           name: string
           parent_id?: string | null
+          seo_description?: string | null
+          seo_title?: string | null
           slug: string
           sort_order?: number
           updated_at?: string
@@ -206,22 +136,15 @@ export type Database = {
           created_at?: string
           description?: string | null
           id?: string
-          locale?: string
           name?: string
           parent_id?: string | null
+          seo_description?: string | null
+          seo_title?: string | null
           slug?: string
           sort_order?: number
           updated_at?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "blog_categories_parent_id_fkey"
-            columns: ["parent_id"]
-            isOneToOne: false
-            referencedRelation: "blog_categories"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       blog_post_tags: {
         Row: {
@@ -239,22 +162,7 @@ export type Database = {
           post_id?: string
           tag_id?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "blog_post_tags_post_id_fkey"
-            columns: ["post_id"]
-            isOneToOne: false
-            referencedRelation: "blog_posts"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "blog_post_tags_tag_id_fkey"
-            columns: ["tag_id"]
-            isOneToOne: false
-            referencedRelation: "blog_tags"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       blog_posts: {
         Row: {
@@ -263,21 +171,20 @@ export type Database = {
           category_id: string | null
           content: string | null
           cover_image: string | null
-          created_at: string | null
+          created_at: string
           excerpt: string | null
           focus_keyword: string | null
           id: string
-          indexable: boolean
-          locale: string
+          indexable: number
+          published_at: string | null
           robots: string
           seo_description: string | null
           seo_title: string | null
           slug: string
-          status: string | null
-          tags: string[] | null
-          target_profiles: string[]
+          status: string
+          tags_csv: string
           title: string
-          updated_at: string | null
+          updated_at: string
         }
         Insert: {
           author?: string | null
@@ -285,21 +192,20 @@ export type Database = {
           category_id?: string | null
           content?: string | null
           cover_image?: string | null
-          created_at?: string | null
+          created_at?: string
           excerpt?: string | null
           focus_keyword?: string | null
-          id?: string
-          indexable?: boolean
-          locale?: string
+          id: string
+          indexable?: number
+          published_at?: string | null
           robots?: string
           seo_description?: string | null
           seo_title?: string | null
           slug: string
-          status?: string | null
-          tags?: string[] | null
-          target_profiles?: string[]
+          status?: string
+          tags_csv?: string
           title: string
-          updated_at?: string | null
+          updated_at?: string
         }
         Update: {
           author?: string | null
@@ -307,38 +213,28 @@ export type Database = {
           category_id?: string | null
           content?: string | null
           cover_image?: string | null
-          created_at?: string | null
+          created_at?: string
           excerpt?: string | null
           focus_keyword?: string | null
           id?: string
-          indexable?: boolean
-          locale?: string
+          indexable?: number
+          published_at?: string | null
           robots?: string
           seo_description?: string | null
           seo_title?: string | null
           slug?: string
-          status?: string | null
-          tags?: string[] | null
-          target_profiles?: string[]
+          status?: string
+          tags_csv?: string
           title?: string
-          updated_at?: string | null
+          updated_at?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "blog_posts_category_id_fkey"
-            columns: ["category_id"]
-            isOneToOne: false
-            referencedRelation: "blog_categories"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       blog_tags: {
         Row: {
           created_at: string
           description: string | null
           id: string
-          locale: string
           name: string
           seo_description: string | null
           seo_title: string | null
@@ -349,8 +245,7 @@ export type Database = {
         Insert: {
           created_at?: string
           description?: string | null
-          id?: string
-          locale?: string
+          id: string
           name: string
           seo_description?: string | null
           seo_title?: string | null
@@ -362,13 +257,78 @@ export type Database = {
           created_at?: string
           description?: string | null
           id?: string
-          locale?: string
           name?: string
           seo_description?: string | null
           seo_title?: string | null
           slug?: string
           sort_order?: number
           updated_at?: string
+        }
+        Relationships: []
+      }
+      contact_messages: {
+        Row: {
+          created_at: string
+          email: string | null
+          id: string
+          ip_address: string | null
+          message: string
+          name: string
+          phone: string | null
+          status: string
+          subject: string | null
+        }
+        Insert: {
+          created_at?: string
+          email?: string | null
+          id: string
+          ip_address?: string | null
+          message: string
+          name: string
+          phone?: string | null
+          status?: string
+          subject?: string | null
+        }
+        Update: {
+          created_at?: string
+          email?: string | null
+          id?: string
+          ip_address?: string | null
+          message?: string
+          name?: string
+          phone?: string | null
+          status?: string
+          subject?: string | null
+        }
+        Relationships: []
+      }
+      login_attempts: {
+        Row: {
+          created_at: string
+          email: string
+          id: string
+          ip_address: string | null
+          reason: string | null
+          success: number
+          user_agent: string | null
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          id: string
+          ip_address?: string | null
+          reason?: string | null
+          success?: number
+          user_agent?: string | null
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          id?: string
+          ip_address?: string | null
+          reason?: string | null
+          success?: number
+          user_agent?: string | null
         }
         Relationships: []
       }
@@ -379,7 +339,6 @@ export type Database = {
           filename: string
           height: number | null
           id: string
-          locale: string
           mime_type: string | null
           path: string
           provider: string
@@ -394,8 +353,7 @@ export type Database = {
           created_at?: string
           filename: string
           height?: number | null
-          id?: string
-          locale?: string
+          id: string
           mime_type?: string | null
           path: string
           provider?: string
@@ -411,7 +369,6 @@ export type Database = {
           filename?: string
           height?: number | null
           id?: string
-          locale?: string
           mime_type?: string | null
           path?: string
           provider?: string
@@ -423,45 +380,135 @@ export type Database = {
         }
         Relationships: []
       }
-      site_settings: {
+      seo_pages: {
         Row: {
-          change_note: string | null
+          canonical_url: string | null
+          created_at: string
+          description: string | null
           id: string
-          private_data: Json | null
-          public_data: Json | null
-          updated_at: string | null
+          og_image: string | null
+          page_key: string
+          path: string
+          robots: string
+          schema_json: string | null
+          title: string | null
+          updated_at: string
         }
         Insert: {
-          change_note?: string | null
-          id?: string
-          private_data?: Json | null
-          public_data?: Json | null
-          updated_at?: string | null
+          canonical_url?: string | null
+          created_at?: string
+          description?: string | null
+          id: string
+          og_image?: string | null
+          page_key: string
+          path?: string
+          robots?: string
+          schema_json?: string | null
+          title?: string | null
+          updated_at?: string
         }
         Update: {
-          change_note?: string | null
+          canonical_url?: string | null
+          created_at?: string
+          description?: string | null
           id?: string
-          private_data?: Json | null
-          public_data?: Json | null
-          updated_at?: string | null
+          og_image?: string | null
+          page_key?: string
+          path?: string
+          robots?: string
+          schema_json?: string | null
+          title?: string | null
+          updated_at?: string
         }
         Relationships: []
       }
-      user_roles: {
+      settings: {
         Row: {
           id: string
-          role: Database["public"]["Enums"]["app_role"]
-          user_id: string
+          is_private: number
+          setting_key: string
+          setting_value: string
+          updated_at: string
         }
         Insert: {
-          id?: string
-          role: Database["public"]["Enums"]["app_role"]
-          user_id: string
+          id: string
+          is_private?: number
+          setting_key: string
+          setting_value?: string
+          updated_at?: string
         }
         Update: {
           id?: string
-          role?: Database["public"]["Enums"]["app_role"]
+          is_private?: number
+          setting_key?: string
+          setting_value?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      user_sessions: {
+        Row: {
+          created_at: string
+          expires_at: string
+          id: string
+          ip_address: string | null
+          token_hash: string
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          expires_at: string
+          id: string
+          ip_address?: string | null
+          token_hash: string
+          user_agent?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          expires_at?: string
+          id?: string
+          ip_address?: string | null
+          token_hash?: string
+          user_agent?: string | null
           user_id?: string
+        }
+        Relationships: []
+      }
+      users: {
+        Row: {
+          created_at: string
+          display_name: string | null
+          email: string
+          id: string
+          is_active: number
+          last_login_at: string | null
+          password_hash: string
+          role: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          display_name?: string | null
+          email: string
+          id: string
+          is_active?: number
+          last_login_at?: string | null
+          password_hash: string
+          role?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          display_name?: string | null
+          email?: string
+          id?: string
+          is_active?: number
+          last_login_at?: string | null
+          password_hash?: string
+          role?: string
+          updated_at?: string
         }
         Relationships: []
       }
@@ -470,30 +517,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      get_public_site_settings: { Args: never; Returns: Json }
-      has_role: {
-        Args: {
-          _role: Database["public"]["Enums"]["app_role"]
-          _user_id: string
-        }
-        Returns: boolean
-      }
-      save_site_settings: {
-        Args: { _change_note: string; _private_data: Json; _public_data: Json }
-        Returns: undefined
-      }
-      slugify_tag: { Args: { _input: string }; Returns: string }
-      sync_post_tags: {
-        Args: { _locale: string; _post_id: string; _tag_names: string[] }
-        Returns: undefined
-      }
-      upsert_blog_tag: {
-        Args: { _locale: string; _name: string }
-        Returns: string
-      }
+      [_ in never]: never
     }
     Enums: {
-      app_role: "admin" | "moderator" | "user"
+      [_ in never]: never
     }
     CompositeTypes: {
       [_ in never]: never
@@ -620,8 +647,6 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {
-      app_role: ["admin", "moderator", "user"],
-    },
+    Enums: {},
   },
 } as const
