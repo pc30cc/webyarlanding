@@ -72,29 +72,50 @@ export type PostInput = z.infer<typeof postInputSchema>;
 export const listPublishedPosts = createServerFn({ method: "GET" })
   .inputValidator((input: { limit?: number | undefined; categorySlug?: string | undefined; tagSlug?: string | undefined; search?: string | undefined } | undefined) => input ?? {})
   .handler(async ({ data }): Promise<PostDto[]> => {
-    const { listPosts } = await import("./blog.server");
-    return await listPosts({ ...data, status: "published" });
+    try {
+      const { listPosts } = await import("./blog.server");
+      return await listPosts({ ...data, status: "published" });
+    } catch (error) {
+      console.error("listPublishedPosts failed:", error);
+      return [];
+    }
   });
 
 /** یک مقاله منتشرشده با اسلاگ */
 export const getPublishedPost = createServerFn({ method: "GET" })
   .inputValidator((input: unknown) => z.object({ slug: z.string() }).parse(input))
   .handler(async ({ data }): Promise<PostDto | null> => {
-    const { getPostBySlug } = await import("./blog.server");
-    const post = await getPostBySlug(data.slug);
-    if (!post || post.status !== "published") return null;
-    return post;
+    try {
+      const { getPostBySlug } = await import("./blog.server");
+      const post = await getPostBySlug(data.slug);
+      if (!post || post.status !== "published") return null;
+      return post;
+    } catch (error) {
+      console.error("getPublishedPost failed:", error);
+      return null;
+    }
   });
 
 export const listCategories = createServerFn({ method: "GET" }).handler(async (): Promise<CategoryDto[]> => {
-  const { fetchCategories } = await import("./blog.server");
-  return await fetchCategories();
+  try {
+    const { fetchCategories } = await import("./blog.server");
+    return await fetchCategories();
+  } catch (error) {
+    console.error("listCategories failed:", error);
+    return [];
+  }
 });
 
 export const listTags = createServerFn({ method: "GET" }).handler(async (): Promise<TagDto[]> => {
-  const { fetchTags } = await import("./blog.server");
-  return await fetchTags();
+  try {
+    const { fetchTags } = await import("./blog.server");
+    return await fetchTags();
+  } catch (error) {
+    console.error("listTags failed:", error);
+    return [];
+  }
 });
+
 
 /* ───────────── مدیریت (نیازمند ورود مدیر) ───────────── */
 
