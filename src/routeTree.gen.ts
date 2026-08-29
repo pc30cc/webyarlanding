@@ -17,6 +17,7 @@ import { Route as ApiDocsRouteImport } from './routes/api-docs'
 import { Route as ContactRouteImport } from './routes/contact'
 import { Route as PricingRouteImport } from './routes/pricing'
 import { Route as PrivacyRouteImport } from './routes/privacy'
+import { Route as RobotsDottxtRouteImport } from './routes/robots[.]txt'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as SlaRouteImport } from './routes/sla'
 import { Route as TermsRouteImport } from './routes/terms'
@@ -78,6 +79,11 @@ const PricingRoute = PricingRouteImport.update({
 const PrivacyRoute = PrivacyRouteImport.update({
   id: '/privacy',
   path: '/privacy',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RobotsDottxtRoute = RobotsDottxtRouteImport.update({
+  id: '/robots.txt',
+  path: '/robots.txt',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
@@ -200,6 +206,7 @@ export interface FileRoutesByFullPath {
   '/contact': typeof ContactRoute
   '/pricing': typeof PricingRoute
   '/privacy': typeof PrivacyRoute
+  '/robots.txt': typeof RobotsDottxtRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/sla': typeof SlaRoute
   '/terms': typeof TermsRoute
@@ -231,6 +238,7 @@ export interface FileRoutesByTo {
   '/contact': typeof ContactRoute
   '/pricing': typeof PricingRoute
   '/privacy': typeof PrivacyRoute
+  '/robots.txt': typeof RobotsDottxtRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/sla': typeof SlaRoute
   '/terms': typeof TermsRoute
@@ -264,6 +272,7 @@ export interface FileRoutesById {
   '/contact': typeof ContactRoute
   '/pricing': typeof PricingRoute
   '/privacy': typeof PrivacyRoute
+  '/robots.txt': typeof RobotsDottxtRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/sla': typeof SlaRoute
   '/terms': typeof TermsRoute
@@ -298,6 +307,7 @@ export interface FileRouteTypes {
     | '/contact'
     | '/pricing'
     | '/privacy'
+    | '/robots.txt'
     | '/sitemap.xml'
     | '/sla'
     | '/terms'
@@ -329,6 +339,7 @@ export interface FileRouteTypes {
     | '/contact'
     | '/pricing'
     | '/privacy'
+    | '/robots.txt'
     | '/sitemap.xml'
     | '/sla'
     | '/terms'
@@ -361,6 +372,7 @@ export interface FileRouteTypes {
     | '/contact'
     | '/pricing'
     | '/privacy'
+    | '/robots.txt'
     | '/sitemap.xml'
     | '/sla'
     | '/terms'
@@ -394,6 +406,7 @@ export interface RootRouteChildren {
   ContactRoute: typeof ContactRoute
   PricingRoute: typeof PricingRoute
   PrivacyRoute: typeof PrivacyRoute
+  RobotsDottxtRoute: typeof RobotsDottxtRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   SlaRoute: typeof SlaRoute
   TermsRoute: typeof TermsRoute
@@ -460,6 +473,13 @@ declare module '@tanstack/react-router' {
       path: '/privacy'
       fullPath: '/privacy'
       preLoaderRoute: typeof PrivacyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/robots.txt': {
+      id: '/robots.txt'
+      path: '/robots.txt'
+      fullPath: '/robots.txt'
+      preLoaderRoute: typeof RobotsDottxtRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/sitemap.xml': {
@@ -664,6 +684,7 @@ const rootRouteChildren: RootRouteChildren = {
   ContactRoute: ContactRoute,
   PricingRoute: PricingRoute,
   PrivacyRoute: PrivacyRoute,
+  RobotsDottxtRoute: RobotsDottxtRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   SlaRoute: SlaRoute,
   TermsRoute: TermsRoute,

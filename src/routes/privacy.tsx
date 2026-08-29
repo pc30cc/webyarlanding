@@ -1,18 +1,25 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { motion } from "framer-motion";
 import { fetchSettings } from "@/lib/settings.functions";
+import { getPublicSeoPage } from "@/lib/seo.functions";
+import { buildPageMeta } from "@/lib/seo-meta";
 import { SiteLayout } from "@/components/site/SiteLayout";
 
 export const Route = createFileRoute("/privacy")({
-  loader: async () => ({ settings: await fetchSettings() }),
-  head: () => ({
-    meta: [
-      { title: "حریم خصوصی | وب‌یار" },
-      { name: "description", content: "سیاست‌های حفظ حریم خصوصی و امنیت اطلاعات کاربران در وب‌یار." },
-      { property: "og:title", content: "حریم خصوصی | وب‌یار" },
-      { property: "og:description", content: "نحوه جمع‌آوری، استفاده و حفاظت از داده‌های شما در وب‌یار." },
-    ],
-  }),
+  loader: async () => {
+    const [settings, seoOverride] = await Promise.all([fetchSettings(), getPublicSeoPage({ data: { path: "/privacy" } })]);
+    return { settings, seoOverride };
+  },
+  head: ({ loaderData }) => {
+    if (!loaderData) return {};
+    return buildPageMeta({
+      settings: loaderData.settings,
+      path: "/privacy",
+      override: loaderData.seoOverride,
+      fallbackTitle: "حریم خصوصی | وب‌یار",
+      fallbackDescription: "سیاست‌های حفظ حریم خصوصی و امنیت اطلاعات کاربران در وب‌یار.",
+    });
+  },
   component: PrivacyPage,
 });
 

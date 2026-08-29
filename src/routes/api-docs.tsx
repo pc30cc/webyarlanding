@@ -2,18 +2,25 @@ import { createFileRoute } from "@tanstack/react-router";
 import { motion } from "framer-motion";
 import { Code2, Key, Webhook, FileJson, Zap, Lock } from "lucide-react";
 import { fetchSettings } from "@/lib/settings.functions";
+import { getPublicSeoPage } from "@/lib/seo.functions";
+import { buildPageMeta } from "@/lib/seo-meta";
 import { SiteLayout } from "@/components/site/SiteLayout";
 
 export const Route = createFileRoute("/api-docs")({
-  loader: async () => ({ settings: await fetchSettings() }),
-  head: () => ({
-    meta: [
-      { title: "مستندات API | وب‌یار" },
-      { name: "description", content: "راهنمای کامل REST API وب‌یار برای یکپارچه‌سازی با سیستم‌های شما." },
-      { property: "og:title", content: "مستندات API | وب‌یار" },
-      { property: "og:description", content: "احراز هویت، وب‌هوک‌ها و فهرست کامل Endpointهای API وب‌یار." },
-    ],
-  }),
+  loader: async () => {
+    const [settings, seoOverride] = await Promise.all([fetchSettings(), getPublicSeoPage({ data: { path: "/api-docs" } })]);
+    return { settings, seoOverride };
+  },
+  head: ({ loaderData }) => {
+    if (!loaderData) return {};
+    return buildPageMeta({
+      settings: loaderData.settings,
+      path: "/api-docs",
+      override: loaderData.seoOverride,
+      fallbackTitle: "مستندات API | وب‌یار",
+      fallbackDescription: "راهنمای کامل REST API وب‌یار برای یکپارچه‌سازی با سیستم‌های شما.",
+    });
+  },
   component: ApiDocsPage,
 });
 
@@ -41,7 +48,7 @@ function ApiDocsPage() {
       <div className="container-page max-w-5xl py-16 sm:py-24">
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="mb-12">
           <div className="mb-4 flex items-center gap-3">
-            <Code2 className="h-8 w-8 text-brand" />
+            <Code2 className="h-8 w-8 text-primary" />
             <h1 className="text-3xl font-extrabold text-foreground sm:text-4xl">مستندات API</h1>
           </div>
           <p className="text-base text-muted-foreground">راهنمای کامل REST API برای یکپارچه‌سازی با سیستم‌های شما</p>
@@ -51,7 +58,7 @@ function ApiDocsPage() {
           {sections.map((s, i) => (
             <motion.div key={s.title} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.08 }} className="rounded-xl border border-border bg-card p-6 shadow-card">
               <div className="flex items-start gap-4">
-                <s.icon className="mt-0.5 h-5 w-5 shrink-0 text-brand" />
+                <s.icon className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
                 <div className="min-w-0 flex-1">
                   <h3 className="mb-1 text-base font-bold text-foreground">{s.title}</h3>
                   <p className="mb-3 text-xs text-muted-foreground">{s.desc}</p>

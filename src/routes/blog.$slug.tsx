@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import ReactMarkdown from "react-markdown";
 import { ArrowRight, Calendar, User, Tag as TagIcon } from "lucide-react";
 import { fetchSettings } from "@/lib/settings.functions";
+import { buildPageMeta } from "@/lib/seo-meta";
 import { getPublishedPost, listPublishedPosts } from "@/lib/blog.functions";
 import { SiteLayout } from "@/components/site/SiteLayout";
 
@@ -13,20 +14,19 @@ export const Route = createFileRoute("/blog/$slug")({
     const related = (await listPublishedPosts({ data: { categorySlug: post.categorySlug ?? undefined, limit: 4 } })).filter((p) => p.slug !== post.slug).slice(0, 3);
     return { settings, post, related };
   },
-  head: ({ loaderData }) => {
+  head: ({ loaderData, params }) => {
     if (!loaderData) return {};
-    const { post } = loaderData;
+    const { settings, post } = loaderData;
     const title = post.seoTitle || `${post.title} | وب‌یار`;
     const desc = post.seoDescription || post.excerpt || post.title;
-    return {
-      meta: [
-        { title },
-        { name: "description", content: desc },
-        { property: "og:title", content: title },
-        { property: "og:description", content: desc },
-        ...(post.coverImage ? [{ property: "og:image", content: post.coverImage }] : []),
-      ],
-    };
+    return buildPageMeta({
+      settings,
+      path: `/blog/${params.slug}`,
+      override: null, // یک ردیف seo_pages سراسری برای این مسیر معنا ندارد؛ عنوان/توضیحات/تصویر پست همیشه اولویت دارند
+      fallbackTitle: title,
+      fallbackDescription: desc,
+      ...(post.coverImage ? { fallbackOgImage: post.coverImage } : {}),
+    });
   },
   notFoundComponent: () => (
     <div className="container-page flex min-h-[50vh] flex-col items-center justify-center gap-4 py-24 text-center">
@@ -100,7 +100,7 @@ function BlogPostPage() {
           {post.tags.length > 0 && (
             <footer className="mt-10 border-t border-border pt-6">
               <div className="mb-3 flex items-center gap-2 text-sm font-medium text-foreground">
-                <TagIcon className="h-4 w-4 text-brand" />
+                <TagIcon className="h-4 w-4 text-primary" />
                 برچسب‌ها
               </div>
               <ul className="flex flex-wrap gap-2">

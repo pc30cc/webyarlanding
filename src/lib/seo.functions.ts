@@ -80,6 +80,34 @@ export const deleteSeoPage = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
+/** خواندن عمومی (بدون نیاز به ورود مدیر) تنظیمات سئوی یک صفحه، برای رندر متا/کنونیکال/JSON-LD */
+export const getPublicSeoPage = createServerFn({ method: "GET" })
+  .inputValidator((input: unknown) => z.object({ path: z.string() }).parse(input))
+  .handler(async ({ data }): Promise<SeoPageDto | null> => {
+    try {
+      const { db } = await import("./db.server");
+      const { data: row } = await db.from("seo_pages").select("*").eq("path", data.path).maybeSingle();
+      if (!row) return null;
+      return {
+        id: row.id,
+        pageKey: row.page_key,
+        path: row.path,
+        title: row.title,
+        description: row.description,
+        ogImage: row.og_image,
+        canonicalUrl: row.canonical_url,
+        robots: row.robots,
+        schemaJson: row.schema_json,
+        createdAt: row.created_at,
+        updatedAt: row.updated_at,
+      };
+    } catch (error) {
+      // دیتابیس در دسترس نیست — صفحه عمومی باید با متای پیش‌فرض رندر شود، نه با خطا
+      console.error("getPublicSeoPage failed:", error);
+      return null;
+    }
+  });
+
 export interface SeoHealthIssueDto {
   postId: string;
   title: string;

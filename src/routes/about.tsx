@@ -2,19 +2,26 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { motion } from "framer-motion";
 import { Target, Award, Heart, ChevronLeft } from "lucide-react";
 import { fetchSettings } from "@/lib/settings.functions";
+import { getPublicSeoPage } from "@/lib/seo.functions";
+import { buildPageMeta } from "@/lib/seo-meta";
 import { SiteLayout } from "@/components/site/SiteLayout";
 import { ScrollReveal, StaggerChildren, childVariant } from "@/components/site/animations";
 
 export const Route = createFileRoute("/about")({
-  loader: async () => ({ settings: await fetchSettings() }),
-  head: () => ({
-    meta: [
-      { title: "درباره ما | وب‌یار" },
-      { name: "description", content: "وب‌یار پلتفرم جامع مدیریت ارتباط با مشتری برای توانمندسازی کسب‌وکارهای ایرانی." },
-      { property: "og:title", content: "درباره ما | وب‌یار" },
-      { property: "og:description", content: "آشنایی با مأموریت، ارزش‌ها، چشم‌انداز و تیم وب‌یار." },
-    ],
-  }),
+  loader: async () => {
+    const [settings, seoOverride] = await Promise.all([fetchSettings(), getPublicSeoPage({ data: { path: "/about" } })]);
+    return { settings, seoOverride };
+  },
+  head: ({ loaderData }) => {
+    if (!loaderData) return {};
+    return buildPageMeta({
+      settings: loaderData.settings,
+      path: "/about",
+      override: loaderData.seoOverride,
+      fallbackTitle: "درباره ما | وب‌یار",
+      fallbackDescription: "وب‌یار پلتفرم جامع مدیریت ارتباط با مشتری برای توانمندسازی کسب‌وکارهای ایرانی.",
+    });
+  },
   component: AboutPage,
 });
 
@@ -40,7 +47,7 @@ function AboutPage() {
         <StaggerChildren className="grid grid-cols-1 gap-6 text-start sm:grid-cols-3">
           {values.map((v) => (
             <motion.div key={v.title} variants={childVariant} className="rounded-xl border border-border bg-card p-6 shadow-card">
-              <v.icon className="mb-4 h-8 w-8 text-brand" />
+              <v.icon className="mb-4 h-8 w-8 text-primary" />
               <h3 className="mb-2 text-lg font-bold text-foreground">{v.title}</h3>
               <p className="text-sm leading-relaxed text-muted-foreground">{v.desc}</p>
             </motion.div>
