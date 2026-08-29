@@ -48,7 +48,10 @@ function buildSiteJsonLd(settings: SiteSettings): unknown[] {
 export function SiteLayout({ settings, children }: { settings: SiteSettings; children: ReactNode }) {
   const siteJsonLd = buildSiteJsonLd(settings);
   return (
-    <div className="flex min-h-screen flex-col bg-background">
+    <div className="relative flex min-h-screen flex-col overflow-x-clip bg-background">
+      {/* گرادیان‌های ملایم برند در گوشه‌های صفحه — پس‌زمینه یکدست در تمام صفحات، حتی در نمایش خیلی عریض */}
+      <div aria-hidden className="pointer-events-none absolute -top-24 -start-24 -z-10 h-72 w-72 rounded-full bg-accent/10 blur-3xl" />
+      <div aria-hidden className="pointer-events-none absolute -bottom-24 -end-24 -z-10 h-72 w-72 rounded-full bg-primary/10 blur-3xl" />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(siteJsonLd) }} />
       <SiteHeader settings={settings} />
       <main className="flex-1">{children}</main>
