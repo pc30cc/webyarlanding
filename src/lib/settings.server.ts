@@ -6,13 +6,20 @@ const PRIVATE_KEY = "private_settings";
 
 /** تنظیمات عمومی سایت (قابل نمایش به بازدیدکننده) */
 export async function loadSettings(): Promise<SiteSettings> {
-  const { data } = await db
-    .from("settings")
-    .select("setting_value")
-    .eq("setting_key", SITE_KEY)
-    .maybeSingle();
-  return mergeSettings(parseJson<Partial<SiteSettings>>(data?.setting_value, {}));
+  try {
+    const { data } = await db
+      .from("settings")
+      .select("setting_value")
+      .eq("setting_key", SITE_KEY)
+      .maybeSingle();
+    return mergeSettings(parseJson<Partial<SiteSettings>>(data?.setting_value, {}));
+  } catch (error) {
+    // دیتابیس در دسترس نیست — صفحه عمومی با تنظیمات پیش‌فرض رندر می‌شود
+    console.error("loadSettings failed, using defaults:", error);
+    return mergeSettings({});
+  }
 }
+
 
 export async function saveSettings(next: SiteSettings): Promise<void> {
   const { data } = await db.from("settings").select("id").eq("setting_key", SITE_KEY).maybeSingle();
