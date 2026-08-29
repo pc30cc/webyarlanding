@@ -100,6 +100,22 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
           : []),
       ],
       links: [
+        // پیش‌بارگذاری فونت خودمیزبان‌شده (public/fonts) تا قبل از رندر اول دانلود شود
+        // و فلش فونت پیش‌فرض مرورگر (FOUT) به حداقل برسد.
+        {
+          rel: "preload",
+          href: "/fonts/vazirmatn-arabic-wght-normal.woff2",
+          as: "font",
+          type: "font/woff2",
+          crossOrigin: "anonymous",
+        },
+        {
+          rel: "preload",
+          href: "/fonts/vazirmatn-latin-wght-normal.woff2",
+          as: "font",
+          type: "font/woff2",
+          crossOrigin: "anonymous",
+        },
         {
           rel: "stylesheet",
           href: appCss,
