@@ -1,0 +1,20 @@
+providers = ["node"]
+
+[variables]
+NIXPACKS_NODE_VERSION = "22"
+NODE_ENV = "production"
+NPM_CONFIG_PRODUCTION = "false"
+CI = "true"
+
+[phases.setup]
+nixPkgs = ["nodejs_22"]
+
+[phases.install]
+cmds = ["npm ci --include=dev"]
+
+[phases.build]
+cmds = ["npm run build"]
+
+[start]
+# Build output lives in ./dist (dist/client for static assets, dist/server for SSR).
+cmd = "npx vite preview --host 0.0.0.0 --port ${PORT:-3000}"
