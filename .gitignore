@@ -30,3 +30,7 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Bun is not used for production builds (npm is canonical)
+bun.lock
+bun.lockb
