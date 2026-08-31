@@ -176,15 +176,15 @@ export default function GeneralSection() {
               />
             </div>
           </div>
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <Field label="سرویس هوش مصنوعی">
+          <div className="grid grid-cols-1 gap-4">
+            <Field label="سرویس فعال برای تولید مقاله و تصویر (دستی و خودکار)">
               <Select
                 value={form.ai.provider}
                 onValueChange={(v) =>
                   setForm((f) => ({ ...f, ai: { ...f.ai, provider: v as "openai" | "gemini" } }))
                 }
               >
-                <SelectTrigger>
+                <SelectTrigger className="sm:w-64">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -193,51 +193,120 @@ export default function GeneralSection() {
                 </SelectContent>
               </Select>
             </Field>
-            <Field label="مدل تولید متن">
-              <Input
-                dir="ltr"
-                placeholder={form.ai.provider === "gemini" ? "gemini-2.0-flash" : "gpt-4o-mini"}
-                value={form.ai.textModel}
-                onChange={(e) =>
-                  setForm((f) => ({ ...f, ai: { ...f.ai, textModel: e.target.value } }))
-                }
-              />
-            </Field>
-            <Field label="مدل تولید تصویر">
-              <Input
-                dir="ltr"
-                placeholder={form.ai.provider === "gemini" ? "gemini-2.5-flash-image" : "dall-e-3"}
-                value={form.ai.imageModel}
-                onChange={(e) =>
-                  setForm((f) => ({ ...f, ai: { ...f.ai, imageModel: e.target.value } }))
-                }
-              />
-            </Field>
-            <Field label="خلاقیت پاسخ (Temperature ۰ تا ۱)">
-              <Input
-                dir="ltr"
-                type="number"
-                step="0.1"
-                min="0"
-                max="1"
-                value={form.ai.temperature}
-                onChange={(e) =>
-                  setForm((f) => ({
-                    ...f,
-                    ai: { ...f.ai, temperature: Number(e.target.value) || 0 },
-                  }))
-                }
-              />
-            </Field>
-            <Field label="سبک و لحن نوشتار" full>
-              <Textarea
-                rows={2}
-                value={form.ai.systemPrompt}
-                onChange={(e) =>
-                  setForm((f) => ({ ...f, ai: { ...f.ai, systemPrompt: e.target.value } }))
-                }
-              />
-            </Field>
+
+            <p className="text-xs text-muted-foreground">
+              تنظیمات دو سرویس کاملاً از هم جدا هستند و هر دو نگه داشته می‌شوند؛ فقط سرویسی که در
+              بالا فعال کرده‌اید برای تولید مقاله و تصویر (چه از پنل «دستیار هوش مصنوعی»، چه تولید
+              خودکار وبلاگ) استفاده می‌شود.
+            </p>
+
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div
+                className={`flex flex-col gap-3 rounded-lg border p-3 ${form.ai.provider === "openai" ? "border-primary/40 bg-primary/5" : "border-border"}`}
+              >
+                <div className="flex items-center justify-between">
+                  <h3 className="text-sm font-semibold text-foreground">OpenAI</h3>
+                  {form.ai.provider === "openai" && (
+                    <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-medium text-primary">
+                      فعال
+                    </span>
+                  )}
+                </div>
+                <Field label="مدل تولید متن">
+                  <Input
+                    dir="ltr"
+                    placeholder="gpt-4o-mini"
+                    value={form.ai.openai.textModel}
+                    onChange={(e) =>
+                      setForm((f) => ({
+                        ...f,
+                        ai: { ...f.ai, openai: { ...f.ai.openai, textModel: e.target.value } },
+                      }))
+                    }
+                  />
+                </Field>
+                <Field label="مدل تولید تصویر">
+                  <Input
+                    dir="ltr"
+                    placeholder="dall-e-3"
+                    value={form.ai.openai.imageModel}
+                    onChange={(e) =>
+                      setForm((f) => ({
+                        ...f,
+                        ai: { ...f.ai, openai: { ...f.ai.openai, imageModel: e.target.value } },
+                      }))
+                    }
+                  />
+                </Field>
+              </div>
+
+              <div
+                className={`flex flex-col gap-3 rounded-lg border p-3 ${form.ai.provider === "gemini" ? "border-primary/40 bg-primary/5" : "border-border"}`}
+              >
+                <div className="flex items-center justify-between">
+                  <h3 className="text-sm font-semibold text-foreground">Google Gemini</h3>
+                  {form.ai.provider === "gemini" && (
+                    <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-medium text-primary">
+                      فعال
+                    </span>
+                  )}
+                </div>
+                <Field label="مدل تولید متن">
+                  <Input
+                    dir="ltr"
+                    placeholder="gemini-2.0-flash"
+                    value={form.ai.gemini.textModel}
+                    onChange={(e) =>
+                      setForm((f) => ({
+                        ...f,
+                        ai: { ...f.ai, gemini: { ...f.ai.gemini, textModel: e.target.value } },
+                      }))
+                    }
+                  />
+                </Field>
+                <Field label="مدل تولید تصویر">
+                  <Input
+                    dir="ltr"
+                    placeholder="gemini-2.5-flash-image"
+                    value={form.ai.gemini.imageModel}
+                    onChange={(e) =>
+                      setForm((f) => ({
+                        ...f,
+                        ai: { ...f.ai, gemini: { ...f.ai.gemini, imageModel: e.target.value } },
+                      }))
+                    }
+                  />
+                </Field>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <Field label="خلاقیت پاسخ (Temperature ۰ تا ۱)">
+                <Input
+                  dir="ltr"
+                  type="number"
+                  step="0.1"
+                  min="0"
+                  max="1"
+                  value={form.ai.temperature}
+                  onChange={(e) =>
+                    setForm((f) => ({
+                      ...f,
+                      ai: { ...f.ai, temperature: Number(e.target.value) || 0 },
+                    }))
+                  }
+                />
+              </Field>
+              <Field label="سبک و لحن نوشتار">
+                <Textarea
+                  rows={2}
+                  value={form.ai.systemPrompt}
+                  onChange={(e) =>
+                    setForm((f) => ({ ...f, ai: { ...f.ai, systemPrompt: e.target.value } }))
+                  }
+                />
+              </Field>
+            </div>
           </div>
           <p className="mt-3 text-xs text-muted-foreground">
             کلید API این سرویس‌ها را در بخش «کلیدهای API هوش مصنوعی» زیر همین صفحه وارد کنید.
