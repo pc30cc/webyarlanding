@@ -208,15 +208,34 @@ export async function generateBlogPost(input: {
   saveAsDraft?: boolean | undefined;
   categoryId?: string | null | undefined;
   author?: string | undefined;
-}): Promise<GeneratedPost & { postId?: string }> {
+  withImage?: boolean | undefined;
+}): Promise<
+  GeneratedPost & { postId?: string; coverImage?: string; imageError?: string | undefined }
+> {
   const generated = await generatePostContent(input);
   if (!input.saveAsDraft) return generated;
+
+  let coverImage = "";
+  let imageError: string | undefined;
+  if (input.withImage) {
+    try {
+      const image = await generateImage({
+        prompt: `عکس کاور حرفه‌ای و مرتبط با موضوع: ${generated.title}`,
+        alt: generated.title,
+      });
+      coverImage = image.url;
+    } catch (e) {
+      imageError = e instanceof Error ? e.message : "خطای ناشناخته در تولید تصویر";
+      console.error("generateBlogPost: cover image generation failed:", e);
+    }
+  }
 
   const { savePost } = await import("./blog.server");
   const postId = await savePost({
     title: generated.title,
     excerpt: generated.excerpt,
     content: generated.content,
+    coverImage,
     tags: generated.tags,
     status: "draft",
     categoryId: input.categoryId ?? null,
@@ -224,7 +243,7 @@ export async function generateBlogPost(input: {
     seoTitle: generated.seoTitle,
     seoDescription: generated.seoDescription,
   });
-  return { ...generated, postId };
+  return { ...generated, postId, coverImage, imageError };
 }
 
 export async function improveText(input: { text: string; instruction: string }): Promise<string> {

@@ -16,7 +16,34 @@ export interface AutoblogSettingsDto {
   totalGenerated: number;
 }
 
-function mapSettings(row: any): AutoblogSettingsDto {
+type AutoblogSettingsRow = {
+  id: string;
+  enabled: number;
+  posts_per_day: number;
+  run_hours: string;
+  with_image: number;
+  master_prompt: string | null;
+  topic_pool: string | null;
+  category_id: string | null;
+  author: string | null;
+  publish_status: string;
+  last_run_at?: string | null;
+  total_generated?: number;
+};
+
+type AutoblogRunRow = {
+  id: string;
+  trigger_source: string;
+  status: string;
+  posts_requested: number;
+  posts_created: number;
+  post_ids: string;
+  error: string | null;
+  started_at: string;
+  finished_at: string | null;
+};
+
+function mapSettings(row: AutoblogSettingsRow): AutoblogSettingsDto {
   const hours = parseCsv(row.run_hours)
     .map((h: string) => Number(h))
     .filter((h: number) => Number.isFinite(h) && h >= 0 && h <= 23);
@@ -70,9 +97,9 @@ export interface SaveAutoblogSettingsInput {
 
 export async function saveSettings(input: SaveAutoblogSettingsInput): Promise<AutoblogSettingsDto> {
   const current = await getSettings();
-  const hours = Array.from(new Set(input.runHours.filter((h) => Number.isFinite(h) && h >= 0 && h <= 23))).sort(
-    (a, b) => a - b,
-  );
+  const hours = Array.from(
+    new Set(input.runHours.filter((h) => Number.isFinite(h) && h >= 0 && h <= 23)),
+  ).sort((a, b) => a - b);
   const payload = {
     enabled: input.enabled ? 1 : 0,
     posts_per_day: hours.length || 1,
@@ -102,8 +129,12 @@ export interface AutoblogRunDto {
 }
 
 export async function listRuns(limit = 30): Promise<AutoblogRunDto[]> {
-  const { data } = await db.from("autoblog_runs").select("*").order("started_at", { ascending: false }).limit(limit);
-  return (data ?? []).map((row: any) => ({
+  const { data } = await db
+    .from("autoblog_runs")
+    .select("*")
+    .order("started_at", { ascending: false })
+    .limit(limit);
+  return (data ?? []).map((row: AutoblogRunRow) => ({
     id: row.id,
     triggerSource: row.trigger_source,
     status: row.status,
@@ -130,7 +161,10 @@ function pickTopic(pool: string[], seed: number): string {
   return list[seed % list.length]!;
 }
 
-export async function runAutoblog(triggerSource: "manual" | "cron", options?: { ignoreHourCheck?: boolean }) {
+export async function runAutoblog(
+  triggerSource: "manual" | "cron",
+  options?: { ignoreHourCheck?: boolean },
+) {
   const settings = await getSettings();
 
   if (!settings.enabled && triggerSource === "cron") {
@@ -168,10 +202,14 @@ export async function runAutoblog(triggerSource: "manual" | "cron", options?: { 
     if (settings.withImage) {
       try {
         const { generateImage } = await import("./ai.server");
-        const image = await generateImage({ prompt: `عکس کاور حرفه‌ای و مرتبط با موضوع: ${generated.title}`, alt: generated.title });
+        const image = await generateImage({
+          prompt: `عکس کاور حرفه‌ای و مرتبط با موضوع: ${generated.title}`,
+          alt: generated.title,
+        });
         coverImage = image.url;
-      } catch {
-        // اگر تولید عکس شکست خورد، مقاله بدون عکس ذخیره می‌شود.
+      } catch (e) {
+        // اگر تولید عکس شکست خورد، مقاله بدون عکس ذخیره می‌شود — اما دلیل شکست را برای عیب‌یابی لاگ می‌کنیم.
+        console.error("autoblog: cover image generation failed:", e);
       }
     }
 
@@ -200,15 +238,24 @@ export async function runAutoblog(triggerSource: "manual" | "cron", options?: { 
 
     await db
       .from("autoblog_settings")
-      .update({ last_run_at: nowIso(), total_generated: settings.totalGenerated + 1, updated_at: nowIso() })
+      .update({
+        last_run_at: nowIso(),
+        total_generated: settings.totalGenerated + 1,
+        updated_at: nowIso(),
+      })
       .eq("id", settings.id);
 
     return { ok: true, skipped: false, postId };
-  } catch (e: any) {
+  } catch (e) {
+    const message = e instanceof Error ? e.message : String(e);
     await db
       .from("autoblog_runs")
-      .update({ status: "failed", error: String(e?.message ?? e).slice(0, 2000), finished_at: nowIso() })
+      .update({
+        status: "failed",
+        error: message.slice(0, 2000),
+        finished_at: nowIso(),
+      })
       .eq("id", runId);
-    return { ok: false, error: String(e?.message ?? e) };
+    return { ok: false, error: message };
   }
 }
