@@ -1,11 +1,14 @@
 import { useState } from "react";
-import { Link, useRouterState } from "@tanstack/react-router";
+import { Link, getRouteApi, useRouterState } from "@tanstack/react-router";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronDown, Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { MegaMenu } from "@/components/site/MegaMenu";
-import { productCategories, solutionCategories } from "@/lib/catalog";
+import { getIcon } from "@/lib/icon-registry";
+import type { CatalogCategoryDto } from "@/lib/catalog.functions";
 import type { SiteSettings } from "@/lib/settings";
+
+const rootRoute = getRouteApi("__root__");
 
 type NavLink =
   | { type: "link"; to: string; hash?: string; label: string }
@@ -13,24 +16,25 @@ type NavLink =
       type: "mega";
       to: "/products" | "/solutions";
       label: string;
-      categories: typeof productCategories;
+      categories: CatalogCategoryDto[];
     };
-
-const NAV_LINKS: NavLink[] = [
-  { type: "mega", to: "/products", label: "محصولات", categories: productCategories },
-  { type: "mega", to: "/solutions", label: "راه‌کارها", categories: solutionCategories },
-  { type: "link", to: "/pricing", label: "قیمت‌گذاری" },
-  { type: "link", to: "/", hash: "features", label: "امکانات" },
-  { type: "link", to: "/blog", label: "بلاگ" },
-  { type: "link", to: "/api-docs", label: "مستندات API" },
-];
 
 export function SiteHeader({ settings }: { settings: SiteSettings }) {
   const [open, setOpen] = useState(false);
   const [mobileExpanded, setMobileExpanded] = useState<string | null>(null);
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const { productCatalog, solutionCatalog } = rootRoute.useLoaderData();
   const brandInitial = settings.brand.name?.charAt(0) || "و";
   const auth = settings.auth;
+
+  const NAV_LINKS: NavLink[] = [
+    { type: "mega", to: "/products", label: "محصولات", categories: productCatalog },
+    { type: "mega", to: "/solutions", label: "راه‌کارها", categories: solutionCatalog },
+    { type: "link", to: "/pricing", label: "قیمت‌گذاری" },
+    { type: "link", to: "/", hash: "features", label: "امکانات" },
+    { type: "link", to: "/blog", label: "بلاگ" },
+    { type: "link", to: "/api-docs", label: "مستندات API" },
+  ];
 
   return (
     <motion.header
@@ -141,25 +145,28 @@ export function SiteHeader({ settings }: { settings: SiteSettings }) {
                           >
                             <div className="space-y-3 py-2">
                               {link.categories.map((category) => (
-                                <div key={category.title}>
+                                <div key={category.id}>
                                   <div className="mb-1 px-3 text-[11px] font-bold text-muted-foreground/70">
                                     {category.title}
                                   </div>
-                                  {category.items.map((item) => (
-                                    <Link
-                                      key={item.slug}
-                                      to={link.to}
-                                      hash={item.slug}
-                                      onClick={() => {
-                                        setOpen(false);
-                                        setMobileExpanded(null);
-                                      }}
-                                      className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
-                                    >
-                                      <item.icon className="h-4 w-4 shrink-0 text-primary" />
-                                      {item.title}
-                                    </Link>
-                                  ))}
+                                  {category.items.map((item) => {
+                                    const Icon = getIcon(item.icon);
+                                    return (
+                                      <Link
+                                        key={item.id}
+                                        to={`${link.to}/$slug`}
+                                        params={{ slug: item.slug }}
+                                        onClick={() => {
+                                          setOpen(false);
+                                          setMobileExpanded(null);
+                                        }}
+                                        className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+                                      >
+                                        <Icon className="h-4 w-4 shrink-0 text-primary" />
+                                        {item.title}
+                                      </Link>
+                                    );
+                                  })}
                                 </div>
                               ))}
                               <Link

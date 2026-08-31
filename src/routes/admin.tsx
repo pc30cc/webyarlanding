@@ -1,5 +1,12 @@
 import { useState } from "react";
-import { createFileRoute, Link, Outlet, redirect, useNavigate, useRouterState } from "@tanstack/react-router";
+import {
+  createFileRoute,
+  Link,
+  Outlet,
+  redirect,
+  useNavigate,
+  useRouterState,
+} from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import {
@@ -10,6 +17,7 @@ import {
   FolderTree,
   Tags,
   Images,
+  LayoutGrid,
   MessageSquare,
   ShieldAlert,
   MessageCircle,
@@ -39,6 +47,7 @@ const NAV_ITEMS = [
   { to: "/admin", label: "داشبورد", icon: LayoutDashboard, exact: true },
   { to: "/admin/general", label: "تنظیمات عمومی", icon: Settings },
   { to: "/admin/seo", label: "سئو", icon: Search },
+  { to: "/admin/catalog", label: "محصولات و راه‌کارها", icon: LayoutGrid },
   { to: "/admin/blog", label: "مقالات", icon: FileText },
   { to: "/admin/categories", label: "دسته‌بندی‌ها", icon: FolderTree },
   { to: "/admin/tags", label: "برچسب‌ها", icon: Tags },
@@ -83,9 +92,13 @@ function AdminLayout() {
           </div>
           <span className="text-base font-bold text-foreground">پنل مدیریت وب‌یار</span>
         </div>
-        <nav className="flex flex-col gap-1 overflow-y-auto p-3" style={{ maxHeight: "calc(100vh - 4rem)" }}>
+        <nav
+          className="flex flex-col gap-1 overflow-y-auto p-3"
+          style={{ maxHeight: "calc(100vh - 4rem)" }}
+        >
           {NAV_ITEMS.map((item) => {
-            const active = "exact" in item && item.exact ? pathname === item.to : pathname.startsWith(item.to);
+            const active =
+              "exact" in item && item.exact ? pathname === item.to : pathname.startsWith(item.to);
             const Icon = item.icon;
             return (
               <Link
@@ -108,12 +121,20 @@ function AdminLayout() {
       </aside>
 
       {sidebarOpen && (
-        <div className="fixed inset-0 z-30 bg-black/40 lg:hidden" onClick={() => setSidebarOpen(false)} />
+        <div
+          className="fixed inset-0 z-30 bg-black/40 lg:hidden"
+          onClick={() => setSidebarOpen(false)}
+        />
       )}
 
       <div className="flex min-h-screen flex-1 flex-col">
         <header className="flex h-16 items-center justify-between border-b border-border bg-card px-4">
-          <Button variant="ghost" size="icon" className="lg:hidden" onClick={() => setSidebarOpen(true)}>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="lg:hidden"
+            onClick={() => setSidebarOpen(true)}
+          >
             <Menu className="h-5 w-5" />
           </Button>
           <div className="hidden text-sm text-muted-foreground lg:block">پنل مدیریت</div>

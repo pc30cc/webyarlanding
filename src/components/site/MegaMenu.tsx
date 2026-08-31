@@ -2,7 +2,8 @@ import { useRef, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { AnimatePresence, motion } from "framer-motion";
 import { ChevronDown, ChevronLeft } from "lucide-react";
-import type { CatalogCategory } from "@/lib/catalog";
+import { getIcon } from "@/lib/icon-registry";
+import type { CatalogCategoryDto } from "@/lib/catalog.functions";
 
 const TINTS = [
   { bg: "bg-primary/10", text: "text-primary" },
@@ -18,7 +19,7 @@ export function MegaMenu({
 }: {
   label: string;
   basePath: "/products" | "/solutions";
-  categories: readonly CatalogCategory[];
+  categories: CatalogCategoryDto[];
   viewAllLabel: string;
 }) {
   const [open, setOpen] = useState(false);
@@ -32,6 +33,17 @@ export function MegaMenu({
     if (closeTimer.current) clearTimeout(closeTimer.current);
     closeTimer.current = setTimeout(() => setOpen(false), 150);
   };
+
+  if (categories.length === 0) {
+    return (
+      <Link
+        to={basePath}
+        className="flex items-center gap-1 transition-colors hover:text-foreground"
+      >
+        {label}
+      </Link>
+    );
+  }
 
   return (
     <div className="relative" onMouseEnter={openNow} onMouseLeave={closeSoon}>
@@ -59,25 +71,26 @@ export function MegaMenu({
                 className={`grid gap-x-8 gap-y-6 sm:grid-cols-2 ${categories.length >= 4 ? "lg:grid-cols-4" : "lg:grid-cols-2"}`}
               >
                 {categories.map((category) => (
-                  <div key={category.title}>
+                  <div key={category.id}>
                     <h3 className="mb-3 text-xs font-bold text-muted-foreground">
                       {category.title}
                     </h3>
                     <ul className="space-y-1">
                       {category.items.map((item, i) => {
                         const tint = TINTS[i % TINTS.length]!;
+                        const Icon = getIcon(item.icon);
                         return (
-                          <li key={item.slug}>
+                          <li key={item.id}>
                             <Link
-                              to={basePath}
-                              hash={item.slug}
+                              to={`${basePath}/$slug`}
+                              params={{ slug: item.slug }}
                               onClick={() => setOpen(false)}
                               className="flex items-start gap-3 rounded-xl p-2 text-start transition-colors hover:bg-secondary"
                             >
                               <span
                                 className={`mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${tint.bg}`}
                               >
-                                <item.icon className={`h-4 w-4 ${tint.text}`} />
+                                <Icon className={`h-4 w-4 ${tint.text}`} />
                               </span>
                               <span>
                                 <span className="block text-sm font-semibold text-foreground">
