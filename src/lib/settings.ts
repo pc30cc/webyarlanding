@@ -49,12 +49,18 @@ export interface ChatWidgetSettings {
   position: "right" | "left";
 }
 
-export interface AiSettings {
-  enabled: boolean;
-  /** کدام سرویس هوش مصنوعی برای تولید متن/تصویر استفاده شود — کلید API هر کدام در تنظیمات محرمانه ذخیره می‌شود */
-  provider: "openai" | "gemini";
+export interface AiProviderModels {
   textModel: string;
   imageModel: string;
+}
+
+export interface AiSettings {
+  enabled: boolean;
+  /** کدام سرویس برای تولید مقاله (دستی و خودکار) و تصویر واقعاً استفاده شود */
+  provider: "openai" | "gemini";
+  /** تنظیمات هرکدام از دو سرویس کاملاً جدا و مستقل نگه داشته می‌شود؛ کلید API هرکدام در تنظیمات محرمانه است */
+  openai: AiProviderModels;
+  gemini: AiProviderModels;
   systemPrompt: string;
   temperature: number;
   maxTokens: number;
@@ -132,8 +138,8 @@ export const DEFAULT_SETTINGS: SiteSettings = {
   ai: {
     enabled: true,
     provider: "openai",
-    textModel: "gpt-4o-mini",
-    imageModel: "dall-e-3",
+    openai: { textModel: "gpt-4o-mini", imageModel: "dall-e-3" },
+    gemini: { textModel: "gemini-2.0-flash", imageModel: "gemini-2.5-flash-image" },
     systemPrompt:
       "تو یک نویسنده حرفه‌ای فارسی‌زبان در حوزه فناوری و کسب‌وکار هستی. محتوای دقیق، روان، سئوشده و بدون کلیشه بنویس.",
     temperature: 0.7,
@@ -161,5 +167,8 @@ export function mergeSettings(stored: Partial<SiteSettings> | null | undefined):
       Object.assign(result[key] as object, section);
     }
   }
+  // ai.openai/ai.gemini باید عمیق ادغام شوند تا ذخیره جزئی یکی، فیلدهای دیگری را پاک نکند
+  if (stored.ai?.openai) Object.assign(result.ai.openai, stored.ai.openai);
+  if (stored.ai?.gemini) Object.assign(result.ai.gemini, stored.ai.gemini);
   return result;
 }

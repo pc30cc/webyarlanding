@@ -49,7 +49,7 @@ async function chatOpenAi(
     method: "POST",
     headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
     body: JSON.stringify({
-      model: config.ai.textModel || "gpt-4o-mini",
+      model: config.ai.openai?.textModel || "gpt-4o-mini",
       messages,
       temperature: config.ai.temperature,
       max_tokens: config.ai.maxTokens,
@@ -86,7 +86,7 @@ async function chatGemini(
       "کلید API جمینای در تنظیمات عمومی → هوش مصنوعی وارد نشده است.",
     );
   }
-  const model = config.ai.textModel || "gemini-2.0-flash";
+  const model = config.ai.gemini?.textModel || "gemini-2.0-flash";
   const systemMsg = messages.find((m) => m.role === "system");
   const contents = messages
     .filter((m) => m.role !== "system")
@@ -281,7 +281,7 @@ async function generateImageOpenAi(prompt: string, config: AiConfig): Promise<st
     method: "POST",
     headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
     body: JSON.stringify({
-      model: config.ai.imageModel || "dall-e-3",
+      model: config.ai.openai?.imageModel || "dall-e-3",
       prompt,
       n: 1,
       size: "1024x1024",
@@ -312,7 +312,7 @@ async function generateImageGemini(prompt: string, config: AiConfig): Promise<st
       "کلید API جمینای در تنظیمات عمومی → هوش مصنوعی وارد نشده است.",
     );
   }
-  const model = config.ai.imageModel || "gemini-2.5-flash-image";
+  const model = config.ai.gemini?.imageModel || "gemini-2.5-flash-image";
   const res = await fetch(
     `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(key)}`,
     {
