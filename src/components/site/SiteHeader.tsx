@@ -1,18 +1,33 @@
 import { useState } from "react";
 import { Link, useRouterState } from "@tanstack/react-router";
 import { motion, AnimatePresence } from "framer-motion";
-import { Menu, X } from "lucide-react";
+import { ChevronDown, Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { MegaMenu } from "@/components/site/MegaMenu";
+import { productCategories, solutionCategories } from "@/lib/catalog";
 import type { SiteSettings } from "@/lib/settings";
 
-const NAV_LINKS = [
-  { to: "/products", label: "محصولات" },
-  { to: "/solutions", label: "راه‌کارها" },
-  { to: "/pricing", label: "قیمت‌گذاری" },
-] as const;
+type NavLink =
+  | { type: "link"; to: string; hash?: string; label: string }
+  | {
+      type: "mega";
+      to: "/products" | "/solutions";
+      label: string;
+      categories: typeof productCategories;
+    };
+
+const NAV_LINKS: NavLink[] = [
+  { type: "mega", to: "/products", label: "محصولات", categories: productCategories },
+  { type: "mega", to: "/solutions", label: "راه‌کارها", categories: solutionCategories },
+  { type: "link", to: "/pricing", label: "قیمت‌گذاری" },
+  { type: "link", to: "/", hash: "features", label: "امکانات" },
+  { type: "link", to: "/blog", label: "بلاگ" },
+  { type: "link", to: "/api-docs", label: "مستندات API" },
+];
 
 export function SiteHeader({ settings }: { settings: SiteSettings }) {
   const [open, setOpen] = useState(false);
+  const [mobileExpanded, setMobileExpanded] = useState<string | null>(null);
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const brandInitial = settings.brand.name?.charAt(0) || "و";
   const auth = settings.auth;
@@ -34,11 +49,25 @@ export function SiteHeader({ settings }: { settings: SiteSettings }) {
 
         <nav className="hidden items-center gap-7 text-sm font-medium text-muted-foreground md:flex">
           {NAV_LINKS.map((link) => {
+            if (link.type === "mega") {
+              return (
+                <MegaMenu
+                  key={link.label}
+                  label={link.label}
+                  basePath={link.to}
+                  categories={link.categories}
+                  viewAllLabel={
+                    link.to === "/products" ? "مشاهده همه محصولات" : "مشاهده همه راه‌کارها"
+                  }
+                />
+              );
+            }
             const isActive = pathname === link.to;
             return (
               <Link
                 key={link.label}
                 to={link.to}
+                {...(link.hash ? { hash: link.hash } : {})}
                 className={`transition-colors hover:text-foreground ${isActive ? "text-foreground" : ""}`}
               >
                 {link.label}
@@ -85,17 +114,83 @@ export function SiteHeader({ settings }: { settings: SiteSettings }) {
             exit={{ height: 0, opacity: 0 }}
             className="overflow-hidden border-t border-border bg-background/95 backdrop-blur-xl md:hidden"
           >
-            <div className="space-y-1 px-4 py-4">
-              {NAV_LINKS.map((link) => (
-                <Link
-                  key={link.label}
-                  to={link.to}
-                  onClick={() => setOpen(false)}
-                  className="block rounded-lg px-3 py-2.5 text-sm text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
-                >
-                  {link.label}
-                </Link>
-              ))}
+            <div className="max-h-[70vh] space-y-1 overflow-y-auto px-4 py-4">
+              {NAV_LINKS.map((link) => {
+                if (link.type === "mega") {
+                  const expanded = mobileExpanded === link.label;
+                  return (
+                    <div key={link.label} className="rounded-lg">
+                      <button
+                        type="button"
+                        onClick={() => setMobileExpanded(expanded ? null : link.label)}
+                        className="flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-sm text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+                        aria-expanded={expanded}
+                      >
+                        {link.label}
+                        <ChevronDown
+                          className={`h-4 w-4 transition-transform ${expanded ? "rotate-180" : ""}`}
+                        />
+                      </button>
+                      <AnimatePresence>
+                        {expanded && (
+                          <motion.div
+                            initial={{ height: 0, opacity: 0 }}
+                            animate={{ height: "auto", opacity: 1 }}
+                            exit={{ height: 0, opacity: 0 }}
+                            className="overflow-hidden ps-3"
+                          >
+                            <div className="space-y-3 py-2">
+                              {link.categories.map((category) => (
+                                <div key={category.title}>
+                                  <div className="mb-1 px-3 text-[11px] font-bold text-muted-foreground/70">
+                                    {category.title}
+                                  </div>
+                                  {category.items.map((item) => (
+                                    <Link
+                                      key={item.slug}
+                                      to={link.to}
+                                      hash={item.slug}
+                                      onClick={() => {
+                                        setOpen(false);
+                                        setMobileExpanded(null);
+                                      }}
+                                      className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+                                    >
+                                      <item.icon className="h-4 w-4 shrink-0 text-primary" />
+                                      {item.title}
+                                    </Link>
+                                  ))}
+                                </div>
+                              ))}
+                              <Link
+                                to={link.to}
+                                onClick={() => {
+                                  setOpen(false);
+                                  setMobileExpanded(null);
+                                }}
+                                className="block px-3 py-1.5 text-sm font-semibold text-primary"
+                              >
+                                مشاهده همه {link.label}
+                              </Link>
+                            </div>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </div>
+                  );
+                }
+                return (
+                  <Link
+                    key={link.label}
+                    to={link.to}
+                    {...(link.hash ? { hash: link.hash } : {})}
+                    onClick={() => setOpen(false)}
+                    className="block rounded-lg px-3 py-2.5 text-sm text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+                  >
+                    {link.label}
+                  </Link>
+                );
+              })}
               {auth.enabled && (
                 <div className="mt-3 space-y-2 border-t border-border pt-3">
                   {auth.signupUrl && (
