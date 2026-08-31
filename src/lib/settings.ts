@@ -72,10 +72,31 @@ export interface AnalyticsSettings {
   bodyScripts: string;
 }
 
-export interface MediaSettings {
-  provider: "supabase" | "ftp" | "bunny" | "external";
-  publicBaseUrl: string;
+export interface BunnyStorageSettings {
+  /** نام Storage Zone در بانی سی‌دی‌ان */
+  storageZone: string;
+  /** کد ناحیه ذخیره‌سازی (خالی = پیش‌فرض/فرانکفورت)؛ مثلاً ny, la, sg, syd, uk */
+  region: string;
+  /** آدرس عمومی Pull Zone که فایل‌ها از آن سرو می‌شوند، مثلاً https://xxxx.b-cdn.net */
+  pullZoneUrl: string;
+}
+
+export interface ArvanStorageSettings {
+  /** نام باکت در ابر آروان (Object Storage) */
   bucket: string;
+  /** آدرس endpoint سازگار با S3، مثلاً https://s3.ir-thr-at1.arvanstorage.ir */
+  endpoint: string;
+  /** کد ناحیه، مثلاً ir-thr-at1 */
+  region: string;
+  /** آدرس عمومی برای دسترسی به فایل‌ها؛ خالی یعنی از endpoint/bucket استفاده شود */
+  publicUrl: string;
+}
+
+export interface MediaSettings {
+  /** محل ذخیره‌سازی تصاویر تولیدشده با هوش مصنوعی و رسانه‌ها؛ "none" یعنی هیچ محل ذخیره‌سازی متصل نیست */
+  provider: "none" | "bunny" | "arvan";
+  bunny: BunnyStorageSettings;
+  arvan: ArvanStorageSettings;
 }
 
 export interface SiteSettings {
@@ -151,9 +172,9 @@ export const DEFAULT_SETTINGS: SiteSettings = {
     bodyScripts: "",
   },
   media: {
-    provider: "supabase",
-    publicBaseUrl: "",
-    bucket: "media",
+    provider: "none",
+    bunny: { storageZone: "", region: "", pullZoneUrl: "" },
+    arvan: { bucket: "", endpoint: "", region: "ir-thr-at1", publicUrl: "" },
   },
 };
 
@@ -170,5 +191,7 @@ export function mergeSettings(stored: Partial<SiteSettings> | null | undefined):
   // ai.openai/ai.gemini باید عمیق ادغام شوند تا ذخیره جزئی یکی، فیلدهای دیگری را پاک نکند
   if (stored.ai?.openai) Object.assign(result.ai.openai, stored.ai.openai);
   if (stored.ai?.gemini) Object.assign(result.ai.gemini, stored.ai.gemini);
+  if (stored.media?.bunny) Object.assign(result.media.bunny, stored.media.bunny);
+  if (stored.media?.arvan) Object.assign(result.media.arvan, stored.media.arvan);
   return result;
 }

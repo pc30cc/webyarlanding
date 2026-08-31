@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { Loader2, KeyRound, Trash2 } from "lucide-react";
 import { fetchSettings, updateSettings } from "@/lib/settings.functions";
 import { adminGetAiKeysStatus, adminSaveAiKeys } from "@/lib/ai.functions";
+import { adminGetMediaKeysStatus, adminSaveMediaKeys } from "@/lib/media.functions";
 import type { SiteSettings } from "@/lib/settings";
 import { DEFAULT_SETTINGS } from "@/lib/settings";
 import { Input } from "@/components/ui/input";
@@ -316,6 +317,164 @@ export default function GeneralSection() {
         <AiKeysSection />
 
         <section className="rounded-xl border border-border bg-card p-4 shadow-sm">
+          <h2 className="mb-4 text-base font-semibold text-foreground">ذخیره‌سازی رسانه</h2>
+          <p className="mb-4 text-xs text-muted-foreground">
+            تصاویری که با هوش مصنوعی تولید می‌شوند (کاور مقالات) در دیتابیس ذخیره نمی‌شوند و باید به
+            یک محل ذخیره‌سازی خارجی آپلود شوند. یکی از دو سرویس زیر را وصل کنید.
+          </p>
+          <Field label="محل ذخیره‌سازی فعال">
+            <Select
+              value={form.media.provider}
+              onValueChange={(v) =>
+                setForm((f) => ({
+                  ...f,
+                  media: { ...f.media, provider: v as "none" | "bunny" | "arvan" },
+                }))
+              }
+            >
+              <SelectTrigger className="sm:w-64">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">هیچ‌کدام (متصل نیست)</SelectItem>
+                <SelectItem value="bunny">بانی سی‌دی‌ان (Bunny CDN)</SelectItem>
+                <SelectItem value="arvan">ابر آروان (ArvanCloud)</SelectItem>
+              </SelectContent>
+            </Select>
+          </Field>
+
+          <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div
+              className={`flex flex-col gap-3 rounded-lg border p-3 ${form.media.provider === "bunny" ? "border-primary/40 bg-primary/5" : "border-border"}`}
+            >
+              <div className="flex items-center justify-between">
+                <h3 className="text-sm font-semibold text-foreground">Bunny CDN</h3>
+                {form.media.provider === "bunny" && (
+                  <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-medium text-primary">
+                    فعال
+                  </span>
+                )}
+              </div>
+              <Field label="نام Storage Zone">
+                <Input
+                  dir="ltr"
+                  placeholder="my-storage-zone"
+                  value={form.media.bunny.storageZone}
+                  onChange={(e) =>
+                    setForm((f) => ({
+                      ...f,
+                      media: {
+                        ...f.media,
+                        bunny: { ...f.media.bunny, storageZone: e.target.value },
+                      },
+                    }))
+                  }
+                />
+              </Field>
+              <Field label="کد ناحیه (اختیاری — خالی = پیش‌فرض)">
+                <Input
+                  dir="ltr"
+                  placeholder="ny / la / sg / syd / uk"
+                  value={form.media.bunny.region}
+                  onChange={(e) =>
+                    setForm((f) => ({
+                      ...f,
+                      media: { ...f.media, bunny: { ...f.media.bunny, region: e.target.value } },
+                    }))
+                  }
+                />
+              </Field>
+              <Field label="آدرس Pull Zone">
+                <Input
+                  dir="ltr"
+                  placeholder="https://xxxx.b-cdn.net"
+                  value={form.media.bunny.pullZoneUrl}
+                  onChange={(e) =>
+                    setForm((f) => ({
+                      ...f,
+                      media: {
+                        ...f.media,
+                        bunny: { ...f.media.bunny, pullZoneUrl: e.target.value },
+                      },
+                    }))
+                  }
+                />
+              </Field>
+            </div>
+
+            <div
+              className={`flex flex-col gap-3 rounded-lg border p-3 ${form.media.provider === "arvan" ? "border-primary/40 bg-primary/5" : "border-border"}`}
+            >
+              <div className="flex items-center justify-between">
+                <h3 className="text-sm font-semibold text-foreground">ابر آروان (ArvanCloud)</h3>
+                {form.media.provider === "arvan" && (
+                  <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-medium text-primary">
+                    فعال
+                  </span>
+                )}
+              </div>
+              <Field label="نام باکت (Bucket)">
+                <Input
+                  dir="ltr"
+                  placeholder="my-bucket"
+                  value={form.media.arvan.bucket}
+                  onChange={(e) =>
+                    setForm((f) => ({
+                      ...f,
+                      media: { ...f.media, arvan: { ...f.media.arvan, bucket: e.target.value } },
+                    }))
+                  }
+                />
+              </Field>
+              <Field label="آدرس Endpoint">
+                <Input
+                  dir="ltr"
+                  placeholder="https://s3.ir-thr-at1.arvanstorage.ir"
+                  value={form.media.arvan.endpoint}
+                  onChange={(e) =>
+                    setForm((f) => ({
+                      ...f,
+                      media: { ...f.media, arvan: { ...f.media.arvan, endpoint: e.target.value } },
+                    }))
+                  }
+                />
+              </Field>
+              <Field label="کد ناحیه">
+                <Input
+                  dir="ltr"
+                  placeholder="ir-thr-at1"
+                  value={form.media.arvan.region}
+                  onChange={(e) =>
+                    setForm((f) => ({
+                      ...f,
+                      media: { ...f.media, arvan: { ...f.media.arvan, region: e.target.value } },
+                    }))
+                  }
+                />
+              </Field>
+              <Field label="آدرس عمومی (اختیاری — خالی = ساخته‌شده از endpoint)">
+                <Input
+                  dir="ltr"
+                  placeholder="https://my-bucket.s3.ir-thr-at1.arvanstorage.ir"
+                  value={form.media.arvan.publicUrl}
+                  onChange={(e) =>
+                    setForm((f) => ({
+                      ...f,
+                      media: { ...f.media, arvan: { ...f.media.arvan, publicUrl: e.target.value } },
+                    }))
+                  }
+                />
+              </Field>
+            </div>
+          </div>
+          <p className="mt-3 text-xs text-muted-foreground">
+            کلید دسترسی این سرویس‌ها را در بخش «کلیدهای اتصال ذخیره‌سازی» زیر همین صفحه وارد کنید.
+          </p>
+        </section>
+
+        <MediaKeysSection />
+
+        <section className="rounded-xl border border-border bg-card p-4 shadow-sm">
           <h2 className="mb-4 text-base font-semibold text-foreground">تحلیل و اسکریپت‌ها</h2>
           <div className="grid grid-cols-1 gap-4">
             <Field label="شناسه گوگل آنالیتیکس">
@@ -492,6 +651,159 @@ function AiKeysSection() {
             >
               {saveMutation.isPending && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
               ذخیره کلید جمینای
+            </Button>
+          </div>
+        </div>
+      )}
+    </section>
+  );
+}
+
+function MediaKeysSection() {
+  const statusFn = useServerFn(adminGetMediaKeysStatus);
+  const saveFn = useServerFn(adminSaveMediaKeys);
+  const qc = useQueryClient();
+  const { data, isLoading } = useQuery({
+    queryKey: ["media-keys-status"],
+    queryFn: () => statusFn(),
+  });
+  const [bunnyAccessKey, setBunnyAccessKey] = useState("");
+  const [arvanAccessKey, setArvanAccessKey] = useState("");
+  const [arvanSecretKey, setArvanSecretKey] = useState("");
+
+  const saveMutation = useMutation({
+    mutationFn: (payload: {
+      bunnyAccessKey?: string;
+      arvanAccessKey?: string;
+      arvanSecretKey?: string;
+      clearBunny?: boolean;
+      clearArvan?: boolean;
+    }) => saveFn({ data: payload }),
+    onSuccess: () => {
+      toast.success("کلید ذخیره شد");
+      qc.invalidateQueries({ queryKey: ["media-keys-status"] });
+      setBunnyAccessKey("");
+      setArvanAccessKey("");
+      setArvanSecretKey("");
+    },
+    onError: () => toast.error("خطا در ذخیره کلید"),
+  });
+
+  return (
+    <section className="rounded-xl border border-border bg-card p-4 shadow-sm">
+      <div className="mb-4 flex items-center gap-2">
+        <KeyRound className="h-4 w-4 text-primary" />
+        <h2 className="text-base font-semibold text-foreground">کلیدهای اتصال ذخیره‌سازی</h2>
+      </div>
+      <p className="mb-4 text-xs text-muted-foreground">
+        این کلیدها مستقیماً و فقط سمت سرور استفاده می‌شوند و هرگز به مرورگر ارسال نمی‌شوند.
+      </p>
+      {isLoading ? (
+        <Skeleton className="h-24 w-full" />
+      ) : (
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <div className="flex flex-col gap-1.5">
+            <Label className="flex items-center justify-between">
+              <span>کلید دسترسی بانی سی‌دی‌ان (Access Key)</span>
+              {data?.bunnyKeySet && (
+                <span dir="ltr" className="text-xs text-success">
+                  تنظیم شده · {data.bunnyKeyPreview}
+                </span>
+              )}
+            </Label>
+            <div className="flex gap-2">
+              <Input
+                dir="ltr"
+                type="password"
+                placeholder={data?.bunnyKeySet ? "برای تغییر، کلید جدید وارد کنید" : "Access Key"}
+                value={bunnyAccessKey}
+                onChange={(e) => setBunnyAccessKey(e.target.value)}
+              />
+              {data?.bunnyKeySet && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="icon"
+                  className="shrink-0 text-destructive"
+                  disabled={saveMutation.isPending}
+                  onClick={() => saveMutation.mutate({ clearBunny: true })}
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              )}
+            </div>
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              disabled={!bunnyAccessKey.trim() || saveMutation.isPending}
+              onClick={() => saveMutation.mutate({ bunnyAccessKey })}
+              className="w-fit gap-1.5"
+            >
+              {saveMutation.isPending && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+              ذخیره کلید بانی
+            </Button>
+          </div>
+
+          <div className="flex flex-col gap-1.5">
+            <Label className="flex items-center justify-between">
+              <span>کلیدهای دسترسی ابر آروان (Access / Secret Key)</span>
+              {data?.arvanAccessKeySet && data?.arvanSecretKeySet && (
+                <span dir="ltr" className="text-xs text-success">
+                  تنظیم شده
+                </span>
+              )}
+            </Label>
+            <div className="flex flex-col gap-2">
+              <Input
+                dir="ltr"
+                type="password"
+                placeholder={
+                  data?.arvanAccessKeySet
+                    ? `Access Key تنظیم شده · ${data.arvanAccessKeyPreview}`
+                    : "Access Key"
+                }
+                value={arvanAccessKey}
+                onChange={(e) => setArvanAccessKey(e.target.value)}
+              />
+              <div className="flex gap-2">
+                <Input
+                  dir="ltr"
+                  type="password"
+                  placeholder={
+                    data?.arvanSecretKeySet
+                      ? `Secret Key تنظیم شده · ${data.arvanSecretKeyPreview}`
+                      : "Secret Key"
+                  }
+                  value={arvanSecretKey}
+                  onChange={(e) => setArvanSecretKey(e.target.value)}
+                />
+                {data?.arvanAccessKeySet && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    className="shrink-0 text-destructive"
+                    disabled={saveMutation.isPending}
+                    onClick={() => saveMutation.mutate({ clearArvan: true })}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                )}
+              </div>
+            </div>
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              disabled={
+                (!arvanAccessKey.trim() && !arvanSecretKey.trim()) || saveMutation.isPending
+              }
+              onClick={() => saveMutation.mutate({ arvanAccessKey, arvanSecretKey })}
+              className="w-fit gap-1.5"
+            >
+              {saveMutation.isPending && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+              ذخیره کلیدهای آروان
             </Button>
           </div>
         </div>

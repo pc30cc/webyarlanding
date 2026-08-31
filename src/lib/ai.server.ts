@@ -375,12 +375,22 @@ export async function generateImage(input: {
   const sizeMatch = dataUrl.match(/^data:(.+?);base64,(.+)$/);
   const mime = sizeMatch?.[1] ?? "image/png";
   const base64Len = sizeMatch?.[2]?.length ?? 0;
+  const filename = `ai-generated/${id}.png`;
+
+  const { uploadImageDataUrl, StorageError } = await import("./storage.server");
+  let url: string;
+  try {
+    url = await uploadImageDataUrl(dataUrl, filename);
+  } catch (e) {
+    if (e instanceof StorageError) throw new AiGatewayError("UNKNOWN", e.message);
+    throw e;
+  }
 
   const { error } = await db.from("media_assets").insert({
     id,
     provider: config.ai.provider,
-    path: `ai-generated/${id}.png`,
-    url: dataUrl,
+    path: filename,
+    url,
     filename: `${id}.png`,
     mime_type: mime,
     size_bytes: Math.round((base64Len * 3) / 4),
@@ -391,5 +401,5 @@ export async function generateImage(input: {
     throw new AiGatewayError("UNKNOWN", `ذخیره‌سازی تصویر در دیتابیس ناموفق بود: ${error.message}`);
   }
 
-  return { id, url: dataUrl };
+  return { id, url };
 }

@@ -15,25 +15,31 @@ export interface MediaAssetDto {
   createdAt: string;
 }
 
-export const listMedia = createServerFn({ method: "GET" }).handler(async (): Promise<MediaAssetDto[]> => {
-  const { requireAdmin } = await import("./auth.server");
-  const { db } = await import("./db.server");
-  await requireAdmin();
-  const { data } = await db.from("media_assets").select("*").order("created_at", { ascending: false }).limit(500);
-  return (data ?? []).map((row) => ({
-    id: row.id,
-    filename: row.filename,
-    url: row.url,
-    path: row.path,
-    provider: row.provider,
-    mimeType: row.mime_type,
-    sizeBytes: row.size_bytes,
-    width: row.width,
-    height: row.height,
-    alt: row.alt,
-    createdAt: row.created_at,
-  }));
-});
+export const listMedia = createServerFn({ method: "GET" }).handler(
+  async (): Promise<MediaAssetDto[]> => {
+    const { requireAdmin } = await import("./auth.server");
+    const { db } = await import("./db.server");
+    await requireAdmin();
+    const { data } = await db
+      .from("media_assets")
+      .select("*")
+      .order("created_at", { ascending: false })
+      .limit(500);
+    return (data ?? []).map((row) => ({
+      id: row.id,
+      filename: row.filename,
+      url: row.url,
+      path: row.path,
+      provider: row.provider,
+      mimeType: row.mime_type,
+      sizeBytes: row.size_bytes,
+      width: row.width,
+      height: row.height,
+      alt: row.alt,
+      createdAt: row.created_at,
+    }));
+  },
+);
 
 const mediaSchema = z.object({
   filename: z.string().min(1, "نام فایل الزامی است"),
@@ -68,5 +74,60 @@ export const deleteMedia = createServerFn({ method: "POST" })
     const { db } = await import("./db.server");
     await requireAdmin();
     await db.from("media_assets").delete().eq("id", data.id);
+    return { ok: true };
+  });
+
+function maskMediaKey(key: string): string {
+  if (!key) return "";
+  if (key.length <= 8) return "•".repeat(key.length);
+  return `${key.slice(0, 4)}${"•".repeat(6)}${key.slice(-4)}`;
+}
+
+/** وضعیت کلیدهای اتصال به محل ذخیره‌سازی — مقدار واقعی کلید هرگز به کلاینت برنمی‌گردد */
+export const adminGetMediaKeysStatus = createServerFn({ method: "GET" }).handler(async () => {
+  const { requireAdmin } = await import("./auth.server");
+  await requireAdmin();
+  const { loadMediaKeys } = await import("./settings.server");
+  const keys = await loadMediaKeys();
+  return {
+    bunnyKeySet: !!keys.mediaBunnyAccessKey,
+    bunnyKeyPreview: maskMediaKey(keys.mediaBunnyAccessKey),
+    arvanAccessKeySet: !!keys.mediaArvanAccessKey,
+    arvanAccessKeyPreview: maskMediaKey(keys.mediaArvanAccessKey),
+    arvanSecretKeySet: !!keys.mediaArvanSecretKey,
+    arvanSecretKeyPreview: maskMediaKey(keys.mediaArvanSecretKey),
+  };
+});
+
+const saveMediaKeysSchema = z.object({
+  bunnyAccessKey: z.string().optional(),
+  arvanAccessKey: z.string().optional(),
+  arvanSecretKey: z.string().optional(),
+  clearBunny: z.boolean().optional().default(false),
+  clearArvan: z.boolean().optional().default(false),
+});
+
+/** ذخیره یا حذف کلیدهای اتصال به محل ذخیره‌سازی — مقدار خالی/نامشخص به‌معنای «بدون تغییر» است */
+export const adminSaveMediaKeys = createServerFn({ method: "POST" })
+  .inputValidator((input: unknown) => saveMediaKeysSchema.parse(input))
+  .handler(async ({ data }): Promise<{ ok: boolean }> => {
+    const { requireAdmin } = await import("./auth.server");
+    await requireAdmin();
+    const { saveMediaKeys } = await import("./settings.server");
+    const partial: {
+      mediaBunnyAccessKey?: string;
+      mediaArvanAccessKey?: string;
+      mediaArvanSecretKey?: string;
+    } = {};
+    if (data.clearBunny) partial.mediaBunnyAccessKey = "";
+    else if (data.bunnyAccessKey) partial.mediaBunnyAccessKey = data.bunnyAccessKey;
+    if (data.clearArvan) {
+      partial.mediaArvanAccessKey = "";
+      partial.mediaArvanSecretKey = "";
+    } else {
+      if (data.arvanAccessKey) partial.mediaArvanAccessKey = data.arvanAccessKey;
+      if (data.arvanSecretKey) partial.mediaArvanSecretKey = data.arvanSecretKey;
+    }
+    await saveMediaKeys(partial);
     return { ok: true };
   });

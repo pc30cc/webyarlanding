@@ -81,3 +81,26 @@ export async function saveAiKeys(partial: Partial<AiApiKeys>): Promise<void> {
   const stored = await loadPrivateSettings<Partial<AiApiKeys>>({});
   await savePrivateSettings({ ...stored, ...partial });
 }
+
+/** کلیدهای اتصال به محل ذخیره‌سازی تصاویر — بخشی از تنظیمات محرمانه، فقط سمت سرور خوانده می‌شود */
+export interface MediaApiKeys {
+  mediaBunnyAccessKey: string;
+  mediaArvanAccessKey: string;
+  mediaArvanSecretKey: string;
+}
+
+const MEDIA_KEYS_DEFAULTS: MediaApiKeys = {
+  mediaBunnyAccessKey: "",
+  mediaArvanAccessKey: "",
+  mediaArvanSecretKey: "",
+};
+
+export async function loadMediaKeys(): Promise<MediaApiKeys> {
+  const stored = await loadPrivateSettings<Partial<MediaApiKeys>>({});
+  return { ...MEDIA_KEYS_DEFAULTS, ...stored };
+}
+
+export async function saveMediaKeys(partial: Partial<MediaApiKeys>): Promise<void> {
+  const stored = await loadPrivateSettings<Partial<MediaApiKeys>>({});
+  await savePrivateSettings({ ...stored, ...partial });
+}
