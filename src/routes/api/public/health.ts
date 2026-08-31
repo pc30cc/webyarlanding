@@ -9,7 +9,7 @@ export const Route = createFileRoute("/api/public/health")({
     handlers: {
       GET: async () => {
         const required = ["SUPABASE_URL", "SUPABASE_SERVICE_ROLE_KEY"];
-        const optional = ["SUPABASE_PUBLISHABLE_KEY", "LOVABLE_API_KEY", "LOVABLE_CRON_SECRET"];
+        const optional = ["SUPABASE_PUBLISHABLE_KEY", "LOVABLE_CRON_SECRET"];
 
         const present = (name: string) => Boolean(process.env[name]);
         const missing = required.filter((name) => !present(name));
