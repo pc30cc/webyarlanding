@@ -178,40 +178,70 @@ export default function GeneralSection() {
             </div>
           </div>
           <div className="grid grid-cols-1 gap-4">
-            <Field label="سرویس فعال برای تولید مقاله و تصویر (دستی و خودکار)">
-              <Select
-                value={form.ai.provider}
-                onValueChange={(v) =>
-                  setForm((f) => ({ ...f, ai: { ...f.ai, provider: v as "openai" | "gemini" } }))
-                }
-              >
-                <SelectTrigger className="sm:w-64">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="openai">OpenAI</SelectItem>
-                  <SelectItem value="gemini">Google Gemini</SelectItem>
-                </SelectContent>
-              </Select>
-            </Field>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <Field label="سرویس تولید متن مقاله (دستی و خودکار)">
+                <Select
+                  value={form.ai.textProvider}
+                  onValueChange={(v) =>
+                    setForm((f) => ({
+                      ...f,
+                      ai: { ...f.ai, textProvider: v as "openai" | "gemini" },
+                    }))
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="openai">OpenAI</SelectItem>
+                    <SelectItem value="gemini">Google Gemini</SelectItem>
+                  </SelectContent>
+                </Select>
+              </Field>
+              <Field label="سرویس تولید تصویر کاور">
+                <Select
+                  value={form.ai.imageProvider}
+                  onValueChange={(v) =>
+                    setForm((f) => ({
+                      ...f,
+                      ai: { ...f.ai, imageProvider: v as "openai" | "gemini" },
+                    }))
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="openai">OpenAI</SelectItem>
+                    <SelectItem value="gemini">Google Gemini</SelectItem>
+                  </SelectContent>
+                </Select>
+              </Field>
+            </div>
 
             <p className="text-xs text-muted-foreground">
-              تنظیمات دو سرویس کاملاً از هم جدا هستند و هر دو نگه داشته می‌شوند؛ فقط سرویسی که در
-              بالا فعال کرده‌اید برای تولید مقاله و تصویر (چه از پنل «دستیار هوش مصنوعی»، چه تولید
-              خودکار وبلاگ) استفاده می‌شود.
+              تنظیمات دو سرویس کاملاً از هم جدا هستند و هر دو نگه داشته می‌شوند؛ تولید متن و تولید
+              تصویر می‌توانند از دو سرویس متفاوت استفاده کنند.
             </p>
 
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div
-                className={`flex flex-col gap-3 rounded-lg border p-3 ${form.ai.provider === "openai" ? "border-primary/40 bg-primary/5" : "border-border"}`}
+                className={`flex flex-col gap-3 rounded-lg border p-3 ${form.ai.textProvider === "openai" || form.ai.imageProvider === "openai" ? "border-primary/40 bg-primary/5" : "border-border"}`}
               >
                 <div className="flex items-center justify-between">
                   <h3 className="text-sm font-semibold text-foreground">OpenAI</h3>
-                  {form.ai.provider === "openai" && (
-                    <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-medium text-primary">
-                      فعال
-                    </span>
-                  )}
+                  <div className="flex gap-1">
+                    {form.ai.textProvider === "openai" && (
+                      <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-medium text-primary">
+                        متن
+                      </span>
+                    )}
+                    {form.ai.imageProvider === "openai" && (
+                      <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-medium text-primary">
+                        تصویر
+                      </span>
+                    )}
+                  </div>
                 </div>
                 <Field label="مدل تولید متن">
                   <Input
@@ -242,15 +272,22 @@ export default function GeneralSection() {
               </div>
 
               <div
-                className={`flex flex-col gap-3 rounded-lg border p-3 ${form.ai.provider === "gemini" ? "border-primary/40 bg-primary/5" : "border-border"}`}
+                className={`flex flex-col gap-3 rounded-lg border p-3 ${form.ai.textProvider === "gemini" || form.ai.imageProvider === "gemini" ? "border-primary/40 bg-primary/5" : "border-border"}`}
               >
                 <div className="flex items-center justify-between">
                   <h3 className="text-sm font-semibold text-foreground">Google Gemini</h3>
-                  {form.ai.provider === "gemini" && (
-                    <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-medium text-primary">
-                      فعال
-                    </span>
-                  )}
+                  <div className="flex gap-1">
+                    {form.ai.textProvider === "gemini" && (
+                      <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-medium text-primary">
+                        متن
+                      </span>
+                    )}
+                    {form.ai.imageProvider === "gemini" && (
+                      <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-medium text-primary">
+                        تصویر
+                      </span>
+                    )}
+                  </div>
                 </div>
                 <Field label="مدل تولید متن">
                   <Input

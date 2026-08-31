@@ -56,8 +56,10 @@ export interface AiProviderModels {
 
 export interface AiSettings {
   enabled: boolean;
-  /** کدام سرویس برای تولید مقاله (دستی و خودکار) و تصویر واقعاً استفاده شود */
-  provider: "openai" | "gemini";
+  /** کدام سرویس برای تولید متن مقاله (دستی و خودکار) استفاده شود */
+  textProvider: "openai" | "gemini";
+  /** کدام سرویس برای تولید تصویر کاور استفاده شود — می‌تواند از سرویس متن جدا باشد */
+  imageProvider: "openai" | "gemini";
   /** تنظیمات هرکدام از دو سرویس کاملاً جدا و مستقل نگه داشته می‌شود؛ کلید API هرکدام در تنظیمات محرمانه است */
   openai: AiProviderModels;
   gemini: AiProviderModels;
@@ -158,7 +160,8 @@ export const DEFAULT_SETTINGS: SiteSettings = {
   },
   ai: {
     enabled: true,
-    provider: "openai",
+    textProvider: "openai",
+    imageProvider: "openai",
     openai: { textModel: "gpt-4o-mini", imageModel: "gpt-image-1" },
     gemini: { textModel: "gemini-2.0-flash", imageModel: "gemini-2.5-flash-image" },
     systemPrompt:

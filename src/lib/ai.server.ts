@@ -129,7 +129,7 @@ async function chatGemini(
 
 async function chat(messages: ChatMessage[], jsonMode = false): Promise<string> {
   const config = await getAiConfig();
-  return config.ai.provider === "gemini"
+  return config.ai.textProvider === "gemini"
     ? chatGemini(messages, jsonMode, config)
     : chatOpenAi(messages, jsonMode, config);
 }
@@ -371,7 +371,7 @@ export async function generateImage(input: {
 }): Promise<{ id: string; url: string }> {
   const config = await getAiConfig();
   const dataUrl =
-    config.ai.provider === "gemini"
+    config.ai.imageProvider === "gemini"
       ? await generateImageGemini(input.prompt, config)
       : await generateImageOpenAi(input.prompt, config);
 
@@ -392,7 +392,7 @@ export async function generateImage(input: {
 
   const { error } = await db.from("media_assets").insert({
     id,
-    provider: config.ai.provider,
+    provider: config.ai.imageProvider,
     path: filename,
     url,
     filename: `${id}.png`,
