@@ -16,31 +16,53 @@ export function SiteFooter({ settings }: { settings: SiteSettings }) {
               <span className="text-base font-bold text-foreground">{settings.brand.name}</span>
             </Link>
             <p className="text-sm leading-relaxed text-muted-foreground">
-              {settings.brand.tagline || "پلتفرم جامع مدیریت ارتباط با مشتری برای کسب‌وکارهای ایرانی"}
+              {settings.brand.tagline ||
+                "پلتفرم جامع مدیریت ارتباط با مشتری برای کسب‌وکارهای ایرانی"}
             </p>
           </div>
           <div>
             <h4 className="mb-3 text-sm font-semibold text-foreground">محصول</h4>
             <nav className="space-y-2 text-sm text-muted-foreground">
-              <Link to="/" hash="features" className="block transition-colors hover:text-foreground">امکانات</Link>
-              <Link to="/pricing" className="block transition-colors hover:text-foreground">قیمت‌گذاری</Link>
-              <Link to="/api-docs" className="block transition-colors hover:text-foreground">مستندات API</Link>
+              <Link to="/products" className="block transition-colors hover:text-foreground">
+                محصولات
+              </Link>
+              <Link to="/solutions" className="block transition-colors hover:text-foreground">
+                راه‌کارها
+              </Link>
+              <Link to="/pricing" className="block transition-colors hover:text-foreground">
+                قیمت‌گذاری
+              </Link>
+              <Link to="/api-docs" className="block transition-colors hover:text-foreground">
+                مستندات API
+              </Link>
             </nav>
           </div>
           <div>
             <h4 className="mb-3 text-sm font-semibold text-foreground">شرکت</h4>
             <nav className="space-y-2 text-sm text-muted-foreground">
-              <Link to="/about" className="block transition-colors hover:text-foreground">درباره ما</Link>
-              <Link to="/blog" className="block transition-colors hover:text-foreground">بلاگ</Link>
-              <Link to="/contact" className="block transition-colors hover:text-foreground">تماس با ما</Link>
+              <Link to="/about" className="block transition-colors hover:text-foreground">
+                درباره ما
+              </Link>
+              <Link to="/blog" className="block transition-colors hover:text-foreground">
+                بلاگ
+              </Link>
+              <Link to="/contact" className="block transition-colors hover:text-foreground">
+                تماس با ما
+              </Link>
             </nav>
           </div>
           <div>
             <h4 className="mb-3 text-sm font-semibold text-foreground">قانونی</h4>
             <nav className="space-y-2 text-sm text-muted-foreground">
-              <Link to="/terms" className="block transition-colors hover:text-foreground">شرایط استفاده</Link>
-              <Link to="/privacy" className="block transition-colors hover:text-foreground">حریم خصوصی</Link>
-              <Link to="/sla" className="block transition-colors hover:text-foreground">SLA</Link>
+              <Link to="/terms" className="block transition-colors hover:text-foreground">
+                شرایط استفاده
+              </Link>
+              <Link to="/privacy" className="block transition-colors hover:text-foreground">
+                حریم خصوصی
+              </Link>
+              <Link to="/sla" className="block transition-colors hover:text-foreground">
+                SLA
+              </Link>
             </nav>
           </div>
         </div>
