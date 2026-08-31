@@ -2,7 +2,18 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { motion } from "framer-motion";
 import {
-  Check, ChevronLeft, Mic, MicOff, PhoneOff, Video, MonitorUp, Send, Clock, Users, MessageSquare, UserRound,
+  Check,
+  ChevronLeft,
+  Mic,
+  MicOff,
+  PhoneOff,
+  Video,
+  MonitorUp,
+  Send,
+  Clock,
+  Users,
+  MessageSquare,
+  UserRound,
 } from "lucide-react";
 import { fetchSettings } from "@/lib/settings.functions";
 import { getPublicSeoPage } from "@/lib/seo.functions";
@@ -12,7 +23,10 @@ import { ScrollReveal, StaggerChildren, childVariant, FAQItem } from "@/componen
 
 export const Route = createFileRoute("/")({
   loader: async () => {
-    const [settings, seoOverride] = await Promise.all([fetchSettings(), getPublicSeoPage({ data: { path: "/" } })]);
+    const [settings, seoOverride] = await Promise.all([
+      fetchSettings(),
+      getPublicSeoPage({ data: { path: "/" } }),
+    ]);
     return { settings, seoOverride };
   },
   head: ({ loaderData }) => {
@@ -59,47 +73,116 @@ const conversations = [
 
 const steps = [
   { n: "۱", title: "کد ابزارک را کپی کنید", desc: "یک قطعه کد کوچک از پنل مدیریت دریافت کنید." },
-  { n: "۲", title: "در سایت خود قرار دهید", desc: "کد را پیش از تگ بسته body در سایتتان جای‌گذاری کنید." },
-  { n: "۳", title: "گفتگو را شروع کنید", desc: "از همان لحظه، پیام‌ها و تماس‌ها را در پنل ببینید." },
+  {
+    n: "۲",
+    title: "در سایت خود قرار دهید",
+    desc: "کد را پیش از تگ بسته body در سایتتان جای‌گذاری کنید.",
+  },
+  {
+    n: "۳",
+    title: "گفتگو را شروع کنید",
+    desc: "از همان لحظه، پیام‌ها و تماس‌ها را در پنل ببینید.",
+  },
 ];
 
 function getPlans(period: "monthly" | "yearly") {
   return [
     {
-      name: "شروع", tagline: "برای سایت‌های کوچک و شروع کار", price: "رایگان", unit: "", cta: "شروع کنید",
-      features: ["۱ اپراتور", "چت زنده نامحدود", "تاریخچه ۳۰ روزه", "ابزارک قابل شخصی‌سازی", "پشتیبانی ایمیلی"],
+      name: "شروع",
+      tagline: "برای سایت‌های کوچک و شروع کار",
+      price: "رایگان",
+      unit: "",
+      cta: "شروع کنید",
+      features: [
+        "۱ اپراتور",
+        "چت زنده نامحدود",
+        "تاریخچه ۳۰ روزه",
+        "ابزارک قابل شخصی‌سازی",
+        "پشتیبانی ایمیلی",
+      ],
       highlight: false,
     },
     {
-      name: "حرفه‌ای", tagline: "برای تیم‌های در حال رشد",
+      name: "حرفه‌ای",
+      tagline: "برای تیم‌های در حال رشد",
       price: period === "yearly" ? "۳۹۲٬۰۰۰" : "۴۹۰٬۰۰۰",
       unit: period === "yearly" ? "تومان / ماه، سالانه" : "تومان / ماهانه",
       cta: "۱۴ روز رایگان",
-      features: ["۵ اپراتور", "تماس ویدیویی HD", "اشتراک‌گذاری صفحه", "تاریخچه نامحدود", "گزارش‌های پیشرفته", "پشتیبانی اولویت‌دار"],
+      features: [
+        "۵ اپراتور",
+        "تماس ویدیویی HD",
+        "اشتراک‌گذاری صفحه",
+        "تاریخچه نامحدود",
+        "گزارش‌های پیشرفته",
+        "پشتیبانی اولویت‌دار",
+      ],
       highlight: true,
     },
     {
-      name: "سازمانی", tagline: "برای کسب‌وکارهای بزرگ", price: "تماس بگیرید", unit: "", cta: "گفتگو با فروش",
-      features: ["اپراتور نامحدود", "نصب روی سرور اختصاصی", "SSO و کنترل دسترسی", "SLA اختصاصی", "مدیر حساب اختصاصی"],
+      name: "سازمانی",
+      tagline: "برای کسب‌وکارهای بزرگ",
+      price: "تماس بگیرید",
+      unit: "",
+      cta: "گفتگو با فروش",
+      features: [
+        "اپراتور نامحدود",
+        "نصب روی سرور اختصاصی",
+        "SSO و کنترل دسترسی",
+        "SLA اختصاصی",
+        "مدیر حساب اختصاصی",
+      ],
       highlight: false,
     },
   ];
 }
 
 const testimonials = [
-  { name: "سارا محمدی", role: "مدیر پشتیبانی — دیجی‌استایل", text: "از زمانی که وب‌یار رو جایگزین سیستم قبلی‌مون کردیم، زمان پاسخ‌دهی ۶۰٪ کاهش پیدا کرد." },
-  { name: "امیر حسینی", role: "بنیان‌گذار — تکنوشاپ", text: "هوش مصنوعی وب‌یار ۴۰٪ از سوالات رو بدون دخالت اپراتور جواب میده. فوق‌العاده‌ست!" },
-  { name: "مریم رضایی", role: "مدیر بازاریابی — فین‌تک‌پلاس", text: "ابزار کمپین و CRM وب‌یار بهترین ترکیبی‌ه که دیدم. نرخ تبدیل ما ۳۵٪ رشد کرد." },
+  {
+    name: "سارا محمدی",
+    role: "مدیر پشتیبانی — دیجی‌استایل",
+    text: "از زمانی که وب‌یار رو جایگزین سیستم قبلی‌مون کردیم، زمان پاسخ‌دهی ۶۰٪ کاهش پیدا کرد.",
+  },
+  {
+    name: "امیر حسینی",
+    role: "بنیان‌گذار — تکنوشاپ",
+    text: "هوش مصنوعی وب‌یار ۴۰٪ از سوالات رو بدون دخالت اپراتور جواب میده. فوق‌العاده‌ست!",
+  },
+  {
+    name: "مریم رضایی",
+    role: "مدیر بازاریابی — فین‌تک‌پلاس",
+    text: "ابزار کمپین و CRM وب‌یار بهترین ترکیبی‌ه که دیدم. نرخ تبدیل ما ۳۵٪ رشد کرد.",
+  },
 ];
 
 const faqs = [
-  { q: "وب‌یار چیست و چه کاربردی دارد؟", a: "وب‌یار یک پلتفرم جامع مدیریت ارتباط با مشتری (CRM) است که شامل چت زنده، هوش مصنوعی، اتوماسیون، کمپین، چت تصویری، ابزارهای سئو و گزارش‌دهی پیشرفته می‌شود." },
-  { q: "آیا پلن رایگان محدودیتی دارد؟", a: "پلن رایگان شامل ۱ اپراتور، چت زنده، CRM پایه و ۱٬۰۰۰ گفتگو در ماه است." },
-  { q: "آیا می‌توانم وب‌یار را روی سایت خودم نصب کنم؟", a: "بله! فقط کافیه یک قطعه کد ساده را قبل از تگ </body> سایتتان قرار دهید." },
-  { q: "هوش مصنوعی وب‌یار چگونه کار می‌کند؟", a: "دستیار هوشمند وب‌یار بر اساس پایگاه دانش شما آموزش می‌بیند و می‌تواند به سوالات متداول مشتریان پاسخ دهد." },
-  { q: "آیا امکان اتصال به واتساپ و تلگرام وجود دارد؟", a: "بله، وب‌یار از ارتباط چندکاناله پشتیبانی می‌کند." },
-  { q: "امنیت اطلاعات ما چگونه تضمین می‌شود؟", a: "وب‌یار از رمزنگاری end-to-end، کنترل دسترسی مبتنی بر نقش (RBAC) با ۱۸ سطح مختلف استفاده می‌کند." },
-  { q: "آیا API برای یکپارچه‌سازی دارید؟", a: "بله، وب‌یار دارای REST API کامل و سیستم Webhook برای اتصال به هر سرویس خارجی است." },
+  {
+    q: "وب‌یار چیست و چه کاربردی دارد؟",
+    a: "وب‌یار یک پلتفرم جامع مدیریت ارتباط با مشتری (CRM) است که شامل چت زنده، هوش مصنوعی، اتوماسیون، کمپین، چت تصویری، ابزارهای سئو و گزارش‌دهی پیشرفته می‌شود.",
+  },
+  {
+    q: "آیا پلن رایگان محدودیتی دارد؟",
+    a: "پلن رایگان شامل ۱ اپراتور، چت زنده، CRM پایه و ۱٬۰۰۰ گفتگو در ماه است.",
+  },
+  {
+    q: "آیا می‌توانم وب‌یار را روی سایت خودم نصب کنم؟",
+    a: "بله! فقط کافیه یک قطعه کد ساده را قبل از تگ </body> سایتتان قرار دهید.",
+  },
+  {
+    q: "هوش مصنوعی وب‌یار چگونه کار می‌کند؟",
+    a: "دستیار هوشمند وب‌یار بر اساس پایگاه دانش شما آموزش می‌بیند و می‌تواند به سوالات متداول مشتریان پاسخ دهد.",
+  },
+  {
+    q: "آیا امکان اتصال به واتساپ و تلگرام وجود دارد؟",
+    a: "بله، وب‌یار از ارتباط چندکاناله پشتیبانی می‌کند.",
+  },
+  {
+    q: "امنیت اطلاعات ما چگونه تضمین می‌شود؟",
+    a: "وب‌یار از رمزنگاری end-to-end، کنترل دسترسی مبتنی بر نقش (RBAC) با ۱۸ سطح مختلف استفاده می‌کند.",
+  },
+  {
+    q: "آیا API برای یکپارچه‌سازی دارید؟",
+    a: "بله، وب‌یار دارای REST API کامل و سیستم Webhook برای اتصال به هر سرویس خارجی است.",
+  },
 ];
 
 function eyebrow(text: string) {
@@ -136,28 +219,51 @@ function IndexPage() {
   const { settings, seoOverride } = Route.useLoaderData();
   const [period, setPeriod] = useState<"monthly" | "yearly">("monthly");
 
-  const defaultJsonLd = {
-    "@context": "https://schema.org",
-    "@type": "SoftwareApplication",
-    name: settings.brand.name,
-    applicationCategory: "BusinessApplication",
-    operatingSystem: "Web",
-    description: "چت زنده، CRM، هوش مصنوعی، اتوماسیون، چت تصویری، سئو و کمپین — همه در وب‌یار",
-    offers: [{ "@type": "Offer", price: "0", priceCurrency: "IRR", name: "شروع" }],
-    aggregateRating: { "@type": "AggregateRating", ratingValue: "4.8", reviewCount: "340" },
-  };
+  const defaultJsonLd = [
+    {
+      "@context": "https://schema.org",
+      "@type": "SoftwareApplication",
+      name: settings.brand.name,
+      applicationCategory: "BusinessApplication",
+      operatingSystem: "Web",
+      description: "چت زنده، CRM، هوش مصنوعی، اتوماسیون، چت تصویری، سئو و کمپین — همه در وب‌یار",
+      offers: [{ "@type": "Offer", price: "0", priceCurrency: "IRR", name: "شروع" }],
+    },
+    // بازتاب همان سوالات و پاسخ‌های واقعی که در بخش FAQ همین صفحه نمایش داده می‌شود
+    {
+      "@context": "https://schema.org",
+      "@type": "FAQPage",
+      mainEntity: faqs.map((f) => ({
+        "@type": "Question",
+        name: f.q,
+        acceptedAnswer: { "@type": "Answer", text: f.a },
+      })),
+    },
+  ];
   const jsonLd = parseSchemaJson(seoOverride?.schemaJson) ?? defaultJsonLd;
 
   return (
     <SiteLayout settings={settings}>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
 
       {/* HERO */}
       <section className="relative overflow-hidden pt-16 pb-12 sm:pt-24 sm:pb-16">
         {/* پس‌زمینه — نسبت به کل عرض section (نه ستون محتوا) تا در نمایش‌های عریض هم کامل باشد */}
-        <div aria-hidden className="pointer-events-none absolute inset-0 bg-gradient-to-br from-accent/[0.06] via-transparent to-primary/[0.06]" />
-        <div aria-hidden className="pointer-events-none absolute -top-40 -start-24 h-[420px] w-[420px] rounded-full bg-accent/15 blur-3xl xl:-start-10 xl:h-[560px] xl:w-[560px] 2xl:h-[680px] 2xl:w-[680px]" />
-        <div aria-hidden className="pointer-events-none absolute top-32 -end-16 h-[340px] w-[340px] rounded-full bg-primary/15 blur-3xl xl:top-24 xl:-end-4 xl:h-[460px] xl:w-[460px] 2xl:h-[560px] 2xl:w-[560px]" />
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-0 bg-gradient-to-br from-accent/[0.06] via-transparent to-primary/[0.06]"
+        />
+        <div
+          aria-hidden
+          className="pointer-events-none absolute -top-40 -start-24 h-[420px] w-[420px] rounded-full bg-accent/15 blur-3xl xl:-start-10 xl:h-[560px] xl:w-[560px] 2xl:h-[680px] 2xl:w-[680px]"
+        />
+        <div
+          aria-hidden
+          className="pointer-events-none absolute top-32 -end-16 h-[340px] w-[340px] rounded-full bg-primary/15 blur-3xl xl:top-24 xl:-end-4 xl:h-[460px] xl:w-[460px] 2xl:h-[560px] 2xl:w-[560px]"
+        />
 
         <div className="container-page relative z-10 grid items-center gap-12 lg:grid-cols-2 lg:gap-16">
           <div>
@@ -182,8 +288,9 @@ function IndexPage() {
             </h1>
 
             <p className="mb-9 max-w-xl text-base leading-[1.9] text-muted-foreground sm:text-lg">
-              وب‌یار ابزارک چتی است که روی سایت شما می‌نشیند و امکان گفتگوی زنده و تماس تصویری مستقیم با بازدیدکننده‌ها را فراهم
-              می‌کند. نصب در کمتر از ۵ دقیقه، بدون نیاز به برنامه‌نویس.
+              وب‌یار ابزارک چتی است که روی سایت شما می‌نشیند و امکان گفتگوی زنده و تماس تصویری
+              مستقیم با بازدیدکننده‌ها را فراهم می‌کند. نصب در کمتر از ۵ دقیقه، بدون نیاز به
+              برنامه‌نویس.
             </p>
 
             <div className="flex flex-wrap items-center gap-4">
@@ -200,7 +307,9 @@ function IndexPage() {
                 مشاهده دمو
               </Link>
             </div>
-            <p className="mt-4 text-xs text-muted-foreground">بدون نیاز به کارت بانکی · لغو در هر زمان</p>
+            <p className="mt-4 text-xs text-muted-foreground">
+              بدون نیاز به کارت بانکی · لغو در هر زمان
+            </p>
           </div>
 
           <div className="relative hidden h-[430px] sm:block sm:h-[520px]">
@@ -230,14 +339,19 @@ function IndexPage() {
                 </div>
               </div>
               <div className="flex items-center gap-2.5 border-t border-border px-4 py-3.5">
-                <div className="flex-1 rounded-full bg-secondary px-4 py-2.5 text-xs text-muted-foreground">پیام خود را بنویسید...</div>
+                <div className="flex-1 rounded-full bg-secondary px-4 py-2.5 text-xs text-muted-foreground">
+                  پیام خود را بنویسید...
+                </div>
                 <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary">
                   <Send className="h-4 w-4 text-primary-foreground" />
                 </div>
               </div>
             </motion.div>
 
-            <motion.div {...float(1)} className="absolute end-0 bottom-0 w-[280px] rounded-[18px] bg-foreground/90 p-3.5 shadow-2xl">
+            <motion.div
+              {...float(1)}
+              className="absolute end-0 bottom-0 w-[280px] rounded-[18px] bg-foreground/90 p-3.5 shadow-2xl"
+            >
               <div className="relative h-[150px] overflow-hidden rounded-xl">
                 <VideoCallMock />
                 <OperatorAvatar className="absolute start-2.5 bottom-2.5 h-12 w-16 rounded-lg border-2 border-background/40" />
@@ -262,20 +376,26 @@ function IndexPage() {
       <section className="border-y border-border px-4 py-9 sm:px-8">
         <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-center gap-x-14 gap-y-5">
           {trustLogos.map((logo) => (
-            <span key={logo} className="text-base font-bold tracking-wide text-muted-foreground/70">{logo}</span>
+            <span key={logo} className="text-base font-bold tracking-wide text-muted-foreground/70">
+              {logo}
+            </span>
           ))}
         </div>
       </section>
 
       {/* LIVE CHAT */}
-      <section id="features" className="container-page grid items-center gap-12 py-20 sm:py-28 lg:grid-cols-2 lg:gap-[70px]">
+      <section
+        id="features"
+        className="container-page grid items-center gap-12 py-20 sm:py-28 lg:grid-cols-2 lg:gap-[70px]"
+      >
         <ScrollReveal className="lg:order-1">
           {eyebrow("چت زنده")}
           <h2 className="mb-5 text-2xl font-extrabold leading-[1.35] text-foreground sm:text-4xl">
             تمام مکالمات مشتریان، در یک پنل
           </h2>
           <p className="mb-7 text-base leading-[1.9] text-muted-foreground">
-            هر پیامی که از سایت شما ارسال می‌شود، همان‌جا در پنل مدیریت وب‌یار قابل مشاهده و پاسخ‌گویی است؛ از موبایل یا دسکتاپ.
+            هر پیامی که از سایت شما ارسال می‌شود، همان‌جا در پنل مدیریت وب‌یار قابل مشاهده و
+            پاسخ‌گویی است؛ از موبایل یا دسکتاپ.
           </p>
           <div className="space-y-4">
             {chatFeatures.map((f) => (
@@ -295,7 +415,10 @@ function IndexPage() {
         <ScrollReveal className="rounded-3xl bg-secondary/30 p-5 lg:order-2 sm:p-7">
           <div className="rounded-2xl bg-card p-5 shadow-card">
             {conversations.map((row, i) => (
-              <div key={row.name} className={`flex items-center gap-3 py-3.5 ${i ? "border-t border-border" : ""}`}>
+              <div
+                key={row.name}
+                className={`flex items-center gap-3 py-3.5 ${i ? "border-t border-border" : ""}`}
+              >
                 <span className="flex h-9 w-9 flex-none items-center justify-center rounded-full bg-primary/10 text-sm font-bold text-primary">
                   {row.name.charAt(0)}
                 </span>
@@ -315,7 +438,10 @@ function IndexPage() {
 
       {/* VIDEO CALL */}
       <section className="relative overflow-hidden bg-foreground px-4 py-20 sm:px-8 sm:py-28">
-        <div aria-hidden className="pointer-events-none absolute -top-24 -end-24 h-[360px] w-[360px] rounded-full bg-primary/20 blur-3xl" />
+        <div
+          aria-hidden
+          className="pointer-events-none absolute -top-24 -end-24 h-[360px] w-[360px] rounded-full bg-primary/20 blur-3xl"
+        />
         <div className="relative z-10 mx-auto grid max-w-7xl items-center gap-12 lg:grid-cols-2 lg:gap-[70px]">
           <ScrollReveal>
             {eyebrow("تماس ویدیویی")}
@@ -323,7 +449,8 @@ function IndexPage() {
               وقتی متن کافی نیست، تصویر را روشن کنید
             </h2>
             <p className="mb-7 text-base leading-[1.9] text-background/70">
-              با یک کلیک از داخل همان چت، تماس تصویری HD با مشتری برقرار کنید؛ بدون نصب اپلیکیشن یا افزونه از طرف او.
+              با یک کلیک از داخل همان چت، تماس تصویری HD با مشتری برقرار کنید؛ بدون نصب اپلیکیشن یا
+              افزونه از طرف او.
             </p>
             <div className="space-y-4">
               {videoFeatures.map((f) => (
@@ -367,7 +494,9 @@ function IndexPage() {
       <section className="container-page py-20 sm:py-28">
         <ScrollReveal className="mb-14 text-center">
           {eyebrow("شروع سریع")}
-          <h2 className="text-2xl font-extrabold text-foreground sm:text-4xl">سه قدم تا اولین گفتگو</h2>
+          <h2 className="text-2xl font-extrabold text-foreground sm:text-4xl">
+            سه قدم تا اولین گفتگو
+          </h2>
         </ScrollReveal>
         <StaggerChildren className="grid gap-8 md:grid-cols-3">
           {steps.map((s) => (
@@ -376,7 +505,9 @@ function IndexPage() {
                 {s.n}
               </div>
               <h3 className="mb-2.5 text-lg font-bold text-foreground">{s.title}</h3>
-              <p className="mx-auto max-w-xs text-sm leading-[1.8] text-muted-foreground">{s.desc}</p>
+              <p className="mx-auto max-w-xs text-sm leading-[1.8] text-muted-foreground">
+                {s.desc}
+              </p>
             </motion.div>
           ))}
         </StaggerChildren>
@@ -387,7 +518,9 @@ function IndexPage() {
         <div className="mx-auto max-w-7xl">
           <ScrollReveal className="text-center">
             {eyebrow("قیمت‌گذاری")}
-            <h2 className="mb-4 text-2xl font-extrabold text-foreground sm:text-4xl">پلنی متناسب با کسب‌وکار شما</h2>
+            <h2 className="mb-4 text-2xl font-extrabold text-foreground sm:text-4xl">
+              پلنی متناسب با کسب‌وکار شما
+            </h2>
           </ScrollReveal>
 
           <div className="mb-14 flex justify-center">
@@ -398,14 +531,18 @@ function IndexPage() {
                   type="button"
                   onClick={() => setPeriod(p)}
                   className={`flex items-center gap-2 rounded-full px-5 py-2.5 text-sm font-bold transition-colors ${
-                    period === p ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
+                    period === p
+                      ? "bg-primary text-primary-foreground"
+                      : "text-muted-foreground hover:text-foreground"
                   }`}
                 >
                   {p === "monthly" ? "ماهانه" : "سالانه"}
                   {p === "yearly" && (
                     <span
                       className={`rounded-full px-2 py-0.5 text-xs ${
-                        period === "yearly" ? "bg-primary-foreground/20" : "bg-success/15 text-success"
+                        period === "yearly"
+                          ? "bg-primary-foreground/20"
+                          : "bg-success/15 text-success"
                       }`}
                     >
                       ۲۰٪ تخفیف
@@ -437,7 +574,9 @@ function IndexPage() {
                 <Link
                   to="/pricing"
                   className={`mb-7 block rounded-xl py-3.5 text-center text-sm font-bold transition-opacity hover:opacity-90 ${
-                    plan.highlight ? "bg-brand text-primary-foreground" : "bg-secondary text-secondary-foreground"
+                    plan.highlight
+                      ? "bg-brand text-primary-foreground"
+                      : "bg-secondary text-secondary-foreground"
                   }`}
                 >
                   {plan.cta}
@@ -462,12 +601,20 @@ function IndexPage() {
       <section className="container-page py-20 sm:py-28">
         <ScrollReveal className="mb-14 text-center">
           {eyebrow("اعتماد مشتریان")}
-          <h2 className="text-2xl font-extrabold text-foreground sm:text-4xl">آنچه کاربران می‌گویند</h2>
+          <h2 className="text-2xl font-extrabold text-foreground sm:text-4xl">
+            آنچه کاربران می‌گویند
+          </h2>
         </ScrollReveal>
         <StaggerChildren className="grid gap-7 md:grid-cols-2">
           {testimonials.map((tm) => (
-            <motion.figure key={tm.name} variants={childVariant} className="rounded-[20px] bg-secondary/30 p-8">
-              <blockquote className="mb-6 text-base leading-[1.9] text-foreground sm:text-lg">«{tm.text}»</blockquote>
+            <motion.figure
+              key={tm.name}
+              variants={childVariant}
+              className="rounded-[20px] bg-secondary/30 p-8"
+            >
+              <blockquote className="mb-6 text-base leading-[1.9] text-foreground sm:text-lg">
+                «{tm.text}»
+              </blockquote>
               <figcaption className="flex items-center gap-3">
                 <span className="flex h-11 w-11 items-center justify-center rounded-full bg-primary/10 font-bold text-primary">
                   {tm.name.charAt(0)}
@@ -502,14 +649,20 @@ function IndexPage() {
       {/* FINAL CTA */}
       <ScrollReveal className="container-page my-16">
         <div className="relative overflow-hidden rounded-[28px] bg-brand px-6 py-16 text-center sm:px-10">
-          <div aria-hidden className="pointer-events-none absolute -top-20 -start-20 h-72 w-72 rounded-full bg-primary-foreground/15" />
+          <div
+            aria-hidden
+            className="pointer-events-none absolute -top-20 -start-20 h-72 w-72 rounded-full bg-primary-foreground/15"
+          />
           <h2 className="relative mb-4 text-2xl font-extrabold text-primary-foreground sm:text-3xl">
             همین امروز وب‌یار را روی سایتتان نصب کنید
           </h2>
           <p className="relative mb-8 text-base text-primary-foreground/90">
             ۱۴ روز استفاده رایگان از تمام امکانات، بدون نیاز به کارت بانکی
           </p>
-          <Link to="/contact" className="relative inline-block rounded-xl bg-card px-9 py-4 text-base font-bold text-primary">
+          <Link
+            to="/contact"
+            className="relative inline-block rounded-xl bg-card px-9 py-4 text-base font-bold text-primary"
+          >
             شروع رایگان
           </Link>
         </div>

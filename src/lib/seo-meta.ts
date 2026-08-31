@@ -35,8 +35,21 @@ export function buildPageMeta(opts: {
   fallbackTitle: string;
   fallbackDescription: string;
   fallbackOgImage?: string;
+  /** نوع Open Graph — پیش‌فرض «website»؛ برای مقالات بلاگ «article» بدهید */
+  ogType?: string;
+  /** متاتگ‌های اضافی مخصوص نوع محتوا (مثل article:published_time) */
+  extraMeta?: { property?: string; name?: string; content: string }[];
 }) {
-  const { settings, path, override, fallbackTitle, fallbackDescription, fallbackOgImage } = opts;
+  const {
+    settings,
+    path,
+    override,
+    fallbackTitle,
+    fallbackDescription,
+    fallbackOgImage,
+    ogType = "website",
+    extraMeta = [],
+  } = opts;
   const base = (settings.brand.siteUrl || "").replace(/\/$/, "");
 
   const title = override?.title || fallbackTitle;
@@ -56,11 +69,34 @@ export function buildPageMeta(opts: {
       { title },
       { name: "description", content: description },
       { name: "robots", content: robots },
+      { property: "og:type", content: ogType },
       { property: "og:title", content: title },
       { property: "og:description", content: description },
       { property: "og:image", content: ogImage },
+      { name: "twitter:title", content: title },
+      { name: "twitter:description", content: description },
+      { name: "twitter:image", content: ogImage },
       ...(canonical ? [{ property: "og:url", content: canonical }] : []),
+      ...extraMeta,
     ],
     links: canonical ? [{ rel: "canonical", href: canonical }] : [],
+  };
+}
+
+/** JSON-LD مسیر ناوبری (Breadcrumb) — برای صفحات داخلی، سازگار با Google Rich Results */
+export function buildBreadcrumbJsonLd(
+  settings: SiteSettings,
+  items: { name: string; path?: string }[],
+) {
+  const base = (settings.brand.siteUrl || "").replace(/\/$/, "");
+  return {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: items.map((item, i) => ({
+      "@type": "ListItem",
+      position: i + 1,
+      name: item.name,
+      item: item.path ? (base ? `${base}${item.path}` : undefined) : undefined,
+    })),
   };
 }

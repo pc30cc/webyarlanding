@@ -9,6 +9,9 @@ import { Label } from "@/components/ui/label";
 import { loginAdmin } from "@/lib/auth.functions";
 
 export const Route = createFileRoute("/admin-login")({
+  head: () => ({
+    meta: [{ title: "ورود مدیر" }, { name: "robots", content: "noindex, nofollow" }],
+  }),
   component: AdminLoginPage,
 });
 
@@ -43,9 +46,18 @@ function AdminLoginPage() {
   }
 
   return (
-    <div dir="rtl" className="relative flex min-h-screen items-center justify-center overflow-hidden bg-muted/40 px-4">
-      <div aria-hidden className="pointer-events-none absolute -top-32 -start-40 h-[480px] w-[480px] rounded-full bg-accent/25 blur-3xl" />
-      <div aria-hidden className="pointer-events-none absolute -bottom-32 -end-40 h-[420px] w-[420px] rounded-full bg-primary/25 blur-3xl" />
+    <div
+      dir="rtl"
+      className="relative flex min-h-screen items-center justify-center overflow-hidden bg-muted/40 px-4"
+    >
+      <div
+        aria-hidden
+        className="pointer-events-none absolute -top-32 -start-40 h-[480px] w-[480px] rounded-full bg-accent/25 blur-3xl"
+      />
+      <div
+        aria-hidden
+        className="pointer-events-none absolute -bottom-32 -end-40 h-[420px] w-[420px] rounded-full bg-primary/25 blur-3xl"
+      />
 
       <div className="relative w-full max-w-sm rounded-xl border border-border bg-card p-8 shadow-sm">
         <div className="mb-6 flex flex-col items-center gap-2 text-center">
