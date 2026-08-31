@@ -1,18 +1,10 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { motion } from "framer-motion";
-import {
-  ShoppingCart,
-  Briefcase,
-  Rocket,
-  GraduationCap,
-  HeartPulse,
-  Building2,
-  Check,
-  ChevronLeft,
-} from "lucide-react";
+import { Check, ChevronLeft } from "lucide-react";
 import { fetchSettings } from "@/lib/settings.functions";
 import { getPublicSeoPage } from "@/lib/seo.functions";
 import { buildPageMeta, parseSchemaJson } from "@/lib/seo-meta";
+import { solutionCategories } from "@/lib/catalog";
 import { SiteLayout } from "@/components/site/SiteLayout";
 import { ScrollReveal, StaggerChildren, childVariant } from "@/components/site/animations";
 
@@ -44,74 +36,7 @@ const TINTS = [
   { bg: "bg-success/10", text: "text-success" },
 ];
 
-const solutions = [
-  {
-    icon: ShoppingCart,
-    title: "فروشگاه‌های اینترنتی",
-    desc: "کاهش سبدهای خرید رهاشده با پاسخ‌گویی آنی و راهنمایی زنده مشتری حین خرید.",
-    bullets: [
-      "چت پیش از خرید برای رفع تردید مشتری",
-      "پیگیری خودکار سبدهای خرید رهاشده",
-      "اتصال به واتساپ برای ارسال فاکتور و کد رهگیری",
-      "گزارش نرخ تبدیل بازدیدکننده به خریدار",
-    ],
-  },
-  {
-    icon: Briefcase,
-    title: "کسب‌وکارهای خدماتی",
-    desc: "رزرو وقت، پاسخ به سوالات متداول و پیگیری مشتریان، همه در یک پنل.",
-    bullets: [
-      "دستیار هوش مصنوعی برای پاسخ به سوالات تکراری",
-      "هماهنگی نوبت از طریق چت زنده",
-      "CRM برای ثبت تاریخچه کامل هر مشتری",
-      "یادآوری خودکار قرارهای ملاقات",
-    ],
-  },
-  {
-    icon: Rocket,
-    title: "استارتاپ‌ها و شرکت‌های SaaS",
-    desc: "پشتیبانی محصول، آنبوردینگ کاربر جدید و جمع‌آوری بازخورد در یک ابزار سبک.",
-    bullets: [
-      "تماس ویدیویی برای دمو و آنبوردینگ کاربران",
-      "اتصال به API برای همگام‌سازی داده کاربران",
-      "پیگیری خودکار کاربران دوره آزمایشی",
-      "گزارش رضایت و بازخورد کاربران",
-    ],
-  },
-  {
-    icon: GraduationCap,
-    title: "آموزش آنلاین",
-    desc: "پاسخ‌گویی به دانشجویان و برگزاری جلسات مشاوره تصویری با اساتید و مشاوران.",
-    bullets: [
-      "تماس ویدیویی برای مشاوره و رفع اشکال",
-      "دستیار هوش مصنوعی برای سوالات متداول دوره‌ها",
-      "پیگیری خودکار ثبت‌نام‌های نیمه‌تمام",
-      "گزارش تعامل و رضایت دانشجویان",
-    ],
-  },
-  {
-    icon: HeartPulse,
-    title: "کلینیک‌ها و مراکز درمانی",
-    desc: "هماهنگی نوبت، مشاوره اولیه تصویری و پیگیری بیماران با رعایت کامل محرمانگی.",
-    bullets: [
-      "مشاوره اولیه با تماس ویدیویی امن",
-      "رزرو و یادآوری نوبت از طریق چت",
-      "تاریخچه کامل ارتباط با هر بیمار",
-      "اطلاع‌رسانی نتایج از طریق واتساپ",
-    ],
-  },
-  {
-    icon: Building2,
-    title: "آژانس‌های املاک",
-    desc: "بازدید تصویری از ملک، پاسخ سریع به مشتری و پیگیری خودکار سرنخ‌های فروش.",
-    bullets: [
-      "بازدید ملک با تماس ویدیویی زنده",
-      "ثبت و دسته‌بندی سرنخ‌های خریدار و مستاجر",
-      "پیگیری خودکار مشتریان علاقه‌مند",
-      "اشتراک‌گذاری صفحه برای نمایش نقشه و مدارک",
-    ],
-  },
-] as const;
+const allSolutions = solutionCategories.flatMap((c) => c.items);
 
 function SolutionsPage() {
   const { settings, seoOverride } = Route.useLoaderData();
@@ -120,7 +45,7 @@ function SolutionsPage() {
     "@context": "https://schema.org",
     "@type": "ItemList",
     name: "راه‌کارهای وب‌یار",
-    itemListElement: solutions.map((s, i) => ({
+    itemListElement: allSolutions.map((s, i) => ({
       "@type": "ListItem",
       position: i + 1,
       item: {
@@ -171,35 +96,48 @@ function SolutionsPage() {
         </div>
       </section>
 
-      <div className="container-page pb-16 sm:pb-24">
-        <StaggerChildren className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {solutions.map((s, i) => {
-            const tint = TINTS[i % TINTS.length]!;
-            return (
-              <motion.div
-                key={s.title}
-                variants={childVariant}
-                className="flex flex-col rounded-2xl border border-border bg-card p-6 shadow-card transition-shadow hover:shadow-glow sm:p-7"
-              >
-                <div
-                  className={`mb-5 flex h-14 w-14 items-center justify-center rounded-2xl ${tint.bg}`}
-                >
-                  <s.icon className={`h-7 w-7 ${tint.text}`} />
-                </div>
-                <h3 className="mb-2 text-lg font-bold text-foreground">{s.title}</h3>
-                <p className="mb-5 text-sm leading-relaxed text-muted-foreground">{s.desc}</p>
-                <ul className="mt-auto space-y-2">
-                  {s.bullets.map((b) => (
-                    <li key={b} className="flex items-start gap-2 text-sm text-muted-foreground">
-                      <Check className="mt-0.5 h-4 w-4 shrink-0 text-success" />
-                      <span>{b}</span>
-                    </li>
-                  ))}
-                </ul>
-              </motion.div>
-            );
-          })}
-        </StaggerChildren>
+      <div className="container-page space-y-16 pb-16 sm:space-y-20 sm:pb-24">
+        {solutionCategories.map((category) => (
+          <div key={category.title}>
+            <ScrollReveal className="mb-6">
+              <h2 className="text-xl font-extrabold text-foreground sm:text-2xl">
+                {category.title}
+              </h2>
+            </ScrollReveal>
+            <StaggerChildren className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+              {category.items.map((s, i) => {
+                const tint = TINTS[i % TINTS.length]!;
+                return (
+                  <motion.div
+                    key={s.slug}
+                    id={s.slug}
+                    variants={childVariant}
+                    className="flex scroll-mt-28 flex-col rounded-2xl border border-border bg-card p-6 shadow-card transition-shadow hover:shadow-glow sm:p-7"
+                  >
+                    <div
+                      className={`mb-5 flex h-14 w-14 items-center justify-center rounded-2xl ${tint.bg}`}
+                    >
+                      <s.icon className={`h-7 w-7 ${tint.text}`} />
+                    </div>
+                    <h3 className="mb-2 text-lg font-bold text-foreground">{s.title}</h3>
+                    <p className="mb-5 text-sm leading-relaxed text-muted-foreground">{s.desc}</p>
+                    <ul className="mt-auto space-y-2">
+                      {s.bullets.map((b) => (
+                        <li
+                          key={b}
+                          className="flex items-start gap-2 text-sm text-muted-foreground"
+                        >
+                          <Check className="mt-0.5 h-4 w-4 shrink-0 text-success" />
+                          <span>{b}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </motion.div>
+                );
+              })}
+            </StaggerChildren>
+          </div>
+        ))}
       </div>
 
       <div className="bg-secondary/30 px-4 py-16 text-center sm:px-8 sm:py-24">

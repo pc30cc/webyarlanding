@@ -1,21 +1,10 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { motion } from "framer-motion";
-import {
-  MessageSquare,
-  Video,
-  Sparkles,
-  Users,
-  Megaphone,
-  Share2,
-  Palette,
-  BarChart3,
-  Webhook,
-  Check,
-  ChevronLeft,
-} from "lucide-react";
+import { Check, ChevronLeft } from "lucide-react";
 import { fetchSettings } from "@/lib/settings.functions";
 import { getPublicSeoPage } from "@/lib/seo.functions";
 import { buildPageMeta, parseSchemaJson } from "@/lib/seo-meta";
+import { productCategories } from "@/lib/catalog";
 import { SiteLayout } from "@/components/site/SiteLayout";
 import { ScrollReveal, StaggerChildren, childVariant } from "@/components/site/animations";
 
@@ -47,107 +36,7 @@ const TINTS = [
   { bg: "bg-success/10", text: "text-success" },
 ];
 
-const products = [
-  {
-    icon: MessageSquare,
-    title: "چت زنده",
-    desc: "گفتگوی بلادرنگ با بازدیدکننده‌های سایت، مستقیم از یک ابزارک سبک روی هر صفحه.",
-    bullets: [
-      "پاسخ‌گویی آنی بدون تأخیر",
-      "تاریخچه کامل مکالمات هر مشتری",
-      "ارسال فایل، عکس و ایموجی",
-      "اختصاص خودکار گفتگو به اپراتور مناسب",
-    ],
-  },
-  {
-    icon: Video,
-    title: "تماس ویدیویی HD",
-    desc: "تماس تصویری یک‌کلیکی از همان پنجره چت، بدون نیاز به نصب اپلیکیشن برای مشتری.",
-    bullets: [
-      "کیفیت HD حتی با اینترنت محدود",
-      "اشتراک‌گذاری صفحه برای راهنمایی بهتر",
-      "ضبط و بایگانی تماس‌ها",
-      "بدون لینک یا نرم‌افزار جداگانه",
-    ],
-  },
-  {
-    icon: Sparkles,
-    title: "دستیار هوش مصنوعی",
-    desc: "پاسخ‌گویی خودکار به سوالات پرتکرار بر اساس پایگاه دانش اختصاصی کسب‌وکار شما.",
-    bullets: [
-      "پاسخ فوری به بیش از ۴۰٪ گفتگوها بدون اپراتور",
-      "یادگیری از مقالات و مستندات سایت شما",
-      "تحویل هوشمند مکالمه به اپراتور در موارد پیچیده",
-      "پشتیبانی کامل از زبان فارسی",
-    ],
-  },
-  {
-    icon: Users,
-    title: "CRM و مدیریت مشتریان",
-    desc: "پروفایل کامل هر مشتری، تاریخچه بازدید و مکالمات، در یک پنل یکپارچه.",
-    bullets: [
-      "پروفایل ۳۶۰ درجه از هر مشتری",
-      "برچسب‌گذاری و دسته‌بندی مخاطبین",
-      "یادداشت و پیگیری داخلی تیم",
-      "جست‌وجوی سریع در تاریخچه گفتگوها",
-    ],
-  },
-  {
-    icon: Megaphone,
-    title: "اتوماسیون و کمپین",
-    desc: "قوانین خودکار برای خوش‌آمدگویی، پیگیری مشتریان و ارسال کمپین‌های هدفمند.",
-    bullets: [
-      "پیام خودکار خوش‌آمدگویی بر اساس رفتار کاربر",
-      "کمپین‌های ایمیلی و پیامکی هدفمند",
-      "پیگیری خودکار مشتریان سرد",
-      "زمان‌بندی و تحلیل نرخ تبدیل کمپین‌ها",
-    ],
-  },
-  {
-    icon: Share2,
-    title: "ارتباط چندکاناله",
-    desc: "تمام پیام‌های واتساپ، تلگرام و اینستاگرام را در یک صندوق ورودی یکپارچه مدیریت کنید.",
-    bullets: [
-      "اتصال به واتساپ بیزینس",
-      "اتصال به تلگرام و اینستاگرام",
-      "مدیریت همه کانال‌ها از یک پنل",
-      "گزارش عملکرد به‌تفکیک هر کانال",
-    ],
-  },
-  {
-    icon: Palette,
-    title: "ابزارک قابل شخصی‌سازی",
-    desc: "رنگ، موقعیت، متن و رفتار ابزارک را دقیقاً مطابق هویت بصری برند خود تنظیم کنید.",
-    bullets: [
-      "تنظیم رنگ و لوگو مطابق برند",
-      "موقعیت راست یا چپ صفحه",
-      "نصب با یک خط کد، بدون برنامه‌نویس",
-      "سازگار با هر سایت و فروشگاه اینترنتی",
-    ],
-  },
-  {
-    icon: BarChart3,
-    title: "گزارش‌ها و تحلیل‌های پیشرفته",
-    desc: "عملکرد تیم پشتیبانی و فروش را با گزارش‌های دقیق و لحظه‌ای رصد کنید.",
-    bullets: [
-      "میانگین زمان پاسخ‌گویی هر اپراتور",
-      "نرخ رضایت مشتریان",
-      "گزارش حجم گفتگو در بازه‌های زمانی",
-      "خروجی Excel برای تحلیل بیشتر",
-    ],
-  },
-  {
-    icon: Webhook,
-    title: "API و یکپارچه‌سازی",
-    desc: "REST API کامل و سیستم Webhook برای اتصال وب‌یار به سایر ابزارهای کسب‌وکار شما.",
-    bullets: [
-      "REST API کامل و مستندشده",
-      "Webhook برای رویدادهای لحظه‌ای",
-      "اتصال به فروشگاه‌ساز و CRM‌های دیگر",
-      "کلید API اختصاصی برای هر حساب",
-    ],
-  },
-] as const;
+const allProducts = productCategories.flatMap((c) => c.items);
 
 function ProductsPage() {
   const { settings, seoOverride } = Route.useLoaderData();
@@ -156,7 +45,7 @@ function ProductsPage() {
     "@context": "https://schema.org",
     "@type": "ItemList",
     name: "محصولات وب‌یار",
-    itemListElement: products.map((p, i) => ({
+    itemListElement: allProducts.map((p, i) => ({
       "@type": "ListItem",
       position: i + 1,
       item: {
@@ -207,35 +96,48 @@ function ProductsPage() {
         </div>
       </section>
 
-      <div className="container-page pb-16 sm:pb-24">
-        <StaggerChildren className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {products.map((p, i) => {
-            const tint = TINTS[i % TINTS.length]!;
-            return (
-              <motion.div
-                key={p.title}
-                variants={childVariant}
-                className="flex flex-col rounded-2xl border border-border bg-card p-6 shadow-card transition-shadow hover:shadow-glow sm:p-7"
-              >
-                <div
-                  className={`mb-5 flex h-14 w-14 items-center justify-center rounded-2xl ${tint.bg}`}
-                >
-                  <p.icon className={`h-7 w-7 ${tint.text}`} />
-                </div>
-                <h3 className="mb-2 text-lg font-bold text-foreground">{p.title}</h3>
-                <p className="mb-5 text-sm leading-relaxed text-muted-foreground">{p.desc}</p>
-                <ul className="mt-auto space-y-2">
-                  {p.bullets.map((b) => (
-                    <li key={b} className="flex items-start gap-2 text-sm text-muted-foreground">
-                      <Check className="mt-0.5 h-4 w-4 shrink-0 text-success" />
-                      <span>{b}</span>
-                    </li>
-                  ))}
-                </ul>
-              </motion.div>
-            );
-          })}
-        </StaggerChildren>
+      <div className="container-page space-y-16 pb-16 sm:space-y-20 sm:pb-24">
+        {productCategories.map((category) => (
+          <div key={category.title}>
+            <ScrollReveal className="mb-6">
+              <h2 className="text-xl font-extrabold text-foreground sm:text-2xl">
+                {category.title}
+              </h2>
+            </ScrollReveal>
+            <StaggerChildren className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+              {category.items.map((p, i) => {
+                const tint = TINTS[i % TINTS.length]!;
+                return (
+                  <motion.div
+                    key={p.slug}
+                    id={p.slug}
+                    variants={childVariant}
+                    className="flex scroll-mt-28 flex-col rounded-2xl border border-border bg-card p-6 shadow-card transition-shadow hover:shadow-glow sm:p-7"
+                  >
+                    <div
+                      className={`mb-5 flex h-14 w-14 items-center justify-center rounded-2xl ${tint.bg}`}
+                    >
+                      <p.icon className={`h-7 w-7 ${tint.text}`} />
+                    </div>
+                    <h3 className="mb-2 text-lg font-bold text-foreground">{p.title}</h3>
+                    <p className="mb-5 text-sm leading-relaxed text-muted-foreground">{p.desc}</p>
+                    <ul className="mt-auto space-y-2">
+                      {p.bullets.map((b) => (
+                        <li
+                          key={b}
+                          className="flex items-start gap-2 text-sm text-muted-foreground"
+                        >
+                          <Check className="mt-0.5 h-4 w-4 shrink-0 text-success" />
+                          <span>{b}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </motion.div>
+                );
+              })}
+            </StaggerChildren>
+          </div>
+        ))}
       </div>
 
       <div className="bg-secondary/30 px-4 py-16 text-center sm:px-8 sm:py-24">
