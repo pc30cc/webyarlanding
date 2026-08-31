@@ -533,9 +533,15 @@ function ItemEditor({
               />
             </div>
             <div className="flex flex-col gap-1.5">
-              <Label>توضیح کامل (برای صفحه اختصاصی)</Label>
+              <Label>محتوای کامل صفحه اختصاصی (Markdown)</Label>
+              <p className="text-xs text-muted-foreground">
+                این متن، مقاله اصلی صفحه است — هرچه کامل‌تر و طولانی‌تر باشد برای سئوی گوگل بهتر
+                است. از ## برای زیرعنوان و پاراگراف‌های جدا برای متن استفاده کنید.
+              </p>
               <Textarea
-                rows={4}
+                rows={14}
+                dir="rtl"
+                className="font-mono text-sm"
                 value={form.description}
                 onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
               />

@@ -1,5 +1,6 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { motion } from "framer-motion";
+import ReactMarkdown from "react-markdown";
 import { ArrowRight, Check, ChevronLeft } from "lucide-react";
 import { fetchSettings } from "@/lib/settings.functions";
 import { getPublicSeoPage } from "@/lib/seo.functions";
@@ -27,7 +28,7 @@ export const Route = createFileRoute("/solutions/$slug")({
       path: `/solutions/${params.slug}`,
       override: seoOverride,
       fallbackTitle: `${item.title} | راه‌کارهای وب‌یار`,
-      fallbackDescription: item.description || item.shortDesc,
+      fallbackDescription: item.shortDesc || item.description,
     });
   },
   notFoundComponent: () => (
@@ -52,7 +53,7 @@ function SolutionDetailPage() {
       "@context": "https://schema.org",
       "@type": "Service",
       name: item.title,
-      description: item.description || item.shortDesc,
+      description: item.shortDesc || item.description,
       url,
       provider: { "@type": "Organization", name: settings.brand.name, url: base || undefined },
     },
@@ -120,7 +121,7 @@ function SolutionDetailPage() {
               {item.title}
             </h1>
             <p className="max-w-2xl text-base leading-[1.9] text-muted-foreground sm:text-lg">
-              {item.description || item.shortDesc}
+              {item.shortDesc || item.description}
             </p>
           </motion.div>
         </div>
@@ -128,6 +129,12 @@ function SolutionDetailPage() {
 
       <div className="container-page pb-16 sm:pb-24">
         <div className="max-w-3xl">
+          {item.description && (
+            <ScrollReveal className="prose prose-sm mb-14 max-w-none prose-headings:text-foreground prose-p:leading-[1.9] prose-p:text-muted-foreground prose-a:text-brand prose-strong:text-foreground sm:prose-base dark:prose-invert">
+              <ReactMarkdown>{item.description}</ReactMarkdown>
+            </ScrollReveal>
+          )}
+
           <ScrollReveal>
             <h2 className="mb-6 text-xl font-extrabold text-foreground sm:text-2xl">
               وب‌یار برای {item.title} چه می‌کند
