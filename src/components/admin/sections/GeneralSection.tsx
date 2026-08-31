@@ -229,7 +229,7 @@ export default function GeneralSection() {
                 <Field label="مدل تولید تصویر">
                   <Input
                     dir="ltr"
-                    placeholder="dall-e-3"
+                    placeholder="gpt-image-1"
                     value={form.ai.openai.imageModel}
                     onChange={(e) =>
                       setForm((f) => ({

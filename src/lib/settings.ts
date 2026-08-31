@@ -159,7 +159,7 @@ export const DEFAULT_SETTINGS: SiteSettings = {
   ai: {
     enabled: true,
     provider: "openai",
-    openai: { textModel: "gpt-4o-mini", imageModel: "dall-e-3" },
+    openai: { textModel: "gpt-4o-mini", imageModel: "gpt-image-1" },
     gemini: { textModel: "gemini-2.0-flash", imageModel: "gemini-2.5-flash-image" },
     systemPrompt:
       "تو یک نویسنده حرفه‌ای فارسی‌زبان در حوزه فناوری و کسب‌وکار هستی. محتوای دقیق، روان، سئوشده و بدون کلیشه بنویس.",
