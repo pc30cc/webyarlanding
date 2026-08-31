@@ -39,6 +39,8 @@ export function buildPageMeta(opts: {
   ogType?: string;
   /** متاتگ‌های اضافی مخصوص نوع محتوا (مثل article:published_time) */
   extraMeta?: { property?: string; name?: string; content: string }[];
+  /** پیش‌فرض robots وقتی نه override اختصاصی صفحه و نه تنظیمات عمومی سئو مقداری دارند (پیش‌فرض: "index,follow") — برای صفحات کم‌محتوا (مثل برچسب‌های تک‌مقاله‌ای) "noindex,follow" بدهید */
+  defaultRobots?: string;
 }) {
   const {
     settings,
@@ -49,6 +51,7 @@ export function buildPageMeta(opts: {
     fallbackOgImage,
     ogType = "website",
     extraMeta = [],
+    defaultRobots = "index,follow",
   } = opts;
   const base = (settings.brand.siteUrl || "").replace(/\/$/, "");
 
@@ -62,7 +65,7 @@ export function buildPageMeta(opts: {
   const canonical = override?.canonicalUrl || (base ? `${base}${path}` : undefined);
   const robots =
     override?.robots ||
-    (looksLikeMetaRobots(settings.seo.robots) ? settings.seo.robots : "index,follow");
+    (looksLikeMetaRobots(settings.seo.robots) ? settings.seo.robots : defaultRobots);
 
   return {
     meta: [

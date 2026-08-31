@@ -156,9 +156,27 @@ function pickTopic(pool: string[], seed: number): string {
     "تکنولوژی و فناوری‌های روز",
     "هوش مصنوعی و یادگیری ماشین",
     "کسب‌وکارهای اینترنتی و دیجیتال مارکتینگ",
+    "چت آنلاین و تجربه مشتری",
+    "اتوماسیون فروش و بازاریابی",
+    "امنیت سایبری برای کسب‌وکارها",
+    "طراحی و تجربه کاربری وب‌سایت",
+    "شبکه‌های اجتماعی و برندسازی",
+    "تحلیل داده و تصمیم‌گیری در کسب‌وکار",
+    "خدمات ابری و زیرساخت فناوری",
+    "روندهای آینده فناوری اطلاعات",
   ];
   const list = pool.length ? pool : defaults;
   return list[seed % list.length]!;
+}
+
+/** عنوان چند مقاله‌ی اخیر — برای اینکه از تکرار موضوع/محتوای مشابه در تولید خودکار جلوگیری شود */
+async function recentPostTitles(limit = 8): Promise<string[]> {
+  const { data } = await db
+    .from("blog_posts")
+    .select("title")
+    .order("created_at", { ascending: false })
+    .limit(limit);
+  return (data ?? []).map((row) => row.title);
 }
 
 export async function runAutoblog(
@@ -193,8 +211,12 @@ export async function runAutoblog(
     const { savePost } = await import("./blog.server");
 
     const topic = pickTopic(settings.topicPool, settings.totalGenerated);
+    const recentTitles = await recentPostTitles();
+    const avoidRepeatHint = recentTitles.length
+      ? `\n\nعناوین مقالاتی که اخیراً منتشر شده‌اند (از تکرار موضوع یا محتوای مشابه با این‌ها جداً خودداری کن و زاویه‌ی کاملاً تازه‌ای انتخاب کن):\n- ${recentTitles.join("\n- ")}`
+      : "";
     const generated = await generatePostContent({
-      topic: `${settings.masterPrompt || DEFAULT_MASTER_PROMPT}\n\nموضوع این مقاله: ${topic}`,
+      topic: `${settings.masterPrompt || DEFAULT_MASTER_PROMPT}\n\nموضوع این مقاله: ${topic}${avoidRepeatHint}`,
       length: "medium",
     });
 
