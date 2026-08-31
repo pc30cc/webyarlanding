@@ -6,10 +6,9 @@ import { Button } from "@/components/ui/button";
 import type { SiteSettings } from "@/lib/settings";
 
 const NAV_LINKS = [
-  { to: "/", hash: "features", label: "امکانات" },
+  { to: "/products", label: "محصولات" },
+  { to: "/solutions", label: "راه‌کارها" },
   { to: "/pricing", label: "قیمت‌گذاری" },
-  { to: "/blog", label: "بلاگ" },
-  { to: "/api-docs", label: "مستندات API" },
 ] as const;
 
 export function SiteHeader({ settings }: { settings: SiteSettings }) {
@@ -35,14 +34,11 @@ export function SiteHeader({ settings }: { settings: SiteSettings }) {
 
         <nav className="hidden items-center gap-7 text-sm font-medium text-muted-foreground md:flex">
           {NAV_LINKS.map((link) => {
-            const isHashLink = "hash" in link;
-            const isActive = !isHashLink && pathname === link.to;
-            const hashProps = isHashLink ? { hash: link.hash } : {};
+            const isActive = pathname === link.to;
             return (
               <Link
                 key={link.label}
                 to={link.to}
-                {...hashProps}
                 className={`transition-colors hover:text-foreground ${isActive ? "text-foreground" : ""}`}
               >
                 {link.label}
@@ -94,7 +90,6 @@ export function SiteHeader({ settings }: { settings: SiteSettings }) {
                 <Link
                   key={link.label}
                   to={link.to}
-                  {...("hash" in link ? { hash: link.hash } : {})}
                   onClick={() => setOpen(false)}
                   className="block rounded-lg px-3 py-2.5 text-sm text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
                 >
@@ -110,7 +105,9 @@ export function SiteHeader({ settings }: { settings: SiteSettings }) {
                   )}
                   {auth.loginUrl && (
                     <a href={auth.loginUrl} className="block">
-                      <Button variant="outline" className="h-10 w-full">{auth.loginLabel || "ورود"}</Button>
+                      <Button variant="outline" className="h-10 w-full">
+                        {auth.loginLabel || "ورود"}
+                      </Button>
                     </a>
                   )}
                 </div>

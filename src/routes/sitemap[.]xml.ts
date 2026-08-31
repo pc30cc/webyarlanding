@@ -2,7 +2,19 @@ import { createFileRoute } from "@tanstack/react-router";
 import { fetchSettings } from "@/lib/settings.functions";
 import { listPublishedPosts, listCategories, listTags } from "@/lib/blog.functions";
 
-const staticPaths = ["/", "/about", "/pricing", "/contact", "/blog", "/terms", "/privacy", "/sla", "/api-docs"];
+const staticPaths = [
+  "/",
+  "/products",
+  "/solutions",
+  "/about",
+  "/pricing",
+  "/contact",
+  "/blog",
+  "/terms",
+  "/privacy",
+  "/sla",
+  "/api-docs",
+];
 
 export const Route = createFileRoute("/sitemap.xml")({
   server: {
