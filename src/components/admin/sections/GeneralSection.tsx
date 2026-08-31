@@ -13,6 +13,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Select,
   SelectContent,
@@ -56,7 +57,9 @@ export default function GeneralSection() {
     <div className="flex flex-col gap-6">
       <div>
         <h1 className="text-2xl font-bold text-foreground">تنظیمات عمومی</h1>
-        <p className="text-sm text-muted-foreground">اطلاعات برند، تماس و شبکه‌های اجتماعی سایت</p>
+        <p className="text-sm text-muted-foreground">
+          برند، شبکه‌های اجتماعی، هوش مصنوعی، ذخیره‌سازی رسانه و اسکریپت‌های سایت
+        </p>
       </div>
 
       <form
@@ -66,494 +69,544 @@ export default function GeneralSection() {
         }}
         className="flex flex-col gap-6"
       >
-        <section className="rounded-xl border border-border bg-card p-4 shadow-sm">
-          <h2 className="mb-4 text-base font-semibold text-foreground">برند</h2>
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <Field label="نام برند">
-              <Input
-                value={form.brand.name}
-                onChange={(e) =>
-                  setForm((f) => ({ ...f, brand: { ...f.brand, name: e.target.value } }))
-                }
-              />
-            </Field>
-            <Field label="شعار / تگ‌لاین">
-              <Input
-                value={form.brand.tagline}
-                onChange={(e) =>
-                  setForm((f) => ({ ...f, brand: { ...f.brand, tagline: e.target.value } }))
-                }
-              />
-            </Field>
-            <Field label="آدرس لوگو">
-              <Input
-                dir="ltr"
-                value={form.brand.logoUrl}
-                onChange={(e) =>
-                  setForm((f) => ({ ...f, brand: { ...f.brand, logoUrl: e.target.value } }))
-                }
-              />
-            </Field>
-            <Field label="آدرس فاوآیکون">
-              <Input
-                dir="ltr"
-                value={form.brand.faviconUrl}
-                onChange={(e) =>
-                  setForm((f) => ({ ...f, brand: { ...f.brand, faviconUrl: e.target.value } }))
-                }
-              />
-            </Field>
-            <Field label="آدرس سایت">
-              <Input
-                dir="ltr"
-                value={form.brand.siteUrl}
-                onChange={(e) =>
-                  setForm((f) => ({ ...f, brand: { ...f.brand, siteUrl: e.target.value } }))
-                }
-              />
-            </Field>
-            <Field label="تلفن">
-              <Input
-                dir="ltr"
-                value={form.brand.phone}
-                onChange={(e) =>
-                  setForm((f) => ({ ...f, brand: { ...f.brand, phone: e.target.value } }))
-                }
-              />
-            </Field>
-            <Field label="ایمیل">
-              <Input
-                dir="ltr"
-                value={form.brand.email}
-                onChange={(e) =>
-                  setForm((f) => ({ ...f, brand: { ...f.brand, email: e.target.value } }))
-                }
-              />
-            </Field>
-            <Field label="آدرس">
-              <Input
-                value={form.brand.address}
-                onChange={(e) =>
-                  setForm((f) => ({ ...f, brand: { ...f.brand, address: e.target.value } }))
-                }
-              />
-            </Field>
-            <Field label="متن کپی‌رایت" full>
-              <Input
-                value={form.brand.copyright}
-                onChange={(e) =>
-                  setForm((f) => ({ ...f, brand: { ...f.brand, copyright: e.target.value } }))
-                }
-              />
-            </Field>
-          </div>
-        </section>
+        <Tabs defaultValue="brand">
+          <TabsList className="h-auto flex-wrap">
+            <TabsTrigger value="brand">برند</TabsTrigger>
+            <TabsTrigger value="social">شبکه‌های اجتماعی</TabsTrigger>
+            <TabsTrigger value="ai">هوش مصنوعی</TabsTrigger>
+            <TabsTrigger value="media">ذخیره‌سازی رسانه</TabsTrigger>
+            <TabsTrigger value="analytics">تحلیل و اسکریپت‌ها</TabsTrigger>
+          </TabsList>
 
-        <section className="rounded-xl border border-border bg-card p-4 shadow-sm">
-          <h2 className="mb-4 text-base font-semibold text-foreground">شبکه‌های اجتماعی</h2>
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            {(Object.keys(form.social) as (keyof typeof form.social)[]).map((key) => (
-              <Field key={key} label={socialLabels[key] ?? key}>
-                <Input
-                  dir="ltr"
-                  value={form.social[key] ?? ""}
-                  onChange={(e) =>
-                    setForm((f) => ({ ...f, social: { ...f.social, [key]: e.target.value } }))
-                  }
-                />
-              </Field>
-            ))}
-          </div>
-        </section>
+          <TabsContent value="brand" className="mt-6">
+            <section className="rounded-xl border border-border bg-card p-4 shadow-sm">
+              <h2 className="mb-4 text-base font-semibold text-foreground">برند</h2>
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <Field label="نام برند">
+                  <Input
+                    value={form.brand.name}
+                    onChange={(e) =>
+                      setForm((f) => ({ ...f, brand: { ...f.brand, name: e.target.value } }))
+                    }
+                  />
+                </Field>
+                <Field label="شعار / تگ‌لاین">
+                  <Input
+                    value={form.brand.tagline}
+                    onChange={(e) =>
+                      setForm((f) => ({ ...f, brand: { ...f.brand, tagline: e.target.value } }))
+                    }
+                  />
+                </Field>
+                <Field label="آدرس لوگو">
+                  <Input
+                    dir="ltr"
+                    value={form.brand.logoUrl}
+                    onChange={(e) =>
+                      setForm((f) => ({ ...f, brand: { ...f.brand, logoUrl: e.target.value } }))
+                    }
+                  />
+                </Field>
+                <Field label="آدرس فاوآیکون">
+                  <Input
+                    dir="ltr"
+                    value={form.brand.faviconUrl}
+                    onChange={(e) =>
+                      setForm((f) => ({
+                        ...f,
+                        brand: { ...f.brand, faviconUrl: e.target.value },
+                      }))
+                    }
+                  />
+                </Field>
+                <Field label="آدرس سایت">
+                  <Input
+                    dir="ltr"
+                    value={form.brand.siteUrl}
+                    onChange={(e) =>
+                      setForm((f) => ({ ...f, brand: { ...f.brand, siteUrl: e.target.value } }))
+                    }
+                  />
+                </Field>
+                <Field label="تلفن">
+                  <Input
+                    dir="ltr"
+                    value={form.brand.phone}
+                    onChange={(e) =>
+                      setForm((f) => ({ ...f, brand: { ...f.brand, phone: e.target.value } }))
+                    }
+                  />
+                </Field>
+                <Field label="ایمیل">
+                  <Input
+                    dir="ltr"
+                    value={form.brand.email}
+                    onChange={(e) =>
+                      setForm((f) => ({ ...f, brand: { ...f.brand, email: e.target.value } }))
+                    }
+                  />
+                </Field>
+                <Field label="آدرس">
+                  <Input
+                    value={form.brand.address}
+                    onChange={(e) =>
+                      setForm((f) => ({ ...f, brand: { ...f.brand, address: e.target.value } }))
+                    }
+                  />
+                </Field>
+                <Field label="متن کپی‌رایت" full>
+                  <Input
+                    value={form.brand.copyright}
+                    onChange={(e) =>
+                      setForm((f) => ({
+                        ...f,
+                        brand: { ...f.brand, copyright: e.target.value },
+                      }))
+                    }
+                  />
+                </Field>
+              </div>
+            </section>
+          </TabsContent>
 
-        <section className="rounded-xl border border-border bg-card p-4 shadow-sm">
-          <div className="mb-4 flex items-center justify-between">
-            <h2 className="text-base font-semibold text-foreground">هوش مصنوعی</h2>
-            <div className="flex items-center gap-2">
-              <Label className="cursor-pointer text-xs">فعال</Label>
-              <Switch
-                checked={form.ai.enabled}
-                onCheckedChange={(v) => setForm((f) => ({ ...f, ai: { ...f.ai, enabled: v } }))}
-              />
-            </div>
-          </div>
-          <div className="grid grid-cols-1 gap-4">
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <Field label="سرویس تولید متن مقاله (دستی و خودکار)">
+          <TabsContent value="social" className="mt-6">
+            <section className="rounded-xl border border-border bg-card p-4 shadow-sm">
+              <h2 className="mb-4 text-base font-semibold text-foreground">شبکه‌های اجتماعی</h2>
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                {(Object.keys(form.social) as (keyof typeof form.social)[]).map((key) => (
+                  <Field key={key} label={socialLabels[key] ?? key}>
+                    <Input
+                      dir="ltr"
+                      value={form.social[key] ?? ""}
+                      onChange={(e) =>
+                        setForm((f) => ({ ...f, social: { ...f.social, [key]: e.target.value } }))
+                      }
+                    />
+                  </Field>
+                ))}
+              </div>
+            </section>
+          </TabsContent>
+
+          <TabsContent value="ai" className="mt-6 flex flex-col gap-6">
+            <section className="rounded-xl border border-border bg-card p-4 shadow-sm">
+              <div className="mb-4 flex items-center justify-between">
+                <h2 className="text-base font-semibold text-foreground">هوش مصنوعی</h2>
+                <div className="flex items-center gap-2">
+                  <Label className="cursor-pointer text-xs">فعال</Label>
+                  <Switch
+                    checked={form.ai.enabled}
+                    onCheckedChange={(v) => setForm((f) => ({ ...f, ai: { ...f.ai, enabled: v } }))}
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-1 gap-4">
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  <Field label="سرویس تولید متن مقاله (دستی و خودکار)">
+                    <Select
+                      value={form.ai.textProvider}
+                      onValueChange={(v) =>
+                        setForm((f) => ({
+                          ...f,
+                          ai: { ...f.ai, textProvider: v as "openai" | "gemini" },
+                        }))
+                      }
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="openai">OpenAI</SelectItem>
+                        <SelectItem value="gemini">Google Gemini</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </Field>
+                  <Field label="سرویس تولید تصویر کاور">
+                    <Select
+                      value={form.ai.imageProvider}
+                      onValueChange={(v) =>
+                        setForm((f) => ({
+                          ...f,
+                          ai: { ...f.ai, imageProvider: v as "openai" | "gemini" },
+                        }))
+                      }
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="openai">OpenAI</SelectItem>
+                        <SelectItem value="gemini">Google Gemini</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </Field>
+                </div>
+
+                <p className="text-xs text-muted-foreground">
+                  تنظیمات دو سرویس کاملاً از هم جدا هستند و هر دو نگه داشته می‌شوند؛ تولید متن و
+                  تولید تصویر می‌توانند از دو سرویس متفاوت استفاده کنند.
+                </p>
+
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  <div
+                    className={`flex flex-col gap-3 rounded-lg border p-3 ${form.ai.textProvider === "openai" || form.ai.imageProvider === "openai" ? "border-primary/40 bg-primary/5" : "border-border"}`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <h3 className="text-sm font-semibold text-foreground">OpenAI</h3>
+                      <div className="flex gap-1">
+                        {form.ai.textProvider === "openai" && (
+                          <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-medium text-primary">
+                            متن
+                          </span>
+                        )}
+                        {form.ai.imageProvider === "openai" && (
+                          <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-medium text-primary">
+                            تصویر
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    <Field label="مدل تولید متن">
+                      <Input
+                        dir="ltr"
+                        placeholder="gpt-4o-mini"
+                        value={form.ai.openai.textModel}
+                        onChange={(e) =>
+                          setForm((f) => ({
+                            ...f,
+                            ai: { ...f.ai, openai: { ...f.ai.openai, textModel: e.target.value } },
+                          }))
+                        }
+                      />
+                    </Field>
+                    <Field label="مدل تولید تصویر">
+                      <Input
+                        dir="ltr"
+                        placeholder="gpt-image-1-mini"
+                        value={form.ai.openai.imageModel}
+                        onChange={(e) =>
+                          setForm((f) => ({
+                            ...f,
+                            ai: {
+                              ...f.ai,
+                              openai: { ...f.ai.openai, imageModel: e.target.value },
+                            },
+                          }))
+                        }
+                      />
+                    </Field>
+                  </div>
+
+                  <div
+                    className={`flex flex-col gap-3 rounded-lg border p-3 ${form.ai.textProvider === "gemini" || form.ai.imageProvider === "gemini" ? "border-primary/40 bg-primary/5" : "border-border"}`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <h3 className="text-sm font-semibold text-foreground">Google Gemini</h3>
+                      <div className="flex gap-1">
+                        {form.ai.textProvider === "gemini" && (
+                          <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-medium text-primary">
+                            متن
+                          </span>
+                        )}
+                        {form.ai.imageProvider === "gemini" && (
+                          <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-medium text-primary">
+                            تصویر
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    <Field label="مدل تولید متن">
+                      <Input
+                        dir="ltr"
+                        placeholder="gemini-3.1-flash-lite"
+                        value={form.ai.gemini.textModel}
+                        onChange={(e) =>
+                          setForm((f) => ({
+                            ...f,
+                            ai: { ...f.ai, gemini: { ...f.ai.gemini, textModel: e.target.value } },
+                          }))
+                        }
+                      />
+                    </Field>
+                    <Field label="مدل تولید تصویر">
+                      <Input
+                        dir="ltr"
+                        placeholder="gemini-3.1-flash-lite-image"
+                        value={form.ai.gemini.imageModel}
+                        onChange={(e) =>
+                          setForm((f) => ({
+                            ...f,
+                            ai: {
+                              ...f.ai,
+                              gemini: { ...f.ai.gemini, imageModel: e.target.value },
+                            },
+                          }))
+                        }
+                      />
+                    </Field>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  <Field label="خلاقیت پاسخ (Temperature ۰ تا ۱)">
+                    <Input
+                      dir="ltr"
+                      type="number"
+                      step="0.1"
+                      min="0"
+                      max="1"
+                      value={form.ai.temperature}
+                      onChange={(e) =>
+                        setForm((f) => ({
+                          ...f,
+                          ai: { ...f.ai, temperature: Number(e.target.value) || 0 },
+                        }))
+                      }
+                    />
+                  </Field>
+                  <Field label="سبک و لحن نوشتار">
+                    <Textarea
+                      rows={2}
+                      value={form.ai.systemPrompt}
+                      onChange={(e) =>
+                        setForm((f) => ({ ...f, ai: { ...f.ai, systemPrompt: e.target.value } }))
+                      }
+                    />
+                  </Field>
+                </div>
+              </div>
+              <p className="mt-3 text-xs text-muted-foreground">
+                کلید API این سرویس‌ها را در بخش «کلیدهای API هوش مصنوعی» زیر همین کارت وارد کنید.
+              </p>
+            </section>
+
+            <AiKeysSection />
+          </TabsContent>
+
+          <TabsContent value="media" className="mt-6 flex flex-col gap-6">
+            <section className="rounded-xl border border-border bg-card p-4 shadow-sm">
+              <h2 className="mb-4 text-base font-semibold text-foreground">ذخیره‌سازی رسانه</h2>
+              <p className="mb-4 text-xs text-muted-foreground">
+                تصاویری که با هوش مصنوعی تولید می‌شوند (کاور مقالات) در دیتابیس ذخیره نمی‌شوند و
+                باید به یک محل ذخیره‌سازی خارجی آپلود شوند. یکی از دو سرویس زیر را وصل کنید.
+              </p>
+              <Field label="محل ذخیره‌سازی فعال">
                 <Select
-                  value={form.ai.textProvider}
+                  value={form.media.provider}
                   onValueChange={(v) =>
                     setForm((f) => ({
                       ...f,
-                      ai: { ...f.ai, textProvider: v as "openai" | "gemini" },
+                      media: { ...f.media, provider: v as "none" | "bunny" | "arvan" },
                     }))
                   }
                 >
-                  <SelectTrigger>
+                  <SelectTrigger className="sm:w-64">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="openai">OpenAI</SelectItem>
-                    <SelectItem value="gemini">Google Gemini</SelectItem>
+                    <SelectItem value="none">هیچ‌کدام (متصل نیست)</SelectItem>
+                    <SelectItem value="bunny">بانی سی‌دی‌ان (Bunny CDN)</SelectItem>
+                    <SelectItem value="arvan">ابر آروان (ArvanCloud)</SelectItem>
                   </SelectContent>
                 </Select>
               </Field>
-              <Field label="سرویس تولید تصویر کاور">
-                <Select
-                  value={form.ai.imageProvider}
-                  onValueChange={(v) =>
-                    setForm((f) => ({
-                      ...f,
-                      ai: { ...f.ai, imageProvider: v as "openai" | "gemini" },
-                    }))
-                  }
+
+              <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <div
+                  className={`flex flex-col gap-3 rounded-lg border p-3 ${form.media.provider === "bunny" ? "border-primary/40 bg-primary/5" : "border-border"}`}
                 >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="openai">OpenAI</SelectItem>
-                    <SelectItem value="gemini">Google Gemini</SelectItem>
-                  </SelectContent>
-                </Select>
-              </Field>
-            </div>
-
-            <p className="text-xs text-muted-foreground">
-              تنظیمات دو سرویس کاملاً از هم جدا هستند و هر دو نگه داشته می‌شوند؛ تولید متن و تولید
-              تصویر می‌توانند از دو سرویس متفاوت استفاده کنند.
-            </p>
-
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <div
-                className={`flex flex-col gap-3 rounded-lg border p-3 ${form.ai.textProvider === "openai" || form.ai.imageProvider === "openai" ? "border-primary/40 bg-primary/5" : "border-border"}`}
-              >
-                <div className="flex items-center justify-between">
-                  <h3 className="text-sm font-semibold text-foreground">OpenAI</h3>
-                  <div className="flex gap-1">
-                    {form.ai.textProvider === "openai" && (
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-sm font-semibold text-foreground">Bunny CDN</h3>
+                    {form.media.provider === "bunny" && (
                       <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-medium text-primary">
-                        متن
-                      </span>
-                    )}
-                    {form.ai.imageProvider === "openai" && (
-                      <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-medium text-primary">
-                        تصویر
+                        فعال
                       </span>
                     )}
                   </div>
+                  <Field label="نام Storage Zone">
+                    <Input
+                      dir="ltr"
+                      placeholder="my-storage-zone"
+                      value={form.media.bunny.storageZone}
+                      onChange={(e) =>
+                        setForm((f) => ({
+                          ...f,
+                          media: {
+                            ...f.media,
+                            bunny: { ...f.media.bunny, storageZone: e.target.value },
+                          },
+                        }))
+                      }
+                    />
+                  </Field>
+                  <Field label="کد ناحیه (اختیاری — خالی = پیش‌فرض)">
+                    <Input
+                      dir="ltr"
+                      placeholder="ny / la / sg / syd / uk"
+                      value={form.media.bunny.region}
+                      onChange={(e) =>
+                        setForm((f) => ({
+                          ...f,
+                          media: {
+                            ...f.media,
+                            bunny: { ...f.media.bunny, region: e.target.value },
+                          },
+                        }))
+                      }
+                    />
+                  </Field>
+                  <Field label="آدرس Pull Zone">
+                    <Input
+                      dir="ltr"
+                      placeholder="https://xxxx.b-cdn.net"
+                      value={form.media.bunny.pullZoneUrl}
+                      onChange={(e) =>
+                        setForm((f) => ({
+                          ...f,
+                          media: {
+                            ...f.media,
+                            bunny: { ...f.media.bunny, pullZoneUrl: e.target.value },
+                          },
+                        }))
+                      }
+                    />
+                  </Field>
                 </div>
-                <Field label="مدل تولید متن">
-                  <Input
-                    dir="ltr"
-                    placeholder="gpt-4o-mini"
-                    value={form.ai.openai.textModel}
-                    onChange={(e) =>
-                      setForm((f) => ({
-                        ...f,
-                        ai: { ...f.ai, openai: { ...f.ai.openai, textModel: e.target.value } },
-                      }))
-                    }
-                  />
-                </Field>
-                <Field label="مدل تولید تصویر">
-                  <Input
-                    dir="ltr"
-                    placeholder="gpt-image-1-mini"
-                    value={form.ai.openai.imageModel}
-                    onChange={(e) =>
-                      setForm((f) => ({
-                        ...f,
-                        ai: { ...f.ai, openai: { ...f.ai.openai, imageModel: e.target.value } },
-                      }))
-                    }
-                  />
-                </Field>
-              </div>
 
-              <div
-                className={`flex flex-col gap-3 rounded-lg border p-3 ${form.ai.textProvider === "gemini" || form.ai.imageProvider === "gemini" ? "border-primary/40 bg-primary/5" : "border-border"}`}
-              >
-                <div className="flex items-center justify-between">
-                  <h3 className="text-sm font-semibold text-foreground">Google Gemini</h3>
-                  <div className="flex gap-1">
-                    {form.ai.textProvider === "gemini" && (
+                <div
+                  className={`flex flex-col gap-3 rounded-lg border p-3 ${form.media.provider === "arvan" ? "border-primary/40 bg-primary/5" : "border-border"}`}
+                >
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-sm font-semibold text-foreground">
+                      ابر آروان (ArvanCloud)
+                    </h3>
+                    {form.media.provider === "arvan" && (
                       <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-medium text-primary">
-                        متن
-                      </span>
-                    )}
-                    {form.ai.imageProvider === "gemini" && (
-                      <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-medium text-primary">
-                        تصویر
+                        فعال
                       </span>
                     )}
                   </div>
+                  <Field label="نام باکت (Bucket)">
+                    <Input
+                      dir="ltr"
+                      placeholder="my-bucket"
+                      value={form.media.arvan.bucket}
+                      onChange={(e) =>
+                        setForm((f) => ({
+                          ...f,
+                          media: {
+                            ...f.media,
+                            arvan: { ...f.media.arvan, bucket: e.target.value },
+                          },
+                        }))
+                      }
+                    />
+                  </Field>
+                  <Field label="آدرس Endpoint">
+                    <Input
+                      dir="ltr"
+                      placeholder="https://s3.ir-thr-at1.arvanstorage.ir"
+                      value={form.media.arvan.endpoint}
+                      onChange={(e) =>
+                        setForm((f) => ({
+                          ...f,
+                          media: {
+                            ...f.media,
+                            arvan: { ...f.media.arvan, endpoint: e.target.value },
+                          },
+                        }))
+                      }
+                    />
+                  </Field>
+                  <Field label="کد ناحیه">
+                    <Input
+                      dir="ltr"
+                      placeholder="ir-thr-at1"
+                      value={form.media.arvan.region}
+                      onChange={(e) =>
+                        setForm((f) => ({
+                          ...f,
+                          media: {
+                            ...f.media,
+                            arvan: { ...f.media.arvan, region: e.target.value },
+                          },
+                        }))
+                      }
+                    />
+                  </Field>
+                  <Field label="آدرس عمومی (اختیاری — خالی = ساخته‌شده از endpoint)">
+                    <Input
+                      dir="ltr"
+                      placeholder="https://my-bucket.s3.ir-thr-at1.arvanstorage.ir"
+                      value={form.media.arvan.publicUrl}
+                      onChange={(e) =>
+                        setForm((f) => ({
+                          ...f,
+                          media: {
+                            ...f.media,
+                            arvan: { ...f.media.arvan, publicUrl: e.target.value },
+                          },
+                        }))
+                      }
+                    />
+                  </Field>
                 </div>
-                <Field label="مدل تولید متن">
+              </div>
+              <p className="mt-3 text-xs text-muted-foreground">
+                کلید دسترسی این سرویس‌ها را در بخش «کلیدهای اتصال ذخیره‌سازی» زیر همین کارت وارد
+                کنید.
+              </p>
+            </section>
+
+            <MediaKeysSection />
+          </TabsContent>
+
+          <TabsContent value="analytics" className="mt-6">
+            <section className="rounded-xl border border-border bg-card p-4 shadow-sm">
+              <h2 className="mb-4 text-base font-semibold text-foreground">تحلیل و اسکریپت‌ها</h2>
+              <div className="grid grid-cols-1 gap-4">
+                <Field label="شناسه گوگل آنالیتیکس">
                   <Input
                     dir="ltr"
-                    placeholder="gemini-3.1-flash-lite"
-                    value={form.ai.gemini.textModel}
+                    value={form.analytics.googleAnalyticsId}
                     onChange={(e) =>
                       setForm((f) => ({
                         ...f,
-                        ai: { ...f.ai, gemini: { ...f.ai.gemini, textModel: e.target.value } },
+                        analytics: { ...f.analytics, googleAnalyticsId: e.target.value },
                       }))
                     }
                   />
                 </Field>
-                <Field label="مدل تولید تصویر">
-                  <Input
+                <Field label="اسکریپت‌های head">
+                  <Textarea
                     dir="ltr"
-                    placeholder="gemini-3.1-flash-lite-image"
-                    value={form.ai.gemini.imageModel}
+                    rows={3}
+                    value={form.analytics.headScripts}
                     onChange={(e) =>
                       setForm((f) => ({
                         ...f,
-                        ai: { ...f.ai, gemini: { ...f.ai.gemini, imageModel: e.target.value } },
+                        analytics: { ...f.analytics, headScripts: e.target.value },
+                      }))
+                    }
+                  />
+                </Field>
+                <Field label="اسکریپت‌های body">
+                  <Textarea
+                    dir="ltr"
+                    rows={3}
+                    value={form.analytics.bodyScripts}
+                    onChange={(e) =>
+                      setForm((f) => ({
+                        ...f,
+                        analytics: { ...f.analytics, bodyScripts: e.target.value },
                       }))
                     }
                   />
                 </Field>
               </div>
-            </div>
-
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <Field label="خلاقیت پاسخ (Temperature ۰ تا ۱)">
-                <Input
-                  dir="ltr"
-                  type="number"
-                  step="0.1"
-                  min="0"
-                  max="1"
-                  value={form.ai.temperature}
-                  onChange={(e) =>
-                    setForm((f) => ({
-                      ...f,
-                      ai: { ...f.ai, temperature: Number(e.target.value) || 0 },
-                    }))
-                  }
-                />
-              </Field>
-              <Field label="سبک و لحن نوشتار">
-                <Textarea
-                  rows={2}
-                  value={form.ai.systemPrompt}
-                  onChange={(e) =>
-                    setForm((f) => ({ ...f, ai: { ...f.ai, systemPrompt: e.target.value } }))
-                  }
-                />
-              </Field>
-            </div>
-          </div>
-          <p className="mt-3 text-xs text-muted-foreground">
-            کلید API این سرویس‌ها را در بخش «کلیدهای API هوش مصنوعی» زیر همین صفحه وارد کنید.
-          </p>
-        </section>
-
-        <AiKeysSection />
-
-        <section className="rounded-xl border border-border bg-card p-4 shadow-sm">
-          <h2 className="mb-4 text-base font-semibold text-foreground">ذخیره‌سازی رسانه</h2>
-          <p className="mb-4 text-xs text-muted-foreground">
-            تصاویری که با هوش مصنوعی تولید می‌شوند (کاور مقالات) در دیتابیس ذخیره نمی‌شوند و باید به
-            یک محل ذخیره‌سازی خارجی آپلود شوند. یکی از دو سرویس زیر را وصل کنید.
-          </p>
-          <Field label="محل ذخیره‌سازی فعال">
-            <Select
-              value={form.media.provider}
-              onValueChange={(v) =>
-                setForm((f) => ({
-                  ...f,
-                  media: { ...f.media, provider: v as "none" | "bunny" | "arvan" },
-                }))
-              }
-            >
-              <SelectTrigger className="sm:w-64">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="none">هیچ‌کدام (متصل نیست)</SelectItem>
-                <SelectItem value="bunny">بانی سی‌دی‌ان (Bunny CDN)</SelectItem>
-                <SelectItem value="arvan">ابر آروان (ArvanCloud)</SelectItem>
-              </SelectContent>
-            </Select>
-          </Field>
-
-          <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <div
-              className={`flex flex-col gap-3 rounded-lg border p-3 ${form.media.provider === "bunny" ? "border-primary/40 bg-primary/5" : "border-border"}`}
-            >
-              <div className="flex items-center justify-between">
-                <h3 className="text-sm font-semibold text-foreground">Bunny CDN</h3>
-                {form.media.provider === "bunny" && (
-                  <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-medium text-primary">
-                    فعال
-                  </span>
-                )}
-              </div>
-              <Field label="نام Storage Zone">
-                <Input
-                  dir="ltr"
-                  placeholder="my-storage-zone"
-                  value={form.media.bunny.storageZone}
-                  onChange={(e) =>
-                    setForm((f) => ({
-                      ...f,
-                      media: {
-                        ...f.media,
-                        bunny: { ...f.media.bunny, storageZone: e.target.value },
-                      },
-                    }))
-                  }
-                />
-              </Field>
-              <Field label="کد ناحیه (اختیاری — خالی = پیش‌فرض)">
-                <Input
-                  dir="ltr"
-                  placeholder="ny / la / sg / syd / uk"
-                  value={form.media.bunny.region}
-                  onChange={(e) =>
-                    setForm((f) => ({
-                      ...f,
-                      media: { ...f.media, bunny: { ...f.media.bunny, region: e.target.value } },
-                    }))
-                  }
-                />
-              </Field>
-              <Field label="آدرس Pull Zone">
-                <Input
-                  dir="ltr"
-                  placeholder="https://xxxx.b-cdn.net"
-                  value={form.media.bunny.pullZoneUrl}
-                  onChange={(e) =>
-                    setForm((f) => ({
-                      ...f,
-                      media: {
-                        ...f.media,
-                        bunny: { ...f.media.bunny, pullZoneUrl: e.target.value },
-                      },
-                    }))
-                  }
-                />
-              </Field>
-            </div>
-
-            <div
-              className={`flex flex-col gap-3 rounded-lg border p-3 ${form.media.provider === "arvan" ? "border-primary/40 bg-primary/5" : "border-border"}`}
-            >
-              <div className="flex items-center justify-between">
-                <h3 className="text-sm font-semibold text-foreground">ابر آروان (ArvanCloud)</h3>
-                {form.media.provider === "arvan" && (
-                  <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-medium text-primary">
-                    فعال
-                  </span>
-                )}
-              </div>
-              <Field label="نام باکت (Bucket)">
-                <Input
-                  dir="ltr"
-                  placeholder="my-bucket"
-                  value={form.media.arvan.bucket}
-                  onChange={(e) =>
-                    setForm((f) => ({
-                      ...f,
-                      media: { ...f.media, arvan: { ...f.media.arvan, bucket: e.target.value } },
-                    }))
-                  }
-                />
-              </Field>
-              <Field label="آدرس Endpoint">
-                <Input
-                  dir="ltr"
-                  placeholder="https://s3.ir-thr-at1.arvanstorage.ir"
-                  value={form.media.arvan.endpoint}
-                  onChange={(e) =>
-                    setForm((f) => ({
-                      ...f,
-                      media: { ...f.media, arvan: { ...f.media.arvan, endpoint: e.target.value } },
-                    }))
-                  }
-                />
-              </Field>
-              <Field label="کد ناحیه">
-                <Input
-                  dir="ltr"
-                  placeholder="ir-thr-at1"
-                  value={form.media.arvan.region}
-                  onChange={(e) =>
-                    setForm((f) => ({
-                      ...f,
-                      media: { ...f.media, arvan: { ...f.media.arvan, region: e.target.value } },
-                    }))
-                  }
-                />
-              </Field>
-              <Field label="آدرس عمومی (اختیاری — خالی = ساخته‌شده از endpoint)">
-                <Input
-                  dir="ltr"
-                  placeholder="https://my-bucket.s3.ir-thr-at1.arvanstorage.ir"
-                  value={form.media.arvan.publicUrl}
-                  onChange={(e) =>
-                    setForm((f) => ({
-                      ...f,
-                      media: { ...f.media, arvan: { ...f.media.arvan, publicUrl: e.target.value } },
-                    }))
-                  }
-                />
-              </Field>
-            </div>
-          </div>
-          <p className="mt-3 text-xs text-muted-foreground">
-            کلید دسترسی این سرویس‌ها را در بخش «کلیدهای اتصال ذخیره‌سازی» زیر همین صفحه وارد کنید.
-          </p>
-        </section>
-
-        <MediaKeysSection />
-
-        <section className="rounded-xl border border-border bg-card p-4 shadow-sm">
-          <h2 className="mb-4 text-base font-semibold text-foreground">تحلیل و اسکریپت‌ها</h2>
-          <div className="grid grid-cols-1 gap-4">
-            <Field label="شناسه گوگل آنالیتیکس">
-              <Input
-                dir="ltr"
-                value={form.analytics.googleAnalyticsId}
-                onChange={(e) =>
-                  setForm((f) => ({
-                    ...f,
-                    analytics: { ...f.analytics, googleAnalyticsId: e.target.value },
-                  }))
-                }
-              />
-            </Field>
-            <Field label="اسکریپت‌های head">
-              <Textarea
-                dir="ltr"
-                rows={3}
-                value={form.analytics.headScripts}
-                onChange={(e) =>
-                  setForm((f) => ({
-                    ...f,
-                    analytics: { ...f.analytics, headScripts: e.target.value },
-                  }))
-                }
-              />
-            </Field>
-            <Field label="اسکریپت‌های body">
-              <Textarea
-                dir="ltr"
-                rows={3}
-                value={form.analytics.bodyScripts}
-                onChange={(e) =>
-                  setForm((f) => ({
-                    ...f,
-                    analytics: { ...f.analytics, bodyScripts: e.target.value },
-                  }))
-                }
-              />
-            </Field>
-          </div>
-        </section>
+            </section>
+          </TabsContent>
+        </Tabs>
 
         <div>
           <Button type="submit" disabled={mutation.isPending} className="gap-2">
