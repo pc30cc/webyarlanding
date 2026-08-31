@@ -8,6 +8,7 @@ const genPostSchema = z.object({
   saveAsDraft: z.boolean().optional().default(false),
   categoryId: z.string().nullable().optional(),
   author: z.string().optional(),
+  withImage: z.boolean().optional().default(false),
 });
 
 function toPersianError(e: unknown): Error {
