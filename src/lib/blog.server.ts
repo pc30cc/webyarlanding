@@ -164,13 +164,15 @@ export async function savePost(input: SavePostInput): Promise<string> {
   };
 
   if (input.id) {
-    await db.from("blog_posts").update(row).eq("id", input.id);
+    const { error } = await db.from("blog_posts").update(row).eq("id", input.id);
+    if (error) throw new Error(`ذخیره‌سازی مقاله ناموفق بود: ${error.message}`);
   } else {
-    await db.from("blog_posts").insert({
+    const { error } = await db.from("blog_posts").insert({
       id,
       ...row,
       published_at: status === "published" ? nowIso() : null,
     });
+    if (error) throw new Error(`ذخیره‌سازی مقاله ناموفق بود: ${error.message}`);
   }
 
   if (input.id && status === "published") {
