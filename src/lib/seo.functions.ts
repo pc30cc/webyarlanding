@@ -15,25 +15,30 @@ export interface SeoPageDto {
   updatedAt: string;
 }
 
-export const listSeoPages = createServerFn({ method: "GET" }).handler(async (): Promise<SeoPageDto[]> => {
-  const { requireAdmin } = await import("./auth.server");
-  const { db } = await import("./db.server");
-  await requireAdmin();
-  const { data } = await db.from("seo_pages").select("*").order("updated_at", { ascending: false });
-  return (data ?? []).map((row) => ({
-    id: row.id,
-    pageKey: row.page_key,
-    path: row.path,
-    title: row.title,
-    description: row.description,
-    ogImage: row.og_image,
-    canonicalUrl: row.canonical_url,
-    robots: row.robots,
-    schemaJson: row.schema_json,
-    createdAt: row.created_at,
-    updatedAt: row.updated_at,
-  }));
-});
+export const listSeoPages = createServerFn({ method: "GET" }).handler(
+  async (): Promise<SeoPageDto[]> => {
+    const { requireAdmin } = await import("./auth.server");
+    const { db } = await import("./db.server");
+    await requireAdmin();
+    const { data } = await db
+      .from("seo_pages")
+      .select("*")
+      .order("updated_at", { ascending: false });
+    return (data ?? []).map((row) => ({
+      id: row.id,
+      pageKey: row.page_key,
+      path: row.path,
+      title: row.title,
+      description: row.description,
+      ogImage: row.og_image,
+      canonicalUrl: row.canonical_url,
+      robots: row.robots,
+      schemaJson: row.schema_json,
+      createdAt: row.created_at,
+      updatedAt: row.updated_at,
+    }));
+  },
+);
 
 const seoPageSchema = z.object({
   id: z.string().optional(),
@@ -86,7 +91,11 @@ export const getPublicSeoPage = createServerFn({ method: "GET" })
   .handler(async ({ data }): Promise<SeoPageDto | null> => {
     try {
       const { db } = await import("./db.server");
-      const { data: row } = await db.from("seo_pages").select("*").eq("path", data.path).maybeSingle();
+      const { data: row } = await db
+        .from("seo_pages")
+        .select("*")
+        .eq("path", data.path)
+        .maybeSingle();
       if (!row) return null;
       return {
         id: row.id,
@@ -115,23 +124,96 @@ export interface SeoHealthIssueDto {
   missing: string[];
 }
 
-export const checkSeoHealth = createServerFn({ method: "GET" }).handler(async (): Promise<SeoHealthIssueDto[]> => {
-  const { requireAdmin } = await import("./auth.server");
-  const { db } = await import("./db.server");
-  await requireAdmin();
-  const { data } = await db
-    .from("blog_posts")
-    .select("id, title, slug, seo_title, seo_description, cover_image, focus_keyword")
-    .eq("status", "published");
+export const checkSeoHealth = createServerFn({ method: "GET" }).handler(
+  async (): Promise<SeoHealthIssueDto[]> => {
+    const { requireAdmin } = await import("./auth.server");
+    const { db } = await import("./db.server");
+    await requireAdmin();
+    const { data } = await db
+      .from("blog_posts")
+      .select("id, title, slug, seo_title, seo_description, cover_image, focus_keyword")
+      .eq("status", "published");
 
-  const issues: SeoHealthIssueDto[] = [];
-  for (const row of data ?? []) {
-    const missing: string[] = [];
-    if (!row.seo_title) missing.push("عنوان سئو");
-    if (!row.seo_description) missing.push("توضیحات سئو");
-    if (!row.cover_image) missing.push("تصویر شاخص");
-    if (!row.focus_keyword) missing.push("کلمه کلیدی هدف");
-    if (missing.length > 0) issues.push({ postId: row.id, title: row.title, slug: row.slug, missing });
-  }
-  return issues;
-});
+    const issues: SeoHealthIssueDto[] = [];
+    for (const row of data ?? []) {
+      const missing: string[] = [];
+      if (!row.seo_title) missing.push("عنوان سئو");
+      if (!row.seo_description) missing.push("توضیحات سئو");
+      if (!row.cover_image) missing.push("تصویر شاخص");
+      if (!row.focus_keyword) missing.push("کلمه کلیدی هدف");
+      if (missing.length > 0)
+        issues.push({ postId: row.id, title: row.title, slug: row.slug, missing });
+    }
+    return issues;
+  },
+);
+
+/** رفع خودکار یک مشکل سئوی گزارش‌شده با هوش مصنوعی — فیلدهای ناقص را می‌سازد و مقاله را ذخیره می‌کند */
+export const adminFixSeoIssue = createServerFn({ method: "POST" })
+  .inputValidator((input: unknown) => z.object({ postId: z.string() }).parse(input))
+  .handler(async ({ data }): Promise<{ ok: boolean; fixed: string[] }> => {
+    const { requireAdmin } = await import("./auth.server");
+    await requireAdmin();
+    const { getPostById, savePost } = await import("./blog.server");
+
+    const post = await getPostById(data.postId);
+    if (!post) throw new Error("مقاله پیدا نشد");
+
+    const fixed: string[] = [];
+    let seoTitle = post.seoTitle;
+    let seoDescription = post.seoDescription;
+    let focusKeyword = post.focusKeyword;
+    let coverImage = post.coverImage;
+
+    if (!seoTitle || !seoDescription || !focusKeyword) {
+      const { generateSeoMeta } = await import("./ai.server");
+      const meta = await generateSeoMeta({ title: post.title, content: post.content });
+      if (!seoTitle) {
+        seoTitle = meta.seoTitle;
+        fixed.push("عنوان سئو");
+      }
+      if (!seoDescription) {
+        seoDescription = meta.seoDescription;
+        fixed.push("توضیحات سئو");
+      }
+      if (!focusKeyword) {
+        focusKeyword = meta.focusKeyword;
+        fixed.push("کلمه کلیدی هدف");
+      }
+    }
+
+    if (!coverImage) {
+      try {
+        const { generateImage } = await import("./ai.server");
+        const image = await generateImage({
+          prompt: `عکس کاور حرفه‌ای و مرتبط با موضوع: ${post.title}`,
+          alt: post.title,
+        });
+        coverImage = image.url;
+        fixed.push("تصویر شاخص");
+      } catch (e) {
+        // اگر ساخت تصویر شکست بخورد (مثلاً محل ذخیره‌سازی وصل نیست)، بقیه اصلاحات سئو
+        // همچنان ذخیره می‌شود؛ خطای تصویر را جداگانه گزارش می‌کنیم.
+        console.error("adminFixSeoIssue: cover image generation failed:", e);
+      }
+    }
+
+    await savePost({
+      id: post.id,
+      title: post.title,
+      excerpt: post.excerpt,
+      content: post.content,
+      coverImage,
+      status: post.status,
+      author: post.author,
+      tags: post.tags,
+      categoryId: post.categoryId,
+      seoTitle,
+      seoDescription,
+      canonicalUrl: post.canonicalUrl,
+      robots: post.robots,
+      focusKeyword,
+    });
+
+    return { ok: true, fixed };
+  });

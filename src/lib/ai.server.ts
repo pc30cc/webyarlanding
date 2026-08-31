@@ -154,6 +154,7 @@ export interface GeneratedPost {
   tags: string[];
   seoTitle: string;
   seoDescription: string;
+  focusKeyword: string;
 }
 
 export async function generatePostContent(input: {
@@ -185,7 +186,8 @@ export async function generatePostContent(input: {
           `درباره موضوع «${input.topic}» یک مقاله فارسی با لحن ${tone} و طول ${lengthHint} بنویس. ` +
           `خروجی را دقیقاً به شکل JSON با کلیدهای زیر بده:\n` +
           `{"title": "عنوان جذاب", "excerpt": "خلاصه یک تا دو جمله‌ای", "content": "متن کامل مقاله با فرمت markdown شامل تیترهای H2/H3", ` +
-          `"tags": ["برچسب۱","برچسب۲","برچسب۳"], "seoTitle": "عنوان سئو حداکثر ۶۰ کاراکتر", "seoDescription": "توضیح متا حداکثر ۱۶۰ کاراکتر"}`,
+          `"tags": ["برچسب۱","برچسب۲","برچسب۳"], "seoTitle": "عنوان سئو حداکثر ۶۰ کاراکتر", "seoDescription": "توضیح متا حداکثر ۱۶۰ کاراکتر", ` +
+          `"focusKeyword": "مهم‌ترین کلمه یا عبارت کلیدی هدف این مقاله (۲ تا ۴ کلمه)"}`,
       },
     ],
     true,
@@ -198,6 +200,7 @@ export async function generatePostContent(input: {
     tags: [],
     seoTitle: input.topic,
     seoDescription: "",
+    focusKeyword: input.topic,
   });
 }
 
@@ -242,6 +245,7 @@ export async function generateBlogPost(input: {
     author: input.author ?? "",
     seoTitle: generated.seoTitle,
     seoDescription: generated.seoDescription,
+    focusKeyword: generated.focusKeyword,
   });
   return { ...generated, postId, coverImage, imageError };
 }

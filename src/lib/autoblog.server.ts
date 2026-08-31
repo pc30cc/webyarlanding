@@ -227,6 +227,7 @@ export async function runAutoblog(
       author: settings.author || "تیم تحریریه",
       seoTitle: generated.seoTitle,
       seoDescription: generated.seoDescription,
+      focusKeyword: generated.focusKeyword,
     });
 
     await db
