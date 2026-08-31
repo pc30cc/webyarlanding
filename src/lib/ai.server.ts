@@ -376,7 +376,7 @@ export async function generateImage(input: {
   const mime = sizeMatch?.[1] ?? "image/png";
   const base64Len = sizeMatch?.[2]?.length ?? 0;
 
-  await db.from("media_assets").insert({
+  const { error } = await db.from("media_assets").insert({
     id,
     provider: config.ai.provider,
     path: `ai-generated/${id}.png`,
@@ -387,6 +387,9 @@ export async function generateImage(input: {
     alt: input.alt ?? input.prompt.slice(0, 480),
     updated_at: nowIso(),
   });
+  if (error) {
+    throw new AiGatewayError("UNKNOWN", `ذخیره‌سازی تصویر در دیتابیس ناموفق بود: ${error.message}`);
+  }
 
   return { id, url: dataUrl };
 }
