@@ -224,9 +224,9 @@ export async function runAutoblog(
     let imageError: string | undefined;
     if (settings.withImage) {
       try {
-        const { generateImage } = await import("./ai.server");
+        const { generateImage, buildCoverImagePrompt } = await import("./ai.server");
         const image = await generateImage({
-          prompt: `عکس کاور حرفه‌ای و مرتبط با موضوع: ${generated.title}`,
+          prompt: buildCoverImagePrompt(generated.title),
           alt: generated.title,
         });
         coverImage = image.url;
