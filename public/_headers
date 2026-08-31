@@ -1,0 +1,5 @@
+/fonts/*
+  Access-Control-Allow-Origin: *
+
+/assets/*
+  Access-Control-Allow-Origin: *
