@@ -104,14 +104,14 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         // و فلش فونت پیش‌فرض مرورگر (FOUT) به حداقل برسد.
         {
           rel: "preload",
-          href: "/fonts/vazirmatn-arabic-wght-normal.woff2",
+          href: "/fonts/IRANSansWeb.woff2",
           as: "font",
           type: "font/woff2",
           crossOrigin: "anonymous",
         },
         {
           rel: "preload",
-          href: "/fonts/vazirmatn-latin-wght-normal.woff2",
+          href: "/fonts/IRANSansWeb-Bold.woff2",
           as: "font",
           type: "font/woff2",
           crossOrigin: "anonymous",
