@@ -20,7 +20,6 @@ export async function loadSettings(): Promise<SiteSettings> {
   }
 }
 
-
 export async function saveSettings(next: SiteSettings): Promise<void> {
   const { data } = await db.from("settings").select("id").eq("setting_key", SITE_KEY).maybeSingle();
   const payload = {
@@ -47,7 +46,11 @@ export async function loadPrivateSettings<T extends object>(fallback: T): Promis
 }
 
 export async function savePrivateSettings(value: object): Promise<void> {
-  const { data } = await db.from("settings").select("id").eq("setting_key", PRIVATE_KEY).maybeSingle();
+  const { data } = await db
+    .from("settings")
+    .select("id")
+    .eq("setting_key", PRIVATE_KEY)
+    .maybeSingle();
   const payload = {
     setting_key: PRIVATE_KEY,
     setting_value: JSON.stringify(value),
@@ -59,4 +62,22 @@ export async function savePrivateSettings(value: object): Promise<void> {
   } else {
     await db.from("settings").insert({ id: newId(), ...payload });
   }
+}
+
+/** کلیدهای API سرویس‌های هوش مصنوعی — بخشی از تنظیمات محرمانه، فقط سمت سرور خوانده می‌شود */
+export interface AiApiKeys {
+  aiOpenaiApiKey: string;
+  aiGeminiApiKey: string;
+}
+
+const AI_KEYS_DEFAULTS: AiApiKeys = { aiOpenaiApiKey: "", aiGeminiApiKey: "" };
+
+export async function loadAiKeys(): Promise<AiApiKeys> {
+  const stored = await loadPrivateSettings<Partial<AiApiKeys>>({});
+  return { ...AI_KEYS_DEFAULTS, ...stored };
+}
+
+export async function saveAiKeys(partial: Partial<AiApiKeys>): Promise<void> {
+  const stored = await loadPrivateSettings<Partial<AiApiKeys>>({});
+  await savePrivateSettings({ ...stored, ...partial });
 }

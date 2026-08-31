@@ -51,7 +51,9 @@ export interface ChatWidgetSettings {
 
 export interface AiSettings {
   enabled: boolean;
-  model: string;
+  /** کدام سرویس هوش مصنوعی برای تولید متن/تصویر استفاده شود — کلید API هر کدام در تنظیمات محرمانه ذخیره می‌شود */
+  provider: "openai" | "gemini";
+  textModel: string;
   imageModel: string;
   systemPrompt: string;
   temperature: number;
@@ -97,7 +99,8 @@ export const DEFAULT_SETTINGS: SiteSettings = {
     metaTitle: "وب‌یار | چت زنده و تماس ویدیویی، فقط با یک خط کد",
     metaDescription:
       "وب‌یار ابزارک چتی است که روی سایت شما می‌نشیند و امکان گفتگوی زنده و تماس تصویری مستقیم با بازدیدکننده‌ها را فراهم می‌کند. نصب در کمتر از ۵ دقیقه، بدون نیاز به برنامه‌نویس.",
-    keywords: "چت آنلاین, چت زنده, تماس ویدیویی, پشتیبانی آنلاین, ابزارک چت, ویجت چت سایت, نرم‌افزار پشتیبانی مشتری",
+    keywords:
+      "چت آنلاین, چت زنده, تماس ویدیویی, پشتیبانی آنلاین, ابزارک چت, ویجت چت سایت, نرم‌افزار پشتیبانی مشتری",
     ogImage: "",
     robots: "index,follow",
     author: "وب‌یار",
@@ -128,8 +131,9 @@ export const DEFAULT_SETTINGS: SiteSettings = {
   },
   ai: {
     enabled: true,
-    model: "google/gemini-3-flash-preview",
-    imageModel: "google/gemini-3-pro-image-preview",
+    provider: "openai",
+    textModel: "gpt-4o-mini",
+    imageModel: "dall-e-3",
     systemPrompt:
       "تو یک نویسنده حرفه‌ای فارسی‌زبان در حوزه فناوری و کسب‌وکار هستی. محتوای دقیق، روان، سئوشده و بدون کلیشه بنویس.",
     temperature: 0.7,
