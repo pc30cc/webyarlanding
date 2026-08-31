@@ -13,6 +13,7 @@ import appCss from "../styles.css?url";
 import { Toaster } from "../components/ui/sonner";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { fetchSettings } from "../lib/settings.functions";
+import { getPublicCatalog } from "../lib/catalog.functions";
 
 function NotFoundComponent() {
   return (
@@ -75,7 +76,14 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
 }
 
 export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()({
-  loader: async () => ({ settings: await fetchSettings() }),
+  loader: async () => {
+    const [settings, productCatalog, solutionCatalog] = await Promise.all([
+      fetchSettings(),
+      getPublicCatalog({ data: { type: "product" } }),
+      getPublicCatalog({ data: { type: "solution" } }),
+    ]);
+    return { settings, productCatalog, solutionCatalog };
+  },
   head: ({ loaderData }) => {
     const settings = loaderData?.settings;
     const base = (settings?.brand.siteUrl || "").replace(/\/$/, "");

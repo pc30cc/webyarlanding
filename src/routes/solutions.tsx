@@ -3,18 +3,20 @@ import { motion } from "framer-motion";
 import { Check, ChevronLeft } from "lucide-react";
 import { fetchSettings } from "@/lib/settings.functions";
 import { getPublicSeoPage } from "@/lib/seo.functions";
+import { getPublicCatalog } from "@/lib/catalog.functions";
 import { buildPageMeta, parseSchemaJson } from "@/lib/seo-meta";
-import { solutionCategories } from "@/lib/catalog";
+import { getIcon } from "@/lib/icon-registry";
 import { SiteLayout } from "@/components/site/SiteLayout";
 import { ScrollReveal, StaggerChildren, childVariant } from "@/components/site/animations";
 
 export const Route = createFileRoute("/solutions")({
   loader: async () => {
-    const [settings, seoOverride] = await Promise.all([
+    const [settings, seoOverride, categories] = await Promise.all([
       fetchSettings(),
       getPublicSeoPage({ data: { path: "/solutions" } }),
+      getPublicCatalog({ data: { type: "solution" } }),
     ]);
-    return { settings, seoOverride };
+    return { settings, seoOverride, categories };
   },
   head: ({ loaderData }) => {
     if (!loaderData) return {};
@@ -36,10 +38,10 @@ const TINTS = [
   { bg: "bg-success/10", text: "text-success" },
 ];
 
-const allSolutions = solutionCategories.flatMap((c) => c.items);
-
 function SolutionsPage() {
-  const { settings, seoOverride } = Route.useLoaderData();
+  const { settings, seoOverride, categories } = Route.useLoaderData();
+  const base = (settings.brand.siteUrl || "").replace(/\/$/, "");
+  const allSolutions = categories.flatMap((c) => c.items);
 
   const jsonLd = parseSchemaJson(seoOverride?.schemaJson) ?? {
     "@context": "https://schema.org",
@@ -51,7 +53,8 @@ function SolutionsPage() {
       item: {
         "@type": "Service",
         name: s.title,
-        description: s.desc,
+        description: s.shortDesc,
+        url: base ? `${base}/solutions/${s.slug}` : undefined,
         provider: { "@type": "Organization", name: settings.brand.name },
       },
     })),
@@ -97,8 +100,8 @@ function SolutionsPage() {
       </section>
 
       <div className="container-page space-y-16 pb-16 sm:space-y-20 sm:pb-24">
-        {solutionCategories.map((category) => (
-          <div key={category.title}>
+        {categories.map((category) => (
+          <div key={category.id}>
             <ScrollReveal className="mb-6">
               <h2 className="text-xl font-extrabold text-foreground sm:text-2xl">
                 {category.title}
@@ -107,31 +110,38 @@ function SolutionsPage() {
             <StaggerChildren className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
               {category.items.map((s, i) => {
                 const tint = TINTS[i % TINTS.length]!;
+                const Icon = getIcon(s.icon);
                 return (
-                  <motion.div
-                    key={s.slug}
-                    id={s.slug}
-                    variants={childVariant}
-                    className="flex scroll-mt-28 flex-col rounded-2xl border border-border bg-card p-6 shadow-card transition-shadow hover:shadow-glow sm:p-7"
-                  >
-                    <div
-                      className={`mb-5 flex h-14 w-14 items-center justify-center rounded-2xl ${tint.bg}`}
+                  <motion.div key={s.id} variants={childVariant}>
+                    <Link
+                      to="/solutions/$slug"
+                      params={{ slug: s.slug }}
+                      className="flex h-full flex-col rounded-2xl border border-border bg-card p-6 shadow-card transition-shadow hover:shadow-glow sm:p-7"
                     >
-                      <s.icon className={`h-7 w-7 ${tint.text}`} />
-                    </div>
-                    <h3 className="mb-2 text-lg font-bold text-foreground">{s.title}</h3>
-                    <p className="mb-5 text-sm leading-relaxed text-muted-foreground">{s.desc}</p>
-                    <ul className="mt-auto space-y-2">
-                      {s.bullets.map((b) => (
-                        <li
-                          key={b}
-                          className="flex items-start gap-2 text-sm text-muted-foreground"
-                        >
-                          <Check className="mt-0.5 h-4 w-4 shrink-0 text-success" />
-                          <span>{b}</span>
-                        </li>
-                      ))}
-                    </ul>
+                      <div
+                        className={`mb-5 flex h-14 w-14 items-center justify-center rounded-2xl ${tint.bg}`}
+                      >
+                        <Icon className={`h-7 w-7 ${tint.text}`} />
+                      </div>
+                      <h3 className="mb-2 text-lg font-bold text-foreground">{s.title}</h3>
+                      <p className="mb-5 text-sm leading-relaxed text-muted-foreground">
+                        {s.shortDesc}
+                      </p>
+                      <ul className="mt-auto space-y-2">
+                        {s.bullets.slice(0, 3).map((b) => (
+                          <li
+                            key={b}
+                            className="flex items-start gap-2 text-sm text-muted-foreground"
+                          >
+                            <Check className="mt-0.5 h-4 w-4 shrink-0 text-success" />
+                            <span>{b}</span>
+                          </li>
+                        ))}
+                      </ul>
+                      <span className="mt-5 inline-flex items-center gap-1 text-sm font-semibold text-primary">
+                        بیشتر بدانید <ChevronLeft className="h-3.5 w-3.5" />
+                      </span>
+                    </Link>
                   </motion.div>
                 );
               })}

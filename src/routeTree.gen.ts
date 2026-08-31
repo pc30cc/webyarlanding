@@ -28,6 +28,7 @@ import { Route as AdminAiRouteImport } from './routes/admin.ai'
 import { Route as AdminAutoblogRouteImport } from './routes/admin.autoblog'
 import { Route as AdminBackupRouteImport } from './routes/admin.backup'
 import { Route as AdminBlogRouteImport } from './routes/admin.blog'
+import { Route as AdminCatalogRouteImport } from './routes/admin.catalog'
 import { Route as AdminCategoriesRouteImport } from './routes/admin.categories'
 import { Route as AdminChatRouteImport } from './routes/admin.chat'
 import { Route as AdminGeneralRouteImport } from './routes/admin.general'
@@ -39,6 +40,8 @@ import { Route as AdminSeoRouteImport } from './routes/admin.seo'
 import { Route as AdminTagsRouteImport } from './routes/admin.tags'
 import { Route as BlogIndexRouteImport } from './routes/blog.index'
 import { Route as BlogSlugRouteImport } from './routes/blog.$slug'
+import { Route as ProductsSlugRouteImport } from './routes/products.$slug'
+import { Route as SolutionsSlugRouteImport } from './routes/solutions.$slug'
 import { Route as TagSlugRouteImport } from './routes/tag.$slug'
 import { Route as ApiPublicAutoblogCronRouteImport } from './routes/api/public/autoblog-cron'
 import { Route as ApiPublicHealthRouteImport } from './routes/api/public/health'
@@ -138,6 +141,11 @@ const AdminBlogRoute = AdminBlogRouteImport.update({
   path: '/blog',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminCatalogRoute = AdminCatalogRouteImport.update({
+  id: '/catalog',
+  path: '/catalog',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminCategoriesRoute = AdminCategoriesRouteImport.update({
   id: '/categories',
   path: '/categories',
@@ -193,6 +201,16 @@ const BlogSlugRoute = BlogSlugRouteImport.update({
   path: '/blog/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ProductsSlugRoute = ProductsSlugRouteImport.update({
+  id: '/$slug',
+  path: '/$slug',
+  getParentRoute: () => ProductsRoute,
+} as any)
+const SolutionsSlugRoute = SolutionsSlugRouteImport.update({
+  id: '/$slug',
+  path: '/$slug',
+  getParentRoute: () => SolutionsRoute,
+} as any)
 const TagSlugRoute = TagSlugRouteImport.update({
   id: '/tag/$slug',
   path: '/tag/$slug',
@@ -218,16 +236,17 @@ export interface FileRoutesByFullPath {
   '/contact': typeof ContactRoute
   '/pricing': typeof PricingRoute
   '/privacy': typeof PrivacyRoute
-  '/products': typeof ProductsRoute
+  '/products': typeof ProductsRouteWithChildren
   '/robots.txt': typeof RobotsDottxtRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/sla': typeof SlaRoute
-  '/solutions': typeof SolutionsRoute
+  '/solutions': typeof SolutionsRouteWithChildren
   '/terms': typeof TermsRoute
   '/admin/ai': typeof AdminAiRoute
   '/admin/autoblog': typeof AdminAutoblogRoute
   '/admin/backup': typeof AdminBackupRoute
   '/admin/blog': typeof AdminBlogRoute
+  '/admin/catalog': typeof AdminCatalogRoute
   '/admin/categories': typeof AdminCategoriesRoute
   '/admin/chat': typeof AdminChatRoute
   '/admin/general': typeof AdminGeneralRoute
@@ -238,6 +257,8 @@ export interface FileRoutesByFullPath {
   '/admin/seo': typeof AdminSeoRoute
   '/admin/tags': typeof AdminTagsRoute
   '/blog/$slug': typeof BlogSlugRoute
+  '/products/$slug': typeof ProductsSlugRoute
+  '/solutions/$slug': typeof SolutionsSlugRoute
   '/tag/$slug': typeof TagSlugRoute
   '/admin/': typeof AdminIndexRoute
   '/blog/': typeof BlogIndexRoute
@@ -252,16 +273,17 @@ export interface FileRoutesByTo {
   '/contact': typeof ContactRoute
   '/pricing': typeof PricingRoute
   '/privacy': typeof PrivacyRoute
-  '/products': typeof ProductsRoute
+  '/products': typeof ProductsRouteWithChildren
   '/robots.txt': typeof RobotsDottxtRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/sla': typeof SlaRoute
-  '/solutions': typeof SolutionsRoute
+  '/solutions': typeof SolutionsRouteWithChildren
   '/terms': typeof TermsRoute
   '/admin/ai': typeof AdminAiRoute
   '/admin/autoblog': typeof AdminAutoblogRoute
   '/admin/backup': typeof AdminBackupRoute
   '/admin/blog': typeof AdminBlogRoute
+  '/admin/catalog': typeof AdminCatalogRoute
   '/admin/categories': typeof AdminCategoriesRoute
   '/admin/chat': typeof AdminChatRoute
   '/admin/general': typeof AdminGeneralRoute
@@ -272,6 +294,8 @@ export interface FileRoutesByTo {
   '/admin/seo': typeof AdminSeoRoute
   '/admin/tags': typeof AdminTagsRoute
   '/blog/$slug': typeof BlogSlugRoute
+  '/products/$slug': typeof ProductsSlugRoute
+  '/solutions/$slug': typeof SolutionsSlugRoute
   '/tag/$slug': typeof TagSlugRoute
   '/admin': typeof AdminIndexRoute
   '/blog': typeof BlogIndexRoute
@@ -288,16 +312,17 @@ export interface FileRoutesById {
   '/contact': typeof ContactRoute
   '/pricing': typeof PricingRoute
   '/privacy': typeof PrivacyRoute
-  '/products': typeof ProductsRoute
+  '/products': typeof ProductsRouteWithChildren
   '/robots.txt': typeof RobotsDottxtRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/sla': typeof SlaRoute
-  '/solutions': typeof SolutionsRoute
+  '/solutions': typeof SolutionsRouteWithChildren
   '/terms': typeof TermsRoute
   '/admin/ai': typeof AdminAiRoute
   '/admin/autoblog': typeof AdminAutoblogRoute
   '/admin/backup': typeof AdminBackupRoute
   '/admin/blog': typeof AdminBlogRoute
+  '/admin/catalog': typeof AdminCatalogRoute
   '/admin/categories': typeof AdminCategoriesRoute
   '/admin/chat': typeof AdminChatRoute
   '/admin/general': typeof AdminGeneralRoute
@@ -308,6 +333,8 @@ export interface FileRoutesById {
   '/admin/seo': typeof AdminSeoRoute
   '/admin/tags': typeof AdminTagsRoute
   '/blog/$slug': typeof BlogSlugRoute
+  '/products/$slug': typeof ProductsSlugRoute
+  '/solutions/$slug': typeof SolutionsSlugRoute
   '/tag/$slug': typeof TagSlugRoute
   '/admin/': typeof AdminIndexRoute
   '/blog/': typeof BlogIndexRoute
@@ -335,6 +362,7 @@ export interface FileRouteTypes {
     | '/admin/autoblog'
     | '/admin/backup'
     | '/admin/blog'
+    | '/admin/catalog'
     | '/admin/categories'
     | '/admin/chat'
     | '/admin/general'
@@ -345,6 +373,8 @@ export interface FileRouteTypes {
     | '/admin/seo'
     | '/admin/tags'
     | '/blog/$slug'
+    | '/products/$slug'
+    | '/solutions/$slug'
     | '/tag/$slug'
     | '/admin/'
     | '/blog/'
@@ -369,6 +399,7 @@ export interface FileRouteTypes {
     | '/admin/autoblog'
     | '/admin/backup'
     | '/admin/blog'
+    | '/admin/catalog'
     | '/admin/categories'
     | '/admin/chat'
     | '/admin/general'
@@ -379,6 +410,8 @@ export interface FileRouteTypes {
     | '/admin/seo'
     | '/admin/tags'
     | '/blog/$slug'
+    | '/products/$slug'
+    | '/solutions/$slug'
     | '/tag/$slug'
     | '/admin'
     | '/blog'
@@ -404,6 +437,7 @@ export interface FileRouteTypes {
     | '/admin/autoblog'
     | '/admin/backup'
     | '/admin/blog'
+    | '/admin/catalog'
     | '/admin/categories'
     | '/admin/chat'
     | '/admin/general'
@@ -414,6 +448,8 @@ export interface FileRouteTypes {
     | '/admin/seo'
     | '/admin/tags'
     | '/blog/$slug'
+    | '/products/$slug'
+    | '/solutions/$slug'
     | '/tag/$slug'
     | '/admin/'
     | '/blog/'
@@ -430,11 +466,11 @@ export interface RootRouteChildren {
   ContactRoute: typeof ContactRoute
   PricingRoute: typeof PricingRoute
   PrivacyRoute: typeof PrivacyRoute
-  ProductsRoute: typeof ProductsRoute
+  ProductsRoute: typeof ProductsRouteWithChildren
   RobotsDottxtRoute: typeof RobotsDottxtRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   SlaRoute: typeof SlaRoute
-  SolutionsRoute: typeof SolutionsRoute
+  SolutionsRoute: typeof SolutionsRouteWithChildren
   TermsRoute: typeof TermsRoute
   BlogSlugRoute: typeof BlogSlugRoute
   TagSlugRoute: typeof TagSlugRoute
@@ -578,6 +614,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminBlogRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/catalog': {
+      id: '/admin/catalog'
+      path: '/catalog'
+      fullPath: '/admin/catalog'
+      preLoaderRoute: typeof AdminCatalogRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/categories': {
       id: '/admin/categories'
       path: '/categories'
@@ -655,6 +698,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof BlogSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/products/$slug': {
+      id: '/products/$slug'
+      path: '/$slug'
+      fullPath: '/products/$slug'
+      preLoaderRoute: typeof ProductsSlugRouteImport
+      parentRoute: typeof ProductsRoute
+    }
+    '/solutions/$slug': {
+      id: '/solutions/$slug'
+      path: '/$slug'
+      fullPath: '/solutions/$slug'
+      preLoaderRoute: typeof SolutionsSlugRouteImport
+      parentRoute: typeof SolutionsRoute
+    }
     '/tag/$slug': {
       id: '/tag/$slug'
       path: '/tag/$slug'
@@ -684,6 +741,7 @@ interface AdminRouteChildren {
   AdminAutoblogRoute: typeof AdminAutoblogRoute
   AdminBackupRoute: typeof AdminBackupRoute
   AdminBlogRoute: typeof AdminBlogRoute
+  AdminCatalogRoute: typeof AdminCatalogRoute
   AdminCategoriesRoute: typeof AdminCategoriesRoute
   AdminChatRoute: typeof AdminChatRoute
   AdminGeneralRoute: typeof AdminGeneralRoute
@@ -701,6 +759,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminAutoblogRoute: AdminAutoblogRoute,
   AdminBackupRoute: AdminBackupRoute,
   AdminBlogRoute: AdminBlogRoute,
+  AdminCatalogRoute: AdminCatalogRoute,
   AdminCategoriesRoute: AdminCategoriesRoute,
   AdminChatRoute: AdminChatRoute,
   AdminGeneralRoute: AdminGeneralRoute,
@@ -715,6 +774,30 @@ const AdminRouteChildren: AdminRouteChildren = {
 
 const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
 
+interface ProductsRouteChildren {
+  ProductsSlugRoute: typeof ProductsSlugRoute
+}
+
+const ProductsRouteChildren: ProductsRouteChildren = {
+  ProductsSlugRoute: ProductsSlugRoute,
+}
+
+const ProductsRouteWithChildren = ProductsRoute._addFileChildren(
+  ProductsRouteChildren,
+)
+
+interface SolutionsRouteChildren {
+  SolutionsSlugRoute: typeof SolutionsSlugRoute
+}
+
+const SolutionsRouteChildren: SolutionsRouteChildren = {
+  SolutionsSlugRoute: SolutionsSlugRoute,
+}
+
+const SolutionsRouteWithChildren = SolutionsRoute._addFileChildren(
+  SolutionsRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AboutRoute: AboutRoute,
@@ -724,11 +807,11 @@ const rootRouteChildren: RootRouteChildren = {
   ContactRoute: ContactRoute,
   PricingRoute: PricingRoute,
   PrivacyRoute: PrivacyRoute,
-  ProductsRoute: ProductsRoute,
+  ProductsRoute: ProductsRouteWithChildren,
   RobotsDottxtRoute: RobotsDottxtRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   SlaRoute: SlaRoute,
-  SolutionsRoute: SolutionsRoute,
+  SolutionsRoute: SolutionsRouteWithChildren,
   TermsRoute: TermsRoute,
   BlogSlugRoute: BlogSlugRoute,
   TagSlugRoute: TagSlugRoute,
