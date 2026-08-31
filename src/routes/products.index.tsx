@@ -4,7 +4,7 @@ import { Check, ChevronLeft } from "lucide-react";
 import { fetchSettings } from "@/lib/settings.functions";
 import { getPublicSeoPage } from "@/lib/seo.functions";
 import { getPublicCatalog } from "@/lib/catalog.functions";
-import { buildPageMeta, parseSchemaJson } from "@/lib/seo-meta";
+import { buildPageMeta, parseSchemaJson, buildBreadcrumbJsonLd } from "@/lib/seo-meta";
 import { getIcon } from "@/lib/icon-registry";
 import { SiteLayout } from "@/components/site/SiteLayout";
 import { ScrollReveal, StaggerChildren, childVariant } from "@/components/site/animations";
@@ -43,22 +43,28 @@ function ProductsPage() {
   const base = (settings.brand.siteUrl || "").replace(/\/$/, "");
   const allProducts = categories.flatMap((c) => c.items);
 
-  const jsonLd = parseSchemaJson(seoOverride?.schemaJson) ?? {
-    "@context": "https://schema.org",
-    "@type": "ItemList",
-    name: "محصولات وب‌یار",
-    itemListElement: allProducts.map((p, i) => ({
-      "@type": "ListItem",
-      position: i + 1,
-      item: {
-        "@type": "Service",
-        name: p.title,
-        description: p.shortDesc,
-        url: base ? `${base}/products/${p.slug}` : undefined,
-        provider: { "@type": "Organization", name: settings.brand.name },
-      },
-    })),
-  };
+  const jsonLd = parseSchemaJson(seoOverride?.schemaJson) ?? [
+    {
+      "@context": "https://schema.org",
+      "@type": "ItemList",
+      name: "محصولات وب‌یار",
+      itemListElement: allProducts.map((p, i) => ({
+        "@type": "ListItem",
+        position: i + 1,
+        item: {
+          "@type": "Service",
+          name: p.title,
+          description: p.shortDesc,
+          url: base ? `${base}/products/${p.slug}` : undefined,
+          provider: { "@type": "Organization", name: settings.brand.name },
+        },
+      })),
+    },
+    buildBreadcrumbJsonLd(settings, [
+      { name: "خانه", path: "/" },
+      { name: "محصولات", path: "/products" },
+    ]),
+  ];
 
   return (
     <SiteLayout settings={settings}>

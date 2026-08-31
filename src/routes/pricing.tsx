@@ -4,13 +4,16 @@ import { motion } from "framer-motion";
 import { Check, CheckCircle2, Zap, Star, Crown, ChevronLeft } from "lucide-react";
 import { fetchSettings } from "@/lib/settings.functions";
 import { getPublicSeoPage } from "@/lib/seo.functions";
-import { buildPageMeta } from "@/lib/seo-meta";
+import { buildPageMeta, buildBreadcrumbJsonLd } from "@/lib/seo-meta";
 import { SiteLayout } from "@/components/site/SiteLayout";
 import { StaggerChildren, childVariant } from "@/components/site/animations";
 
 export const Route = createFileRoute("/pricing")({
   loader: async () => {
-    const [settings, seoOverride] = await Promise.all([fetchSettings(), getPublicSeoPage({ data: { path: "/pricing" } })]);
+    const [settings, seoOverride] = await Promise.all([
+      fetchSettings(),
+      getPublicSeoPage({ data: { path: "/pricing" } }),
+    ]);
     return { settings, seoOverride };
   },
   head: ({ loaderData }) => {
@@ -20,7 +23,8 @@ export const Route = createFileRoute("/pricing")({
       path: "/pricing",
       override: loaderData.seoOverride,
       fallbackTitle: "امکانات و قیمت | وب‌یار",
-      fallbackDescription: "پلن مناسب کسب‌وکار خود را از میان پلن‌های شروع، رشد، حرفه‌ای و سازمانی وب‌یار انتخاب کنید.",
+      fallbackDescription:
+        "پلن مناسب کسب‌وکار خود را از میان پلن‌های شروع، رشد، حرفه‌ای و سازمانی وب‌یار انتخاب کنید.",
     });
   },
   component: PricingPage,
@@ -29,19 +33,46 @@ export const Route = createFileRoute("/pricing")({
 function getPlans(period: "monthly" | "yearly") {
   return [
     {
-      slug: "starter", icon: Zap, name: "شروع", desc: "برای شروع و آزمایش وب‌یار", price: "رایگان", unit: "", cta: "شروع کنید",
+      slug: "starter",
+      icon: Zap,
+      name: "شروع",
+      desc: "برای شروع و آزمایش وب‌یار",
+      price: "رایگان",
+      unit: "",
+      cta: "شروع کنید",
       features: ["۱ اپراتور پشتیبانی", "۵۰ گفتگو در ماه", "بدون تماس ویدیویی"],
     },
     {
-      slug: "professional", icon: Star, name: "حرفه‌ای", desc: "برای تیم‌های در حال رشد",
+      slug: "professional",
+      icon: Star,
+      name: "حرفه‌ای",
+      desc: "برای تیم‌های در حال رشد",
       price: period === "yearly" ? "۳۹۲٬۰۰۰" : "۴۹۰٬۰۰۰",
       unit: period === "yearly" ? "تومان / ماه، سالانه" : "تومان / ماه",
-      cta: "شروع رایگان", popular: true,
-      features: ["۵ اپراتور پشتیبانی", "گفتگوی نامحدود", "تماس تصویری HD", "اشتراک‌گذاری صفحه", "گزارش‌گیری کامل"],
+      cta: "شروع رایگان",
+      popular: true,
+      features: [
+        "۵ اپراتور پشتیبانی",
+        "گفتگوی نامحدود",
+        "تماس تصویری HD",
+        "اشتراک‌گذاری صفحه",
+        "گزارش‌گیری کامل",
+      ],
     },
     {
-      slug: "enterprise", icon: Crown, name: "سازمانی", desc: "برای کسب‌وکارهای بزرگ", price: "تماس بگیرید", unit: "", cta: "تماس با فروش",
-      features: ["اپراتور نامحدود", "چند دامنه هم‌زمان", "پشتیبانی اختصاصی", "امکانات یکپارچه‌سازی ویژه"],
+      slug: "enterprise",
+      icon: Crown,
+      name: "سازمانی",
+      desc: "برای کسب‌وکارهای بزرگ",
+      price: "تماس بگیرید",
+      unit: "",
+      cta: "تماس با فروش",
+      features: [
+        "اپراتور نامحدود",
+        "چند دامنه هم‌زمان",
+        "پشتیبانی اختصاصی",
+        "امکانات یکپارچه‌سازی ویژه",
+      ],
     },
   ];
 }
@@ -54,6 +85,19 @@ const comparisonRows = [
   { label: "چند دامنه", free: false, pro: false, enterprise: true },
   { label: "پشتیبانی اختصاصی", free: false, pro: false, enterprise: true },
 ];
+
+const PERSIAN_DIGITS = "۰۱۲۳۴۵۶۷۸۹";
+function toAsciiNumber(input: string): string | null {
+  const cleaned = input
+    .split("")
+    .map((ch) => {
+      const idx = PERSIAN_DIGITS.indexOf(ch);
+      return idx >= 0 ? String(idx) : ch;
+    })
+    .join("")
+    .replace(/[^\d]/g, "");
+  return cleaned || null;
+}
 
 function ComparisonCell({ value }: { value: string | boolean }) {
   if (typeof value === "boolean") {
@@ -70,12 +114,52 @@ function PricingPage() {
   const { settings } = Route.useLoaderData();
   const [period, setPeriod] = useState<"monthly" | "yearly">("monthly");
   const plans = getPlans(period);
+  const base = (settings.brand.siteUrl || "").replace(/\/$/, "");
+
+  const jsonLd = [
+    {
+      "@context": "https://schema.org",
+      "@type": "SoftwareApplication",
+      name: settings.brand.name,
+      applicationCategory: "BusinessApplication",
+      operatingSystem: "Web",
+      url: base ? `${base}/pricing` : undefined,
+      offers: plans
+        .map((plan) => {
+          const price = plan.price === "رایگان" ? "0" : toAsciiNumber(plan.price);
+          if (!price) return null;
+          return {
+            "@type": "Offer",
+            name: plan.name,
+            price,
+            priceCurrency: "IRR",
+            url: base ? `${base}/pricing` : undefined,
+          };
+        })
+        .filter(Boolean),
+    },
+    buildBreadcrumbJsonLd(settings, [
+      { name: "خانه", path: "/" },
+      { name: "قیمت‌گذاری", path: "/pricing" },
+    ]),
+  ];
+
   return (
     <SiteLayout settings={settings}>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
       <div className="container-page max-w-7xl py-16 sm:py-24">
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="mb-10 text-center">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mb-10 text-center"
+        >
           <h1 className="mb-4 text-3xl font-extrabold text-foreground sm:text-5xl">قیمت‌گذاری</h1>
-          <p className="mx-auto max-w-2xl text-base text-muted-foreground">پلن مناسب کسب‌وکار خود را انتخاب کنید</p>
+          <p className="mx-auto max-w-2xl text-base text-muted-foreground">
+            پلن مناسب کسب‌وکار خود را انتخاب کنید
+          </p>
         </motion.div>
 
         <div className="mb-14 flex justify-center">
@@ -86,14 +170,18 @@ function PricingPage() {
                 type="button"
                 onClick={() => setPeriod(p)}
                 className={`flex items-center gap-2 rounded-full px-5 py-2.5 text-sm font-bold transition-colors ${
-                  period === p ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
+                  period === p
+                    ? "bg-primary text-primary-foreground"
+                    : "text-muted-foreground hover:text-foreground"
                 }`}
               >
                 {p === "monthly" ? "ماهانه" : "سالانه"}
                 {p === "yearly" && (
                   <span
                     className={`rounded-full px-2 py-0.5 text-xs ${
-                      period === "yearly" ? "bg-primary-foreground/20" : "bg-success/15 text-success"
+                      period === "yearly"
+                        ? "bg-primary-foreground/20"
+                        : "bg-success/15 text-success"
                     }`}
                   >
                     ۲۰٪ تخفیف
@@ -140,7 +228,9 @@ function PricingPage() {
               <Link
                 to="/contact"
                 className={`flex w-full items-center justify-center gap-1 rounded-xl px-4 py-2.5 text-sm font-bold transition-colors ${
-                  plan.popular ? "bg-brand text-primary-foreground" : "border border-border text-foreground hover:bg-secondary"
+                  plan.popular
+                    ? "bg-brand text-primary-foreground"
+                    : "border border-border text-foreground hover:bg-secondary"
                 }`}
               >
                 {plan.cta} <ChevronLeft className="h-3.5 w-3.5" />
@@ -149,25 +239,43 @@ function PricingPage() {
           ))}
         </StaggerChildren>
 
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3 }}
+        >
           <h2 className="mb-6 text-center text-xl font-bold text-foreground">مقایسه امکانات</h2>
           <div className="overflow-x-auto rounded-xl border border-border bg-card">
             <table className="w-full min-w-[560px] text-sm">
               <thead>
                 <tr className="border-b border-border bg-secondary/30">
-                  <th className="px-5 py-3 text-start text-xs font-semibold text-foreground">امکانات</th>
-                  <th className="px-5 py-3 text-center text-xs font-semibold text-foreground">رایگان</th>
-                  <th className="px-5 py-3 text-center text-xs font-semibold text-foreground">حرفه‌ای</th>
-                  <th className="px-5 py-3 text-center text-xs font-semibold text-foreground">سازمانی</th>
+                  <th className="px-5 py-3 text-start text-xs font-semibold text-foreground">
+                    امکانات
+                  </th>
+                  <th className="px-5 py-3 text-center text-xs font-semibold text-foreground">
+                    رایگان
+                  </th>
+                  <th className="px-5 py-3 text-center text-xs font-semibold text-foreground">
+                    حرفه‌ای
+                  </th>
+                  <th className="px-5 py-3 text-center text-xs font-semibold text-foreground">
+                    سازمانی
+                  </th>
                 </tr>
               </thead>
               <tbody>
                 {comparisonRows.map((row) => (
                   <tr key={row.label} className="border-b border-border/50 last:border-0">
                     <td className="px-5 py-3 text-muted-foreground">{row.label}</td>
-                    <td className="px-5 py-3 text-center text-foreground"><ComparisonCell value={row.free} /></td>
-                    <td className="px-5 py-3 text-center text-foreground"><ComparisonCell value={row.pro} /></td>
-                    <td className="px-5 py-3 text-center text-foreground"><ComparisonCell value={row.enterprise} /></td>
+                    <td className="px-5 py-3 text-center text-foreground">
+                      <ComparisonCell value={row.free} />
+                    </td>
+                    <td className="px-5 py-3 text-center text-foreground">
+                      <ComparisonCell value={row.pro} />
+                    </td>
+                    <td className="px-5 py-3 text-center text-foreground">
+                      <ComparisonCell value={row.enterprise} />
+                    </td>
                   </tr>
                 ))}
               </tbody>
