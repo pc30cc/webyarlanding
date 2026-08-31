@@ -184,9 +184,9 @@ export const adminFixSeoIssue = createServerFn({ method: "POST" })
 
     if (!coverImage) {
       try {
-        const { generateImage } = await import("./ai.server");
+        const { generateImage, buildCoverImagePrompt } = await import("./ai.server");
         const image = await generateImage({
-          prompt: `عکس کاور حرفه‌ای و مرتبط با موضوع: ${post.title}`,
+          prompt: buildCoverImagePrompt(post.title),
           alt: post.title,
         });
         coverImage = image.url;

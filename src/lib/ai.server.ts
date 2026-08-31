@@ -33,6 +33,15 @@ function withStyle(instruction: string, systemPrompt: string): string {
   return systemPrompt ? `${instruction}\n\nسبک و لحن نوشتار: ${systemPrompt}` : instruction;
 }
 
+/** پرامپت ساخت تصویر کاور — واقع‌گرایانه، مینیمال و تمیز، بدون شلوغی بصری */
+export function buildCoverImagePrompt(title: string): string {
+  return (
+    `یک تصویر کاور باکیفیت، واقع‌گرایانه و مینیمال برای مقاله‌ای با موضوع «${title}» بساز. ` +
+    `ترکیب‌بندی ساده، تمیز و خلوت باشد؛ از شلوغی بصری، عناصر اضافه و هر نوع متن یا نوشته روی تصویر خودداری کن. ` +
+    `اگر شخصیت یا کاراکتری در تصویر هست، زیبا، دلنشین و با ظاهری طبیعی و باکیفیت طراحی شود.`
+  );
+}
+
 async function chatOpenAi(
   messages: ChatMessage[],
   jsonMode: boolean,
@@ -185,7 +194,8 @@ export async function generatePostContent(input: {
         content:
           `درباره موضوع «${input.topic}» یک مقاله فارسی با لحن ${tone} و طول ${lengthHint} بنویس. ` +
           `خروجی را دقیقاً به شکل JSON با کلیدهای زیر بده:\n` +
-          `{"title": "عنوان جذاب", "excerpt": "خلاصه یک تا دو جمله‌ای", "content": "متن کامل مقاله با فرمت markdown شامل تیترهای H2/H3", ` +
+          `{"title": "عنوان جذاب — فقط از حروف و کلمات فارسی تشکیل شود، هیچ نشانه یا کاراکتر خاصی مثل : ؟ ! - _ « » ( ) در آن نباشد", ` +
+          `"excerpt": "خلاصه یک تا دو جمله‌ای", "content": "متن کامل مقاله با فرمت markdown شامل تیترهای H2/H3", ` +
           `"tags": ["برچسب۱","برچسب۲","برچسب۳"], "seoTitle": "عنوان سئو حداکثر ۶۰ کاراکتر", "seoDescription": "توضیح متا حداکثر ۱۶۰ کاراکتر", ` +
           `"focusKeyword": "مهم‌ترین کلمه یا عبارت کلیدی هدف این مقاله (۲ تا ۴ کلمه)"}`,
       },
@@ -223,7 +233,7 @@ export async function generateBlogPost(input: {
   if (input.withImage) {
     try {
       const image = await generateImage({
-        prompt: `عکس کاور حرفه‌ای و مرتبط با موضوع: ${generated.title}`,
+        prompt: buildCoverImagePrompt(generated.title),
         alt: generated.title,
       });
       coverImage = image.url;
