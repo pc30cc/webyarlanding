@@ -1,0 +1,97 @@
+// آمار بازدید سایت — فقط سمت سرور.
+import { db, newId, nowIso } from "./db.server";
+
+const ONLINE_WINDOW_MINUTES = 3;
+
+function minutesAgoIso(minutes: number): string {
+  return new Date(Date.now() - minutes * 60_000).toISOString();
+}
+
+function startOfTodayIso(): string {
+  const d = new Date();
+  d.setHours(0, 0, 0, 0);
+  return d.toISOString();
+}
+
+function daysAgoIso(days: number): string {
+  const d = new Date();
+  d.setHours(0, 0, 0, 0);
+  d.setDate(d.getDate() - days);
+  return d.toISOString();
+}
+
+export async function recordVisit(sessionId: string, path: string): Promise<void> {
+  await Promise.all([
+    db.from("site_visits").insert({ id: newId(), session_id: sessionId, path: path.slice(0, 500) }),
+    db
+      .from("site_presence")
+      .upsert(
+        { session_id: sessionId, path: path.slice(0, 500), last_seen: nowIso() },
+        { onConflict: "session_id" },
+      ),
+  ]);
+}
+
+export async function pingPresence(sessionId: string, path: string): Promise<void> {
+  await db
+    .from("site_presence")
+    .upsert(
+      { session_id: sessionId, path: path.slice(0, 500), last_seen: nowIso() },
+      { onConflict: "session_id" },
+    );
+}
+
+export interface DailyVisitPoint {
+  date: string;
+  count: number;
+}
+
+export interface VisitStatsDto {
+  onlineNow: number;
+  today: number;
+  thisWeek: number;
+  thisMonth: number;
+  daily: DailyVisitPoint[];
+}
+
+export async function getVisitStats(): Promise<VisitStatsDto> {
+  const [onlineRes, todayRes, weekRes, monthRes, dailyRes] = await Promise.all([
+    db
+      .from("site_presence")
+      .select("session_id", { count: "exact", head: true })
+      .gte("last_seen", minutesAgoIso(ONLINE_WINDOW_MINUTES)),
+    db
+      .from("site_visits")
+      .select("id", { count: "exact", head: true })
+      .gte("created_at", startOfTodayIso()),
+    db
+      .from("site_visits")
+      .select("id", { count: "exact", head: true })
+      .gte("created_at", daysAgoIso(6)),
+    db
+      .from("site_visits")
+      .select("id", { count: "exact", head: true })
+      .gte("created_at", daysAgoIso(29)),
+    db.from("site_visits").select("created_at").gte("created_at", daysAgoIso(13)),
+  ]);
+
+  const buckets = new Map<string, number>();
+  for (let i = 13; i >= 0; i--) {
+    const d = new Date();
+    d.setHours(0, 0, 0, 0);
+    d.setDate(d.getDate() - i);
+    buckets.set(d.toISOString().slice(0, 10), 0);
+  }
+  for (const row of dailyRes.data ?? []) {
+    const key = String(row.created_at).slice(0, 10);
+    if (buckets.has(key)) buckets.set(key, (buckets.get(key) ?? 0) + 1);
+  }
+
+  return {
+    onlineNow: onlineRes.count ?? 0,
+    today: todayRes.count ?? 0,
+    thisWeek: weekRes.count ?? 0,
+    thisMonth: monthRes.count ?? 0,
+    daily: Array.from(buckets.entries()).map(([date, count]) => ({ date, count })),
+  };
+}

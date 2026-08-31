@@ -521,6 +521,45 @@ export type Database = {
         }
         Relationships: []
       }
+      site_presence: {
+        Row: {
+          last_seen: string
+          path: string
+          session_id: string
+        }
+        Insert: {
+          last_seen?: string
+          path: string
+          session_id: string
+        }
+        Update: {
+          last_seen?: string
+          path?: string
+          session_id?: string
+        }
+        Relationships: []
+      }
+      site_visits: {
+        Row: {
+          created_at: string
+          id: string
+          path: string
+          session_id: string
+        }
+        Insert: {
+          created_at?: string
+          id: string
+          path: string
+          session_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          path?: string
+          session_id?: string
+        }
+        Relationships: []
+      }
       user_sessions: {
         Row: {
           created_at: string

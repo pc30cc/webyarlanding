@@ -14,6 +14,7 @@ import { Toaster } from "../components/ui/sonner";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { fetchSettings } from "../lib/settings.functions";
 import { getPublicCatalog } from "../lib/catalog.functions";
+import { VisitTracker } from "../components/site/VisitTracker";
 
 function NotFoundComponent() {
   return (
@@ -159,6 +160,7 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       <Toaster position="top-center" richColors dir="rtl" />
+      <VisitTracker />
       {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
       <Outlet />
     </QueryClientProvider>
