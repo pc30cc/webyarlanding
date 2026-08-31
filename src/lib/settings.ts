@@ -162,8 +162,8 @@ export const DEFAULT_SETTINGS: SiteSettings = {
     enabled: true,
     textProvider: "openai",
     imageProvider: "openai",
-    openai: { textModel: "gpt-4o-mini", imageModel: "gpt-image-1" },
-    gemini: { textModel: "gemini-2.0-flash", imageModel: "gemini-2.5-flash-image" },
+    openai: { textModel: "gpt-4o-mini", imageModel: "gpt-image-1-mini" },
+    gemini: { textModel: "gemini-3.1-flash-lite", imageModel: "gemini-3.1-flash-lite-image" },
     systemPrompt:
       "تو یک نویسنده حرفه‌ای فارسی‌زبان در حوزه فناوری و کسب‌وکار هستی. محتوای دقیق، روان، سئوشده و بدون کلیشه بنویس.",
     temperature: 0.7,

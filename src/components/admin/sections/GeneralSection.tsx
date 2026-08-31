@@ -259,7 +259,7 @@ export default function GeneralSection() {
                 <Field label="مدل تولید تصویر">
                   <Input
                     dir="ltr"
-                    placeholder="gpt-image-1"
+                    placeholder="gpt-image-1-mini"
                     value={form.ai.openai.imageModel}
                     onChange={(e) =>
                       setForm((f) => ({
@@ -292,7 +292,7 @@ export default function GeneralSection() {
                 <Field label="مدل تولید متن">
                   <Input
                     dir="ltr"
-                    placeholder="gemini-2.0-flash"
+                    placeholder="gemini-3.1-flash-lite"
                     value={form.ai.gemini.textModel}
                     onChange={(e) =>
                       setForm((f) => ({
@@ -305,7 +305,7 @@ export default function GeneralSection() {
                 <Field label="مدل تولید تصویر">
                   <Input
                     dir="ltr"
-                    placeholder="gemini-2.5-flash-image"
+                    placeholder="gemini-3.1-flash-lite-image"
                     value={form.ai.gemini.imageModel}
                     onChange={(e) =>
                       setForm((f) => ({
