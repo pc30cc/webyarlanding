@@ -199,6 +199,7 @@ export async function runAutoblog(
     });
 
     let coverImage = "";
+    let imageError: string | undefined;
     if (settings.withImage) {
       try {
         const { generateImage } = await import("./ai.server");
@@ -208,7 +209,9 @@ export async function runAutoblog(
         });
         coverImage = image.url;
       } catch (e) {
-        // اگر تولید عکس شکست خورد، مقاله بدون عکس ذخیره می‌شود — اما دلیل شکست را برای عیب‌یابی لاگ می‌کنیم.
+        // اگر تولید عکس شکست خورد، مقاله بدون عکس ذخیره می‌شود — اما دلیل شکست را هم لاگ و هم روی
+        // خود اجرا ثبت می‌کنیم تا در تاریخچه اجراهای پنل ادمین قابل دیدن باشد، نه فقط در لاگ سرور.
+        imageError = e instanceof Error ? e.message : "خطای ناشناخته در تولید تصویر";
         console.error("autoblog: cover image generation failed:", e);
       }
     }
@@ -232,6 +235,7 @@ export async function runAutoblog(
         status: "success",
         posts_created: 1,
         post_ids: postId,
+        error: imageError ? `مقاله ذخیره شد اما تصویر کاور ساخته نشد: ${imageError}` : null,
         finished_at: nowIso(),
       })
       .eq("id", runId);

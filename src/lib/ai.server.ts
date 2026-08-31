@@ -296,15 +296,19 @@ async function generateImageOpenAi(prompt: string, config: AiConfig): Promise<st
       "کلید API اوپن‌ای‌آی در تنظیمات عمومی → هوش مصنوعی وارد نشده است.",
     );
   }
+  const model = config.ai.openai?.imageModel || "gpt-image-1";
+  // خانواده dall-e (قدیمی) به response_format نیاز دارد؛ خانواده gpt-image این پارامتر را
+  // نمی‌پذیرد و همیشه b64_json برمی‌گرداند — ارسال آن برای gpt-image باعث خطای ۴۰۰ می‌شود.
+  const isLegacyDalle = model.startsWith("dall-e");
   const res = await fetch("https://api.openai.com/v1/images/generations", {
     method: "POST",
     headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
     body: JSON.stringify({
-      model: config.ai.openai?.imageModel || "dall-e-3",
+      model,
       prompt,
       n: 1,
       size: "1024x1024",
-      response_format: "b64_json",
+      ...(isLegacyDalle ? { response_format: "b64_json" } : {}),
     }),
   });
 
