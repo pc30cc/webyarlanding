@@ -9,7 +9,7 @@ import { getIcon } from "@/lib/icon-registry";
 import { SiteLayout } from "@/components/site/SiteLayout";
 import { ScrollReveal, StaggerChildren, childVariant } from "@/components/site/animations";
 
-export const Route = createFileRoute("/products")({
+export const Route = createFileRoute("/products/")({
   loader: async () => {
     const [settings, seoOverride, categories] = await Promise.all([
       fetchSettings(),
