@@ -21,6 +21,13 @@ function daysAgoIso(days: number): string {
 }
 
 export async function recordVisit(sessionId: string, path: string): Promise<void> {
+  const { data: existingPresence } = await db
+    .from("site_presence")
+    .select("session_id")
+    .eq("session_id", sessionId)
+    .maybeSingle();
+  const isNewVisitor = !existingPresence;
+
   await Promise.all([
     db.from("site_visits").insert({ id: newId(), session_id: sessionId, path: path.slice(0, 500) }),
     db
@@ -30,6 +37,15 @@ export async function recordVisit(sessionId: string, path: string): Promise<void
         { onConflict: "session_id" },
       ),
   ]);
+
+  if (isNewVisitor) {
+    try {
+      const { notifyNewVisit } = await import("./telegram.server");
+      await notifyNewVisit(path);
+    } catch (e) {
+      console.error("recordVisit: notifyNewVisit failed:", e);
+    }
+  }
 }
 
 export async function pingPresence(sessionId: string, path: string): Promise<void> {

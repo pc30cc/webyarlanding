@@ -45,6 +45,7 @@ import { Route as SolutionsSlugRouteImport } from './routes/solutions.$slug'
 import { Route as TagSlugRouteImport } from './routes/tag.$slug'
 import { Route as ApiPublicAutoblogCronRouteImport } from './routes/api/public/autoblog-cron'
 import { Route as ApiPublicHealthRouteImport } from './routes/api/public/health'
+import { Route as ApiPublicTelegramWebhookRouteImport } from './routes/api/public/telegram-webhook'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -226,6 +227,12 @@ const ApiPublicHealthRoute = ApiPublicHealthRouteImport.update({
   path: '/api/public/health',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicTelegramWebhookRoute =
+  ApiPublicTelegramWebhookRouteImport.update({
+    id: '/api/public/telegram-webhook',
+    path: '/api/public/telegram-webhook',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -264,6 +271,7 @@ export interface FileRoutesByFullPath {
   '/solutions/': typeof SolutionsIndexRoute
   '/api/public/autoblog-cron': typeof ApiPublicAutoblogCronRoute
   '/api/public/health': typeof ApiPublicHealthRoute
+  '/api/public/telegram-webhook': typeof ApiPublicTelegramWebhookRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -301,6 +309,7 @@ export interface FileRoutesByTo {
   '/solutions': typeof SolutionsIndexRoute
   '/api/public/autoblog-cron': typeof ApiPublicAutoblogCronRoute
   '/api/public/health': typeof ApiPublicHealthRoute
+  '/api/public/telegram-webhook': typeof ApiPublicTelegramWebhookRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -340,6 +349,7 @@ export interface FileRoutesById {
   '/solutions/': typeof SolutionsIndexRoute
   '/api/public/autoblog-cron': typeof ApiPublicAutoblogCronRoute
   '/api/public/health': typeof ApiPublicHealthRoute
+  '/api/public/telegram-webhook': typeof ApiPublicTelegramWebhookRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -380,6 +390,7 @@ export interface FileRouteTypes {
     | '/solutions/'
     | '/api/public/autoblog-cron'
     | '/api/public/health'
+    | '/api/public/telegram-webhook'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -417,6 +428,7 @@ export interface FileRouteTypes {
     | '/solutions'
     | '/api/public/autoblog-cron'
     | '/api/public/health'
+    | '/api/public/telegram-webhook'
   id:
     | '__root__'
     | '/'
@@ -455,6 +467,7 @@ export interface FileRouteTypes {
     | '/solutions/'
     | '/api/public/autoblog-cron'
     | '/api/public/health'
+    | '/api/public/telegram-webhook'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -479,6 +492,7 @@ export interface RootRouteChildren {
   SolutionsIndexRoute: typeof SolutionsIndexRoute
   ApiPublicAutoblogCronRoute: typeof ApiPublicAutoblogCronRoute
   ApiPublicHealthRoute: typeof ApiPublicHealthRoute
+  ApiPublicTelegramWebhookRoute: typeof ApiPublicTelegramWebhookRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -735,6 +749,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicHealthRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/telegram-webhook': {
+      id: '/api/public/telegram-webhook'
+      path: '/api/public/telegram-webhook'
+      fullPath: '/api/public/telegram-webhook'
+      preLoaderRoute: typeof ApiPublicTelegramWebhookRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -798,6 +819,7 @@ const rootRouteChildren: RootRouteChildren = {
   SolutionsIndexRoute: SolutionsIndexRoute,
   ApiPublicAutoblogCronRoute: ApiPublicAutoblogCronRoute,
   ApiPublicHealthRoute: ApiPublicHealthRoute,
+  ApiPublicTelegramWebhookRoute: ApiPublicTelegramWebhookRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
