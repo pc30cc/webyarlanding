@@ -75,7 +75,11 @@ export async function listPosts(options: {
 
   let postIdFilter: string[] | undefined;
   if (options.tagSlug) {
-    const { data: tag } = await db.from("blog_tags").select("id").eq("slug", options.tagSlug).maybeSingle();
+    const { data: tag } = await db
+      .from("blog_tags")
+      .select("id")
+      .eq("slug", options.tagSlug)
+      .maybeSingle();
     if (!tag) return [];
     const { data: links } = await db.from("blog_post_tags").select("post_id").eq("tag_id", tag.id);
     postIdFilter = (links ?? []).map((row) => row.post_id);
@@ -91,7 +95,9 @@ export async function listPosts(options: {
 
   const { data } = await query;
   const cats = await categoryMap();
-  return (data ?? []).map((row) => mapPost(row as PostRow, row.category_id ? cats.get(row.category_id) : null));
+  return (data ?? []).map((row) =>
+    mapPost(row as PostRow, row.category_id ? cats.get(row.category_id) : null),
+  );
 }
 
 export async function getPostBySlug(slug: string): Promise<PostDto | null> {
@@ -108,10 +114,14 @@ export async function getPostById(id: string): Promise<PostDto | null> {
   return mapPost(data as PostRow, data.category_id ? cats.get(data.category_id) : null);
 }
 
-async function uniqueSlug(table: "blog_posts" | "blog_categories" | "blog_tags", desired: string, ignoreId?: string | undefined) {
+async function uniqueSlug(
+  table: "blog_posts" | "blog_categories" | "blog_tags",
+  desired: string,
+  ignoreId?: string | undefined,
+) {
   let slug = desired;
   let attempt = 1;
-  // eslint-disable-next-line no-constant-condition
+
   while (true) {
     const { data } = await db.from(table).select("id").eq("slug", slug).maybeSingle();
     if (!data || data.id === ignoreId) return slug;
@@ -163,9 +173,23 @@ export async function savePost(input: SavePostInput): Promise<string> {
     updated_at: nowIso(),
   };
 
+  let isNewlyPublished = false;
+
   if (input.id) {
     const { error } = await db.from("blog_posts").update(row).eq("id", input.id);
     if (error) throw new Error(`ذخیره‌سازی مقاله ناموفق بود: ${error.message}`);
+
+    if (status === "published") {
+      const { data } = await db
+        .from("blog_posts")
+        .select("published_at")
+        .eq("id", id)
+        .maybeSingle();
+      if (!data?.published_at) {
+        await db.from("blog_posts").update({ published_at: nowIso() }).eq("id", id);
+        isNewlyPublished = true;
+      }
+    }
   } else {
     const { error } = await db.from("blog_posts").insert({
       id,
@@ -173,14 +197,25 @@ export async function savePost(input: SavePostInput): Promise<string> {
       published_at: status === "published" ? nowIso() : null,
     });
     if (error) throw new Error(`ذخیره‌سازی مقاله ناموفق بود: ${error.message}`);
-  }
-
-  if (input.id && status === "published") {
-    const { data } = await db.from("blog_posts").select("published_at").eq("id", id).maybeSingle();
-    if (!data?.published_at) await db.from("blog_posts").update({ published_at: nowIso() }).eq("id", id);
+    isNewlyPublished = status === "published";
   }
 
   await syncPostTags(id, input.tags ?? []);
+
+  if (isNewlyPublished) {
+    try {
+      const { notifyPublishedPost } = await import("./telegram.server");
+      await notifyPublishedPost({
+        title: input.title,
+        slug,
+        excerpt: input.excerpt ?? "",
+        coverImage: input.coverImage ?? "",
+      });
+    } catch (e) {
+      console.error("savePost: notifyPublishedPost failed:", e);
+    }
+  }
+
   return id;
 }
 
@@ -195,7 +230,11 @@ export async function syncPostTags(postId: string, tags: string[]): Promise<void
     const trimmed = name.trim();
     if (!trimmed) continue;
     const slug = slugify(trimmed);
-    const { data: existing } = await db.from("blog_tags").select("id").eq("slug", slug).maybeSingle();
+    const { data: existing } = await db
+      .from("blog_tags")
+      .select("id")
+      .eq("slug", slug)
+      .maybeSingle();
     let tagId = existing?.id;
     if (!tagId) {
       tagId = newId();
@@ -206,8 +245,14 @@ export async function syncPostTags(postId: string, tags: string[]): Promise<void
 }
 
 export async function fetchCategories(): Promise<CategoryDto[]> {
-  const { data } = await db.from("blog_categories").select("*").order("sort_order", { ascending: true });
-  const { data: posts } = await db.from("blog_posts").select("category_id").eq("status", "published");
+  const { data } = await db
+    .from("blog_categories")
+    .select("*")
+    .order("sort_order", { ascending: true });
+  const { data: posts } = await db
+    .from("blog_posts")
+    .select("category_id")
+    .eq("status", "published");
   const counts = new Map<string, number>();
   for (const post of posts ?? []) {
     if (!post.category_id) continue;

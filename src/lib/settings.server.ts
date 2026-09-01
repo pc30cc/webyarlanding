@@ -104,3 +104,22 @@ export async function saveMediaKeys(partial: Partial<MediaApiKeys>): Promise<voi
   const stored = await loadPrivateSettings<Partial<MediaApiKeys>>({});
   await savePrivateSettings({ ...stored, ...partial });
 }
+
+/** توکن ربات تلگرام و رمز وبهوک — بخشی از تنظیمات محرمانه، فقط سمت سرور خوانده می‌شود */
+export interface TelegramApiKeys {
+  telegramBotToken: string;
+  /** رمزی که تلگرام در هدر هر درخواست وبهوک برمی‌گرداند تا از جعل درخواست جلوگیری شود */
+  telegramWebhookSecret: string;
+}
+
+const TELEGRAM_KEYS_DEFAULTS: TelegramApiKeys = { telegramBotToken: "", telegramWebhookSecret: "" };
+
+export async function loadTelegramKeys(): Promise<TelegramApiKeys> {
+  const stored = await loadPrivateSettings<Partial<TelegramApiKeys>>({});
+  return { ...TELEGRAM_KEYS_DEFAULTS, ...stored };
+}
+
+export async function saveTelegramKeys(partial: Partial<TelegramApiKeys>): Promise<void> {
+  const stored = await loadPrivateSettings<Partial<TelegramApiKeys>>({});
+  await savePrivateSettings({ ...stored, ...partial });
+}

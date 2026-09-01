@@ -101,6 +101,19 @@ export interface MediaSettings {
   arvan: ArvanStorageSettings;
 }
 
+export interface TelegramSettings {
+  /** ربات وصل و فعال است؛ اگر خاموش باشد هیچ پیامی (نه اعلان، نه پست کانال) ارسال نمی‌شود */
+  enabled: boolean;
+  /** شناسه یا نام‌کاربری کانالی که مقالات جدید در آن پست می‌شوند، مثل @my_channel یا -1001234567890 */
+  channelId: string;
+  /** شناسه‌های چت تلگرام مجاز به استفاده از منوی مدیریت ربات، جدا شده با کاما */
+  adminChatIds: string;
+  /** ارسال پیام لحظه‌ای به مدیران هنگام ورود یک بازدیدکننده جدید به سایت */
+  notifyOnVisit: boolean;
+  /** پست خودکار مقاله در کانال، به‌محض انتشار مقاله جدید (دستی یا خودکار) */
+  notifyOnPublish: boolean;
+}
+
 export interface SiteSettings {
   brand: BrandSettings;
   seo: SeoSettings;
@@ -110,6 +123,7 @@ export interface SiteSettings {
   ai: AiSettings;
   analytics: AnalyticsSettings;
   media: MediaSettings;
+  telegram: TelegramSettings;
 }
 
 export const DEFAULT_SETTINGS: SiteSettings = {
@@ -178,6 +192,13 @@ export const DEFAULT_SETTINGS: SiteSettings = {
     provider: "none",
     bunny: { storageZone: "", region: "", pullZoneUrl: "" },
     arvan: { bucket: "", endpoint: "", region: "ir-thr-at1", publicUrl: "" },
+  },
+  telegram: {
+    enabled: false,
+    channelId: "",
+    adminChatIds: "",
+    notifyOnVisit: false,
+    notifyOnPublish: true,
   },
 };
 

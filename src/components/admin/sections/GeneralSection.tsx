@@ -2,10 +2,16 @@ import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { Loader2, KeyRound, Trash2 } from "lucide-react";
+import { Loader2, KeyRound, Trash2, Send, Bot } from "lucide-react";
 import { fetchSettings, updateSettings } from "@/lib/settings.functions";
 import { adminGetAiKeysStatus, adminSaveAiKeys } from "@/lib/ai.functions";
 import { adminGetMediaKeysStatus, adminSaveMediaKeys } from "@/lib/media.functions";
+import {
+  adminGetTelegramKeysStatus,
+  adminSaveTelegramBotToken,
+  adminConnectTelegramWebhook,
+  adminGetTelegramWebhookInfo,
+} from "@/lib/telegram.functions";
 import type { SiteSettings } from "@/lib/settings";
 import { DEFAULT_SETTINGS } from "@/lib/settings";
 import { Input } from "@/components/ui/input";
@@ -75,6 +81,7 @@ export default function GeneralSection() {
             <TabsTrigger value="social">شبکه‌های اجتماعی</TabsTrigger>
             <TabsTrigger value="ai">هوش مصنوعی</TabsTrigger>
             <TabsTrigger value="media">ذخیره‌سازی رسانه</TabsTrigger>
+            <TabsTrigger value="telegram">ربات تلگرام</TabsTrigger>
             <TabsTrigger value="analytics">تحلیل و اسکریپت‌ها</TabsTrigger>
           </TabsList>
 
@@ -561,6 +568,96 @@ export default function GeneralSection() {
             <MediaKeysSection />
           </TabsContent>
 
+          <TabsContent value="telegram" className="mt-6 flex flex-col gap-6">
+            <section className="rounded-xl border border-border bg-card p-4 shadow-sm">
+              <div className="mb-4 flex items-center justify-between">
+                <h2 className="text-base font-semibold text-foreground">ربات مدیریتی تلگرام</h2>
+                <div className="flex items-center gap-2">
+                  <Label className="cursor-pointer text-xs">فعال</Label>
+                  <Switch
+                    checked={form.telegram.enabled}
+                    onCheckedChange={(v) =>
+                      setForm((f) => ({ ...f, telegram: { ...f.telegram, enabled: v } }))
+                    }
+                  />
+                </div>
+              </div>
+              <p className="mb-4 text-xs text-muted-foreground">
+                این ربات از طریق پیام‌رسان تلگرام آمار بازدید، وضعیت مقالات و پیام‌های تماس را نشان
+                می‌دهد، امکان تولید مقاله جدید با یک دکمه را فراهم می‌کند و می‌تواند مقالات تازه
+                منتشرشده را در کانال تلگرام شما پست کند.
+              </p>
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <Field label="شناسه کانال تلگرام (برای پست خودکار مقالات)">
+                  <Input
+                    dir="ltr"
+                    placeholder="@your_channel یا -100xxxxxxxxxx"
+                    value={form.telegram.channelId}
+                    onChange={(e) =>
+                      setForm((f) => ({
+                        ...f,
+                        telegram: { ...f.telegram, channelId: e.target.value },
+                      }))
+                    }
+                  />
+                </Field>
+                <Field label="شناسه‌های چت ادمین (با کاما جدا کنید)">
+                  <Input
+                    dir="ltr"
+                    placeholder="123456789, 987654321"
+                    value={form.telegram.adminChatIds}
+                    onChange={(e) =>
+                      setForm((f) => ({
+                        ...f,
+                        telegram: { ...f.telegram, adminChatIds: e.target.value },
+                      }))
+                    }
+                  />
+                </Field>
+              </div>
+              <p className="mt-2 text-xs text-muted-foreground">
+                برای پیدا کردن شناسه چت خودتان، یک پیام به ربات بفرستید؛ اگر شناسه شما هنوز اضافه
+                نشده باشد، ربات همان شناسه را برایتان پیام می‌دهد.
+              </p>
+
+              <div className="mt-4 flex flex-col gap-3 rounded-lg border border-border p-3 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <p className="text-sm font-medium text-foreground">
+                    اعلان لحظه‌ای ورود بازدیدکننده جدید
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    به همه‌ی شناسه‌های چت ادمین بالا پیام می‌دهد
+                  </p>
+                </div>
+                <Switch
+                  checked={form.telegram.notifyOnVisit}
+                  onCheckedChange={(v) =>
+                    setForm((f) => ({ ...f, telegram: { ...f.telegram, notifyOnVisit: v } }))
+                  }
+                />
+              </div>
+
+              <div className="mt-3 flex flex-col gap-3 rounded-lg border border-border p-3 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <p className="text-sm font-medium text-foreground">
+                    پست خودکار مقاله جدید در کانال
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    وقتی مقاله‌ای (دستی یا خودکار) منتشر می‌شود، در کانال بالا پست می‌شود
+                  </p>
+                </div>
+                <Switch
+                  checked={form.telegram.notifyOnPublish}
+                  onCheckedChange={(v) =>
+                    setForm((f) => ({ ...f, telegram: { ...f.telegram, notifyOnPublish: v } }))
+                  }
+                />
+              </div>
+            </section>
+
+            <TelegramKeysSection />
+          </TabsContent>
+
           <TabsContent value="analytics" className="mt-6">
             <section className="rounded-xl border border-border bg-card p-4 shadow-sm">
               <h2 className="mb-4 text-base font-semibold text-foreground">تحلیل و اسکریپت‌ها</h2>
@@ -896,6 +993,152 @@ function MediaKeysSection() {
               ذخیره کلیدهای آروان
             </Button>
           </div>
+        </div>
+      )}
+    </section>
+  );
+}
+
+function TelegramKeysSection() {
+  const statusFn = useServerFn(adminGetTelegramKeysStatus);
+  const saveFn = useServerFn(adminSaveTelegramBotToken);
+  const connectFn = useServerFn(adminConnectTelegramWebhook);
+  const webhookInfoFn = useServerFn(adminGetTelegramWebhookInfo);
+  const qc = useQueryClient();
+  const { data, isLoading } = useQuery({
+    queryKey: ["telegram-keys-status"],
+    queryFn: () => statusFn(),
+  });
+  const { data: webhookInfo, isLoading: webhookLoading } = useQuery({
+    queryKey: ["telegram-webhook-info"],
+    queryFn: () => webhookInfoFn(),
+    enabled: !!data?.botTokenSet,
+  });
+  const [botToken, setBotToken] = useState("");
+
+  const saveMutation = useMutation({
+    mutationFn: (payload: { botToken?: string; clearBotToken?: boolean }) =>
+      saveFn({ data: payload }),
+    onSuccess: () => {
+      toast.success("توکن ربات ذخیره شد");
+      qc.invalidateQueries({ queryKey: ["telegram-keys-status"] });
+      qc.invalidateQueries({ queryKey: ["telegram-webhook-info"] });
+      setBotToken("");
+    },
+    onError: () => toast.error("خطا در ذخیره توکن ربات"),
+  });
+
+  const connectMutation = useMutation({
+    mutationFn: () => connectFn(),
+    onSuccess: (res) => {
+      if (res.ok) {
+        toast.success(res.message);
+        qc.invalidateQueries({ queryKey: ["telegram-webhook-info"] });
+      } else {
+        toast.error(res.message);
+      }
+    },
+    onError: () => toast.error("خطا در اتصال ربات"),
+  });
+
+  return (
+    <section className="rounded-xl border border-border bg-card p-4 shadow-sm">
+      <div className="mb-4 flex items-center gap-2">
+        <Bot className="h-4 w-4 text-primary" />
+        <h2 className="text-base font-semibold text-foreground">اتصال ربات تلگرام</h2>
+      </div>
+      <p className="mb-4 text-xs text-muted-foreground">
+        ابتدا با @BotFather یک ربات بسازید و توکن آن را اینجا وارد کنید، سپس روی «اتصال ربات» بزنید
+        تا وبهوک ثبت شود. توکن مستقیماً و فقط سمت سرور استفاده می‌شود.
+      </p>
+      {isLoading ? (
+        <Skeleton className="h-24 w-full" />
+      ) : (
+        <div className="flex flex-col gap-4">
+          <div className="flex flex-col gap-1.5">
+            <Label className="flex items-center justify-between">
+              <span>توکن ربات (Bot Token)</span>
+              {data?.botTokenSet && (
+                <span dir="ltr" className="text-xs text-success">
+                  تنظیم شده · {data.botTokenPreview}
+                </span>
+              )}
+            </Label>
+            <div className="flex gap-2">
+              <Input
+                dir="ltr"
+                type="password"
+                placeholder={
+                  data?.botTokenSet ? "برای تغییر، توکن جدید وارد کنید" : "123456:ABC-..."
+                }
+                value={botToken}
+                onChange={(e) => setBotToken(e.target.value)}
+              />
+              {data?.botTokenSet && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="icon"
+                  className="shrink-0 text-destructive"
+                  disabled={saveMutation.isPending}
+                  onClick={() => saveMutation.mutate({ clearBotToken: true })}
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              )}
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                disabled={!botToken.trim() || saveMutation.isPending}
+                onClick={() => saveMutation.mutate({ botToken })}
+                className="w-fit gap-1.5"
+              >
+                {saveMutation.isPending && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+                ذخیره توکن
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                disabled={!data?.botTokenSet || connectMutation.isPending}
+                onClick={() => connectMutation.mutate()}
+                className="w-fit gap-1.5"
+              >
+                {connectMutation.isPending ? (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                ) : (
+                  <Send className="h-3.5 w-3.5" />
+                )}
+                اتصال ربات (ثبت وبهوک)
+              </Button>
+            </div>
+          </div>
+
+          {data?.botTokenSet && (
+            <div className="rounded-lg border border-border p-3 text-xs">
+              {webhookLoading ? (
+                <Skeleton className="h-4 w-40" />
+              ) : webhookInfo?.url ? (
+                <div className="flex flex-col gap-1">
+                  <span className="text-success">وبهوک متصل است</span>
+                  <span dir="ltr" className="break-all text-muted-foreground">
+                    {webhookInfo.url}
+                  </span>
+                  {webhookInfo.last_error_message && (
+                    <span className="text-destructive">
+                      آخرین خطا: {webhookInfo.last_error_message}
+                    </span>
+                  )}
+                </div>
+              ) : (
+                <span className="text-muted-foreground">
+                  وبهوک هنوز ثبت نشده — روی «اتصال ربات» بزنید.
+                </span>
+              )}
+            </div>
+          )}
         </div>
       )}
     </section>
