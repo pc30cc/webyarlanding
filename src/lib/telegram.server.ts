@@ -290,12 +290,41 @@ export async function notifyNewVisit(path: string): Promise<void> {
   );
 }
 
+function escapeHtml(s: string): string {
+  return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
+
+/** یکی از چند ایموجی سردر، ثابت برای هر مقاله اما متفاوت بین مقالات — از یکنواختی/تکراری به نظر رسیدن پست‌ها جلوگیری می‌کند */
+const LEAD_EMOJIS = ["✨", "📌", "💬", "🌱", "🔎", "💡", "🌟"];
+function pickLeadEmoji(seed: string): string {
+  let hash = 0;
+  for (const ch of seed) hash = (hash * 31 + ch.charCodeAt(0)) >>> 0;
+  return LEAD_EMOJIS[hash % LEAD_EMOJIS.length] ?? "✨";
+}
+
+function toHashtag(text: string): string {
+  const cleaned = text
+    .trim()
+    .replace(/\s+/g, "_")
+    .replace(/[^\p{L}\p{N}_\u200c]/gu, "");
+  return cleaned ? `#${cleaned}` : "";
+}
+
+/** هشتگ‌های مرتبط برای دیده‌شدن بهتر پست در جست‌وجوی داخل تلگرام */
+function buildHashtags(tags: string[], focusKeyword: string): string {
+  const source = [focusKeyword, ...tags].filter(Boolean).slice(0, 5);
+  const list = Array.from(new Set([...source.map(toHashtag), "#وبیار"].filter(Boolean)));
+  return list.slice(0, 6).join(" ");
+}
+
 /** پست خودکار در کانال، وقتی مقاله‌ای (دستی یا خودکار) تازه منتشر می‌شود */
 export async function notifyPublishedPost(post: {
   title: string;
   slug: string;
   excerpt: string;
   coverImage: string;
+  tags?: string[] | undefined;
+  focusKeyword?: string | undefined;
 }): Promise<void> {
   const settings = await loadSettings();
   if (!settings.telegram.enabled || !settings.telegram.notifyOnPublish) return;
@@ -304,9 +333,12 @@ export async function notifyPublishedPost(post: {
   if (!keys.telegramBotToken) return;
 
   const base = (settings.brand.siteUrl || "").replace(/\/$/, "");
-  const url = `${base}/blog/${post.slug}`;
-  const text =
-    `📝 مقاله جدید منتشر شد\n\n${post.title}\n\n${post.excerpt || ""}\n\n🔗 ${url}`.trim();
+  const url = `${base}/blog/${encodeURIComponent(post.slug)}`;
+  const emoji = pickLeadEmoji(post.slug);
+  const hashtags = buildHashtags(post.tags ?? [], post.focusKeyword ?? "");
+  const caption =
+    `${emoji} <b>${escapeHtml(post.title)}</b>\n\n${escapeHtml(post.excerpt || "")}\n\n${hashtags}`.trim();
+  const replyMarkup = { inline_keyboard: [[{ text: "📖 مطالعه مقاله", url }]] };
 
   try {
     if (post.coverImage) {
@@ -314,7 +346,9 @@ export async function notifyPublishedPost(post: {
         await tgCall(keys.telegramBotToken, "sendPhoto", {
           chat_id: settings.telegram.channelId,
           photo: post.coverImage,
-          caption: text,
+          caption,
+          parse_mode: "HTML",
+          reply_markup: replyMarkup,
         });
       } catch (photoError) {
         // اگر ارسال عکس شکست بخورد (مثلاً آدرس تصویر برای تلگرام قابل‌دسترس نبود)، حداقل خود
@@ -322,13 +356,17 @@ export async function notifyPublishedPost(post: {
         console.error("notifyPublishedPost: sendPhoto failed, falling back to text:", photoError);
         await tgCall(keys.telegramBotToken, "sendMessage", {
           chat_id: settings.telegram.channelId,
-          text,
+          text: caption,
+          parse_mode: "HTML",
+          reply_markup: replyMarkup,
         });
       }
     } else {
       await tgCall(keys.telegramBotToken, "sendMessage", {
         chat_id: settings.telegram.channelId,
-        text,
+        text: caption,
+        parse_mode: "HTML",
+        reply_markup: replyMarkup,
       });
     }
     if (settings.telegram.lastChannelPostError) {

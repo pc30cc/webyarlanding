@@ -210,6 +210,8 @@ export async function savePost(input: SavePostInput): Promise<string> {
         slug,
         excerpt: input.excerpt ?? "",
         coverImage: input.coverImage ?? "",
+        tags: input.tags,
+        focusKeyword: input.focusKeyword,
       });
     } catch (e) {
       console.error("savePost: notifyPublishedPost failed:", e);
