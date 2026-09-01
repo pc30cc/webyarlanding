@@ -73,6 +73,20 @@ export const deleteMedia = createServerFn({ method: "POST" })
     const { requireAdmin } = await import("./auth.server");
     const { db } = await import("./db.server");
     await requireAdmin();
+    const { data: asset } = await db
+      .from("media_assets")
+      .select("path")
+      .eq("id", data.id)
+      .maybeSingle();
+    // path فقط وقتی کلید ذخیره‌سازی داخلیه (نه یک URL خارجی که کاربر دستی ثبت کرده) پاک می‌شود
+    if (asset?.path && !/^https?:\/\//i.test(asset.path)) {
+      try {
+        const { deleteStoredImage } = await import("./storage.server");
+        await deleteStoredImage(asset.path);
+      } catch (e) {
+        console.error("deleteMedia: failed to delete from storage:", e);
+      }
+    }
     await db.from("media_assets").delete().eq("id", data.id);
     return { ok: true };
   });
