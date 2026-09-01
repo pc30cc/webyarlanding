@@ -112,6 +112,10 @@ export interface TelegramSettings {
   notifyOnVisit: boolean;
   /** پست خودکار مقاله در کانال، به‌محض انتشار مقاله جدید (دستی یا خودکار) */
   notifyOnPublish: boolean;
+  /** پیام خطای آخرین تلاش ناموفق برای پست مقاله در کانال — برای دیباگ در پنل ادمین */
+  lastChannelPostError: string;
+  /** زمان آخرین خطای پست کانال (ISO) */
+  lastChannelPostErrorAt: string;
 }
 
 export interface SiteSettings {
@@ -199,6 +203,8 @@ export const DEFAULT_SETTINGS: SiteSettings = {
     adminChatIds: "",
     notifyOnVisit: false,
     notifyOnPublish: true,
+    lastChannelPostError: "",
+    lastChannelPostErrorAt: "",
   },
 };
 

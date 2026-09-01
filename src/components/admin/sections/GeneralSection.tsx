@@ -620,6 +620,23 @@ export default function GeneralSection() {
                 نشده باشد، ربات همان شناسه را برایتان پیام می‌دهد.
               </p>
 
+              {form.telegram.lastChannelPostError && (
+                <div className="mt-3 rounded-lg border border-destructive/30 bg-destructive/5 p-3 text-xs">
+                  <p className="font-medium text-destructive">
+                    آخرین خطای پست در کانال
+                    {form.telegram.lastChannelPostErrorAt &&
+                      ` · ${new Date(form.telegram.lastChannelPostErrorAt).toLocaleString("fa-IR")}`}
+                  </p>
+                  <p dir="ltr" className="mt-1 break-all text-muted-foreground">
+                    {form.telegram.lastChannelPostError}
+                  </p>
+                  <p className="mt-2 text-muted-foreground">
+                    معمولاً یعنی ربات هنوز به‌عنوان ادمین با دسترسی ارسال پیام به کانال بالا اضافه
+                    نشده است.
+                  </p>
+                </div>
+              )}
+
               <div className="mt-4 flex flex-col gap-3 rounded-lg border border-border p-3 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                   <p className="text-sm font-medium text-foreground">

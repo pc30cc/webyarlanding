@@ -310,18 +310,43 @@ export async function notifyPublishedPost(post: {
 
   try {
     if (post.coverImage) {
-      await tgCall(keys.telegramBotToken, "sendPhoto", {
-        chat_id: settings.telegram.channelId,
-        photo: post.coverImage,
-        caption: text,
-      });
+      try {
+        await tgCall(keys.telegramBotToken, "sendPhoto", {
+          chat_id: settings.telegram.channelId,
+          photo: post.coverImage,
+          caption: text,
+        });
+      } catch (photoError) {
+        // اگر ارسال عکس شکست بخورد (مثلاً آدرس تصویر برای تلگرام قابل‌دسترس نبود)، حداقل خود
+        // مقاله به‌صورت متنی در کانال پست شود تا انتشار به‌طور کامل از دست نرود
+        console.error("notifyPublishedPost: sendPhoto failed, falling back to text:", photoError);
+        await tgCall(keys.telegramBotToken, "sendMessage", {
+          chat_id: settings.telegram.channelId,
+          text,
+        });
+      }
     } else {
       await tgCall(keys.telegramBotToken, "sendMessage", {
         chat_id: settings.telegram.channelId,
         text,
       });
     }
+    if (settings.telegram.lastChannelPostError) {
+      const { saveSettings } = await import("./settings.server");
+      settings.telegram.lastChannelPostError = "";
+      settings.telegram.lastChannelPostErrorAt = "";
+      await saveSettings(settings);
+    }
   } catch (e) {
+    const message = e instanceof Error ? e.message : String(e);
     console.error("notifyPublishedPost: telegram send failed:", e);
+    try {
+      const { saveSettings } = await import("./settings.server");
+      settings.telegram.lastChannelPostError = message.slice(0, 500);
+      settings.telegram.lastChannelPostErrorAt = new Date().toISOString();
+      await saveSettings(settings);
+    } catch (saveError) {
+      console.error("notifyPublishedPost: failed to persist last error:", saveError);
+    }
   }
 }
