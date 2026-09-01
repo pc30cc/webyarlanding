@@ -18,10 +18,31 @@ export function ChatWidget({ settings }: { settings: SiteSettings }) {
     }
 
     if (cfg.inlineScript) {
-      const inline = document.createElement("script");
-      inline.text = cfg.inlineScript;
-      document.body.appendChild(inline);
-      injected.push(inline);
+      // کد نصب معمولاً یک قطعه HTML کامل است (شامل تگ <script> و گاهی کامنت‌های HTML دور آن)،
+      // همان‌طور که اکثر ابزارک‌های چت ارائه می‌دهند — نه فقط سورس خام جاوااسکریپت. innerHTML
+      // اسکریپت‌ها را اجرا نمی‌کند، پس هر <script> باید به‌صورت یک المان جدید و واقعی بازسازی و
+      // درج شود تا مرورگر آن را اجرا کند.
+      const parsed = document.createElement("div");
+      parsed.innerHTML = cfg.inlineScript;
+      const scripts = parsed.querySelectorAll("script");
+
+      if (scripts.length > 0) {
+        scripts.forEach((original) => {
+          const script = document.createElement("script");
+          for (const attr of Array.from(original.attributes)) {
+            script.setAttribute(attr.name, attr.value);
+          }
+          if (original.textContent) script.text = original.textContent;
+          document.body.appendChild(script);
+          injected.push(script);
+        });
+      } else {
+        // اگر کد نصب فقط سورس خام جاوااسکریپت بود (بدون تگ <script>)، مثل قبل مستقیم اجرا شود
+        const inline = document.createElement("script");
+        inline.text = cfg.inlineScript;
+        document.body.appendChild(inline);
+        injected.push(inline);
+      }
     }
 
     return () => {
