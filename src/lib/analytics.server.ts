@@ -1,7 +1,30 @@
 // آمار بازدید سایت — فقط سمت سرور.
+import { getRequest } from "@tanstack/react-start/server";
 import { db, newId, nowIso } from "./db.server";
 
 const ONLINE_WINDOW_MINUTES = 3;
+
+interface CloudflareRequestCf {
+  country?: string;
+  city?: string;
+  region?: string;
+}
+
+/**
+ * موقعیت جغرافیایی بازدیدکننده — از شیء cf که کلادفلر روی هر درخواست ورودی
+ * می‌گذارد (سایت روی کلادفلر ورکرز دیپلوی می‌شود)، با بازگشت به هدر استاندارد
+ * CF-IPCountry اگر شیء cf در دسترس نبود.
+ */
+function getVisitorGeo(): { country: string; city: string } {
+  try {
+    const request = getRequest() as Request & { cf?: CloudflareRequestCf };
+    const country = request.cf?.country || request.headers.get("cf-ipcountry") || "";
+    const city = request.cf?.city || request.cf?.region || "";
+    return { country, city };
+  } catch {
+    return { country: "", city: "" };
+  }
+}
 
 function minutesAgoIso(minutes: number): string {
   return new Date(Date.now() - minutes * 60_000).toISOString();
@@ -21,6 +44,7 @@ function daysAgoIso(days: number): string {
 }
 
 export async function recordVisit(sessionId: string, path: string): Promise<void> {
+  const geo = getVisitorGeo();
   const { data: existingPresence } = await db
     .from("site_presence")
     .select("session_id")
@@ -41,7 +65,7 @@ export async function recordVisit(sessionId: string, path: string): Promise<void
   if (isNewVisitor) {
     try {
       const { notifyNewVisit } = await import("./telegram.server");
-      await notifyNewVisit(path);
+      await notifyNewVisit(path, geo);
     } catch (e) {
       console.error("recordVisit: notifyNewVisit failed:", e);
     }
