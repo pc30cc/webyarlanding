@@ -72,8 +72,9 @@ function toHex(buf: ArrayBuffer): string {
   return [...new Uint8Array(buf)].map((b) => b.toString(16).padStart(2, "0")).join("");
 }
 
-/** امضای درخواست PUT با AWS Signature v4 برای ذخیره‌سازی سازگار با S3 (ابر آروان) */
-async function signArvanPut(
+/** امضای درخواست PUT/DELETE با AWS Signature v4 برای ذخیره‌سازی سازگار با S3 (ابر آروان) */
+async function signArvanRequest(
+  method: "PUT" | "DELETE",
   endpoint: string,
   bucket: string,
   key: string,
@@ -94,7 +95,7 @@ async function signArvanPut(
   const payloadHash = "UNSIGNED-PAYLOAD";
   const canonicalHeaders = `host:${host}\nx-amz-content-sha256:${payloadHash}\nx-amz-date:${amzDate}\n`;
   const signedHeaders = "host;x-amz-content-sha256;x-amz-date";
-  const canonicalRequest = `PUT\n${canonicalUri}\n\n${canonicalHeaders}\n${signedHeaders}\n${payloadHash}`;
+  const canonicalRequest = `${method}\n${canonicalUri}\n\n${canonicalHeaders}\n${signedHeaders}\n${payloadHash}`;
   const credentialScope = `${dateStamp}/${region}/s3/aws4_request`;
   const stringToSign = `AWS4-HMAC-SHA256\n${amzDate}\n${credentialScope}\n${await sha256Hex(canonicalRequest)}`;
 
@@ -131,7 +132,8 @@ async function uploadToArvan(
       "تنظیمات ابر آروان کامل نیست — باکت، آدرس endpoint و کلیدهای دسترسی را در تنظیمات عمومی وارد کنید.",
     );
   }
-  const { url, headers } = await signArvanPut(
+  const { url, headers } = await signArvanRequest(
+    "PUT",
     endpoint,
     bucket,
     filename,
@@ -150,6 +152,57 @@ async function uploadToArvan(
   }
   const base = (publicUrl || `${endpoint}/${bucket}`).replace(/\/$/, "");
   return `${base}/${filename}`;
+}
+
+async function deleteFromBunny(
+  path: string,
+  media: MediaSettings,
+  keys: MediaApiKeys,
+): Promise<void> {
+  const { storageZone, region } = media.bunny;
+  if (!storageZone || !keys.mediaBunnyAccessKey) return;
+  const host = region ? `${region}.storage.bunnycdn.com` : "storage.bunnycdn.com";
+  const res = await fetch(`https://${host}/${storageZone}/${path}`, {
+    method: "DELETE",
+    headers: { AccessKey: keys.mediaBunnyAccessKey },
+  });
+  if (!res.ok && res.status !== 404) {
+    const text = await res.text().catch(() => "");
+    throw new StorageError(`حذف از بانی سی‌دی‌ان ناموفق بود: ${res.status} ${text.slice(0, 200)}`);
+  }
+}
+
+async function deleteFromArvan(
+  path: string,
+  media: MediaSettings,
+  keys: MediaApiKeys,
+): Promise<void> {
+  const { bucket, endpoint, region } = media.arvan;
+  if (!bucket || !endpoint || !keys.mediaArvanAccessKey || !keys.mediaArvanSecretKey) return;
+  const { url, headers } = await signArvanRequest(
+    "DELETE",
+    endpoint,
+    bucket,
+    path,
+    region || "ir-thr-at1",
+    keys.mediaArvanAccessKey,
+    keys.mediaArvanSecretKey,
+  );
+  const res = await fetch(url, { method: "DELETE", headers });
+  if (!res.ok && res.status !== 404) {
+    const text = await res.text().catch(() => "");
+    throw new StorageError(`حذف از ابر آروان ناموفق بود: ${res.status} ${text.slice(0, 200)}`);
+  }
+}
+
+/** حذف یک فایل از محل ذخیره‌سازی خارجی متصل‌شده، بر اساس مسیر ذخیره‌شده در media_assets.path */
+export async function deleteStoredImage(path: string): Promise<void> {
+  if (!path) return;
+  const [settings, keys] = await Promise.all([loadSettings(), loadMediaKeys()]);
+  const media = settings.media;
+
+  if (media.provider === "bunny") return deleteFromBunny(path, media, keys);
+  if (media.provider === "arvan") return deleteFromArvan(path, media, keys);
 }
 
 /** آپلود یک تصویر base64 به محل ذخیره‌سازی متصل‌شده و بازگرداندن آدرس عمومی نهایی */

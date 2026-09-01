@@ -222,8 +222,34 @@ export async function savePost(input: SavePostInput): Promise<string> {
 }
 
 export async function deletePost(id: string): Promise<void> {
+  const { data: post } = await db
+    .from("blog_posts")
+    .select("cover_image")
+    .eq("id", id)
+    .maybeSingle();
+
   await db.from("blog_post_tags").delete().eq("post_id", id);
   await db.from("blog_posts").delete().eq("id", id);
+
+  if (post?.cover_image) {
+    try {
+      const { data: asset } = await db
+        .from("media_assets")
+        .select("id, path")
+        .eq("url", post.cover_image)
+        .maybeSingle();
+      if (asset) {
+        // path فقط وقتی کلید ذخیره‌سازی داخلیه (نه یک URL خارجی) از سی‌دی‌ان پاک می‌شود
+        if (asset.path && !/^https?:\/\//i.test(asset.path)) {
+          const { deleteStoredImage } = await import("./storage.server");
+          await deleteStoredImage(asset.path);
+        }
+        await db.from("media_assets").delete().eq("id", asset.id);
+      }
+    } catch (e) {
+      console.error("deletePost: failed to delete cover image from storage:", e);
+    }
+  }
 }
 
 export async function syncPostTags(postId: string, tags: string[]): Promise<void> {
