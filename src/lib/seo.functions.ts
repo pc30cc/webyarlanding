@@ -148,6 +148,45 @@ export const checkSeoHealth = createServerFn({ method: "GET" }).handler(
   },
 );
 
+export interface CatalogSeoHealthIssueDto {
+  itemId: string;
+  type: "product" | "solution";
+  title: string;
+  slug: string;
+  missing: string[];
+}
+
+/** بررسی سلامت سئوی محصولات و راه‌کارهای منتشرشده (همان فیلدهایی که در متا و JSON-LD صفحه‌شان استفاده می‌شوند) */
+export const checkCatalogSeoHealth = createServerFn({ method: "GET" }).handler(
+  async (): Promise<CatalogSeoHealthIssueDto[]> => {
+    const { requireAdmin } = await import("./auth.server");
+    const { db } = await import("./db.server");
+    await requireAdmin();
+    const { data } = await db
+      .from("catalog_items")
+      .select("id, type, title, slug, icon, short_desc, description")
+      .eq("published", 1);
+
+    const issues: CatalogSeoHealthIssueDto[] = [];
+    for (const row of data ?? []) {
+      const missing: string[] = [];
+      if (!row.short_desc?.trim()) missing.push("توضیح کوتاه (متا)");
+      if (!row.description || row.description.trim().length < 200) missing.push("محتوای کامل صفحه");
+      if (!row.icon?.trim()) missing.push("آیکون");
+      if (missing.length > 0) {
+        issues.push({
+          itemId: row.id,
+          type: row.type === "solution" ? "solution" : "product",
+          title: row.title,
+          slug: row.slug,
+          missing,
+        });
+      }
+    }
+    return issues;
+  },
+);
+
 /** رفع خودکار یک مشکل سئوی گزارش‌شده با هوش مصنوعی — فیلدهای ناقص را می‌سازد و مقاله را ذخیره می‌کند */
 export const adminFixSeoIssue = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) => z.object({ postId: z.string() }).parse(input))

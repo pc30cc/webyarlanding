@@ -20,6 +20,7 @@ type ItemRow = {
   bullets_json: string;
   sort_order: number;
   published: number;
+  updated_at: string;
 };
 
 function mapItem(row: ItemRow): CatalogItemDto {
@@ -35,6 +36,7 @@ function mapItem(row: ItemRow): CatalogItemDto {
     bullets: parseJson<string[]>(row.bullets_json, []),
     sortOrder: row.sort_order,
     published: toBool(row.published),
+    updatedAt: row.updated_at,
   };
 }
 

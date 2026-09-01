@@ -11,6 +11,7 @@ import {
   saveSeoPage,
   deleteSeoPage,
   checkSeoHealth,
+  checkCatalogSeoHealth,
   adminFixSeoIssue,
   type SeoPageDto,
 } from "@/lib/seo.functions";
@@ -57,6 +58,7 @@ export default function SeoSection() {
   const savePageFn = useServerFn(saveSeoPage);
   const deletePageFn = useServerFn(deleteSeoPage);
   const healthFn = useServerFn(checkSeoHealth);
+  const catalogHealthFn = useServerFn(checkCatalogSeoHealth);
   const fixSeoFn = useServerFn(adminFixSeoIssue);
   const qc = useQueryClient();
 
@@ -71,6 +73,10 @@ export default function SeoSection() {
   const { data: health, isLoading: healthLoading } = useQuery({
     queryKey: ["seo-health"],
     queryFn: () => healthFn(),
+  });
+  const { data: catalogHealth, isLoading: catalogHealthLoading } = useQuery({
+    queryKey: ["catalog-seo-health"],
+    queryFn: () => catalogHealthFn(),
   });
 
   const [settingsForm, setSettingsForm] = useState<SiteSettings>(DEFAULT_SETTINGS);
@@ -210,9 +216,9 @@ export default function SeoSection() {
         )}
       </section>
 
-      {/* گزارش سلامت سئو */}
+      {/* گزارش سلامت سئو مقالات */}
       <section className="rounded-xl border border-border bg-card p-4 shadow-sm">
-        <h2 className="mb-4 text-base font-semibold text-foreground">گزارش سلامت سئو</h2>
+        <h2 className="mb-4 text-base font-semibold text-foreground">گزارش سلامت سئو مقالات</h2>
         {healthLoading ? (
           <Skeleton className="h-24 w-full" />
         ) : !health || health.length === 0 ? (
@@ -264,6 +270,45 @@ export default function SeoSection() {
                 </div>
               );
             })}
+          </div>
+        )}
+      </section>
+
+      {/* گزارش سلامت سئو محصولات و راه‌کارها */}
+      <section className="rounded-xl border border-border bg-card p-4 shadow-sm">
+        <h2 className="mb-4 text-base font-semibold text-foreground">
+          گزارش سلامت سئو محصولات و راه‌کارها
+        </h2>
+        {catalogHealthLoading ? (
+          <Skeleton className="h-24 w-full" />
+        ) : !catalogHealth || catalogHealth.length === 0 ? (
+          <div className="flex items-center gap-2 rounded-lg bg-green-500/10 p-4 text-sm text-green-600">
+            <CheckCircle2 className="h-5 w-5" /> همه محصولات و راه‌کارهای منتشرشده اطلاعات سئو کامل
+            دارند
+          </div>
+        ) : (
+          <div className="flex flex-col gap-2">
+            {catalogHealth.map((issue) => (
+              <div
+                key={issue.itemId}
+                className="flex flex-col gap-2 rounded-lg border border-amber-500/30 bg-amber-500/5 p-3 sm:flex-row sm:items-center sm:justify-between"
+              >
+                <div className="flex items-center gap-2">
+                  <AlertTriangle className="h-4 w-4 shrink-0 text-amber-600" />
+                  <span className="font-medium text-foreground">{issue.title}</span>
+                  <span dir="ltr" className="text-xs text-muted-foreground">
+                    /{issue.type === "solution" ? "solutions" : "products"}/{issue.slug}
+                  </span>
+                </div>
+                <div className="flex flex-wrap items-center gap-1.5">
+                  {issue.missing.map((m) => (
+                    <Badge key={m} variant="outline" className="border-amber-500/40 text-amber-700">
+                      {m}
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+            ))}
           </div>
         )}
       </section>

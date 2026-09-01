@@ -15,6 +15,7 @@ export interface CatalogItemDto {
   bullets: string[];
   sortOrder: number;
   published: boolean;
+  updatedAt: string;
 }
 
 export interface CatalogCategoryDto {
