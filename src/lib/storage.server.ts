@@ -213,9 +213,10 @@ export async function deleteStoredImage(path: string): Promise<void> {
   if (media.provider === "arvan") return deleteFromArvan(path, media, keys);
 }
 
-// عرض واقعی نمایش کاور مقالات (کارت‌های لیست بلاگ و هدر مقاله) هیچ‌جا از ~۷۳۰px بیشتر
-// نیست؛ ۸۰۰ پیکسل حاشیه‌ی کافی برای رتینا/OG می‌گذارد بدون دانلود بایت‌های اضافه.
-const COVER_IMAGE_MAX_DIMENSION = 800;
+// اندازه‌گیری واقعی پیج‌اسپید روی سایت زنده نشون داد با ۸۰۰px هم عکس‌ها کمی بزرگ‌تر از
+// نیاز واقعی (~۶۴۸px، دقیقاً همون چیزی که پیج‌اسپید اندازه گرفته) دانلود می‌شن؛ ۷۰۰ حاشیه‌ی
+// کافی برای رتینا/OG می‌گذارد و این فاصله‌ی باقی‌مانده رو تقریباً می‌بندد.
+const COVER_IMAGE_MAX_DIMENSION = 700;
 const COVER_IMAGE_JPEG_QUALITY = 82;
 
 /**
