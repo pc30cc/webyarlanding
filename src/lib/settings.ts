@@ -168,7 +168,9 @@ export const DEFAULT_SETTINGS: SiteSettings = {
   },
   auth: {
     enabled: true,
-    loginUrl: "/admin-login",
+    // پیش‌فرض خالی عمدی است — تا وقتی مدیر آدرس واقعی اپلیکیشن را در تنظیمات عمومی
+    // وارد نکرده، دکمه‌ی «ورود» اصلاً نمایش داده نمی‌شود (نباید به پنل ادمین این سایت لینک بدهد).
+    loginUrl: "",
     signupUrl: "/contact",
     loginLabel: "ورود",
     signupLabel: "شروع رایگان",

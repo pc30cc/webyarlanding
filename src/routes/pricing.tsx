@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { motion } from "framer-motion";
 import { Check, CheckCircle2, Zap, Star, Crown, ChevronLeft } from "lucide-react";
 import { fetchSettings } from "@/lib/settings.functions";
@@ -222,8 +222,10 @@ function PricingPage() {
                   </li>
                 ))}
               </ul>
-              <Link
-                to="/contact"
+              <a
+                href={
+                  plan.slug === "enterprise" ? "/contact" : settings.auth.signupUrl || "/contact"
+                }
                 className={`flex w-full items-center justify-center gap-1 rounded-xl px-4 py-2.5 text-sm font-bold transition-colors ${
                   plan.popular
                     ? "bg-brand text-primary-foreground"
@@ -231,7 +233,7 @@ function PricingPage() {
                 }`}
               >
                 {plan.cta} <ChevronLeft className="h-3.5 w-3.5" />
-              </Link>
+              </a>
             </motion.div>
           ))}
         </StaggerChildren>

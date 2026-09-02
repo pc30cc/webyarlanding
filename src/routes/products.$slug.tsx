@@ -150,12 +150,12 @@ function ProductDetailPage() {
           </ScrollReveal>
 
           <ScrollReveal className="mt-12 flex flex-wrap items-center gap-4">
-            <Link
-              to="/contact"
+            <a
+              href={settings.auth.signupUrl || "/contact"}
               className="inline-flex items-center gap-2 rounded-xl bg-brand px-8 py-4 text-base font-bold text-primary-foreground shadow-lg shadow-primary/30"
             >
-              شروع رایگان <ChevronLeft className="h-4 w-4" />
-            </Link>
+              {settings.auth.signupLabel || "شروع رایگان"} <ChevronLeft className="h-4 w-4" />
+            </a>
             <Link
               to="/pricing"
               className="inline-flex items-center rounded-xl border border-border px-8 py-4 text-base font-semibold text-foreground transition-colors hover:bg-secondary"
