@@ -57,8 +57,25 @@ function isH3SwallowedErrorBody(body: string): boolean {
   }
 }
 
+// www → apex ریدایرکت (کنانیکال‌سازی دامنه). این کار در سطح DNS/Cloudflare قابل انجام
+// نیست چون www اصلاً رکورد DNS ندارد؛ به‌محض این‌که یک رکورد CNAME برای www در کلودفلر
+// اضافه شود (این بخش هنوز نیاز به تنظیم دستی دارد)، این هندلر خودش ریدایرکت ۳۰۱ به دامنه‌ی
+// اصلی را انجام می‌دهد — دیگر نیازی به Redirect Rule جداگانه در کلودفلر نیست.
+function wwwToApexRedirect(request: Request): Response | null {
+  const url = new URL(request.url);
+  if (!url.hostname.startsWith("www.")) return null;
+  url.hostname = url.hostname.slice("www.".length);
+  return new Response(null, {
+    status: 301,
+    headers: { Location: url.toString() },
+  });
+}
+
 export default {
   async fetch(request: Request, env: unknown, ctx: unknown) {
+    const redirect = wwwToApexRedirect(request);
+    if (redirect) return withSecurityHeaders(redirect);
+
     try {
       const handler = await getServerEntry();
       const response = await handler.fetch(request, env, ctx);
