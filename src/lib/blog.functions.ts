@@ -70,7 +70,18 @@ export type PostInput = z.infer<typeof postInputSchema>;
 
 /** فهرست مقالات منتشرشده (عمومی) */
 export const listPublishedPosts = createServerFn({ method: "GET" })
-  .inputValidator((input: { limit?: number | undefined; categorySlug?: string | undefined; tagSlug?: string | undefined; search?: string | undefined } | undefined) => input ?? {})
+  .inputValidator(
+    (
+      input:
+        | {
+            limit?: number | undefined;
+            categorySlug?: string | undefined;
+            tagSlug?: string | undefined;
+            search?: string | undefined;
+          }
+        | undefined,
+    ) => input ?? {},
+  )
   .handler(async ({ data }): Promise<PostDto[]> => {
     try {
       const { listPosts } = await import("./blog.server");
@@ -78,6 +89,46 @@ export const listPublishedPosts = createServerFn({ method: "GET" })
     } catch (error) {
       console.error("listPublishedPosts failed:", error);
       return [];
+    }
+  });
+
+export const BLOG_PAGE_SIZE = 9;
+
+export interface PostPageDto {
+  posts: PostDto[];
+  total: number;
+  page: number;
+  pageSize: number;
+}
+
+/** فهرست صفحه‌بندی‌شده‌ی مقالات منتشرشده (برای صفحه‌ی عمومی بلاگ) */
+export const listPublishedPostsPage = createServerFn({ method: "GET" })
+  .inputValidator(
+    (
+      input:
+        | {
+            page?: number | undefined;
+            categorySlug?: string | undefined;
+            search?: string | undefined;
+          }
+        | undefined,
+    ) => input ?? {},
+  )
+  .handler(async ({ data }): Promise<PostPageDto> => {
+    const page = Math.max(1, data.page ?? 1);
+    try {
+      const { listPostsPage } = await import("./blog.server");
+      const { posts, total } = await listPostsPage({
+        status: "published",
+        categorySlug: data.categorySlug,
+        search: data.search,
+        page,
+        pageSize: BLOG_PAGE_SIZE,
+      });
+      return { posts, total, page, pageSize: BLOG_PAGE_SIZE };
+    } catch (error) {
+      console.error("listPublishedPostsPage failed:", error);
+      return { posts: [], total: 0, page, pageSize: BLOG_PAGE_SIZE };
     }
   });
 
@@ -96,15 +147,17 @@ export const getPublishedPost = createServerFn({ method: "GET" })
     }
   });
 
-export const listCategories = createServerFn({ method: "GET" }).handler(async (): Promise<CategoryDto[]> => {
-  try {
-    const { fetchCategories } = await import("./blog.server");
-    return await fetchCategories();
-  } catch (error) {
-    console.error("listCategories failed:", error);
-    return [];
-  }
-});
+export const listCategories = createServerFn({ method: "GET" }).handler(
+  async (): Promise<CategoryDto[]> => {
+    try {
+      const { fetchCategories } = await import("./blog.server");
+      return await fetchCategories();
+    } catch (error) {
+      console.error("listCategories failed:", error);
+      return [];
+    }
+  },
+);
 
 export const listTags = createServerFn({ method: "GET" }).handler(async (): Promise<TagDto[]> => {
   try {
@@ -116,11 +169,13 @@ export const listTags = createServerFn({ method: "GET" }).handler(async (): Prom
   }
 });
 
-
 /* ───────────── مدیریت (نیازمند ورود مدیر) ───────────── */
 
 export const adminListPosts = createServerFn({ method: "GET" })
-  .inputValidator((input: { status?: string | undefined; search?: string | undefined } | undefined) => input ?? {})
+  .inputValidator(
+    (input: { status?: string | undefined; search?: string | undefined } | undefined) =>
+      input ?? {},
+  )
   .handler(async ({ data }): Promise<PostDto[]> => {
     const { requireAdmin } = await import("./auth.server");
     const { listPosts } = await import("./blog.server");

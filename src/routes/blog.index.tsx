@@ -1,50 +1,81 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
+import { z } from "zod";
 import { motion } from "framer-motion";
-import { Calendar, ChevronLeft, Search } from "lucide-react";
+import { Calendar, ChevronLeft, ChevronRight, Search } from "lucide-react";
 import { fetchSettings } from "@/lib/settings.functions";
 import { getPublicSeoPage } from "@/lib/seo.functions";
 import { buildPageMeta, buildBreadcrumbJsonLd, safeJsonLdHtml } from "@/lib/seo-meta";
-import { listPublishedPosts, listCategories } from "@/lib/blog.functions";
+import { listPublishedPostsPage, listCategories } from "@/lib/blog.functions";
 import { SiteLayout } from "@/components/site/SiteLayout";
 
+// همه‌ی فیلدها عمداً اختیاری‌اند (بدون .default) تا Link به این مسیر در جاهای دیگر سایت
+// نیازی به پاس‌دادن search نداشته باشد؛ مقدار پیش‌فرض صفحه‌ی ۱ فقط هنگام مصرف اعمال می‌شود.
+const blogSearchSchema = z.object({
+  page: z.coerce.number().int().min(1).optional().catch(undefined),
+  category: z.string().optional().catch(undefined),
+  q: z.string().optional().catch(undefined),
+});
+
 export const Route = createFileRoute("/blog/")({
-  loader: async () => {
-    const [settings, posts, categories, seoOverride] = await Promise.all([
+  validateSearch: (search: Record<string, unknown>) => blogSearchSchema.parse(search),
+  loaderDeps: ({ search }) => ({ page: search.page, category: search.category, q: search.q }),
+  loader: async ({ deps }) => {
+    const [settings, page, categories, seoOverride] = await Promise.all([
       fetchSettings(),
-      listPublishedPosts({ data: {} }),
+      listPublishedPostsPage({
+        data: { page: deps.page, categorySlug: deps.category, search: deps.q },
+      }),
       listCategories(),
       getPublicSeoPage({ data: { path: "/blog" } }),
     ]);
-    return { settings, posts, categories, seoOverride };
+    return { settings, page, categories, seoOverride, category: deps.category, q: deps.q };
   },
   head: ({ loaderData }) => {
     if (!loaderData) return {};
+    const { settings, seoOverride, page, category, q } = loaderData;
+    // صفحات بعدی/فیلترشده باید به آدرس واقعی خودشان کنونیکال شوند، نه صفحه‌ی اول؛
+    // نتایج جست‌وجوی آزاد (q) هم ایندکس نمی‌شوند تا محتوای نازک/تکراری در گوگل نیفتد.
+    const params = new URLSearchParams();
+    if (category) params.set("category", category);
+    if (page.page > 1) params.set("page", String(page.page));
+    const qs = params.toString();
+    const path = qs ? `/blog?${qs}` : "/blog";
     return buildPageMeta({
-      settings: loaderData.settings,
-      path: "/blog",
-      override: loaderData.seoOverride,
-      fallbackTitle: "بلاگ | وب‌یار",
+      settings,
+      path,
+      override: seoOverride,
+      fallbackTitle: page.page > 1 ? `بلاگ — صفحه ${page.page} | وب‌یار` : "بلاگ | وب‌یار",
       fallbackDescription:
         "آخرین مقالات و اخبار وب‌یار درباره چت زنده، CRM، هوش مصنوعی و بازاریابی.",
+      defaultRobots: q ? "noindex,follow" : "index,follow",
     });
   },
   component: BlogIndexPage,
 });
 
 function BlogIndexPage() {
-  const { settings, posts, categories } = Route.useLoaderData();
-  const [activeCategory, setActiveCategory] = useState<string | null>(null);
-  const [search, setSearch] = useState("");
+  const { settings, page, categories } = Route.useLoaderData();
+  const search = Route.useSearch();
+  const navigate = useNavigate({ from: Route.fullPath });
+  const { posts, total, pageSize } = page;
+  const totalPages = Math.max(1, Math.ceil(total / pageSize));
+  const currentPage = search.page ?? 1;
 
-  const filtered = useMemo(() => {
-    return posts.filter((p) => {
-      const matchesCategory = !activeCategory || p.categorySlug === activeCategory;
-      const q = search.trim();
-      const matchesSearch = !q || p.title.includes(q) || p.excerpt.includes(q);
-      return matchesCategory && matchesSearch;
-    });
-  }, [posts, activeCategory, search]);
+  const [searchInput, setSearchInput] = useState(search.q ?? "");
+  useEffect(() => setSearchInput(search.q ?? ""), [search.q]);
+  useEffect(() => {
+    const current = search.q ?? "";
+    if (searchInput === current) return;
+    const timeout = setTimeout(() => {
+      navigate({
+        search: (prev) => ({ ...prev, q: searchInput.trim() || undefined, page: 1 }),
+        replace: true,
+      });
+    }, 400);
+    return () => clearTimeout(timeout);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchInput]);
 
   const base = (settings.brand.siteUrl || "").replace(/\/$/, "");
   const jsonLd = [
@@ -53,7 +84,7 @@ function BlogIndexPage() {
       "@type": "Blog",
       name: `بلاگ ${settings.brand.name}`,
       url: base ? `${base}/blog` : undefined,
-      blogPost: posts.slice(0, 20).map((p) => ({
+      blogPost: posts.map((p) => ({
         "@type": "BlogPosting",
         headline: p.title,
         url: base ? `${base}/blog/${p.slug}` : undefined,
@@ -81,40 +112,40 @@ function BlogIndexPage() {
 
         <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex flex-wrap gap-2">
-            <button
-              type="button"
-              onClick={() => setActiveCategory(null)}
-              className={`rounded-full px-4 py-1.5 text-xs font-medium transition-colors ${!activeCategory ? "bg-brand text-primary-foreground" : "bg-secondary text-muted-foreground hover:bg-secondary/70"}`}
+            <Link
+              to="/blog"
+              search={(prev) => ({ ...prev, category: undefined, page: 1 })}
+              className={`rounded-full px-4 py-1.5 text-xs font-medium transition-colors ${!search.category ? "bg-brand text-primary-foreground" : "bg-secondary text-muted-foreground hover:bg-secondary/70"}`}
             >
               همه
-            </button>
+            </Link>
             {categories.map((c) => (
-              <button
+              <Link
                 key={c.id}
-                type="button"
-                onClick={() => setActiveCategory(c.slug)}
-                className={`rounded-full px-4 py-1.5 text-xs font-medium transition-colors ${activeCategory === c.slug ? "bg-brand text-primary-foreground" : "bg-secondary text-muted-foreground hover:bg-secondary/70"}`}
+                to="/blog"
+                search={(prev) => ({ ...prev, category: c.slug, page: 1 })}
+                className={`rounded-full px-4 py-1.5 text-xs font-medium transition-colors ${search.category === c.slug ? "bg-brand text-primary-foreground" : "bg-secondary text-muted-foreground hover:bg-secondary/70"}`}
               >
                 {c.name}
-              </button>
+              </Link>
             ))}
           </div>
           <div className="relative w-full sm:w-64">
             <Search className="pointer-events-none absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <input
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
               placeholder="جست‌وجو در مقالات..."
               className="w-full rounded-lg border border-border bg-card py-2 ps-9 pe-3 text-sm text-foreground outline-none focus:border-primary/50"
             />
           </div>
         </div>
 
-        {filtered.length === 0 ? (
+        {posts.length === 0 ? (
           <div className="py-16 text-center text-muted-foreground">مقاله‌ای موجود نیست</div>
         ) : (
           <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {filtered.map((post, i) => (
+            {posts.map((post, i) => (
               <motion.article
                 key={post.id}
                 // سه کارت اول تقریباً همیشه در نمای اول صفحه هستند — اگر با opacity:0 شروع
@@ -164,6 +195,7 @@ function BlogIndexPage() {
                   <Link
                     to="/blog/$slug"
                     params={{ slug: post.slug }}
+                    aria-label={`ادامه مطلب: ${post.title}`}
                     className="inline-flex items-center gap-1 text-xs font-medium text-brand hover:underline"
                   >
                     ادامه مطلب <ChevronLeft className="h-3.5 w-3.5" />
@@ -172,6 +204,47 @@ function BlogIndexPage() {
               </motion.article>
             ))}
           </div>
+        )}
+
+        {totalPages > 1 && (
+          <nav
+            aria-label="صفحه‌بندی بلاگ"
+            className="mt-12 flex flex-wrap items-center justify-center gap-2"
+          >
+            <Link
+              to="/blog"
+              search={(prev) => ({ ...prev, page: Math.max(1, currentPage - 1) })}
+              aria-disabled={currentPage <= 1}
+              className={`inline-flex h-9 w-9 items-center justify-center rounded-lg border border-border text-foreground transition-colors ${currentPage <= 1 ? "pointer-events-none opacity-40" : "hover:bg-secondary"}`}
+            >
+              <ChevronRight className="h-4 w-4" />
+            </Link>
+            {Array.from({ length: totalPages }, (_, i) => i + 1)
+              .filter((n) => n === 1 || n === totalPages || Math.abs(n - currentPage) <= 1)
+              .map((n, idx, arr) => (
+                <span key={n} className="flex items-center gap-2">
+                  {idx > 0 && arr[idx - 1] !== n - 1 && (
+                    <span className="text-muted-foreground">…</span>
+                  )}
+                  <Link
+                    to="/blog"
+                    search={(prev) => ({ ...prev, page: n })}
+                    aria-current={n === currentPage ? "page" : undefined}
+                    className={`inline-flex h-9 w-9 items-center justify-center rounded-lg text-sm font-medium transition-colors ${n === currentPage ? "bg-brand text-primary-foreground" : "border border-border text-foreground hover:bg-secondary"}`}
+                  >
+                    {n.toLocaleString("fa-IR")}
+                  </Link>
+                </span>
+              ))}
+            <Link
+              to="/blog"
+              search={(prev) => ({ ...prev, page: Math.min(totalPages, currentPage + 1) })}
+              aria-disabled={currentPage >= totalPages}
+              className={`inline-flex h-9 w-9 items-center justify-center rounded-lg border border-border text-foreground transition-colors ${currentPage >= totalPages ? "pointer-events-none opacity-40" : "hover:bg-secondary"}`}
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </Link>
+          </nav>
         )}
       </div>
     </SiteLayout>

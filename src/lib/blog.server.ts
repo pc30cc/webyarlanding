@@ -56,14 +56,16 @@ async function categoryMap(): Promise<Map<string, { name: string; slug: string }
   return map;
 }
 
-export async function listPosts(options: {
-  status?: string | undefined;
-  limit?: number | undefined;
+/** ترجمه‌ی categorySlug/tagSlug به شرط‌های قابل استفاده در کوئری — مشترک بین listPosts و listPostsPage */
+async function resolveListFilters(options: {
   categorySlug?: string | undefined;
   tagSlug?: string | undefined;
-  search?: string | undefined;
-}): Promise<PostDto[]> {
-  let categoryId: string | null | undefined;
+}): Promise<{
+  categoryId?: string | undefined;
+  postIdFilter?: string[] | undefined;
+  empty?: boolean;
+}> {
+  let categoryId: string | undefined;
   if (options.categorySlug) {
     const { data } = await db
       .from("blog_categories")
@@ -80,16 +82,29 @@ export async function listPosts(options: {
       .select("id")
       .eq("slug", options.tagSlug)
       .maybeSingle();
-    if (!tag) return [];
+    if (!tag) return { empty: true };
     const { data: links } = await db.from("blog_post_tags").select("post_id").eq("tag_id", tag.id);
     postIdFilter = (links ?? []).map((row) => row.post_id);
-    if (postIdFilter.length === 0) return [];
+    if (postIdFilter.length === 0) return { empty: true };
   }
+
+  return { categoryId, postIdFilter };
+}
+
+export async function listPosts(options: {
+  status?: string | undefined;
+  limit?: number | undefined;
+  categorySlug?: string | undefined;
+  tagSlug?: string | undefined;
+  search?: string | undefined;
+}): Promise<PostDto[]> {
+  const filters = await resolveListFilters(options);
+  if (filters.empty) return [];
 
   let query = db.from("blog_posts").select("*").order("created_at", { ascending: false });
   if (options.status) query = query.eq("status", options.status);
-  if (categoryId) query = query.eq("category_id", categoryId);
-  if (postIdFilter) query = query.in("id", postIdFilter);
+  if (filters.categoryId) query = query.eq("category_id", filters.categoryId);
+  if (filters.postIdFilter) query = query.in("id", filters.postIdFilter);
   if (options.search) query = query.ilike("title", `%${options.search}%`);
   query = query.limit(options.limit ?? 100);
 
@@ -98,6 +113,43 @@ export async function listPosts(options: {
   return (data ?? []).map((row) =>
     mapPost(row as PostRow, row.category_id ? cats.get(row.category_id) : null),
   );
+}
+
+/** فهرست صفحه‌بندی‌شده‌ی مقالات + تعداد کل نتایج منطبق (برای صفحه‌بندی بلاگ عمومی) */
+export async function listPostsPage(options: {
+  status?: string | undefined;
+  categorySlug?: string | undefined;
+  tagSlug?: string | undefined;
+  search?: string | undefined;
+  page?: number | undefined;
+  pageSize?: number | undefined;
+}): Promise<{ posts: PostDto[]; total: number }> {
+  const filters = await resolveListFilters(options);
+  if (filters.empty) return { posts: [], total: 0 };
+
+  const pageSize = options.pageSize ?? 9;
+  const page = Math.max(1, options.page ?? 1);
+  const from = (page - 1) * pageSize;
+  const to = from + pageSize - 1;
+
+  let query = db
+    .from("blog_posts")
+    .select("*", { count: "exact" })
+    .order("created_at", { ascending: false });
+  if (options.status) query = query.eq("status", options.status);
+  if (filters.categoryId) query = query.eq("category_id", filters.categoryId);
+  if (filters.postIdFilter) query = query.in("id", filters.postIdFilter);
+  if (options.search) query = query.ilike("title", `%${options.search}%`);
+  query = query.range(from, to);
+
+  const { data, count } = await query;
+  const cats = await categoryMap();
+  return {
+    posts: (data ?? []).map((row) =>
+      mapPost(row as PostRow, row.category_id ? cats.get(row.category_id) : null),
+    ),
+    total: count ?? 0,
+  };
 }
 
 export async function getPostBySlug(slug: string): Promise<PostDto | null> {
