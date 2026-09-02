@@ -161,6 +161,26 @@ export default function GeneralSection() {
                     }
                   />
                 </Field>
+                <Field label="منطقه زمانی (ساعت نمایش در پنل و اعلان‌های تلگرام)">
+                  <Select
+                    value={form.brand.timezone}
+                    onValueChange={(v) =>
+                      setForm((f) => ({ ...f, brand: { ...f.brand, timezone: v } }))
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Europe/Istanbul">استانبول (UTC+3)</SelectItem>
+                      <SelectItem value="Asia/Tehran">تهران (UTC+3:30)</SelectItem>
+                      <SelectItem value="Asia/Dubai">دبی (UTC+4)</SelectItem>
+                      <SelectItem value="Europe/London">لندن (UTC+0/+1)</SelectItem>
+                      <SelectItem value="Europe/Berlin">برلین (UTC+1/+2)</SelectItem>
+                      <SelectItem value="UTC">UTC</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </Field>
                 <Field label="متن کپی‌رایت" full>
                   <Input
                     value={form.brand.copyright}
