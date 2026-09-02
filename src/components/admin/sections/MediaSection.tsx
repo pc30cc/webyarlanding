@@ -2,26 +2,59 @@ import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { Loader2, Plus, Trash2, Copy, ImageOff } from "lucide-react";
-import { listMedia, saveMediaAsset, deleteMedia, type MediaAssetDto } from "@/lib/media.functions";
+import { Loader2, Plus, Trash2, Copy, ImageOff, Minimize2 } from "lucide-react";
+import {
+  listMedia,
+  saveMediaAsset,
+  deleteMedia,
+  adminRecompressMedia,
+  adminCompressAllMedia,
+  type MediaAssetDto,
+} from "@/lib/media.functions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogAction, AlertDialogCancel } from "@/components/ui/alert-dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogAction,
+  AlertDialogCancel,
+} from "@/components/ui/alert-dialog";
 
 const empty = { filename: "", url: "", alt: "" };
+
+function formatBytes(n: number | null): string {
+  if (!n || n <= 0) return "—";
+  if (n < 1024) return `${n} B`;
+  const kb = n / 1024;
+  if (kb < 1024) return `${kb.toFixed(0)} KB`;
+  return `${(kb / 1024).toFixed(1)} MB`;
+}
 
 export default function MediaSection() {
   const listFn = useServerFn(listMedia);
   const saveFn = useServerFn(saveMediaAsset);
   const deleteFn = useServerFn(deleteMedia);
+  const recompressFn = useServerFn(adminRecompressMedia);
+  const compressAllFn = useServerFn(adminCompressAllMedia);
   const qc = useQueryClient();
   const { data, isLoading } = useQuery({ queryKey: ["media"], queryFn: () => listFn() });
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState(empty);
   const [toDelete, setToDelete] = useState<MediaAssetDto | null>(null);
+  const [recompressingId, setRecompressingId] = useState<string | null>(null);
 
   const saveMutation = useMutation({
     mutationFn: () => saveFn({ data: form }),
@@ -44,6 +77,37 @@ export default function MediaSection() {
     onError: () => toast.error("خطا در حذف"),
   });
 
+  const recompressMutation = useMutation({
+    mutationFn: (id: string) => {
+      setRecompressingId(id);
+      return recompressFn({ data: { id } });
+    },
+    onSuccess: (res) => {
+      if (res.ok) {
+        const savedKb = Math.round(((res.oldSizeBytes ?? 0) - (res.newSizeBytes ?? 0)) / 1024);
+        toast.success(`فشرده شد — ${savedKb.toLocaleString("fa-IR")} کیلوبایت کمتر شد`);
+        qc.invalidateQueries({ queryKey: ["media"] });
+      } else {
+        toast.info(res.reason || "نیازی به فشرده‌سازی نبود");
+      }
+    },
+    onError: () => toast.error("خطا در فشرده‌سازی تصویر"),
+    onSettled: () => setRecompressingId(null),
+  });
+
+  const compressAllMutation = useMutation({
+    mutationFn: () => compressAllFn(),
+    onSuccess: (res) => {
+      const savedMb = (res.savedBytes / (1024 * 1024)).toFixed(1);
+      toast.success(
+        `${res.compressed.toLocaleString("fa-IR")} تصویر فشرده شد، ${savedMb} مگابایت کمتر شد` +
+          (res.hasMore ? " — دکمه را دوباره بزنید تا بقیه هم فشرده شوند" : ""),
+      );
+      qc.invalidateQueries({ queryKey: ["media"] });
+    },
+    onError: () => toast.error("خطا در فشرده‌سازی گروهی"),
+  });
+
   const copyUrl = (url: string) => {
     navigator.clipboard.writeText(url);
     toast.success("آدرس کپی شد");
@@ -51,15 +115,40 @@ export default function MediaSection() {
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold text-foreground">رسانه‌ها</h1>
           <p className="text-sm text-muted-foreground">مدیریت تصاویر و فایل‌های سایت</p>
         </div>
-        <Button className="gap-2" onClick={() => { setForm(empty); setOpen(true); }}>
-          <Plus className="h-4 w-4" /> افزودن با آدرس
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            className="gap-2"
+            disabled={compressAllMutation.isPending}
+            onClick={() => compressAllMutation.mutate()}
+          >
+            {compressAllMutation.isPending ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Minimize2 className="h-4 w-4" />
+            )}
+            فشرده‌سازی همه تصاویر
+          </Button>
+          <Button
+            className="gap-2"
+            onClick={() => {
+              setForm(empty);
+              setOpen(true);
+            }}
+          >
+            <Plus className="h-4 w-4" /> افزودن با آدرس
+          </Button>
+        </div>
       </div>
+      <p className="-mt-3 text-xs text-muted-foreground">
+        تصاویر بزرگ‌تر از ۱۵۰ کیلوبایت را تغییر‌اندازه و فشرده می‌کند؛ اگر تعداد زیاد باشد، ممکن است
+        لازم شود چند بار دکمه را بزنید تا همه پردازش شوند.
+      </p>
 
       {isLoading ? (
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
@@ -68,24 +157,58 @@ export default function MediaSection() {
           ))}
         </div>
       ) : !data || data.length === 0 ? (
-        <p className="rounded-xl border border-dashed border-border p-8 text-center text-sm text-muted-foreground">هیچ رسانه‌ای ثبت نشده است</p>
+        <p className="rounded-xl border border-dashed border-border p-8 text-center text-sm text-muted-foreground">
+          هیچ رسانه‌ای ثبت نشده است
+        </p>
       ) : (
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
           {data.map((m) => (
-            <div key={m.id} className="group flex flex-col gap-2 rounded-xl border border-border bg-card p-2 shadow-sm">
+            <div
+              key={m.id}
+              className="group flex flex-col gap-2 rounded-xl border border-border bg-card p-2 shadow-sm"
+            >
               <div className="relative aspect-square w-full overflow-hidden rounded-lg bg-muted">
                 {m.url ? (
-                  <img src={m.url} alt={m.alt ?? m.filename} className="h-full w-full object-cover" />
+                  <img
+                    src={m.url}
+                    alt={m.alt ?? m.filename}
+                    className="h-full w-full object-cover"
+                  />
                 ) : (
                   <div className="flex h-full w-full items-center justify-center">
                     <ImageOff className="h-6 w-6 text-muted-foreground" />
                   </div>
                 )}
               </div>
-              <p className="truncate text-xs text-foreground" title={m.filename}>{m.filename}</p>
+              <div className="flex items-center justify-between gap-2">
+                <p className="truncate text-xs text-foreground" title={m.filename}>
+                  {m.filename}
+                </p>
+                <span className="shrink-0 text-[11px] text-muted-foreground" dir="ltr">
+                  {formatBytes(m.sizeBytes)}
+                </span>
+              </div>
               <div className="flex gap-1.5">
-                <Button size="sm" variant="outline" className="flex-1 gap-1" onClick={() => copyUrl(m.url)}>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="flex-1 gap-1"
+                  onClick={() => copyUrl(m.url)}
+                >
                   <Copy className="h-3.5 w-3.5" /> کپی
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  title="فشرده‌سازی این تصویر"
+                  disabled={recompressMutation.isPending && recompressingId === m.id}
+                  onClick={() => recompressMutation.mutate(m.id)}
+                >
+                  {recompressMutation.isPending && recompressingId === m.id ? (
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  ) : (
+                    <Minimize2 className="h-3.5 w-3.5" />
+                  )}
                 </Button>
                 <Button size="sm" variant="destructive" onClick={() => setToDelete(m)}>
                   <Trash2 className="h-3.5 w-3.5" />
@@ -98,23 +221,39 @@ export default function MediaSection() {
 
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent>
-          <DialogHeader><DialogTitle>افزودن رسانه با آدرس</DialogTitle></DialogHeader>
+          <DialogHeader>
+            <DialogTitle>افزودن رسانه با آدرس</DialogTitle>
+          </DialogHeader>
           <div className="flex flex-col gap-3">
             <div className="flex flex-col gap-1.5">
               <Label>نام فایل</Label>
-              <Input value={form.filename} onChange={(e) => setForm((f) => ({ ...f, filename: e.target.value }))} />
+              <Input
+                value={form.filename}
+                onChange={(e) => setForm((f) => ({ ...f, filename: e.target.value }))}
+              />
             </div>
             <div className="flex flex-col gap-1.5">
               <Label>آدرس فایل</Label>
-              <Input dir="ltr" value={form.url} onChange={(e) => setForm((f) => ({ ...f, url: e.target.value }))} />
+              <Input
+                dir="ltr"
+                value={form.url}
+                onChange={(e) => setForm((f) => ({ ...f, url: e.target.value }))}
+              />
             </div>
             <div className="flex flex-col gap-1.5">
               <Label>متن جایگزین (Alt)</Label>
-              <Input value={form.alt} onChange={(e) => setForm((f) => ({ ...f, alt: e.target.value }))} />
+              <Input
+                value={form.alt}
+                onChange={(e) => setForm((f) => ({ ...f, alt: e.target.value }))}
+              />
             </div>
           </div>
           <DialogFooter>
-            <Button disabled={!form.filename || !form.url || saveMutation.isPending} onClick={() => saveMutation.mutate()} className="gap-2">
+            <Button
+              disabled={!form.filename || !form.url || saveMutation.isPending}
+              onClick={() => saveMutation.mutate()}
+              className="gap-2"
+            >
               {saveMutation.isPending && <Loader2 className="h-4 w-4 animate-spin" />} ذخیره
             </Button>
           </DialogFooter>
@@ -125,11 +264,15 @@ export default function MediaSection() {
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>حذف رسانه</AlertDialogTitle>
-            <AlertDialogDescription>آیا از حذف «{toDelete?.filename}» مطمئن هستید؟</AlertDialogDescription>
+            <AlertDialogDescription>
+              آیا از حذف «{toDelete?.filename}» مطمئن هستید؟
+            </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>انصراف</AlertDialogCancel>
-            <AlertDialogAction onClick={() => toDelete && deleteMutation.mutate(toDelete.id)}>حذف</AlertDialogAction>
+            <AlertDialogAction onClick={() => toDelete && deleteMutation.mutate(toDelete.id)}>
+              حذف
+            </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

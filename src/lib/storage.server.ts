@@ -269,6 +269,29 @@ export interface UploadedImage {
   sizeBytes: number;
 }
 
+/** آپلود مستقیم بایت‌های آماده (بدون فشرده‌سازی) — پایه‌ی مشترک uploadImageDataUrl و recompressStoredImage */
+async function uploadRawBytes(
+  bytes: ArrayBuffer,
+  mime: string,
+  filename: string,
+): Promise<UploadedImage> {
+  const [settings, keys] = await Promise.all([loadSettings(), loadMediaKeys()]);
+  const media = settings.media;
+
+  let url: string;
+  if (media.provider === "bunny") {
+    url = await uploadToBunny(bytes, mime, filename, media, keys);
+  } else if (media.provider === "arvan") {
+    url = await uploadToArvan(bytes, mime, filename, media, keys);
+  } else {
+    throw new StorageError(
+      "هیچ محل ذخیره‌سازی تصویر متصل نیست — در تنظیمات عمومی → ذخیره‌سازی رسانه، بانی سی‌دی‌ان یا ابر آروان را وصل کنید.",
+    );
+  }
+
+  return { url, path: filename, mimeType: mime, sizeBytes: bytes.byteLength };
+}
+
 /** آپلود یک تصویر base64 به محل ذخیره‌سازی متصل‌شده (پس از فشرده‌سازی) و بازگرداندن مشخصات نهایی */
 export async function uploadImageDataUrl(
   dataUrl: string,
@@ -282,19 +305,101 @@ export async function uploadImageDataUrl(
   const { bytes, mime, isJpeg } = await compressCoverImage(originalBytes, originalMime);
   const finalFilename = isJpeg ? filename.replace(/\.[a-zA-Z0-9]+$/, ".jpg") : filename;
 
-  const [settings, keys] = await Promise.all([loadSettings(), loadMediaKeys()]);
-  const media = settings.media;
+  return uploadRawBytes(bytes, mime, finalFilename);
+}
 
-  let url: string;
-  if (media.provider === "bunny") {
-    url = await uploadToBunny(bytes, mime, finalFilename, media, keys);
-  } else if (media.provider === "arvan") {
-    url = await uploadToArvan(bytes, mime, finalFilename, media, keys);
-  } else {
-    throw new StorageError(
-      "هیچ محل ذخیره‌سازی تصویر متصل نیست — در تنظیمات عمومی → ذخیره‌سازی رسانه، بانی سی‌دی‌ان یا ابر آروان را وصل کنید.",
-    );
+export interface RecompressResult {
+  ok: boolean;
+  skipped: boolean;
+  reason?: string;
+  oldSizeBytes?: number;
+  newSizeBytes?: number;
+  newUrl?: string;
+}
+
+/**
+ * یک تصویر از قبل آپلودشده (media_assets) را دوباره از سرور فعلی‌اش می‌گیرد، تغییر‌اندازه و
+ * فشرده می‌کند، در همان محل ذخیره‌سازی با نام جدید آپلود می‌کند، فایل قدیمی را پاک می‌کند،
+ * و ردیف media_assets را به‌روزرسانی می‌کند. اگر مقاله‌ای همین آدرس را به‌عنوان کاور دارد،
+ * آن هم هم‌زمان به‌روزرسانی می‌شود تا لینک‌ها خراب نشوند.
+ */
+export async function recompressStoredImage(assetId: string): Promise<RecompressResult> {
+  const { db, nowIso } = await import("./db.server");
+  const { data: asset } = await db
+    .from("media_assets")
+    .select("id, path, url, mime_type")
+    .eq("id", assetId)
+    .maybeSingle();
+  if (!asset) return { ok: false, skipped: false, reason: "تصویر یافت نشد" };
+  if (!asset.path || /^https?:\/\//i.test(asset.path)) {
+    return {
+      ok: false,
+      skipped: true,
+      reason: "این تصویر از یک آدرس خارجی اضافه شده، نه آپلود ما — قابل فشرده‌سازی نیست",
+    };
   }
 
-  return { url, path: finalFilename, mimeType: mime, sizeBytes: bytes.byteLength };
+  let originalBytes: ArrayBuffer;
+  try {
+    const res = await fetch(asset.url);
+    if (!res.ok) {
+      return { ok: false, skipped: false, reason: `دریافت تصویر فعلی ناموفق بود: ${res.status}` };
+    }
+    originalBytes = await res.arrayBuffer();
+  } catch (e) {
+    return {
+      ok: false,
+      skipped: false,
+      reason: e instanceof Error ? e.message : "خطا در دریافت تصویر فعلی",
+    };
+  }
+
+  const oldSizeBytes = originalBytes.byteLength;
+  const { bytes, mime, isJpeg } = await compressCoverImage(
+    originalBytes,
+    asset.mime_type || "image/png",
+  );
+
+  if (!isJpeg || bytes.byteLength >= oldSizeBytes) {
+    return {
+      ok: false,
+      skipped: true,
+      reason: "فشرده‌سازی صرفه‌جویی معناداری نداشت",
+      oldSizeBytes,
+      newSizeBytes: bytes.byteLength,
+    };
+  }
+
+  const finalFilename = asset.path.replace(/\.[a-zA-Z0-9]+$/, ".jpg");
+  const uploaded = await uploadRawBytes(bytes, mime, finalFilename);
+
+  if (finalFilename !== asset.path) {
+    try {
+      await deleteStoredImage(asset.path);
+    } catch (e) {
+      console.error("recompressStoredImage: failed to delete old file:", e);
+    }
+  }
+
+  await db
+    .from("media_assets")
+    .update({
+      path: uploaded.path,
+      url: uploaded.url,
+      mime_type: uploaded.mimeType,
+      size_bytes: uploaded.sizeBytes,
+      updated_at: nowIso(),
+    })
+    .eq("id", assetId);
+
+  // اگر مقاله‌ای همین تصویر را به‌عنوان کاور دارد، لینکش هم به‌روز شود وگرنه شکسته می‌ماند
+  await db.from("blog_posts").update({ cover_image: uploaded.url }).eq("cover_image", asset.url);
+
+  return {
+    ok: true,
+    skipped: false,
+    oldSizeBytes,
+    newSizeBytes: bytes.byteLength,
+    newUrl: uploaded.url,
+  };
 }
