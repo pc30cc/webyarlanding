@@ -91,6 +91,95 @@ export const deleteMedia = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
+export interface RecompressMediaResult {
+  ok: boolean;
+  skipped: boolean;
+  reason?: string;
+  oldSizeBytes?: number;
+  newSizeBytes?: number;
+}
+
+/** فشرده‌سازی مجدد یک تصویر مشخص از رسانه‌ها (دستی، از دکمه زیر هر عکس) */
+export const adminRecompressMedia = createServerFn({ method: "POST" })
+  .inputValidator((input: unknown) => z.object({ id: z.string() }).parse(input))
+  .handler(async ({ data }): Promise<RecompressMediaResult> => {
+    const { requireAdmin } = await import("./auth.server");
+    await requireAdmin();
+    const { recompressStoredImage } = await import("./storage.server");
+    return await recompressStoredImage(data.id);
+  });
+
+export interface CompressAllMediaResult {
+  totalCandidates: number;
+  processed: number;
+  compressed: number;
+  skipped: number;
+  failed: number;
+  savedBytes: number;
+  hasMore: boolean;
+}
+
+const COMPRESS_ALL_BATCH_LIMIT = 25;
+const COMPRESS_ALL_TIME_BUDGET_MS = 20_000;
+/** تصاویر کوچک‌تر از این حد را دست نمی‌زنیم — احتمالاً از قبل فشرده هستند */
+const RECOMPRESS_SIZE_THRESHOLD_BYTES = 150_000;
+
+/** فشرده‌سازی دسته‌ای همه‌ی تصاویر موجود (بزرگ‌تر از حد آستانه) — برای اجرای یک‌باره روی رسانه‌های قدیمی */
+export const adminCompressAllMedia = createServerFn({ method: "POST" }).handler(
+  async (): Promise<CompressAllMediaResult> => {
+    const { requireAdmin } = await import("./auth.server");
+    await requireAdmin();
+    const { db } = await import("./db.server");
+    const { recompressStoredImage } = await import("./storage.server");
+
+    const { data } = await db
+      .from("media_assets")
+      .select("id, path, size_bytes")
+      .order("size_bytes", { ascending: false })
+      .limit(500);
+
+    const candidates = (data ?? []).filter(
+      (row) =>
+        row.path &&
+        !/^https?:\/\//i.test(row.path) &&
+        (row.size_bytes ?? 0) >= RECOMPRESS_SIZE_THRESHOLD_BYTES,
+    );
+
+    const result: CompressAllMediaResult = {
+      totalCandidates: candidates.length,
+      processed: 0,
+      compressed: 0,
+      skipped: 0,
+      failed: 0,
+      savedBytes: 0,
+      hasMore: false,
+    };
+
+    const startedAt = Date.now();
+    for (const row of candidates) {
+      if (
+        result.processed >= COMPRESS_ALL_BATCH_LIMIT ||
+        Date.now() - startedAt > COMPRESS_ALL_TIME_BUDGET_MS
+      ) {
+        result.hasMore = true;
+        break;
+      }
+      result.processed += 1;
+      const outcome = await recompressStoredImage(row.id);
+      if (outcome.ok) {
+        result.compressed += 1;
+        result.savedBytes += (outcome.oldSizeBytes ?? 0) - (outcome.newSizeBytes ?? 0);
+      } else if (outcome.skipped) {
+        result.skipped += 1;
+      } else {
+        result.failed += 1;
+      }
+    }
+
+    return result;
+  },
+);
+
 function maskMediaKey(key: string): string {
   if (!key) return "";
   if (key.length <= 8) return "•".repeat(key.length);
