@@ -38,6 +38,37 @@ export function safeJsonLdHtml(data: unknown): { __html: string } {
   return { __html: JSON.stringify(data).replace(/</g, "\\u003c") };
 }
 
+export interface ParsedScriptTag {
+  attrs: Record<string, string>;
+  children?: string | undefined;
+}
+
+/**
+ * قطعه HTML دلخواهی که ادمین در «اسکریپت‌های head/body» وارد کرده را به تگ‌های <script>
+ * تجزیه می‌کند (سازگار با سرور و کلاینت — بدون DOMParser، چون در head() سمت سرور هم اجرا
+ * می‌شود). قطعاتی مثل کدهای گوگل آنالیتیکس/تگ‌منیجر معمولاً همین ساختار ساده را دارند.
+ */
+export function extractScriptTags(html: string): ParsedScriptTag[] {
+  const results: ParsedScriptTag[] = [];
+  const scriptRegex = /<script\b([^>]*)>([\s\S]*?)<\/script>/gi;
+  let match: RegExpExecArray | null;
+  while ((match = scriptRegex.exec(html))) {
+    const attrsStr = match[1] ?? "";
+    const body = match[2]?.trim() ?? "";
+    const attrs: Record<string, string> = {};
+    const attrRegex = /([a-zA-Z0-9_-]+)(?:=("[^"]*"|'[^']*'|[^\s>]+))?/g;
+    let attrMatch: RegExpExecArray | null;
+    while ((attrMatch = attrRegex.exec(attrsStr))) {
+      const name = attrMatch[1];
+      const rawValue = attrMatch[2] ?? "";
+      const value = rawValue.replace(/^['"]|['"]$/g, "");
+      if (name) attrs[name] = value || "true";
+    }
+    results.push(body ? { attrs, children: body } : { attrs });
+  }
+  return results;
+}
+
 export function buildPageMeta(opts: {
   settings: SiteSettings;
   path: string; // مثل "/about" (بدون اسلش پایانی، جز مسیر ریشه "/")
