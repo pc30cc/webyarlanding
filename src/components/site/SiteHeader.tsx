@@ -27,14 +27,14 @@ export function SiteHeader({ settings }: { settings: SiteSettings }) {
   const { productCatalog, solutionCatalog } = rootRoute.useLoaderData();
   const brandInitial = settings.brand.name?.charAt(0) || "و";
   const auth = settings.auth;
-  const session = useAppSession(auth.sessionCheckUrl);
-  const isLoggedIn = session.status === "loggedIn";
+  const session = useAppSession(auth.sessionCheckUrl, auth.logoutUrl);
+  const isLoggedIn = session.status === "loggedIn" && session.user !== null;
+  // اگر fullName خالی بود، یک خوش‌آمدگویی عمومی نشان می‌دهیم — ایمیل کاربر هرگز به‌جای
+  // نام نمایش داده نمی‌شود.
+  const welcomeText = session.user?.fullName ? `خوش آمدید، ${session.user.fullName}` : "خوش آمدید";
 
   const handleLogout = () => {
-    if (auth.logoutUrl) {
-      fetch(auth.logoutUrl, { method: "POST", credentials: "include" }).catch(() => {});
-    }
-    window.location.reload();
+    void session.logout();
   };
 
   const NAV_LINKS: NavLink[] = [
@@ -93,9 +93,7 @@ export function SiteHeader({ settings }: { settings: SiteSettings }) {
         <div className="flex items-center gap-2">
           {auth.enabled && isLoggedIn && (
             <div className="hidden sm:flex items-center gap-3">
-              {session.name && (
-                <span className="text-sm text-muted-foreground">خوش آمدید، {session.name}</span>
-              )}
+              <span className="text-sm text-muted-foreground">{welcomeText}</span>
               {auth.panelUrl && (
                 <a href={auth.panelUrl}>
                   <Button className="h-10 px-5 text-sm font-medium shadow-sm shadow-primary/20">
@@ -232,9 +230,7 @@ export function SiteHeader({ settings }: { settings: SiteSettings }) {
               })}
               {auth.enabled && isLoggedIn && (
                 <div className="mt-3 space-y-2 border-t border-border pt-3">
-                  {session.name && (
-                    <p className="px-1 text-sm text-muted-foreground">خوش آمدید، {session.name}</p>
-                  )}
+                  <p className="px-1 text-sm text-muted-foreground">{welcomeText}</p>
                   {auth.panelUrl && (
                     <a href={auth.panelUrl} className="block">
                       <Button className="h-10 w-full">{auth.panelLabel || "پنل"}</Button>
