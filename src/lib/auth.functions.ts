@@ -21,6 +21,15 @@ export const loginAdmin = createServerFn({ method: "POST" })
     const auth = await import("./auth.server");
 
     const email = data.email.trim().toLowerCase();
+
+    if (await auth.isLoginRateLimited(email)) {
+      await auth.logLoginAttempt(email, false, "محدودیت تعداد تلاش (rate limit)");
+      return {
+        ok: false,
+        error: "تعداد تلاش‌های ناموفق بیش از حد مجاز است. لطفاً چند دقیقه دیگر دوباره تلاش کنید.",
+      };
+    }
+
     const { data: user } = await db
       .from("users")
       .select("id, email, display_name, role, is_active, password_hash")
@@ -79,13 +88,20 @@ export const changeAdminPassword = createServerFn({ method: "POST" })
     const auth = await import("./auth.server");
     const user = await auth.requireAdmin();
 
-    const { data: row } = await db.from("users").select("password_hash").eq("id", user.id).maybeSingle();
+    const { data: row } = await db
+      .from("users")
+      .select("password_hash")
+      .eq("id", user.id)
+      .maybeSingle();
     if (!row) return { ok: false, error: "کاربر یافت نشد" };
 
     const valid = await auth.verifyPassword(data.currentPassword, row.password_hash);
     if (!valid) return { ok: false, error: "رمز فعلی نادرست است" };
 
     const hash = await auth.hashPassword(data.newPassword);
-    await db.from("users").update({ password_hash: hash, updated_at: new Date().toISOString() }).eq("id", user.id);
+    await db
+      .from("users")
+      .update({ password_hash: hash, updated_at: new Date().toISOString() })
+      .eq("id", user.id);
     return { ok: true };
   });

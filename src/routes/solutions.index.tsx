@@ -4,7 +4,12 @@ import { Check, ChevronLeft } from "lucide-react";
 import { fetchSettings } from "@/lib/settings.functions";
 import { getPublicSeoPage } from "@/lib/seo.functions";
 import { getPublicCatalog } from "@/lib/catalog.functions";
-import { buildPageMeta, parseSchemaJson, buildBreadcrumbJsonLd } from "@/lib/seo-meta";
+import {
+  buildPageMeta,
+  parseSchemaJson,
+  buildBreadcrumbJsonLd,
+  safeJsonLdHtml,
+} from "@/lib/seo-meta";
 import { getIcon } from "@/lib/icon-registry";
 import { SiteLayout } from "@/components/site/SiteLayout";
 import { ScrollReveal, StaggerChildren, childVariant } from "@/components/site/animations";
@@ -68,10 +73,7 @@ function SolutionsPage() {
 
   return (
     <SiteLayout settings={settings}>
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-      />
+      <script type="application/ld+json" dangerouslySetInnerHTML={safeJsonLdHtml(jsonLd)} />
 
       <section className="relative overflow-hidden pt-16 pb-12 sm:pt-24 sm:pb-16">
         <div

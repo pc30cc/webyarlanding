@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 import { CheckCircle2, Clock, Shield, Zap } from "lucide-react";
 import { fetchSettings } from "@/lib/settings.functions";
 import { getPublicSeoPage } from "@/lib/seo.functions";
-import { buildPageMeta, buildBreadcrumbJsonLd } from "@/lib/seo-meta";
+import { buildPageMeta, buildBreadcrumbJsonLd, safeJsonLdHtml } from "@/lib/seo-meta";
 import { SiteLayout } from "@/components/site/SiteLayout";
 
 export const Route = createFileRoute("/sla")({
@@ -74,10 +74,7 @@ function SLAPage() {
   ];
   return (
     <SiteLayout settings={settings}>
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-      />
+      <script type="application/ld+json" dangerouslySetInnerHTML={safeJsonLdHtml(jsonLd)} />
       <div className="container-page max-w-4xl py-16 sm:py-24">
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
           <h1 className="mb-2 text-3xl font-extrabold text-foreground sm:text-4xl">

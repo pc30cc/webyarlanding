@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 import { Calendar, ArrowRight, Tag as TagIcon, ChevronLeft } from "lucide-react";
 import { fetchSettings } from "@/lib/settings.functions";
 import { getPublicSeoPage } from "@/lib/seo.functions";
-import { buildPageMeta, buildBreadcrumbJsonLd } from "@/lib/seo-meta";
+import { buildPageMeta, buildBreadcrumbJsonLd, safeJsonLdHtml } from "@/lib/seo-meta";
 import { listPublishedPosts } from "@/lib/blog.functions";
 import { SiteLayout } from "@/components/site/SiteLayout";
 
@@ -69,10 +69,7 @@ function TagPage() {
   ];
   return (
     <SiteLayout settings={settings}>
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-      />
+      <script type="application/ld+json" dangerouslySetInnerHTML={safeJsonLdHtml(jsonLd)} />
       <div className="container-page max-w-5xl py-16 sm:py-24">
         <Link
           to="/blog"

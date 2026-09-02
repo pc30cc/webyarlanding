@@ -1,6 +1,12 @@
 // احراز هویت اختصاصی WEBYAR — بدون Supabase Auth.
 // رمز عبور با PBKDF2-SHA256 هش می‌شود و نشست‌ها در جدول user_sessions نگهداری می‌شوند.
-import { getCookie, setCookie, deleteCookie, getRequestHeader, getRequestIP } from "@tanstack/react-start/server";
+import {
+  getCookie,
+  setCookie,
+  deleteCookie,
+  getRequestHeader,
+  getRequestIP,
+} from "@tanstack/react-start/server";
 import { db, newId, nowIso, toBool } from "./db.server";
 
 export const SESSION_COOKIE = "webyar_session";
@@ -29,9 +35,13 @@ function fromBase64(value: string): Uint8Array {
 }
 
 async function pbkdf2(password: string, salt: Uint8Array, iterations: number): Promise<string> {
-  const key = await crypto.subtle.importKey("raw", new TextEncoder().encode(password), "PBKDF2", false, [
-    "deriveBits",
-  ]);
+  const key = await crypto.subtle.importKey(
+    "raw",
+    new TextEncoder().encode(password),
+    "PBKDF2",
+    false,
+    ["deriveBits"],
+  );
   const bits = await crypto.subtle.deriveBits(
     { name: "PBKDF2", salt: salt as unknown as BufferSource, iterations, hash: "SHA-256" },
     key,
@@ -54,7 +64,8 @@ export async function verifyPassword(password: string, stored: string): Promise<
   const computed = await pbkdf2(password, salt, iterations);
   if (computed.length !== parts[3]!.length) return false;
   let diff = 0;
-  for (let i = 0; i < computed.length; i += 1) diff |= computed.charCodeAt(i) ^ parts[3]!.charCodeAt(i);
+  for (let i = 0; i < computed.length; i += 1)
+    diff |= computed.charCodeAt(i) ^ parts[3]!.charCodeAt(i);
   return diff === 0;
 }
 
@@ -73,7 +84,11 @@ export function clientUserAgent(): string {
   return (getRequestHeader("user-agent") ?? "").slice(0, 480);
 }
 
-export async function logLoginAttempt(email: string, success: boolean, reason?: string): Promise<void> {
+export async function logLoginAttempt(
+  email: string,
+  success: boolean,
+  reason?: string,
+): Promise<void> {
   await db.from("login_attempts").insert({
     id: newId(),
     email: email.slice(0, 190),
@@ -82,6 +97,36 @@ export async function logLoginAttempt(email: string, success: boolean, reason?: 
     ip_address: clientIp(),
     user_agent: clientUserAgent(),
   });
+}
+
+const LOGIN_RATE_LIMIT_WINDOW_MINUTES = 15;
+const LOGIN_RATE_LIMIT_MAX_PER_EMAIL = 8;
+const LOGIN_RATE_LIMIT_MAX_PER_IP = 20;
+
+/** بررسی محدودیت تعداد تلاش ناموفق ورود (بر اساس ایمیل و آی‌پی) — جلوگیری از حمله brute-force */
+export async function isLoginRateLimited(email: string): Promise<boolean> {
+  const since = new Date(Date.now() - LOGIN_RATE_LIMIT_WINDOW_MINUTES * 60_000).toISOString();
+  const ip = clientIp();
+  const [byEmail, byIp] = await Promise.all([
+    db
+      .from("login_attempts")
+      .select("id", { count: "exact", head: true })
+      .eq("email", email.slice(0, 190))
+      .eq("success", 0)
+      .gte("created_at", since),
+    ip
+      ? db
+          .from("login_attempts")
+          .select("id", { count: "exact", head: true })
+          .eq("ip_address", ip)
+          .eq("success", 0)
+          .gte("created_at", since)
+      : Promise.resolve({ count: 0 }),
+  ]);
+  return (
+    (byEmail.count ?? 0) >= LOGIN_RATE_LIMIT_MAX_PER_EMAIL ||
+    (byIp.count ?? 0) >= LOGIN_RATE_LIMIT_MAX_PER_IP
+  );
 }
 
 /** ساخت نشست جدید و ست کردن کوکی */
