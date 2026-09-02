@@ -294,12 +294,12 @@ function IndexPage() {
             </p>
 
             <div className="flex flex-wrap items-center gap-4">
-              <Link
-                to="/contact"
+              <a
+                href={settings.auth.signupUrl || "/contact"}
                 className="inline-flex items-center gap-2 rounded-xl bg-brand px-8 py-4 text-base font-bold text-primary-foreground shadow-lg shadow-primary/30"
               >
-                شروع رایگان <ChevronLeft className="h-4 w-4" />
-              </Link>
+                {settings.auth.signupLabel || "شروع رایگان"} <ChevronLeft className="h-4 w-4" />
+              </a>
               <Link
                 to="/pricing"
                 className="inline-flex items-center rounded-xl border border-border px-8 py-4 text-base font-semibold text-foreground transition-colors hover:bg-secondary"
@@ -659,12 +659,12 @@ function IndexPage() {
           <p className="relative mb-8 text-base text-primary-foreground/90">
             ۱۴ روز استفاده رایگان از تمام امکانات، بدون نیاز به کارت بانکی
           </p>
-          <Link
-            to="/contact"
+          <a
+            href={settings.auth.signupUrl || "/contact"}
             className="relative inline-block rounded-xl bg-card px-9 py-4 text-base font-bold text-primary"
           >
-            شروع رایگان
-          </Link>
+            {settings.auth.signupLabel || "شروع رایگان"}
+          </a>
         </div>
       </ScrollReveal>
     </SiteLayout>

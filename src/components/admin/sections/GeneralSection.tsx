@@ -78,6 +78,7 @@ export default function GeneralSection() {
         <Tabs defaultValue="brand">
           <TabsList className="h-auto flex-wrap">
             <TabsTrigger value="brand">برند</TabsTrigger>
+            <TabsTrigger value="auth">ورود و ثبت‌نام</TabsTrigger>
             <TabsTrigger value="social">شبکه‌های اجتماعی</TabsTrigger>
             <TabsTrigger value="ai">هوش مصنوعی</TabsTrigger>
             <TabsTrigger value="media">ذخیره‌سازی رسانه</TabsTrigger>
@@ -189,6 +190,66 @@ export default function GeneralSection() {
                         ...f,
                         brand: { ...f.brand, copyright: e.target.value },
                       }))
+                    }
+                  />
+                </Field>
+              </div>
+            </section>
+          </TabsContent>
+
+          <TabsContent value="auth" className="mt-6">
+            <section className="rounded-xl border border-border bg-card p-4 shadow-sm">
+              <div className="mb-4 flex items-center justify-between">
+                <h2 className="text-base font-semibold text-foreground">دکمه‌های ورود و ثبت‌نام</h2>
+                <div className="flex items-center gap-2">
+                  <Label className="cursor-pointer text-xs">نمایش در سایت</Label>
+                  <Switch
+                    checked={form.auth.enabled}
+                    onCheckedChange={(v) =>
+                      setForm((f) => ({ ...f, auth: { ...f.auth, enabled: v } }))
+                    }
+                  />
+                </div>
+              </div>
+              <p className="mb-4 text-xs text-muted-foreground">
+                آدرس اپلیکیشن/پنل کاربری خودتان را وارد کنید — دکمه‌های «ورود» و «شروع رایگان» در
+                هدر سایت و صفحات محصولات و قیمت‌گذاری به همین آدرس لینک می‌شوند. اگر خالی بماند، آن
+                دکمه نمایش داده نمی‌شود.
+              </p>
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <Field label="آدرس صفحه ورود">
+                  <Input
+                    dir="ltr"
+                    placeholder="https://app.example.com/login"
+                    value={form.auth.loginUrl}
+                    onChange={(e) =>
+                      setForm((f) => ({ ...f, auth: { ...f.auth, loginUrl: e.target.value } }))
+                    }
+                  />
+                </Field>
+                <Field label="متن دکمه ورود">
+                  <Input
+                    value={form.auth.loginLabel}
+                    onChange={(e) =>
+                      setForm((f) => ({ ...f, auth: { ...f.auth, loginLabel: e.target.value } }))
+                    }
+                  />
+                </Field>
+                <Field label="آدرس ثبت‌نام / شروع رایگان">
+                  <Input
+                    dir="ltr"
+                    placeholder="https://app.example.com/signup"
+                    value={form.auth.signupUrl}
+                    onChange={(e) =>
+                      setForm((f) => ({ ...f, auth: { ...f.auth, signupUrl: e.target.value } }))
+                    }
+                  />
+                </Field>
+                <Field label="متن دکمه شروع رایگان">
+                  <Input
+                    value={form.auth.signupLabel}
+                    onChange={(e) =>
+                      setForm((f) => ({ ...f, auth: { ...f.auth, signupLabel: e.target.value } }))
                     }
                   />
                 </Field>
