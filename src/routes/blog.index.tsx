@@ -215,6 +215,7 @@ function BlogIndexPage() {
               to="/blog"
               search={(prev) => ({ ...prev, page: Math.max(1, currentPage - 1) })}
               aria-disabled={currentPage <= 1}
+              aria-label="صفحه قبل"
               className={`inline-flex h-9 w-9 items-center justify-center rounded-lg border border-border text-foreground transition-colors ${currentPage <= 1 ? "pointer-events-none opacity-40" : "hover:bg-secondary"}`}
             >
               <ChevronRight className="h-4 w-4" />
@@ -230,6 +231,7 @@ function BlogIndexPage() {
                     to="/blog"
                     search={(prev) => ({ ...prev, page: n })}
                     aria-current={n === currentPage ? "page" : undefined}
+                    aria-label={`رفتن به صفحه ${n}`}
                     className={`inline-flex h-9 w-9 items-center justify-center rounded-lg text-sm font-medium transition-colors ${n === currentPage ? "bg-brand text-primary-foreground" : "border border-border text-foreground hover:bg-secondary"}`}
                   >
                     {n.toLocaleString("fa-IR")}
@@ -240,6 +242,7 @@ function BlogIndexPage() {
               to="/blog"
               search={(prev) => ({ ...prev, page: Math.min(totalPages, currentPage + 1) })}
               aria-disabled={currentPage >= totalPages}
+              aria-label="صفحه بعد"
               className={`inline-flex h-9 w-9 items-center justify-center rounded-lg border border-border text-foreground transition-colors ${currentPage >= totalPages ? "pointer-events-none opacity-40" : "hover:bg-secondary"}`}
             >
               <ChevronLeft className="h-4 w-4" />
