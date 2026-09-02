@@ -11,6 +11,8 @@ export interface BrandSettings {
   email: string;
   address: string;
   copyright: string;
+  /** منطقه زمانی نمایش ساعت در پنل ادمین و اعلان‌های تلگرام، مثل Europe/Istanbul */
+  timezone: string;
 }
 
 export interface SeoSettings {
@@ -141,6 +143,7 @@ export const DEFAULT_SETTINGS: SiteSettings = {
     email: "info@webyar.app",
     address: "",
     copyright: "© ۱۴۰۵ وب‌یار — تمامی حقوق محفوظ است",
+    timezone: "Europe/Istanbul",
   },
   seo: {
     metaTitle: "وب‌یار | چت زنده و تماس ویدیویی، فقط با یک خط کد",

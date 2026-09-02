@@ -479,6 +479,31 @@ export interface VisitorGeo {
   city: string;
 }
 
+/** ساعت و تاریخ لحظه‌ی ورود، به وقت منطقه زمانی تنظیم‌شده در تنظیمات عمومی (پیش‌فرض استانبول) */
+function formatVisitTime(timezone: string): string {
+  try {
+    return new Intl.DateTimeFormat("fa-IR", {
+      timeZone: timezone || "Europe/Istanbul",
+      calendar: "gregory",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+    }).format(new Date());
+  } catch {
+    return new Intl.DateTimeFormat("fa-IR", {
+      timeZone: "Europe/Istanbul",
+      calendar: "gregory",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+    }).format(new Date());
+  }
+}
+
 /** اعلان لحظه‌ای به همه‌ی مدیران وقتی بازدیدکننده‌ی جدیدی وارد سایت می‌شود */
 export async function notifyNewVisit(path: string, geo?: VisitorGeo): Promise<void> {
   const settings = await loadSettings();
@@ -492,7 +517,8 @@ export async function notifyNewVisit(path: string, geo?: VisitorGeo): Promise<vo
     ? (COUNTRY_NAMES_FA[geo.country.toUpperCase()] ?? geo.country)
     : "";
   const location = [countryName, geo?.city].filter(Boolean).join("، ") || "نامشخص";
-  const text = `👀 یک بازدیدکننده جدید وارد سایت شد\n\n📍 موقعیت: ${location}\n🔗 صفحه: ${path}`;
+  const visitTime = formatVisitTime(settings.brand.timezone);
+  const text = `👀 یک بازدیدکننده جدید وارد سایت شد\n\n📍 موقعیت: ${location}\n🕒 ساعت ورود: ${visitTime}\n🔗 صفحه: ${path}`;
   await Promise.all(
     ids.map((id) =>
       tgCall(keys.telegramBotToken, "sendMessage", { chat_id: id, text }).catch((e) =>
