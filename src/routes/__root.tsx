@@ -7,6 +7,8 @@ import {
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
+import { motion } from "framer-motion";
+import { Compass, ChevronLeft } from "lucide-react";
 import { useEffect, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
@@ -15,6 +17,7 @@ import { reportLovableError } from "../lib/lovable-error-reporting";
 import { fetchSettings } from "../lib/settings.functions";
 import { getPublicCatalog } from "../lib/catalog.functions";
 import { VisitTracker } from "../components/site/VisitTracker";
+import { SiteLayout } from "../components/site/SiteLayout";
 import { extractScriptTags } from "../lib/seo-meta";
 import type { SiteSettings } from "../lib/settings";
 
@@ -38,25 +41,73 @@ function buildHeadScripts(settings: SiteSettings | undefined): Array<Record<stri
 }
 
 function NotFoundComponent() {
-  return (
-    <div className="flex min-h-screen items-center justify-center bg-background px-4">
-      <div className="max-w-md text-center">
-        <h1 className="text-7xl font-bold text-foreground">404</h1>
-        <h2 className="mt-4 text-xl font-semibold text-foreground">Page not found</h2>
-        <p className="mt-2 text-sm text-muted-foreground">
-          The page you're looking for doesn't exist or has been moved.
-        </p>
-        <div className="mt-6">
-          <Link
-            to="/"
-            className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
-          >
-            Go home
-          </Link>
-        </div>
-      </div>
+  const loaderData = Route.useLoaderData();
+  const settings = loaderData?.settings;
+
+  const content = (
+    <div className="container-page flex min-h-[70vh] flex-col items-center justify-center py-20 text-center">
+      <motion.div
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4 }}
+        className="mb-6 flex h-20 w-20 items-center justify-center rounded-2xl bg-primary/10"
+      >
+        <Compass className="h-10 w-10 text-primary" />
+      </motion.div>
+
+      <motion.h1
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4, delay: 0.05 }}
+        className="text-7xl font-extrabold text-brand sm:text-8xl"
+      >
+        404
+      </motion.h1>
+
+      <motion.h2
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4, delay: 0.1 }}
+        className="mt-5 text-xl font-bold text-foreground sm:text-2xl"
+      >
+        این صفحه پیدا نشد
+      </motion.h2>
+      <motion.p
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4, delay: 0.15 }}
+        className="mt-3 max-w-md text-sm leading-7 text-muted-foreground sm:text-base"
+      >
+        آدرسی که دنبالش هستید وجود ندارد یا جابه‌جا شده است. می‌توانید به صفحه اصلی برگردید یا از
+        منو مسیر درست را پیدا کنید.
+      </motion.p>
+
+      <motion.div
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4, delay: 0.2 }}
+        className="mt-9 flex flex-wrap items-center justify-center gap-4"
+      >
+        <Link
+          to="/"
+          className="inline-flex items-center gap-2 rounded-xl bg-brand px-8 py-4 text-base font-bold text-primary-foreground shadow-lg shadow-primary/30"
+        >
+          بازگشت به صفحه اصلی <ChevronLeft className="h-4 w-4" />
+        </Link>
+        <Link
+          to="/blog"
+          className="inline-flex items-center rounded-xl border border-border px-8 py-4 text-base font-semibold text-foreground transition-colors hover:bg-secondary"
+        >
+          مشاهده وبلاگ
+        </Link>
+      </motion.div>
     </div>
   );
+
+  if (settings) {
+    return <SiteLayout settings={settings}>{content}</SiteLayout>;
+  }
+  return <div className="bg-background">{content}</div>;
 }
 
 function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
