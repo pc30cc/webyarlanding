@@ -65,6 +65,10 @@ function wwwToApexRedirect(request: Request): Response | null {
   const url = new URL(request.url);
   if (!url.hostname.startsWith("www.")) return null;
   url.hostname = url.hostname.slice("www.".length);
+  // request.url گاهی با پروتکل http گزارش می‌شود حتی وقتی خود اتصال https بوده (پشت
+  // Cloudflare Workers) — چون این سایت فقط https سرو می‌شود (و HSTS preload دارد)،
+  // پروتکل مقصد همیشه صراحتاً https تنظیم می‌شود تا کاربر از یک گام واسط http رد نشود.
+  url.protocol = "https:";
   return new Response(null, {
     status: 301,
     headers: { Location: url.toString() },
