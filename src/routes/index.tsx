@@ -376,7 +376,7 @@ function IndexPage() {
       <section className="border-y border-border px-4 py-9 sm:px-8">
         <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-center gap-x-14 gap-y-5">
           {trustLogos.map((logo) => (
-            <span key={logo} className="text-base font-bold tracking-wide text-muted-foreground/70">
+            <span key={logo} className="text-base font-bold tracking-wide text-muted-foreground">
               {logo}
             </span>
           ))}

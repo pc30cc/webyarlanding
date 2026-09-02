@@ -134,7 +134,9 @@
   --destructive: oklch(0.58 0.22 25);
   --destructive-foreground: oklch(0.99 0 0);
 
-  --success: oklch(0.62 0.14 155);
+  /* کمی تیره‌تر از قبل (L=0.46 به‌جای 0.62) تا متن سبز روی پس‌زمینه‌های ملایم
+     success/10 و success/15 هم نسبت کنتراست ۴٫۵:۱ استاندارد WCAG AA را رعایت کند */
+  --success: oklch(0.46 0.14 155);
   --success-foreground: oklch(0.99 0 0);
   --warning: oklch(0.75 0.15 75);
   --warning-foreground: oklch(0.22 0.03 275);
