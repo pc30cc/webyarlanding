@@ -15,6 +15,27 @@ import { reportLovableError } from "../lib/lovable-error-reporting";
 import { fetchSettings } from "../lib/settings.functions";
 import { getPublicCatalog } from "../lib/catalog.functions";
 import { VisitTracker } from "../components/site/VisitTracker";
+import { extractScriptTags } from "../lib/seo-meta";
+import type { SiteSettings } from "../lib/settings";
+
+/** اسکریپت‌های گوگل آنالیتیکس (در صورت تنظیم) + اسکریپت‌های سفارشی head از تنظیمات عمومی */
+function buildHeadScripts(settings: SiteSettings | undefined): Array<Record<string, unknown>> {
+  const scripts: Array<Record<string, unknown>> = [];
+  const gaId = settings?.analytics.googleAnalyticsId?.trim();
+  if (gaId) {
+    scripts.push({ src: `https://www.googletagmanager.com/gtag/js?id=${gaId}`, async: true });
+    scripts.push({
+      children: `window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','${gaId}');`,
+    });
+  }
+  const custom = settings?.analytics.headScripts?.trim();
+  if (custom) {
+    for (const { attrs, children } of extractScriptTags(custom)) {
+      scripts.push({ ...attrs, ...(children ? { children } : {}) });
+    }
+  }
+  return scripts;
+}
 
 function NotFoundComponent() {
   return (
@@ -132,6 +153,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         { rel: "icon", href: "/favicon.png", type: "image/png" },
         { rel: "apple-touch-icon", href: "/apple-touch-icon.png" },
       ],
+      scripts: buildHeadScripts(settings),
     };
   },
   shellComponent: RootShell,
@@ -141,6 +163,9 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 });
 
 function RootShell({ children }: { children: ReactNode }) {
+  const loaderData = Route.useLoaderData();
+  const bodyScripts = loaderData?.settings.analytics.bodyScripts?.trim();
+
   return (
     <html lang="fa" dir="rtl">
       <head>
@@ -148,6 +173,7 @@ function RootShell({ children }: { children: ReactNode }) {
       </head>
       <body>
         {children}
+        {bodyScripts && <div dangerouslySetInnerHTML={{ __html: bodyScripts }} />}
         <Scripts />
       </body>
     </html>
