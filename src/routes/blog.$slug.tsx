@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 import ReactMarkdown from "react-markdown";
 import { ArrowRight, Calendar, User, Tag as TagIcon } from "lucide-react";
 import { fetchSettings } from "@/lib/settings.functions";
-import { buildPageMeta, buildBreadcrumbJsonLd } from "@/lib/seo-meta";
+import { buildPageMeta, buildBreadcrumbJsonLd, safeJsonLdHtml } from "@/lib/seo-meta";
 import { getPublishedPost, listPublishedPosts } from "@/lib/blog.functions";
 import { SiteLayout } from "@/components/site/SiteLayout";
 
@@ -104,10 +104,7 @@ function BlogPostPage() {
 
   return (
     <SiteLayout settings={settings}>
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-      />
+      <script type="application/ld+json" dangerouslySetInnerHTML={safeJsonLdHtml(jsonLd)} />
       <div className="container-page max-w-3xl py-16 sm:py-24">
         <Link
           to="/blog"

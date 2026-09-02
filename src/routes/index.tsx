@@ -17,7 +17,7 @@ import {
 } from "lucide-react";
 import { fetchSettings } from "@/lib/settings.functions";
 import { getPublicSeoPage } from "@/lib/seo.functions";
-import { buildPageMeta, parseSchemaJson } from "@/lib/seo-meta";
+import { buildPageMeta, parseSchemaJson, safeJsonLdHtml } from "@/lib/seo-meta";
 import { SiteLayout } from "@/components/site/SiteLayout";
 import { ScrollReveal, StaggerChildren, childVariant, FAQItem } from "@/components/site/animations";
 
@@ -244,10 +244,7 @@ function IndexPage() {
 
   return (
     <SiteLayout settings={settings}>
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-      />
+      <script type="application/ld+json" dangerouslySetInnerHTML={safeJsonLdHtml(jsonLd)} />
 
       {/* HERO */}
       <section className="relative overflow-hidden pt-16 pb-12 sm:pt-24 sm:pb-16">

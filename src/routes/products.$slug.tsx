@@ -5,7 +5,7 @@ import { ArrowRight, Check, ChevronLeft } from "lucide-react";
 import { fetchSettings } from "@/lib/settings.functions";
 import { getPublicSeoPage } from "@/lib/seo.functions";
 import { getPublicCatalogItem } from "@/lib/catalog.functions";
-import { buildPageMeta } from "@/lib/seo-meta";
+import { buildPageMeta, safeJsonLdHtml } from "@/lib/seo-meta";
 import { getIcon } from "@/lib/icon-registry";
 import { SiteLayout } from "@/components/site/SiteLayout";
 import { ScrollReveal } from "@/components/site/animations";
@@ -75,10 +75,7 @@ function ProductDetailPage() {
 
   return (
     <SiteLayout settings={settings}>
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-      />
+      <script type="application/ld+json" dangerouslySetInnerHTML={safeJsonLdHtml(jsonLd)} />
 
       <section className="relative overflow-hidden pt-12 pb-16 sm:pt-16 sm:pb-24">
         <div

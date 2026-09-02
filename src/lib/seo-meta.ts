@@ -28,6 +28,16 @@ export function parseSchemaJson(raw: string | null | undefined): unknown | null 
   }
 }
 
+/**
+ * سریالایز امن JSON-LD برای درج در تگ <script> با dangerouslySetInnerHTML.
+ * JSON.stringify خام کاراکتر «<» را escape نمی‌کند؛ اگر عنوان یا محتوای یک مقاله
+ * (نوشته‌شده توسط ادمین یا تولیدشده با هوش مصنوعی) شامل رشته‌ی «</script>» باشد،
+ * تگ اسکریپت زودتر از موعد بسته می‌شود و کد دلخواه در صفحه اجرا می‌شود (XSS ذخیره‌شده).
+ */
+export function safeJsonLdHtml(data: unknown): { __html: string } {
+  return { __html: JSON.stringify(data).replace(/</g, "\\u003c") };
+}
+
 export function buildPageMeta(opts: {
   settings: SiteSettings;
   path: string; // مثل "/about" (بدون اسلش پایانی، جز مسیر ریشه "/")
