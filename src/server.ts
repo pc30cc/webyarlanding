@@ -25,6 +25,9 @@ function withSecurityHeaders(response: Response): Response {
   response.headers.set("X-Frame-Options", "SAMEORIGIN");
   response.headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
   response.headers.set("Strict-Transport-Security", "max-age=31536000; includeSubDomains");
+  // same-origin-allow-popups (نه same-origin سخت‌گیرانه) چون ویجت چت خارجی ممکن است برای
+  // تماس تصویری یا اتصال حساب از پاپ‌آپ استفاده کند و نباید رابطه‌اش با پنجره اصلی قطع شود.
+  response.headers.set("Cross-Origin-Opener-Policy", "same-origin-allow-popups");
   return response;
 }
 

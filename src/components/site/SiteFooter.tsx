@@ -21,7 +21,7 @@ export function SiteFooter({ settings }: { settings: SiteSettings }) {
             </p>
           </div>
           <div>
-            <h4 className="mb-3 text-sm font-semibold text-foreground">محصول</h4>
+            <h3 className="mb-3 text-sm font-semibold text-foreground">محصول</h3>
             <nav className="space-y-2 text-sm text-muted-foreground">
               <Link to="/products" className="block transition-colors hover:text-foreground">
                 محصولات
@@ -38,7 +38,7 @@ export function SiteFooter({ settings }: { settings: SiteSettings }) {
             </nav>
           </div>
           <div>
-            <h4 className="mb-3 text-sm font-semibold text-foreground">شرکت</h4>
+            <h3 className="mb-3 text-sm font-semibold text-foreground">شرکت</h3>
             <nav className="space-y-2 text-sm text-muted-foreground">
               <Link to="/about" className="block transition-colors hover:text-foreground">
                 درباره ما
@@ -52,7 +52,7 @@ export function SiteFooter({ settings }: { settings: SiteSettings }) {
             </nav>
           </div>
           <div>
-            <h4 className="mb-3 text-sm font-semibold text-foreground">قانونی</h4>
+            <h3 className="mb-3 text-sm font-semibold text-foreground">قانونی</h3>
             <nav className="space-y-2 text-sm text-muted-foreground">
               <Link to="/terms" className="block transition-colors hover:text-foreground">
                 شرایط استفاده

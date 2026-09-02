@@ -137,7 +137,10 @@ function BlogPostPage() {
               <img
                 src={post.coverImage}
                 alt={post.title}
-                loading="lazy"
+                width={1000}
+                height={400}
+                loading="eager"
+                fetchPriority="high"
                 className="h-auto max-h-[400px] w-full object-cover"
               />
             </div>

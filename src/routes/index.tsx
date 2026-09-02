@@ -192,6 +192,9 @@ function eyebrow(text: string) {
 /** Real, self-hosted looping video of the brand's "live video call" screen — no third-party embed, no stock footage. */
 function VideoCallMock({ className }: { className?: string }) {
   return (
+    // این ویدیو کاملاً تزیینی و بی‌صداست (فقط نمایش بصری دمو، بدون گفتار)؛ اطلاعاتش هم در
+    // متن اطراف صفحه (تیتر و توضیحات) به‌طور کامل آمده، پس از دید فناوری‌های کمکی مخفی است
+    // و به زیرنویس نیاز ندارد.
     <video
       className={`h-full w-full object-cover ${className ?? ""}`}
       src="/videos/video-call.mp4"
@@ -201,7 +204,7 @@ function VideoCallMock({ className }: { className?: string }) {
       loop
       playsInline
       preload="metadata"
-      aria-label="نمایش تماس ویدیویی زنده در ابزارک وب‌یار"
+      aria-hidden="true"
     />
   );
 }
