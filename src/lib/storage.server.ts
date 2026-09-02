@@ -3,6 +3,33 @@
 import { loadMediaKeys, loadSettings } from "./settings.server";
 import type { MediaSettings } from "./settings";
 import type { MediaApiKeys } from "./settings.server";
+import decodePng, { init as initPngDecode } from "@jsquash/png/decode.js";
+import encodeWebp, { init as initWebpEncode } from "@jsquash/webp/encode.js";
+import { PNG_DECODE_WASM_BASE64, WEBP_ENCODE_WASM_BASE64 } from "./wasm-codecs.generated";
+
+// باندلر این پروژه (Rolldown/Vite) از import مستقیم فایل .wasm پشتیبانی نمی‌کند (برخلاف
+// @cf-wasm/photon که بایت‌های wasm را خودش به‌صورت base64 در کدش جاسازی کرده)؛ برای همین
+// همان روش را برای این دو کدک هم به‌صورت دستی تکرار کرده‌ایم (به wasm-codecs.generated.ts
+// و scripts/generate-wasm-inline.mjs نگاه کنید) و این‌جا از base64 کامپایل می‌کنیم.
+let pngDecodeReady: ReturnType<typeof initPngDecode> | undefined;
+function ensurePngDecodeInit() {
+  if (!pngDecodeReady) {
+    pngDecodeReady = WebAssembly.compile(base64ToBytes(PNG_DECODE_WASM_BASE64)).then((module) =>
+      initPngDecode(module),
+    );
+  }
+  return pngDecodeReady;
+}
+
+let webpEncodeReady: ReturnType<typeof initWebpEncode> | undefined;
+function ensureWebpEncodeInit() {
+  if (!webpEncodeReady) {
+    webpEncodeReady = WebAssembly.compile(base64ToBytes(WEBP_ENCODE_WASM_BASE64)).then((module) =>
+      initWebpEncode(module),
+    );
+  }
+  return webpEncodeReady;
+}
 
 export class StorageError extends Error {}
 
@@ -217,21 +244,25 @@ export async function deleteStoredImage(path: string): Promise<void> {
 // نیاز واقعی (~۶۴۸px، دقیقاً همون چیزی که پیج‌اسپید اندازه گرفته) دانلود می‌شن؛ ۷۰۰ حاشیه‌ی
 // کافی برای رتینا/OG می‌گذارد و این فاصله‌ی باقی‌مانده رو تقریباً می‌بندد.
 const COVER_IMAGE_MAX_DIMENSION = 700;
-const COVER_IMAGE_JPEG_QUALITY = 82;
+const COVER_IMAGE_WEBP_QUALITY = 82;
 
 /**
- * تصویر ورودی (معمولاً PNG بدون فشرده‌سازی، خروجی هوش مصنوعی) را کوچک و به JPEG فشرده
- * تبدیل می‌کند تا حجم واقعی صفحات سایت — و در نتیجه LCP — به‌شدت کاهش پیدا کند؛ با
- * @cf-wasm/photon که مخصوص اجرا روی Cloudflare Workers ساخته شده (بدون نیاز به Node/sharp).
+ * تصویر ورودی (معمولاً PNG بدون فشرده‌سازی، خروجی هوش مصنوعی) را کوچک و به WebP فشرده
+ * تبدیل می‌کند تا حجم واقعی صفحات سایت — و در نتیجه LCP — به‌شدت کاهش پیدا کند.
+ * تغییر‌اندازه با @cf-wasm/photon (مخصوص Cloudflare Workers) و رمزگذاری نهایی با
+ * jsquash/webp — روی همین تصویر تست واقعی نشون داد در کیفیت یکسان، خروجی JPEG قبلی
+ * تقریباً ۲ برابر بزرگ‌تر از WebP واقعی (lossy) بود؛ get_bytes_webp خود photon این
+ * قابلیت را ندارد و فقط WebP بدون‌افت (خیلی حجیم) تولید می‌کند.
  * اگر فشرده‌سازی به هر دلیلی شکست بخورد، بایت‌های اصلی بدون تغییر آپلود می‌شوند.
  */
 async function compressCoverImage(
   bytes: ArrayBuffer,
   mime: string,
-): Promise<{ bytes: ArrayBuffer; mime: string; isJpeg: boolean }> {
+): Promise<{ bytes: ArrayBuffer; mime: string; compressed: boolean }> {
   try {
     const { PhotonImage, resize, SamplingFilter } = await import("@cf-wasm/photon");
     const input = PhotonImage.new_from_byteslice(new Uint8Array(bytes));
+    let resizedPngBytes: ArrayBuffer;
     try {
       const width = input.get_width();
       const height = input.get_height();
@@ -246,21 +277,27 @@ async function compressCoverImage(
             )
           : input;
       try {
-        const jpegBytes = resized.get_bytes_jpeg(COVER_IMAGE_JPEG_QUALITY);
-        const buffer = jpegBytes.buffer.slice(
-          jpegBytes.byteOffset,
-          jpegBytes.byteOffset + jpegBytes.byteLength,
+        // get_bytes() خروجی PNG می‌دهد (نه پیکسل خام) — دلیل مرحله‌ی دیکد بعدی
+        const pngBytes = resized.get_bytes();
+        resizedPngBytes = pngBytes.buffer.slice(
+          pngBytes.byteOffset,
+          pngBytes.byteOffset + pngBytes.byteLength,
         ) as ArrayBuffer;
-        return { bytes: buffer, mime: "image/jpeg", isJpeg: true };
       } finally {
         if (resized !== input) resized.free();
       }
     } finally {
       input.free();
     }
+
+    await ensurePngDecodeInit();
+    const imageData = await decodePng(resizedPngBytes);
+    await ensureWebpEncodeInit();
+    const webpBytes = await encodeWebp(imageData, { quality: COVER_IMAGE_WEBP_QUALITY });
+    return { bytes: webpBytes, mime: "image/webp", compressed: true };
   } catch (e) {
     console.error("compressCoverImage failed, uploading original bytes:", e);
-    return { bytes, mime, isJpeg: false };
+    return { bytes, mime, compressed: false };
   }
 }
 
@@ -305,8 +342,8 @@ export async function uploadImageDataUrl(
   const originalMime = match[1] || "image/png";
   const originalBytes = base64ToBytes(match[2]!);
 
-  const { bytes, mime, isJpeg } = await compressCoverImage(originalBytes, originalMime);
-  const finalFilename = isJpeg ? filename.replace(/\.[a-zA-Z0-9]+$/, ".jpg") : filename;
+  const { bytes, mime, compressed } = await compressCoverImage(originalBytes, originalMime);
+  const finalFilename = compressed ? filename.replace(/\.[a-zA-Z0-9]+$/, ".webp") : filename;
 
   return uploadRawBytes(bytes, mime, finalFilename);
 }
@@ -358,12 +395,12 @@ export async function recompressStoredImage(assetId: string): Promise<Recompress
   }
 
   const oldSizeBytes = originalBytes.byteLength;
-  const { bytes, mime, isJpeg } = await compressCoverImage(
+  const { bytes, mime, compressed } = await compressCoverImage(
     originalBytes,
     asset.mime_type || "image/png",
   );
 
-  if (!isJpeg || bytes.byteLength >= oldSizeBytes) {
+  if (!compressed || bytes.byteLength >= oldSizeBytes) {
     return {
       ok: false,
       skipped: true,
@@ -373,7 +410,7 @@ export async function recompressStoredImage(assetId: string): Promise<Recompress
     };
   }
 
-  const finalFilename = asset.path.replace(/\.[a-zA-Z0-9]+$/, ".jpg");
+  const finalFilename = asset.path.replace(/\.[a-zA-Z0-9]+$/, ".webp");
   const uploaded = await uploadRawBytes(bytes, mime, finalFilename);
 
   if (finalFilename !== asset.path) {
