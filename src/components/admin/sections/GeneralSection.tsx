@@ -255,6 +255,70 @@ export default function GeneralSection() {
                 </Field>
               </div>
             </section>
+
+            <section className="mt-4 rounded-xl border border-border bg-card p-4 shadow-sm">
+              <h2 className="mb-1 text-base font-semibold text-foreground">
+                تشخیص ورود کاربر (اختیاری)
+              </h2>
+              <p className="mb-4 text-xs text-muted-foreground">
+                اگر پر شود، سایت هنگام بارگذاری با یک درخواست اعتبارسنجی‌شده وضعیت لاگین کاربر را از
+                اپلیکیشن‌تان می‌پرسد؛ اگر لاگین باشد، به‌جای دکمه‌های ورود/ثبت‌نام، «خوش‌آمدید» +
+                دکمه پنل + دکمه خروج نمایش داده می‌شود. این نیازمند یک API روی همان دامنه‌ی اپلیکیشن
+                است که کوکی نشست را با CORS مناسب برگرداند — اگر پیاده‌سازی نشده یا خالی بماند، سایت
+                مثل قبل رفتار می‌کند.
+              </p>
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <Field label="آدرس بررسی نشست (Session Check API)" full>
+                  <Input
+                    dir="ltr"
+                    placeholder="https://app.example.com/api/session"
+                    value={form.auth.sessionCheckUrl}
+                    onChange={(e) =>
+                      setForm((f) => ({
+                        ...f,
+                        auth: { ...f.auth, sessionCheckUrl: e.target.value },
+                      }))
+                    }
+                  />
+                </Field>
+                <Field label="آدرس خروج از حساب (POST)">
+                  <Input
+                    dir="ltr"
+                    placeholder="https://app.example.com/api/logout"
+                    value={form.auth.logoutUrl}
+                    onChange={(e) =>
+                      setForm((f) => ({ ...f, auth: { ...f.auth, logoutUrl: e.target.value } }))
+                    }
+                  />
+                </Field>
+                <Field label="متن دکمه خروج">
+                  <Input
+                    value={form.auth.logoutLabel}
+                    onChange={(e) =>
+                      setForm((f) => ({ ...f, auth: { ...f.auth, logoutLabel: e.target.value } }))
+                    }
+                  />
+                </Field>
+                <Field label="آدرس پنل کاربری">
+                  <Input
+                    dir="ltr"
+                    placeholder="https://app.example.com/dashboard"
+                    value={form.auth.panelUrl}
+                    onChange={(e) =>
+                      setForm((f) => ({ ...f, auth: { ...f.auth, panelUrl: e.target.value } }))
+                    }
+                  />
+                </Field>
+                <Field label="متن دکمه پنل">
+                  <Input
+                    value={form.auth.panelLabel}
+                    onChange={(e) =>
+                      setForm((f) => ({ ...f, auth: { ...f.auth, panelLabel: e.target.value } }))
+                    }
+                  />
+                </Field>
+              </div>
+            </section>
           </TabsContent>
 
           <TabsContent value="social" className="mt-6">

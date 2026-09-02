@@ -5,6 +5,7 @@ import { ChevronDown, Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { MegaMenu } from "@/components/site/MegaMenu";
 import { getIcon } from "@/lib/icon-registry";
+import { useAppSession } from "@/lib/useAppSession";
 import type { CatalogCategoryDto } from "@/lib/catalog.functions";
 import type { SiteSettings } from "@/lib/settings";
 
@@ -26,6 +27,15 @@ export function SiteHeader({ settings }: { settings: SiteSettings }) {
   const { productCatalog, solutionCatalog } = rootRoute.useLoaderData();
   const brandInitial = settings.brand.name?.charAt(0) || "و";
   const auth = settings.auth;
+  const session = useAppSession(auth.sessionCheckUrl);
+  const isLoggedIn = session.status === "loggedIn";
+
+  const handleLogout = () => {
+    if (auth.logoutUrl) {
+      fetch(auth.logoutUrl, { method: "POST", credentials: "include" }).catch(() => {});
+    }
+    window.location.reload();
+  };
 
   const NAV_LINKS: NavLink[] = [
     { type: "mega", to: "/products", label: "محصولات", categories: productCatalog },
@@ -81,7 +91,29 @@ export function SiteHeader({ settings }: { settings: SiteSettings }) {
         </nav>
 
         <div className="flex items-center gap-2">
-          {auth.enabled && (
+          {auth.enabled && isLoggedIn && (
+            <div className="hidden sm:flex items-center gap-3">
+              {session.name && (
+                <span className="text-sm text-muted-foreground">خوش آمدید، {session.name}</span>
+              )}
+              {auth.panelUrl && (
+                <a href={auth.panelUrl}>
+                  <Button className="h-10 px-5 text-sm font-medium shadow-sm shadow-primary/20">
+                    {auth.panelLabel || "پنل"}
+                  </Button>
+                </a>
+              )}
+              <Button
+                type="button"
+                variant="ghost"
+                className="h-10 px-4 text-sm font-medium"
+                onClick={handleLogout}
+              >
+                {auth.logoutLabel || "خروج"}
+              </Button>
+            </div>
+          )}
+          {auth.enabled && !isLoggedIn && (
             <div className="hidden sm:flex items-center gap-2">
               {auth.loginUrl && (
                 <a href={auth.loginUrl}>
@@ -198,7 +230,27 @@ export function SiteHeader({ settings }: { settings: SiteSettings }) {
                   </Link>
                 );
               })}
-              {auth.enabled && (
+              {auth.enabled && isLoggedIn && (
+                <div className="mt-3 space-y-2 border-t border-border pt-3">
+                  {session.name && (
+                    <p className="px-1 text-sm text-muted-foreground">خوش آمدید، {session.name}</p>
+                  )}
+                  {auth.panelUrl && (
+                    <a href={auth.panelUrl} className="block">
+                      <Button className="h-10 w-full">{auth.panelLabel || "پنل"}</Button>
+                    </a>
+                  )}
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="h-10 w-full"
+                    onClick={handleLogout}
+                  >
+                    {auth.logoutLabel || "خروج"}
+                  </Button>
+                </div>
+              )}
+              {auth.enabled && !isLoggedIn && (
                 <div className="mt-3 space-y-2 border-t border-border pt-3">
                   {auth.signupUrl && (
                     <a href={auth.signupUrl} className="block">

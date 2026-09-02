@@ -42,6 +42,14 @@ export interface AuthLinksSettings {
   signupUrl: string;
   loginLabel: string;
   signupLabel: string;
+  /** آدرس یک API روی دامنه‌ی اپلیکیشن که وضعیت لاگین را برمی‌گرداند — خالی یعنی این قابلیت غیرفعال است */
+  sessionCheckUrl: string;
+  /** آدرس API خروج از حساب روی اپلیکیشن (POST) */
+  logoutUrl: string;
+  /** آدرس پنل کاربری اپلیکیشن — برای دکمه «پنل» وقتی کاربر لاگین است */
+  panelUrl: string;
+  panelLabel: string;
+  logoutLabel: string;
 }
 
 export interface ChatWidgetSettings {
@@ -174,6 +182,11 @@ export const DEFAULT_SETTINGS: SiteSettings = {
     signupUrl: "/contact",
     loginLabel: "ورود",
     signupLabel: "شروع رایگان",
+    sessionCheckUrl: "",
+    logoutUrl: "",
+    panelUrl: "",
+    panelLabel: "پنل",
+    logoutLabel: "خروج",
   },
   chatWidget: {
     enabled: false,
