@@ -40,6 +40,8 @@ async function uploadToBunny(
     headers: {
       AccessKey: keys.mediaBunnyAccessKey,
       "Content-Type": mime,
+      // فایل‌ها با نام یکتا (UUID) هرگز بازنویسی نمی‌شوند — کش طولانی‌مدت کاملاً امن است
+      "Cache-Control": "public, max-age=31536000, immutable",
     },
     body: bytes,
   });
@@ -143,7 +145,13 @@ async function uploadToArvan(
   );
   const res = await fetch(url, {
     method: "PUT",
-    headers: { ...headers, "Content-Type": mime, "x-amz-acl": "public-read" },
+    headers: {
+      ...headers,
+      "Content-Type": mime,
+      "x-amz-acl": "public-read",
+      // فایل‌ها با نام یکتا (UUID) هرگز بازنویسی نمی‌شوند — کش طولانی‌مدت کاملاً امن است
+      "Cache-Control": "public, max-age=31536000, immutable",
+    },
     body: bytes,
   });
   if (!res.ok) {
@@ -205,20 +213,88 @@ export async function deleteStoredImage(path: string): Promise<void> {
   if (media.provider === "arvan") return deleteFromArvan(path, media, keys);
 }
 
-/** آپلود یک تصویر base64 به محل ذخیره‌سازی متصل‌شده و بازگرداندن آدرس عمومی نهایی */
-export async function uploadImageDataUrl(dataUrl: string, filename: string): Promise<string> {
+const COVER_IMAGE_MAX_DIMENSION = 1000;
+const COVER_IMAGE_JPEG_QUALITY = 82;
+
+/**
+ * تصویر ورودی (معمولاً PNG بدون فشرده‌سازی، خروجی هوش مصنوعی) را کوچک و به JPEG فشرده
+ * تبدیل می‌کند تا حجم واقعی صفحات سایت — و در نتیجه LCP — به‌شدت کاهش پیدا کند؛ با
+ * @cf-wasm/photon که مخصوص اجرا روی Cloudflare Workers ساخته شده (بدون نیاز به Node/sharp).
+ * اگر فشرده‌سازی به هر دلیلی شکست بخورد، بایت‌های اصلی بدون تغییر آپلود می‌شوند.
+ */
+async function compressCoverImage(
+  bytes: ArrayBuffer,
+  mime: string,
+): Promise<{ bytes: ArrayBuffer; mime: string; isJpeg: boolean }> {
+  try {
+    const { PhotonImage, resize, SamplingFilter } = await import("@cf-wasm/photon");
+    const input = PhotonImage.new_from_byteslice(new Uint8Array(bytes));
+    try {
+      const width = input.get_width();
+      const height = input.get_height();
+      const scale = Math.min(1, COVER_IMAGE_MAX_DIMENSION / Math.max(width, height));
+      const resized =
+        scale < 1
+          ? resize(
+              input,
+              Math.round(width * scale),
+              Math.round(height * scale),
+              SamplingFilter.Lanczos3,
+            )
+          : input;
+      try {
+        const jpegBytes = resized.get_bytes_jpeg(COVER_IMAGE_JPEG_QUALITY);
+        const buffer = jpegBytes.buffer.slice(
+          jpegBytes.byteOffset,
+          jpegBytes.byteOffset + jpegBytes.byteLength,
+        ) as ArrayBuffer;
+        return { bytes: buffer, mime: "image/jpeg", isJpeg: true };
+      } finally {
+        if (resized !== input) resized.free();
+      }
+    } finally {
+      input.free();
+    }
+  } catch (e) {
+    console.error("compressCoverImage failed, uploading original bytes:", e);
+    return { bytes, mime, isJpeg: false };
+  }
+}
+
+export interface UploadedImage {
+  url: string;
+  /** مسیر واقعی روی سرویس ذخیره‌سازی — برای ذخیره در media_assets.path و حذف بعدی لازم است */
+  path: string;
+  mimeType: string;
+  sizeBytes: number;
+}
+
+/** آپلود یک تصویر base64 به محل ذخیره‌سازی متصل‌شده (پس از فشرده‌سازی) و بازگرداندن مشخصات نهایی */
+export async function uploadImageDataUrl(
+  dataUrl: string,
+  filename: string,
+): Promise<UploadedImage> {
   const match = dataUrl.match(/^data:(.+?);base64,(.+)$/);
   if (!match) throw new StorageError("قالب تصویر نامعتبر است.");
-  const mime = match[1] || "image/png";
-  const bytes = base64ToBytes(match[2]!);
+  const originalMime = match[1] || "image/png";
+  const originalBytes = base64ToBytes(match[2]!);
+
+  const { bytes, mime, isJpeg } = await compressCoverImage(originalBytes, originalMime);
+  const finalFilename = isJpeg ? filename.replace(/\.[a-zA-Z0-9]+$/, ".jpg") : filename;
 
   const [settings, keys] = await Promise.all([loadSettings(), loadMediaKeys()]);
   const media = settings.media;
 
-  if (media.provider === "bunny") return uploadToBunny(bytes, mime, filename, media, keys);
-  if (media.provider === "arvan") return uploadToArvan(bytes, mime, filename, media, keys);
+  let url: string;
+  if (media.provider === "bunny") {
+    url = await uploadToBunny(bytes, mime, finalFilename, media, keys);
+  } else if (media.provider === "arvan") {
+    url = await uploadToArvan(bytes, mime, finalFilename, media, keys);
+  } else {
+    throw new StorageError(
+      "هیچ محل ذخیره‌سازی تصویر متصل نیست — در تنظیمات عمومی → ذخیره‌سازی رسانه، بانی سی‌دی‌ان یا ابر آروان را وصل کنید.",
+    );
+  }
 
-  throw new StorageError(
-    "هیچ محل ذخیره‌سازی تصویر متصل نیست — در تنظیمات عمومی → ذخیره‌سازی رسانه، بانی سی‌دی‌ان یا ابر آروان را وصل کنید.",
-  );
+  return { url, path: finalFilename, mimeType: mime, sizeBytes: bytes.byteLength };
 }

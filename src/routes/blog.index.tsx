@@ -117,9 +117,12 @@ function BlogIndexPage() {
             {filtered.map((post, i) => (
               <motion.article
                 key={post.id}
-                initial={{ opacity: 0, y: 30 }}
+                // سه کارت اول تقریباً همیشه در نمای اول صفحه هستند — اگر با opacity:0 شروع
+                // شوند، عنصر LCP تا اجرای جاوااسکریپت کلاینت نامرئی می‌ماند و LCP به‌شدت کند
+                // می‌شود؛ برای همین این‌ها بدون افکت محو-ورود رندر می‌شوند.
+                initial={i < 3 ? false : { opacity: 0, y: 30 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.06 }}
+                transition={{ delay: i < 3 ? 0 : i * 0.06 }}
                 className="group overflow-hidden rounded-xl border border-border bg-card shadow-card transition-colors hover:border-primary/30"
               >
                 <div className="h-48 overflow-hidden bg-gradient-to-br from-primary/10 via-accent/5 to-secondary">
@@ -127,7 +130,10 @@ function BlogIndexPage() {
                     <img
                       src={post.coverImage}
                       alt={post.title}
-                      loading="lazy"
+                      width={1000}
+                      height={192}
+                      loading={i < 3 ? "eager" : "lazy"}
+                      fetchPriority={i === 0 ? "high" : undefined}
                       className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
                     />
                   ) : (

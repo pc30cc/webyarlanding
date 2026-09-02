@@ -423,28 +423,26 @@ export async function generateImage(input: {
       : await generateImageOpenAi(input.prompt, config);
 
   const id = newId();
-  const sizeMatch = dataUrl.match(/^data:(.+?);base64,(.+)$/);
-  const mime = sizeMatch?.[1] ?? "image/png";
-  const base64Len = sizeMatch?.[2]?.length ?? 0;
   const filename = `covers/${id}.png`;
 
   const { uploadImageDataUrl, StorageError } = await import("./storage.server");
-  let url: string;
+  let uploaded: Awaited<ReturnType<typeof uploadImageDataUrl>>;
   try {
-    url = await uploadImageDataUrl(dataUrl, filename);
+    uploaded = await uploadImageDataUrl(dataUrl, filename);
   } catch (e) {
     if (e instanceof StorageError) throw new AiGatewayError("UNKNOWN", e.message);
     throw e;
   }
+  const { url, path, mimeType, sizeBytes } = uploaded;
 
   const { error } = await db.from("media_assets").insert({
     id,
     provider: config.ai.imageProvider,
-    path: filename,
+    path,
     url,
-    filename: `${id}.png`,
-    mime_type: mime,
-    size_bytes: Math.round((base64Len * 3) / 4),
+    filename: path.split("/").pop() ?? `${id}.jpg`,
+    mime_type: mimeType,
+    size_bytes: sizeBytes,
     alt: input.alt ?? input.prompt.slice(0, 480),
     updated_at: nowIso(),
   });
