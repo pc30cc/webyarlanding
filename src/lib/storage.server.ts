@@ -213,7 +213,9 @@ export async function deleteStoredImage(path: string): Promise<void> {
   if (media.provider === "arvan") return deleteFromArvan(path, media, keys);
 }
 
-const COVER_IMAGE_MAX_DIMENSION = 1000;
+// عرض واقعی نمایش کاور مقالات (کارت‌های لیست بلاگ و هدر مقاله) هیچ‌جا از ~۷۳۰px بیشتر
+// نیست؛ ۸۰۰ پیکسل حاشیه‌ی کافی برای رتینا/OG می‌گذارد بدون دانلود بایت‌های اضافه.
+const COVER_IMAGE_MAX_DIMENSION = 800;
 const COVER_IMAGE_JPEG_QUALITY = 82;
 
 /**

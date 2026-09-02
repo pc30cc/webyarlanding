@@ -122,7 +122,7 @@ export interface CompressAllMediaResult {
 const COMPRESS_ALL_BATCH_LIMIT = 25;
 const COMPRESS_ALL_TIME_BUDGET_MS = 20_000;
 /** تصاویر کوچک‌تر از این حد را دست نمی‌زنیم — احتمالاً از قبل فشرده هستند */
-const RECOMPRESS_SIZE_THRESHOLD_BYTES = 150_000;
+const RECOMPRESS_SIZE_THRESHOLD_BYTES = 30_000;
 
 /** فشرده‌سازی دسته‌ای همه‌ی تصاویر موجود (بزرگ‌تر از حد آستانه) — برای اجرای یک‌باره روی رسانه‌های قدیمی */
 export const adminCompressAllMedia = createServerFn({ method: "POST" }).handler(
