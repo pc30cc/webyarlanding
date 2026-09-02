@@ -146,7 +146,7 @@ export function SiteHeader({ settings }: { settings: SiteSettings }) {
                             <div className="space-y-3 py-2">
                               {link.categories.map((category) => (
                                 <div key={category.id}>
-                                  <div className="mb-1 px-3 text-[11px] font-bold text-muted-foreground/70">
+                                  <div className="mb-1 px-3 text-[11px] font-bold text-muted-foreground">
                                     {category.title}
                                   </div>
                                   {category.items.map((item) => {
