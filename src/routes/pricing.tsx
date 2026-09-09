@@ -5,6 +5,7 @@ import { Check, CheckCircle2, Zap, Star, Crown, ChevronLeft } from "lucide-react
 import { fetchSettings } from "@/lib/settings.functions";
 import { fetchPublicPlans } from "@/lib/plans.functions";
 import type { PublicPlan } from "@/lib/plans";
+import { useCurrentPlanSlug } from "@/lib/useCurrentPlan";
 import { getPublicSeoPage } from "@/lib/seo.functions";
 import { buildPageMeta, buildBreadcrumbJsonLd, safeJsonLdHtml } from "@/lib/seo-meta";
 import { SiteLayout } from "@/components/site/SiteLayout";
