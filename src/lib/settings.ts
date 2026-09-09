@@ -210,6 +210,7 @@ export const DEFAULT_SETTINGS: SiteSettings = {
   plans: {
     enabled: true,
     apiUrl: "https://api.webyar.ai/api/plans",
+    showYearly: false,
   },
   callCenterWidget: {
     enabled: false,
