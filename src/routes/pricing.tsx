@@ -143,9 +143,12 @@ function ComparisonCell({ value }: { value: string | boolean }) {
 }
 
 function PricingPage() {
-  const { settings } = Route.useLoaderData();
+  const { settings, remotePlans } = Route.useLoaderData();
   const [period, setPeriod] = useState<"monthly" | "yearly">("monthly");
-  const plans = getPlans(period);
+  const plans = remotePlans ? mapRemotePlans(remotePlans.plans, period) : getPlans(period);
+  const comparison = remotePlans?.comparison?.rows.length
+    ? remotePlans.comparison
+    : staticComparison;
   const base = (settings.brand.siteUrl || "").replace(/\/$/, "");
 
   const jsonLd = [
