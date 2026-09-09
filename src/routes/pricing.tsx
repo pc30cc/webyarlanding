@@ -232,13 +232,17 @@ function PricingPage() {
             const isCurrent = currentIndex >= 0 && planIndex === currentIndex;
             const isUpgrade = currentIndex >= 0 && planIndex > currentIndex;
             const isDowngrade = currentIndex >= 0 && planIndex < currentIndex;
+            const isFreePlan = plan.price === "رایگان";
+            // پلن‌های پایین‌تر و پلن رایگان برای کاربر واردشده قابل انتخاب نیستند
+            const isBlocked = currentIndex >= 0 && !isCurrent && (isDowngrade || isFreePlan);
             const ctaLabel = isCurrent
               ? "پلن فعلی شما"
-              : isUpgrade
-                ? "ارتقاء پلن"
-                : isDowngrade
-                  ? "تغییر به این پلن"
+              : isBlocked
+                ? "در دسترس نیست"
+                : isUpgrade
+                  ? "ارتقاء پلن"
                   : plan.cta;
+
             return (
             <motion.div
               key={plan.slug}
@@ -275,12 +279,21 @@ function PricingPage() {
                 <div className="flex w-full items-center justify-center gap-1 rounded-xl border border-success/40 bg-success/10 px-4 py-2.5 text-sm font-bold text-success">
                   <CheckCircle2 className="h-3.5 w-3.5" /> {ctaLabel}
                 </div>
+              ) : isBlocked ? (
+                <button
+                  type="button"
+                  disabled
+                  aria-disabled="true"
+                  className="flex w-full cursor-not-allowed items-center justify-center gap-1 rounded-xl border border-border bg-secondary/40 px-4 py-2.5 text-sm font-bold text-muted-foreground opacity-70"
+                >
+                  {ctaLabel}
+                </button>
               ) : (
                 <a
                   href={
                     plan.slug === "enterprise"
                       ? "/contact"
-                      : isUpgrade || isDowngrade
+                      : isUpgrade
                         ? settings.auth.panelUrl || settings.auth.signupUrl || "/contact"
                         : settings.auth.signupUrl || "/contact"
                   }
@@ -293,6 +306,7 @@ function PricingPage() {
                   {ctaLabel} <ChevronLeft className="h-3.5 w-3.5" />
                 </a>
               )}
+
             </motion.div>
             );
           })}
