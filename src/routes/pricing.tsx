@@ -5,6 +5,7 @@ import { Check, CheckCircle2, Zap, Star, Crown, ChevronLeft } from "lucide-react
 import { fetchSettings } from "@/lib/settings.functions";
 import { fetchPublicPlans } from "@/lib/plans.functions";
 import type { PublicPlan } from "@/lib/plans";
+import { useCurrentPlanSlug } from "@/lib/useCurrentPlan";
 import { getPublicSeoPage } from "@/lib/seo.functions";
 import { buildPageMeta, buildBreadcrumbJsonLd, safeJsonLdHtml } from "@/lib/seo-meta";
 import { SiteLayout } from "@/components/site/SiteLayout";
@@ -145,7 +146,9 @@ function ComparisonCell({ value }: { value: string | boolean }) {
 function PricingPage() {
   const { settings, remotePlans } = Route.useLoaderData();
   const [period, setPeriod] = useState<"monthly" | "yearly">("monthly");
+  const currentSlug = useCurrentPlanSlug(settings.plans?.apiUrl || "");
   const plans = remotePlans ? mapRemotePlans(remotePlans.plans, period) : getPlans(period);
+  const currentIndex = currentSlug ? plans.findIndex((p) => p.slug === currentSlug) : -1;
   const comparison = remotePlans?.comparison?.rows.length
     ? remotePlans.comparison
     : staticComparison;
@@ -225,7 +228,18 @@ function PricingPage() {
         </div>
 
         <StaggerChildren className="mb-16 grid grid-cols-1 gap-5 sm:grid-cols-3">
-          {plans.map((plan) => (
+          {plans.map((plan, planIndex) => {
+            const isCurrent = currentIndex >= 0 && planIndex === currentIndex;
+            const isUpgrade = currentIndex >= 0 && planIndex > currentIndex;
+            const isDowngrade = currentIndex >= 0 && planIndex < currentIndex;
+            const ctaLabel = isCurrent
+              ? "پلن فعلی شما"
+              : isUpgrade
+                ? "ارتقاء پلن"
+                : isDowngrade
+                  ? "تغییر به این پلن"
+                  : plan.cta;
+            return (
             <motion.div
               key={plan.slug}
               variants={childVariant}
@@ -257,20 +271,31 @@ function PricingPage() {
                   </li>
                 ))}
               </ul>
-              <a
-                href={
-                  plan.slug === "enterprise" ? "/contact" : settings.auth.signupUrl || "/contact"
-                }
-                className={`flex w-full items-center justify-center gap-1 rounded-xl px-4 py-2.5 text-sm font-bold transition-colors ${
-                  plan.popular
-                    ? "bg-brand text-primary-foreground"
-                    : "border border-border text-foreground hover:bg-secondary"
-                }`}
-              >
-                {plan.cta} <ChevronLeft className="h-3.5 w-3.5" />
-              </a>
+              {isCurrent ? (
+                <div className="flex w-full items-center justify-center gap-1 rounded-xl border border-success/40 bg-success/10 px-4 py-2.5 text-sm font-bold text-success">
+                  <CheckCircle2 className="h-3.5 w-3.5" /> {ctaLabel}
+                </div>
+              ) : (
+                <a
+                  href={
+                    plan.slug === "enterprise"
+                      ? "/contact"
+                      : isUpgrade || isDowngrade
+                        ? settings.auth.panelUrl || settings.auth.signupUrl || "/contact"
+                        : settings.auth.signupUrl || "/contact"
+                  }
+                  className={`flex w-full items-center justify-center gap-1 rounded-xl px-4 py-2.5 text-sm font-bold transition-colors ${
+                    isUpgrade || (plan.popular && currentIndex < 0)
+                      ? "bg-brand text-primary-foreground"
+                      : "border border-border text-foreground hover:bg-secondary"
+                  }`}
+                >
+                  {ctaLabel} <ChevronLeft className="h-3.5 w-3.5" />
+                </a>
+              )}
             </motion.div>
-          ))}
+            );
+          })}
         </StaggerChildren>
 
         <motion.div
