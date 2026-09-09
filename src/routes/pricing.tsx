@@ -227,7 +227,18 @@ function PricingPage() {
         </div>
 
         <StaggerChildren className="mb-16 grid grid-cols-1 gap-5 sm:grid-cols-3">
-          {plans.map((plan) => (
+          {plans.map((plan, planIndex) => {
+            const isCurrent = currentIndex >= 0 && planIndex === currentIndex;
+            const isUpgrade = currentIndex >= 0 && planIndex > currentIndex;
+            const isDowngrade = currentIndex >= 0 && planIndex < currentIndex;
+            const ctaLabel = isCurrent
+              ? "پلن فعلی شما"
+              : isUpgrade
+                ? "ارتقاء پلن"
+                : isDowngrade
+                  ? "تغییر به این پلن"
+                  : plan.cta;
+            return (
             <motion.div
               key={plan.slug}
               variants={childVariant}
