@@ -299,6 +299,23 @@ function PricingPage() {
                 <span className="text-2xl font-black text-foreground">{plan.price}</span>
                 {plan.unit && <span className="text-xs text-muted-foreground">{plan.unit}</span>}
               </div>
+              {plan.limits.length > 0 && (
+                <div className="mb-5 rounded-xl border border-border/60 bg-secondary/30 p-3">
+                  <p className="mb-2 text-[11px] font-bold text-foreground">محدودیت‌ها و سقف‌ها</p>
+                  <ul className="space-y-1.5">
+                    {plan.limits.map((l) => (
+                      <li
+                        key={l.label}
+                        className="flex items-center justify-between gap-2 text-[11px] text-muted-foreground"
+                      >
+                        <span>{l.label}</span>
+                        <span className="font-bold text-foreground">{l.value}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              <p className="mb-2 text-[11px] font-bold text-foreground">امکانات</p>
               <ul className="mb-6 space-y-2">
                 {plan.features.map((f) => (
                   <li key={f} className="flex items-center gap-2 text-xs text-muted-foreground">
