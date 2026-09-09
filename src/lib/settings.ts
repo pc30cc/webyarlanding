@@ -59,6 +59,13 @@ export interface ChatWidgetSettings {
   position: "right" | "left";
 }
 
+export interface CallCenterWidgetSettings {
+  enabled: boolean;
+  scriptUrl: string;
+  inlineScript: string;
+  position: "right" | "left";
+}
+
 export interface AiProviderModels {
   textModel: string;
   imageModel: string;
@@ -134,6 +141,7 @@ export interface SiteSettings {
   social: SocialSettings;
   auth: AuthLinksSettings;
   chatWidget: ChatWidgetSettings;
+  callCenterWidget: CallCenterWidgetSettings;
   ai: AiSettings;
   analytics: AnalyticsSettings;
   media: MediaSettings;
@@ -187,6 +195,12 @@ export const DEFAULT_SETTINGS: SiteSettings = {
     panelUrl: "",
     panelLabel: "پنل",
     logoutLabel: "خروج",
+  },
+  callCenterWidget: {
+    enabled: false,
+    scriptUrl: "",
+    inlineScript: "",
+    position: "right",
   },
   chatWidget: {
     enabled: false,

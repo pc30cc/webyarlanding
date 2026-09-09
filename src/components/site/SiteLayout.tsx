@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import { SiteHeader } from "./SiteHeader";
 import { SiteFooter } from "./SiteFooter";
 import { ChatWidget } from "./ChatWidget";
+import { CallCenterWidget } from "./CallCenterWidget";
 import type { SiteSettings } from "@/lib/settings";
 import { safeJsonLdHtml } from "@/lib/seo-meta";
 
@@ -70,6 +71,7 @@ export function SiteLayout({
       <main className="flex-1">{children}</main>
       <SiteFooter settings={settings} />
       <ChatWidget settings={settings} />
+      <CallCenterWidget settings={settings} />
     </div>
   );
 }
