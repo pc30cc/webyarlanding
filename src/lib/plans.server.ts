@@ -35,19 +35,19 @@ function limitText(value: unknown): string {
 }
 
 function normalize(remote: RemotePlan, index: number, total: number): PublicPlan {
-  const fa = remote.localized?.fa;
+  const fa = remote.localized?.["fa"];
   const entitlements = remote.entitlements ?? {};
   const limits = remote.limits ?? {};
   const irr = remote.prices?.["IRR"] ?? {};
 
   const features = Object.keys(FEATURE_LABELS_FA)
     .filter((key) => entitlements[key] === true)
-    .map((key) => FEATURE_LABELS_FA[key]);
+    .map((key) => FEATURE_LABELS_FA[key] as string);
 
   const limitRows = Object.keys(LIMIT_LABELS_FA)
     .filter((key) => limits[key] !== undefined && limits[key] !== null)
     .slice(0, 6)
-    .map((key) => ({ label: LIMIT_LABELS_FA[key], value: limitText(limits[key]) }));
+    .map((key) => ({ label: LIMIT_LABELS_FA[key] as string, value: limitText(limits[key]) }));
 
   return {
     slug: remote.slug || `plan-${index}`,
@@ -68,14 +68,14 @@ function buildComparison(remotes: RemotePlan[], plans: PublicPlan[]): PlansCompa
   for (const key of COMPARISON_LIMIT_KEYS) {
     if (!remotes.some((r) => r.limits?.[key] !== undefined)) continue;
     rows.push({
-      label: LIMIT_LABELS_FA[key],
+      label: LIMIT_LABELS_FA[key] as string,
       values: remotes.map((r) => limitText(r.limits?.[key])),
     });
   }
   for (const key of COMPARISON_FEATURE_KEYS) {
     if (!remotes.some((r) => r.entitlements?.[key] !== undefined)) continue;
     rows.push({
-      label: FEATURE_LABELS_FA[key],
+      label: FEATURE_LABELS_FA[key] as string,
       values: remotes.map((r) => r.entitlements?.[key] === true),
     });
   }

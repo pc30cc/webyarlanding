@@ -104,7 +104,7 @@ function mapRemotePlans(remote: PublicPlan[], period: "monthly" | "yearly") {
     const isFree = plan.isFree || perMonth === 0;
     return {
       slug: plan.slug,
-      icon: PLAN_ICONS[Math.min(index, PLAN_ICONS.length - 1)],
+      icon: PLAN_ICONS[Math.min(index, PLAN_ICONS.length - 1)] ?? Star,
       name: plan.name,
       desc: plan.description,
       price: isFree ? "رایگان" : perMonth ? faNumber.format(perMonth) : "تماس بگیرید",
