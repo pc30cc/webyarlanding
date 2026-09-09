@@ -178,6 +178,8 @@ function ComparisonCell({ value }: { value: string | boolean }) {
 function PricingPage() {
   const { settings, remotePlans } = Route.useLoaderData();
   const [period, setPeriod] = useState<"monthly" | "yearly">("monthly");
+  // نمایش همه امکانات برای همه پلن‌ها به‌صورت هم‌زمان تا ارتفاع کارت‌ها هماهنگ بماند
+  const [expanded, setExpanded] = useState(false);
   const currentSlug = useCurrentPlanSlug(settings.plans?.apiUrl || "");
   const plans = remotePlans ? mapRemotePlans(remotePlans.plans, period) : getPlans(period);
   const currentIndex = currentSlug ? plans.findIndex((p) => p.slug === currentSlug) : -1;
