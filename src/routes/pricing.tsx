@@ -12,11 +12,12 @@ import { StaggerChildren, childVariant } from "@/components/site/animations";
 
 export const Route = createFileRoute("/pricing")({
   loader: async () => {
-    const [settings, seoOverride] = await Promise.all([
+    const [settings, seoOverride, remotePlans] = await Promise.all([
       fetchSettings(),
       getPublicSeoPage({ data: { path: "/pricing" } }),
+      fetchPublicPlans(),
     ]);
-    return { settings, seoOverride };
+    return { settings, seoOverride, remotePlans };
   },
   head: ({ loaderData }) => {
     if (!loaderData) return {};
