@@ -279,12 +279,21 @@ function PricingPage() {
                 <div className="flex w-full items-center justify-center gap-1 rounded-xl border border-success/40 bg-success/10 px-4 py-2.5 text-sm font-bold text-success">
                   <CheckCircle2 className="h-3.5 w-3.5" /> {ctaLabel}
                 </div>
+              ) : isBlocked ? (
+                <button
+                  type="button"
+                  disabled
+                  aria-disabled="true"
+                  className="flex w-full cursor-not-allowed items-center justify-center gap-1 rounded-xl border border-border bg-secondary/40 px-4 py-2.5 text-sm font-bold text-muted-foreground opacity-70"
+                >
+                  {ctaLabel}
+                </button>
               ) : (
                 <a
                   href={
                     plan.slug === "enterprise"
                       ? "/contact"
-                      : isUpgrade || isDowngrade
+                      : isUpgrade
                         ? settings.auth.panelUrl || settings.auth.signupUrl || "/contact"
                         : settings.auth.signupUrl || "/contact"
                   }
@@ -297,6 +306,7 @@ function PricingPage() {
                   {ctaLabel} <ChevronLeft className="h-3.5 w-3.5" />
                 </a>
               )}
+
             </motion.div>
             );
           })}
