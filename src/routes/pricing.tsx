@@ -232,13 +232,17 @@ function PricingPage() {
             const isCurrent = currentIndex >= 0 && planIndex === currentIndex;
             const isUpgrade = currentIndex >= 0 && planIndex > currentIndex;
             const isDowngrade = currentIndex >= 0 && planIndex < currentIndex;
+            const isFreePlan = plan.price === "رایگان";
+            // پلن‌های پایین‌تر و پلن رایگان برای کاربر واردشده قابل انتخاب نیستند
+            const isBlocked = currentIndex >= 0 && !isCurrent && (isDowngrade || isFreePlan);
             const ctaLabel = isCurrent
               ? "پلن فعلی شما"
-              : isUpgrade
-                ? "ارتقاء پلن"
-                : isDowngrade
-                  ? "تغییر به این پلن"
+              : isBlocked
+                ? "در دسترس نیست"
+                : isUpgrade
+                  ? "ارتقاء پلن"
                   : plan.cta;
+
             return (
             <motion.div
               key={plan.slug}
