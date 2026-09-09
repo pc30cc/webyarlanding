@@ -34,7 +34,20 @@ export const Route = createFileRoute("/pricing")({
   component: PricingPage,
 });
 
-function getPlans(period: "monthly" | "yearly") {
+interface DisplayPlan {
+  slug: string;
+  icon: typeof Zap;
+  name: string;
+  desc: string;
+  price: string;
+  unit: string;
+  cta: string;
+  popular?: boolean;
+  limits: { label: string; value: string }[];
+  features: string[];
+}
+
+function getPlans(period: "monthly" | "yearly"): DisplayPlan[] {
   return [
     {
       slug: "starter",
@@ -44,7 +57,12 @@ function getPlans(period: "monthly" | "yearly") {
       price: "رایگان",
       unit: "",
       cta: "شروع کنید",
-      features: ["۱ اپراتور پشتیبانی", "۵۰ گفتگو در ماه", "بدون تماس ویدیویی"],
+      limits: [
+        { label: "تعداد اپراتور", value: "۱" },
+        { label: "گفتگوی ماهانه", value: "۵۰" },
+        { label: "تعداد دامنه", value: "۱" },
+      ],
+      features: ["ابزارک چت سایت", "مدیریت مخاطبین", "گزارش پایه"],
     },
     {
       slug: "professional",
@@ -55,12 +73,19 @@ function getPlans(period: "monthly" | "yearly") {
       unit: period === "yearly" ? "تومان / ماه، سالانه" : "تومان / ماه",
       cta: "شروع رایگان",
       popular: true,
+      limits: [
+        { label: "تعداد اپراتور", value: "۵" },
+        { label: "گفتگوی ماهانه", value: "نامحدود" },
+        { label: "تعداد دامنه", value: "۳" },
+      ],
       features: [
-        "۵ اپراتور پشتیبانی",
-        "گفتگوی نامحدود",
-        "تماس تصویری HD",
+        "ابزارک چت سایت",
+        "تماس صوتی و تصویری",
         "اشتراک‌گذاری صفحه",
-        "گزارش‌گیری کامل",
+        "گزارش و تحلیل کامل",
+        "دستیار هوش مصنوعی",
+        "اتوماسیون",
+        "پایگاه دانش",
       ],
     },
     {
@@ -71,11 +96,19 @@ function getPlans(period: "monthly" | "yearly") {
       price: "تماس بگیرید",
       unit: "",
       cta: "تماس با فروش",
+      limits: [
+        { label: "تعداد اپراتور", value: "نامحدود" },
+        { label: "گفتگوی ماهانه", value: "نامحدود" },
+        { label: "تعداد دامنه", value: "نامحدود" },
+      ],
       features: [
-        "اپراتور نامحدود",
-        "چند دامنه هم‌زمان",
-        "پشتیبانی اختصاصی",
-        "امکانات یکپارچه‌سازی ویژه",
+        "همه امکانات پلن حرفه‌ای",
+        "مرکز تماس و صف تماس",
+        "دسترسی API",
+        "ورود یکپارچه (SSO)",
+        "برچسب سفید",
+        "گزارش رویدادها",
+        "پشتیبانی اولویت‌دار",
       ],
     },
   ];
