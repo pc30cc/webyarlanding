@@ -42,6 +42,7 @@ interface DisplayPlan {
   price: string;
   unit: string;
   cta: string;
+  note?: string | undefined;
   popular?: boolean;
   limits: { label: string; value: string }[];
   features: string[];
@@ -133,10 +134,15 @@ const faNumber = new Intl.NumberFormat("fa-IR");
 /** تبدیل پلن‌های همگام‌شده اپلیکیشن به مدل نمایش صفحه قیمت‌گذاری */
 function mapRemotePlans(remote: PublicPlan[], period: "monthly" | "yearly"): DisplayPlan[] {
   return remote.map((plan, index) => {
-    const amount = period === "yearly" ? plan.yearly : plan.monthly;
+    const yearlyTotal = plan.yearly;
+    const amount = period === "yearly" ? yearlyTotal : plan.monthly;
     const perMonth = period === "yearly" && amount ? Math.round(amount / 12) : amount;
     const isFree = plan.isFree || perMonth === 0;
     return {
+      note:
+        period === "yearly" && !isFree && yearlyTotal
+          ? `مجموع سالانه ${faNumber.format(yearlyTotal)} تومان`
+          : undefined,
       slug: plan.slug,
       icon: PLAN_ICONS[Math.min(index, PLAN_ICONS.length - 1)] ?? Star,
       name: plan.name,
@@ -181,7 +187,11 @@ function PricingPage() {
   // نمایش همه امکانات برای همه پلن‌ها به‌صورت هم‌زمان تا ارتفاع کارت‌ها هماهنگ بماند
   const [expanded, setExpanded] = useState(false);
   const currentSlug = useCurrentPlanSlug(settings.plans?.apiUrl || "");
-  const plans = remotePlans ? mapRemotePlans(remotePlans.plans, period) : getPlans(period);
+  const showYearly = settings.plans?.showYearly === true;
+  const activePeriod = showYearly ? period : "monthly";
+  const plans = remotePlans
+    ? mapRemotePlans(remotePlans.plans, activePeriod)
+    : getPlans(activePeriod);
   const currentIndex = currentSlug ? plans.findIndex((p) => p.slug === currentSlug) : -1;
   const comparison = remotePlans?.comparison?.rows.length
     ? remotePlans.comparison
@@ -231,6 +241,7 @@ function PricingPage() {
           </p>
         </motion.div>
 
+        {showYearly && (
         <div className="mb-14 flex justify-center">
           <div className="inline-flex rounded-full bg-card p-1.5 shadow-card">
             {(["monthly", "yearly"] as const).map((p) => (
@@ -260,6 +271,7 @@ function PricingPage() {
             ))}
           </div>
         </div>
+        )}
 
         <StaggerChildren className="mb-16 grid grid-cols-1 gap-5 sm:grid-cols-3">
           {plans.map((plan, planIndex) => {
@@ -303,6 +315,7 @@ function PricingPage() {
                 <span className="text-2xl font-black text-foreground">{plan.price}</span>
                 {plan.unit && <span className="text-xs text-muted-foreground">{plan.unit}</span>}
               </div>
+              {plan.note && <p className="-mt-3 mb-5 text-[11px] text-muted-foreground">{plan.note}</p>}
               {plan.limits.length > 0 && (
                 <div className="mb-5 rounded-xl border border-border/60 bg-secondary/30 p-3">
                   <p className="mb-2 text-[11px] font-bold text-foreground">محدودیت‌ها و سقف‌ها</p>

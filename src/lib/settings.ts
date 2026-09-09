@@ -58,6 +58,8 @@ export interface PlansSettings {
   enabled: boolean;
   /** آدرس API پلن‌ها، مثال: https://api.webyar.ai/api/plans */
   apiUrl: string;
+  /** نمایش کلید ماهانه/سالانه و قیمت‌های سالانه در صفحه قیمت‌گذاری */
+  showYearly?: boolean;
 }
 
 export interface ChatWidgetSettings {
@@ -208,6 +210,7 @@ export const DEFAULT_SETTINGS: SiteSettings = {
   plans: {
     enabled: true,
     apiUrl: "https://api.webyar.ai/api/plans",
+    showYearly: false,
   },
   callCenterWidget: {
     enabled: false,

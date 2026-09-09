@@ -336,6 +336,20 @@ export default function GeneralSection() {
                   }
                 />
               </div>
+              <div className="flex items-center justify-between">
+                <div className="flex flex-col gap-0.5">
+                  <Label>نمایش قیمت سالانه</Label>
+                  <span className="text-xs text-muted-foreground">
+                    خاموش یعنی فقط قیمت ماهانه در صفحه قیمت‌گذاری نمایش داده می‌شود.
+                  </span>
+                </div>
+                <Switch
+                  checked={form.plans.showYearly === true}
+                  onCheckedChange={(v) =>
+                    setForm((f) => ({ ...f, plans: { ...f.plans, showYearly: v } }))
+                  }
+                />
+              </div>
               <Field label="آدرس API پلن‌ها">
                 <Input
                   dir="ltr"
