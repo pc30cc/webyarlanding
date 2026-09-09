@@ -80,14 +80,43 @@ function getPlans(period: "monthly" | "yearly") {
   ];
 }
 
-const comparisonRows = [
-  { label: "تعداد اپراتور", free: "۱", pro: "۵", enterprise: "نامحدود" },
-  { label: "گفتگوی ماهانه", free: "۵۰", pro: "نامحدود", enterprise: "نامحدود" },
-  { label: "تماس تصویری", free: false, pro: true, enterprise: true },
-  { label: "اشتراک‌گذاری صفحه", free: false, pro: true, enterprise: true },
-  { label: "چند دامنه", free: false, pro: false, enterprise: true },
-  { label: "پشتیبانی اختصاصی", free: false, pro: false, enterprise: true },
-];
+const staticComparison = {
+  plans: ["رایگان", "حرفه‌ای", "سازمانی"],
+  rows: [
+    { label: "تعداد اپراتور", values: ["۱", "۵", "نامحدود"] },
+    { label: "گفتگوی ماهانه", values: ["۵۰", "نامحدود", "نامحدود"] },
+    { label: "تماس تصویری", values: [false, true, true] },
+    { label: "اشتراک‌گذاری صفحه", values: [false, true, true] },
+    { label: "چند دامنه", values: [false, false, true] },
+    { label: "پشتیبانی اختصاصی", values: [false, false, true] },
+  ] as { label: string; values: (string | boolean)[] }[],
+};
+
+const PLAN_ICONS = [Zap, Star, Crown];
+
+const faNumber = new Intl.NumberFormat("fa-IR");
+
+/** تبدیل پلن‌های همگام‌شده اپلیکیشن به مدل نمایش صفحه قیمت‌گذاری */
+function mapRemotePlans(remote: PublicPlan[], period: "monthly" | "yearly") {
+  return remote.map((plan, index) => {
+    const amount = period === "yearly" ? plan.yearly : plan.monthly;
+    const perMonth = period === "yearly" && amount ? Math.round(amount / 12) : amount;
+    const isFree = plan.isFree || perMonth === 0;
+    return {
+      slug: plan.slug,
+      icon: PLAN_ICONS[Math.min(index, PLAN_ICONS.length - 1)],
+      name: plan.name,
+      desc: plan.description,
+      price: isFree ? "رایگان" : perMonth ? faNumber.format(perMonth) : "تماس بگیرید",
+      unit: isFree || !perMonth ? "" : period === "yearly" ? "تومان / ماه، سالانه" : "تومان / ماه",
+      cta: isFree ? "شروع کنید" : perMonth ? "شروع رایگان" : "تماس با فروش",
+      popular: plan.popular,
+      features: plan.features.length
+        ? plan.features.slice(0, 6)
+        : plan.limits.slice(0, 4).map((l) => `${l.label}: ${l.value}`),
+    };
+  });
+}
 
 const PERSIAN_DIGITS = "۰۱۲۳۴۵۶۷۸۹";
 function toAsciiNumber(input: string): string | null {
