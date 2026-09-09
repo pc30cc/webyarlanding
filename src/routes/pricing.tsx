@@ -131,7 +131,7 @@ const PLAN_ICONS = [Zap, Star, Crown];
 const faNumber = new Intl.NumberFormat("fa-IR");
 
 /** تبدیل پلن‌های همگام‌شده اپلیکیشن به مدل نمایش صفحه قیمت‌گذاری */
-function mapRemotePlans(remote: PublicPlan[], period: "monthly" | "yearly") {
+function mapRemotePlans(remote: PublicPlan[], period: "monthly" | "yearly"): DisplayPlan[] {
   return remote.map((plan, index) => {
     const amount = period === "yearly" ? plan.yearly : plan.monthly;
     const perMonth = period === "yearly" && amount ? Math.round(amount / 12) : amount;
