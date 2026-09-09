@@ -141,6 +141,7 @@ export interface SiteSettings {
   social: SocialSettings;
   auth: AuthLinksSettings;
   chatWidget: ChatWidgetSettings;
+  callCenterWidget: CallCenterWidgetSettings;
   ai: AiSettings;
   analytics: AnalyticsSettings;
   media: MediaSettings;
@@ -194,6 +195,12 @@ export const DEFAULT_SETTINGS: SiteSettings = {
     panelUrl: "",
     panelLabel: "پنل",
     logoutLabel: "خروج",
+  },
+  callCenterWidget: {
+    enabled: false,
+    scriptUrl: "",
+    inlineScript: "",
+    position: "right",
   },
   chatWidget: {
     enabled: false,
