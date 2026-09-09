@@ -59,6 +59,13 @@ export interface ChatWidgetSettings {
   position: "right" | "left";
 }
 
+export interface CallCenterWidgetSettings {
+  enabled: boolean;
+  scriptUrl: string;
+  inlineScript: string;
+  position: "right" | "left";
+}
+
 export interface AiProviderModels {
   textModel: string;
   imageModel: string;
