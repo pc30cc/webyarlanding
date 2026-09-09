@@ -145,7 +145,9 @@ function ComparisonCell({ value }: { value: string | boolean }) {
 function PricingPage() {
   const { settings, remotePlans } = Route.useLoaderData();
   const [period, setPeriod] = useState<"monthly" | "yearly">("monthly");
+  const currentSlug = useCurrentPlanSlug(settings.plans?.apiUrl || "");
   const plans = remotePlans ? mapRemotePlans(remotePlans.plans, period) : getPlans(period);
+  const currentIndex = currentSlug ? plans.findIndex((p) => p.slug === currentSlug) : -1;
   const comparison = remotePlans?.comparison?.rows.length
     ? remotePlans.comparison
     : staticComparison;
