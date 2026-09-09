@@ -42,7 +42,7 @@ interface DisplayPlan {
   price: string;
   unit: string;
   cta: string;
-  note?: string;
+  note?: string | undefined;
   popular?: boolean;
   limits: { label: string; value: string }[];
   features: string[];
