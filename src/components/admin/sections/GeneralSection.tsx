@@ -319,6 +319,34 @@ export default function GeneralSection() {
                 </Field>
               </div>
             </section>
+
+            <section className="mt-8 flex flex-col gap-4 rounded-xl border border-border bg-card p-4">
+              <div className="flex items-center justify-between">
+                <div className="flex flex-col gap-0.5">
+                  <Label>همگام‌سازی پلن‌ها با اپلیکیشن</Label>
+                  <span className="text-xs text-muted-foreground">
+                    پلن‌های صفحه قیمت‌گذاری مستقیماً از اپلیکیشن خوانده می‌شوند؛ هر تغییری آنجا
+                    بدهید، اینجا هم اعمال می‌شود.
+                  </span>
+                </div>
+                <Switch
+                  checked={form.plans.enabled}
+                  onCheckedChange={(v) =>
+                    setForm((f) => ({ ...f, plans: { ...f.plans, enabled: v } }))
+                  }
+                />
+              </div>
+              <Field label="آدرس API پلن‌ها">
+                <Input
+                  dir="ltr"
+                  placeholder="https://api.webyar.ai/api/plans"
+                  value={form.plans.apiUrl}
+                  onChange={(e) =>
+                    setForm((f) => ({ ...f, plans: { ...f.plans, apiUrl: e.target.value } }))
+                  }
+                />
+              </Field>
+            </section>
           </TabsContent>
 
           <TabsContent value="social" className="mt-6">

@@ -52,6 +52,14 @@ export interface AuthLinksSettings {
   logoutLabel: string;
 }
 
+/** همگام‌سازی پلن‌های صفحه قیمت‌گذاری با اپلیکیشن (Brand Builder Hub) */
+export interface PlansSettings {
+  /** خواندن پلن‌ها از API اپلیکیشن؛ خاموش یعنی پلن‌های پیش‌فرض سایت نمایش داده می‌شوند */
+  enabled: boolean;
+  /** آدرس API پلن‌ها، مثال: https://api.webyar.ai/api/plans */
+  apiUrl: string;
+}
+
 export interface ChatWidgetSettings {
   enabled: boolean;
   scriptUrl: string;
@@ -142,6 +150,7 @@ export interface SiteSettings {
   auth: AuthLinksSettings;
   chatWidget: ChatWidgetSettings;
   callCenterWidget: CallCenterWidgetSettings;
+  plans: PlansSettings;
   ai: AiSettings;
   analytics: AnalyticsSettings;
   media: MediaSettings;
@@ -195,6 +204,10 @@ export const DEFAULT_SETTINGS: SiteSettings = {
     panelUrl: "",
     panelLabel: "پنل",
     logoutLabel: "خروج",
+  },
+  plans: {
+    enabled: true,
+    apiUrl: "https://api.webyar.ai/api/plans",
   },
   callCenterWidget: {
     enabled: false,

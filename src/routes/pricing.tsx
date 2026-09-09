@@ -3,6 +3,8 @@ import { createFileRoute } from "@tanstack/react-router";
 import { motion } from "framer-motion";
 import { Check, CheckCircle2, Zap, Star, Crown, ChevronLeft } from "lucide-react";
 import { fetchSettings } from "@/lib/settings.functions";
+import { fetchPublicPlans } from "@/lib/plans.functions";
+import type { PublicPlan } from "@/lib/plans";
 import { getPublicSeoPage } from "@/lib/seo.functions";
 import { buildPageMeta, buildBreadcrumbJsonLd, safeJsonLdHtml } from "@/lib/seo-meta";
 import { SiteLayout } from "@/components/site/SiteLayout";
@@ -10,11 +12,12 @@ import { StaggerChildren, childVariant } from "@/components/site/animations";
 
 export const Route = createFileRoute("/pricing")({
   loader: async () => {
-    const [settings, seoOverride] = await Promise.all([
+    const [settings, seoOverride, remotePlans] = await Promise.all([
       fetchSettings(),
       getPublicSeoPage({ data: { path: "/pricing" } }),
+      fetchPublicPlans(),
     ]);
-    return { settings, seoOverride };
+    return { settings, seoOverride, remotePlans };
   },
   head: ({ loaderData }) => {
     if (!loaderData) return {};
@@ -77,14 +80,43 @@ function getPlans(period: "monthly" | "yearly") {
   ];
 }
 
-const comparisonRows = [
-  { label: "تعداد اپراتور", free: "۱", pro: "۵", enterprise: "نامحدود" },
-  { label: "گفتگوی ماهانه", free: "۵۰", pro: "نامحدود", enterprise: "نامحدود" },
-  { label: "تماس تصویری", free: false, pro: true, enterprise: true },
-  { label: "اشتراک‌گذاری صفحه", free: false, pro: true, enterprise: true },
-  { label: "چند دامنه", free: false, pro: false, enterprise: true },
-  { label: "پشتیبانی اختصاصی", free: false, pro: false, enterprise: true },
-];
+const staticComparison = {
+  plans: ["رایگان", "حرفه‌ای", "سازمانی"],
+  rows: [
+    { label: "تعداد اپراتور", values: ["۱", "۵", "نامحدود"] },
+    { label: "گفتگوی ماهانه", values: ["۵۰", "نامحدود", "نامحدود"] },
+    { label: "تماس تصویری", values: [false, true, true] },
+    { label: "اشتراک‌گذاری صفحه", values: [false, true, true] },
+    { label: "چند دامنه", values: [false, false, true] },
+    { label: "پشتیبانی اختصاصی", values: [false, false, true] },
+  ] as { label: string; values: (string | boolean)[] }[],
+};
+
+const PLAN_ICONS = [Zap, Star, Crown];
+
+const faNumber = new Intl.NumberFormat("fa-IR");
+
+/** تبدیل پلن‌های همگام‌شده اپلیکیشن به مدل نمایش صفحه قیمت‌گذاری */
+function mapRemotePlans(remote: PublicPlan[], period: "monthly" | "yearly") {
+  return remote.map((plan, index) => {
+    const amount = period === "yearly" ? plan.yearly : plan.monthly;
+    const perMonth = period === "yearly" && amount ? Math.round(amount / 12) : amount;
+    const isFree = plan.isFree || perMonth === 0;
+    return {
+      slug: plan.slug,
+      icon: PLAN_ICONS[Math.min(index, PLAN_ICONS.length - 1)] ?? Star,
+      name: plan.name,
+      desc: plan.description,
+      price: isFree ? "رایگان" : perMonth ? faNumber.format(perMonth) : "تماس بگیرید",
+      unit: isFree || !perMonth ? "" : period === "yearly" ? "تومان / ماه، سالانه" : "تومان / ماه",
+      cta: isFree ? "شروع کنید" : perMonth ? "شروع رایگان" : "تماس با فروش",
+      popular: plan.popular,
+      features: plan.features.length
+        ? plan.features.slice(0, 6)
+        : plan.limits.slice(0, 4).map((l) => `${l.label}: ${l.value}`),
+    };
+  });
+}
 
 const PERSIAN_DIGITS = "۰۱۲۳۴۵۶۷۸۹";
 function toAsciiNumber(input: string): string | null {
@@ -111,9 +143,12 @@ function ComparisonCell({ value }: { value: string | boolean }) {
 }
 
 function PricingPage() {
-  const { settings } = Route.useLoaderData();
+  const { settings, remotePlans } = Route.useLoaderData();
   const [period, setPeriod] = useState<"monthly" | "yearly">("monthly");
-  const plans = getPlans(period);
+  const plans = remotePlans ? mapRemotePlans(remotePlans.plans, period) : getPlans(period);
+  const comparison = remotePlans?.comparison?.rows.length
+    ? remotePlans.comparison
+    : staticComparison;
   const base = (settings.brand.siteUrl || "").replace(/\/$/, "");
 
   const jsonLd = [
@@ -251,30 +286,25 @@ function PricingPage() {
                   <th className="px-5 py-3 text-start text-xs font-semibold text-foreground">
                     امکانات
                   </th>
-                  <th className="px-5 py-3 text-center text-xs font-semibold text-foreground">
-                    رایگان
-                  </th>
-                  <th className="px-5 py-3 text-center text-xs font-semibold text-foreground">
-                    حرفه‌ای
-                  </th>
-                  <th className="px-5 py-3 text-center text-xs font-semibold text-foreground">
-                    سازمانی
-                  </th>
+                  {comparison.plans.map((name) => (
+                    <th
+                      key={name}
+                      className="px-5 py-3 text-center text-xs font-semibold text-foreground"
+                    >
+                      {name}
+                    </th>
+                  ))}
                 </tr>
               </thead>
               <tbody>
-                {comparisonRows.map((row) => (
+                {comparison.rows.map((row) => (
                   <tr key={row.label} className="border-b border-border/50 last:border-0">
                     <td className="px-5 py-3 text-muted-foreground">{row.label}</td>
-                    <td className="px-5 py-3 text-center text-foreground">
-                      <ComparisonCell value={row.free} />
-                    </td>
-                    <td className="px-5 py-3 text-center text-foreground">
-                      <ComparisonCell value={row.pro} />
-                    </td>
-                    <td className="px-5 py-3 text-center text-foreground">
-                      <ComparisonCell value={row.enterprise} />
-                    </td>
+                    {row.values.map((value, i) => (
+                      <td key={i} className="px-5 py-3 text-center text-foreground">
+                        <ComparisonCell value={value} />
+                      </td>
+                    ))}
                   </tr>
                 ))}
               </tbody>
