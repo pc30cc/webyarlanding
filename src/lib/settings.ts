@@ -205,6 +205,10 @@ export const DEFAULT_SETTINGS: SiteSettings = {
     panelLabel: "پنل",
     logoutLabel: "خروج",
   },
+  plans: {
+    enabled: true,
+    apiUrl: "https://api.webyar.ai/api/plans",
+  },
   callCenterWidget: {
     enabled: false,
     scriptUrl: "",
