@@ -26,6 +26,7 @@ import { Route as AdminAiRouteImport } from './routes/admin.ai'
 import { Route as AdminAutoblogRouteImport } from './routes/admin.autoblog'
 import { Route as AdminBackupRouteImport } from './routes/admin.backup'
 import { Route as AdminBlogRouteImport } from './routes/admin.blog'
+import { Route as AdminCallcenterRouteImport } from './routes/admin.callcenter'
 import { Route as AdminCatalogRouteImport } from './routes/admin.catalog'
 import { Route as AdminCategoriesRouteImport } from './routes/admin.categories'
 import { Route as AdminChatRouteImport } from './routes/admin.chat'
@@ -130,6 +131,11 @@ const AdminBackupRoute = AdminBackupRouteImport.update({
 const AdminBlogRoute = AdminBlogRouteImport.update({
   id: '/blog',
   path: '/blog',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminCallcenterRoute = AdminCallcenterRouteImport.update({
+  id: '/callcenter',
+  path: '/callcenter',
   getParentRoute: () => AdminRoute,
 } as any)
 const AdminCatalogRoute = AdminCatalogRouteImport.update({
@@ -251,6 +257,7 @@ export interface FileRoutesByFullPath {
   '/admin/autoblog': typeof AdminAutoblogRoute
   '/admin/backup': typeof AdminBackupRoute
   '/admin/blog': typeof AdminBlogRoute
+  '/admin/callcenter': typeof AdminCallcenterRoute
   '/admin/catalog': typeof AdminCatalogRoute
   '/admin/categories': typeof AdminCategoriesRoute
   '/admin/chat': typeof AdminChatRoute
@@ -289,6 +296,7 @@ export interface FileRoutesByTo {
   '/admin/autoblog': typeof AdminAutoblogRoute
   '/admin/backup': typeof AdminBackupRoute
   '/admin/blog': typeof AdminBlogRoute
+  '/admin/callcenter': typeof AdminCallcenterRoute
   '/admin/catalog': typeof AdminCatalogRoute
   '/admin/categories': typeof AdminCategoriesRoute
   '/admin/chat': typeof AdminChatRoute
@@ -329,6 +337,7 @@ export interface FileRoutesById {
   '/admin/autoblog': typeof AdminAutoblogRoute
   '/admin/backup': typeof AdminBackupRoute
   '/admin/blog': typeof AdminBlogRoute
+  '/admin/callcenter': typeof AdminCallcenterRoute
   '/admin/catalog': typeof AdminCatalogRoute
   '/admin/categories': typeof AdminCategoriesRoute
   '/admin/chat': typeof AdminChatRoute
@@ -370,6 +379,7 @@ export interface FileRouteTypes {
     | '/admin/autoblog'
     | '/admin/backup'
     | '/admin/blog'
+    | '/admin/callcenter'
     | '/admin/catalog'
     | '/admin/categories'
     | '/admin/chat'
@@ -408,6 +418,7 @@ export interface FileRouteTypes {
     | '/admin/autoblog'
     | '/admin/backup'
     | '/admin/blog'
+    | '/admin/callcenter'
     | '/admin/catalog'
     | '/admin/categories'
     | '/admin/chat'
@@ -447,6 +458,7 @@ export interface FileRouteTypes {
     | '/admin/autoblog'
     | '/admin/backup'
     | '/admin/blog'
+    | '/admin/callcenter'
     | '/admin/catalog'
     | '/admin/categories'
     | '/admin/chat'
@@ -616,6 +628,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminBlogRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/callcenter': {
+      id: '/admin/callcenter'
+      path: '/callcenter'
+      fullPath: '/admin/callcenter'
+      preLoaderRoute: typeof AdminCallcenterRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/catalog': {
       id: '/admin/catalog'
       path: '/catalog'
@@ -764,6 +783,7 @@ interface AdminRouteChildren {
   AdminAutoblogRoute: typeof AdminAutoblogRoute
   AdminBackupRoute: typeof AdminBackupRoute
   AdminBlogRoute: typeof AdminBlogRoute
+  AdminCallcenterRoute: typeof AdminCallcenterRoute
   AdminCatalogRoute: typeof AdminCatalogRoute
   AdminCategoriesRoute: typeof AdminCategoriesRoute
   AdminChatRoute: typeof AdminChatRoute
@@ -782,6 +802,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminAutoblogRoute: AdminAutoblogRoute,
   AdminBackupRoute: AdminBackupRoute,
   AdminBlogRoute: AdminBlogRoute,
+  AdminCallcenterRoute: AdminCallcenterRoute,
   AdminCatalogRoute: AdminCatalogRoute,
   AdminCategoriesRoute: AdminCategoriesRoute,
   AdminChatRoute: AdminChatRoute,
