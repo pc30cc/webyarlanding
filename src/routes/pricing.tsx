@@ -271,6 +271,7 @@ function PricingPage() {
             ))}
           </div>
         </div>
+        )}
 
         <StaggerChildren className="mb-16 grid grid-cols-1 gap-5 sm:grid-cols-3">
           {plans.map((plan, planIndex) => {
