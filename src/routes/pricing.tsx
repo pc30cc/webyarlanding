@@ -305,7 +305,7 @@ function PricingPage() {
                 <div className="mb-5 rounded-xl border border-border/60 bg-secondary/30 p-3">
                   <p className="mb-2 text-[11px] font-bold text-foreground">محدودیت‌ها و سقف‌ها</p>
                   <ul className="space-y-1.5">
-                    {plan.limits.map((l) => (
+                    {(expanded ? plan.limits : plan.limits.slice(0, 3)).map((l) => (
                       <li
                         key={l.label}
                         className="flex items-center justify-between gap-2 text-[11px] text-muted-foreground"
@@ -318,14 +318,25 @@ function PricingPage() {
                 </div>
               )}
               <p className="mb-2 text-[11px] font-bold text-foreground">امکانات</p>
-              <ul className="mb-6 grow space-y-2">
-                {plan.features.map((f) => (
+              <ul className="mb-3 space-y-2">
+                {(expanded ? plan.features : plan.features.slice(0, 5)).map((f) => (
                   <li key={f} className="flex items-center gap-2 text-xs text-muted-foreground">
                     <CheckCircle2 className="h-3.5 w-3.5 shrink-0 text-success" />
                     {f}
                   </li>
                 ))}
               </ul>
+              <div className="mb-6 grow">
+                {hiddenCount > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => setExpanded((v) => !v)}
+                    className="text-xs font-bold text-primary hover:underline"
+                  >
+                    {expanded ? "نمایش کمتر" : "مشاهده همه امکانات"}
+                  </button>
+                )}
+              </div>
               {isCurrent ? (
                 <div className="flex w-full items-center justify-center gap-1 rounded-xl border border-success/40 bg-success/10 px-4 py-2.5 text-sm font-bold text-success">
                   <CheckCircle2 className="h-3.5 w-3.5" /> {ctaLabel}
