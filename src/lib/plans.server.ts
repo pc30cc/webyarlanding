@@ -46,7 +46,6 @@ function normalize(remote: RemotePlan, index: number, total: number): PublicPlan
 
   const limitRows = Object.keys(LIMIT_LABELS_FA)
     .filter((key) => limits[key] !== undefined && limits[key] !== null)
-    .slice(0, 6)
     .map((key) => ({ label: LIMIT_LABELS_FA[key] as string, value: limitText(limits[key]) }));
 
   return {
@@ -63,16 +62,25 @@ function normalize(remote: RemotePlan, index: number, total: number): PublicPlan
   };
 }
 
+/** کلیدهای مرتب‌شده: ابتدا کلیدهای مهم، سپس بقیه کلیدهای شناخته‌شده */
+function orderedKeys(priority: string[], all: string[]): string[] {
+  return [...priority.filter((k) => all.includes(k)), ...all.filter((k) => !priority.includes(k))];
+}
+
 function buildComparison(remotes: RemotePlan[], plans: PublicPlan[]): PlansComparison {
   const rows: PlansComparison["rows"] = [];
-  for (const key of COMPARISON_LIMIT_KEYS) {
-    if (!remotes.some((r) => r.limits?.[key] !== undefined)) continue;
+
+  const limitKeys = orderedKeys(COMPARISON_LIMIT_KEYS, Object.keys(LIMIT_LABELS_FA));
+  for (const key of limitKeys) {
+    if (!remotes.some((r) => r.limits?.[key] !== undefined && r.limits?.[key] !== null)) continue;
     rows.push({
       label: LIMIT_LABELS_FA[key] as string,
       values: remotes.map((r) => limitText(r.limits?.[key])),
     });
   }
-  for (const key of COMPARISON_FEATURE_KEYS) {
+
+  const featureKeys = orderedKeys(COMPARISON_FEATURE_KEYS, Object.keys(FEATURE_LABELS_FA));
+  for (const key of featureKeys) {
     if (!remotes.some((r) => r.entitlements?.[key] !== undefined)) continue;
     rows.push({
       label: FEATURE_LABELS_FA[key] as string,

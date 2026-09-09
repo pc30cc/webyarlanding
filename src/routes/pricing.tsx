@@ -34,7 +34,20 @@ export const Route = createFileRoute("/pricing")({
   component: PricingPage,
 });
 
-function getPlans(period: "monthly" | "yearly") {
+interface DisplayPlan {
+  slug: string;
+  icon: typeof Zap;
+  name: string;
+  desc: string;
+  price: string;
+  unit: string;
+  cta: string;
+  popular?: boolean;
+  limits: { label: string; value: string }[];
+  features: string[];
+}
+
+function getPlans(period: "monthly" | "yearly"): DisplayPlan[] {
   return [
     {
       slug: "starter",
@@ -44,7 +57,12 @@ function getPlans(period: "monthly" | "yearly") {
       price: "رایگان",
       unit: "",
       cta: "شروع کنید",
-      features: ["۱ اپراتور پشتیبانی", "۵۰ گفتگو در ماه", "بدون تماس ویدیویی"],
+      limits: [
+        { label: "تعداد اپراتور", value: "۱" },
+        { label: "گفتگوی ماهانه", value: "۵۰" },
+        { label: "تعداد دامنه", value: "۱" },
+      ],
+      features: ["ابزارک چت سایت", "مدیریت مخاطبین", "گزارش پایه"],
     },
     {
       slug: "professional",
@@ -55,12 +73,19 @@ function getPlans(period: "monthly" | "yearly") {
       unit: period === "yearly" ? "تومان / ماه، سالانه" : "تومان / ماه",
       cta: "شروع رایگان",
       popular: true,
+      limits: [
+        { label: "تعداد اپراتور", value: "۵" },
+        { label: "گفتگوی ماهانه", value: "نامحدود" },
+        { label: "تعداد دامنه", value: "۳" },
+      ],
       features: [
-        "۵ اپراتور پشتیبانی",
-        "گفتگوی نامحدود",
-        "تماس تصویری HD",
+        "ابزارک چت سایت",
+        "تماس صوتی و تصویری",
         "اشتراک‌گذاری صفحه",
-        "گزارش‌گیری کامل",
+        "گزارش و تحلیل کامل",
+        "دستیار هوش مصنوعی",
+        "اتوماسیون",
+        "پایگاه دانش",
       ],
     },
     {
@@ -71,11 +96,19 @@ function getPlans(period: "monthly" | "yearly") {
       price: "تماس بگیرید",
       unit: "",
       cta: "تماس با فروش",
+      limits: [
+        { label: "تعداد اپراتور", value: "نامحدود" },
+        { label: "گفتگوی ماهانه", value: "نامحدود" },
+        { label: "تعداد دامنه", value: "نامحدود" },
+      ],
       features: [
-        "اپراتور نامحدود",
-        "چند دامنه هم‌زمان",
-        "پشتیبانی اختصاصی",
-        "امکانات یکپارچه‌سازی ویژه",
+        "همه امکانات پلن حرفه‌ای",
+        "مرکز تماس و صف تماس",
+        "دسترسی API",
+        "ورود یکپارچه (SSO)",
+        "برچسب سفید",
+        "گزارش رویدادها",
+        "پشتیبانی اولویت‌دار",
       ],
     },
   ];
@@ -98,7 +131,7 @@ const PLAN_ICONS = [Zap, Star, Crown];
 const faNumber = new Intl.NumberFormat("fa-IR");
 
 /** تبدیل پلن‌های همگام‌شده اپلیکیشن به مدل نمایش صفحه قیمت‌گذاری */
-function mapRemotePlans(remote: PublicPlan[], period: "monthly" | "yearly") {
+function mapRemotePlans(remote: PublicPlan[], period: "monthly" | "yearly"): DisplayPlan[] {
   return remote.map((plan, index) => {
     const amount = period === "yearly" ? plan.yearly : plan.monthly;
     const perMonth = period === "yearly" && amount ? Math.round(amount / 12) : amount;
@@ -112,9 +145,8 @@ function mapRemotePlans(remote: PublicPlan[], period: "monthly" | "yearly") {
       unit: isFree || !perMonth ? "" : period === "yearly" ? "تومان / ماه، سالانه" : "تومان / ماه",
       cta: isFree ? "شروع کنید" : perMonth ? "شروع رایگان" : "تماس با فروش",
       popular: plan.popular,
-      features: plan.features.length
-        ? plan.features.slice(0, 6)
-        : plan.limits.slice(0, 4).map((l) => `${l.label}: ${l.value}`),
+      limits: plan.limits,
+      features: plan.features,
     };
   });
 }
@@ -247,7 +279,7 @@ function PricingPage() {
             <motion.div
               key={plan.slug}
               variants={childVariant}
-              className={`relative rounded-2xl border bg-card p-6 shadow-card transition-transform hover:scale-[1.02] ${plan.popular ? "border-primary ring-2 ring-primary/10" : "border-border"}`}
+              className={`relative flex flex-col rounded-2xl border bg-card p-6 shadow-card transition-transform hover:scale-[1.02] ${plan.popular ? "border-primary ring-2 ring-primary/10" : "border-border"}`}
             >
               {plan.popular && (
                 <div className="absolute -top-3 inset-x-0 mx-auto w-fit rounded-full bg-brand px-4 py-1 text-xs font-bold text-primary-foreground">
@@ -267,7 +299,24 @@ function PricingPage() {
                 <span className="text-2xl font-black text-foreground">{plan.price}</span>
                 {plan.unit && <span className="text-xs text-muted-foreground">{plan.unit}</span>}
               </div>
-              <ul className="mb-6 space-y-2">
+              {plan.limits.length > 0 && (
+                <div className="mb-5 rounded-xl border border-border/60 bg-secondary/30 p-3">
+                  <p className="mb-2 text-[11px] font-bold text-foreground">محدودیت‌ها و سقف‌ها</p>
+                  <ul className="space-y-1.5">
+                    {plan.limits.map((l) => (
+                      <li
+                        key={l.label}
+                        className="flex items-center justify-between gap-2 text-[11px] text-muted-foreground"
+                      >
+                        <span>{l.label}</span>
+                        <span className="font-bold text-foreground">{l.value}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              <p className="mb-2 text-[11px] font-bold text-foreground">امکانات</p>
+              <ul className="mb-6 grow space-y-2">
                 {plan.features.map((f) => (
                   <li key={f} className="flex items-center gap-2 text-xs text-muted-foreground">
                     <CheckCircle2 className="h-3.5 w-3.5 shrink-0 text-success" />
