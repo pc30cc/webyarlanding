@@ -315,6 +315,7 @@ function PricingPage() {
                 <span className="text-2xl font-black text-foreground">{plan.price}</span>
                 {plan.unit && <span className="text-xs text-muted-foreground">{plan.unit}</span>}
               </div>
+              {plan.note && <p className="-mt-3 mb-5 text-[11px] text-muted-foreground">{plan.note}</p>}
               {plan.limits.length > 0 && (
                 <div className="mb-5 rounded-xl border border-border/60 bg-secondary/30 p-3">
                   <p className="mb-2 text-[11px] font-bold text-foreground">محدودیت‌ها و سقف‌ها</p>
