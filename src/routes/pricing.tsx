@@ -42,6 +42,7 @@ interface DisplayPlan {
   price: string;
   unit: string;
   cta: string;
+  note?: string;
   popular?: boolean;
   limits: { label: string; value: string }[];
   features: string[];
@@ -186,7 +187,11 @@ function PricingPage() {
   // نمایش همه امکانات برای همه پلن‌ها به‌صورت هم‌زمان تا ارتفاع کارت‌ها هماهنگ بماند
   const [expanded, setExpanded] = useState(false);
   const currentSlug = useCurrentPlanSlug(settings.plans?.apiUrl || "");
-  const plans = remotePlans ? mapRemotePlans(remotePlans.plans, period) : getPlans(period);
+  const showYearly = settings.plans?.showYearly === true;
+  const activePeriod = showYearly ? period : "monthly";
+  const plans = remotePlans
+    ? mapRemotePlans(remotePlans.plans, activePeriod)
+    : getPlans(activePeriod);
   const currentIndex = currentSlug ? plans.findIndex((p) => p.slug === currentSlug) : -1;
   const comparison = remotePlans?.comparison?.rows.length
     ? remotePlans.comparison
@@ -236,6 +241,7 @@ function PricingPage() {
           </p>
         </motion.div>
 
+        {showYearly && (
         <div className="mb-14 flex justify-center">
           <div className="inline-flex rounded-full bg-card p-1.5 shadow-card">
             {(["monthly", "yearly"] as const).map((p) => (
