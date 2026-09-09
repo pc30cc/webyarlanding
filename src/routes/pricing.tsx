@@ -112,9 +112,8 @@ function mapRemotePlans(remote: PublicPlan[], period: "monthly" | "yearly") {
       unit: isFree || !perMonth ? "" : period === "yearly" ? "تومان / ماه، سالانه" : "تومان / ماه",
       cta: isFree ? "شروع کنید" : perMonth ? "شروع رایگان" : "تماس با فروش",
       popular: plan.popular,
-      features: plan.features.length
-        ? plan.features.slice(0, 6)
-        : plan.limits.slice(0, 4).map((l) => `${l.label}: ${l.value}`),
+      limits: plan.limits,
+      features: plan.features,
     };
   });
 }
