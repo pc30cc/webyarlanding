@@ -279,7 +279,7 @@ function PricingPage() {
             <motion.div
               key={plan.slug}
               variants={childVariant}
-              className={`relative rounded-2xl border bg-card p-6 shadow-card transition-transform hover:scale-[1.02] ${plan.popular ? "border-primary ring-2 ring-primary/10" : "border-border"}`}
+              className={`relative flex flex-col rounded-2xl border bg-card p-6 shadow-card transition-transform hover:scale-[1.02] ${plan.popular ? "border-primary ring-2 ring-primary/10" : "border-border"}`}
             >
               {plan.popular && (
                 <div className="absolute -top-3 inset-x-0 mx-auto w-fit rounded-full bg-brand px-4 py-1 text-xs font-bold text-primary-foreground">
@@ -316,7 +316,7 @@ function PricingPage() {
                 </div>
               )}
               <p className="mb-2 text-[11px] font-bold text-foreground">امکانات</p>
-              <ul className="mb-6 space-y-2">
+              <ul className="mb-6 grow space-y-2">
                 {plan.features.map((f) => (
                   <li key={f} className="flex items-center gap-2 text-xs text-muted-foreground">
                     <CheckCircle2 className="h-3.5 w-3.5 shrink-0 text-success" />
