@@ -276,6 +276,8 @@ function PricingPage() {
                 : isUpgrade
                   ? "ارتقاء پلن"
                   : plan.cta;
+            const hiddenCount =
+              Math.max(0, plan.features.length - 5) + Math.max(0, plan.limits.length - 3);
 
             return (
             <motion.div
