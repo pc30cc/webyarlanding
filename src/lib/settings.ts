@@ -150,6 +150,7 @@ export interface SiteSettings {
   auth: AuthLinksSettings;
   chatWidget: ChatWidgetSettings;
   callCenterWidget: CallCenterWidgetSettings;
+  plans: PlansSettings;
   ai: AiSettings;
   analytics: AnalyticsSettings;
   media: MediaSettings;
