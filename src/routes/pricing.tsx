@@ -270,20 +270,31 @@ function PricingPage() {
                   </li>
                 ))}
               </ul>
-              <a
-                href={
-                  plan.slug === "enterprise" ? "/contact" : settings.auth.signupUrl || "/contact"
-                }
-                className={`flex w-full items-center justify-center gap-1 rounded-xl px-4 py-2.5 text-sm font-bold transition-colors ${
-                  plan.popular
-                    ? "bg-brand text-primary-foreground"
-                    : "border border-border text-foreground hover:bg-secondary"
-                }`}
-              >
-                {plan.cta} <ChevronLeft className="h-3.5 w-3.5" />
-              </a>
+              {isCurrent ? (
+                <div className="flex w-full items-center justify-center gap-1 rounded-xl border border-success/40 bg-success/10 px-4 py-2.5 text-sm font-bold text-success">
+                  <CheckCircle2 className="h-3.5 w-3.5" /> {ctaLabel}
+                </div>
+              ) : (
+                <a
+                  href={
+                    plan.slug === "enterprise"
+                      ? "/contact"
+                      : isUpgrade || isDowngrade
+                        ? settings.auth.panelUrl || settings.auth.signupUrl || "/contact"
+                        : settings.auth.signupUrl || "/contact"
+                  }
+                  className={`flex w-full items-center justify-center gap-1 rounded-xl px-4 py-2.5 text-sm font-bold transition-colors ${
+                    isUpgrade || (plan.popular && currentIndex < 0)
+                      ? "bg-brand text-primary-foreground"
+                      : "border border-border text-foreground hover:bg-secondary"
+                  }`}
+                >
+                  {ctaLabel} <ChevronLeft className="h-3.5 w-3.5" />
+                </a>
+              )}
             </motion.div>
-          ))}
+            );
+          })}
         </StaggerChildren>
 
         <motion.div
