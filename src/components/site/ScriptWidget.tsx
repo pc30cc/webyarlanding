@@ -7,33 +7,49 @@ export interface WidgetScriptConfig {
   position?: "right" | "left";
 }
 
-/** تزریق اسکریپت ابزارک‌های خارجی (چت، مرکز تماس و مانند آن) — فقط سمت کلاینت. */
-export function ScriptWidget({ config }: { config?: WidgetScriptConfig }) {
-  useEffect(() => {
-    const cfg = config;
-    if (!cfg?.enabled) return;
+/** ابزارک‌هایی که قبلاً روی این صفحه تزریق شده‌اند — جلوگیری از اجرای دوباره اسکریپت */
+const injectedKeys = new Set<string>();
 
-    const injected: HTMLElement[] = [];
+/** تزریق اسکریپت ابزارک‌های خارجی (چت، مرکز تماس و مانند آن) — فقط سمت کلاینت، یک‌بار در هر بارگذاری صفحه. */
+export function ScriptWidget({ config }: { config?: WidgetScriptConfig }) {
+  const enabled = Boolean(config?.enabled);
+  const scriptUrl = config?.scriptUrl ?? "";
+  const inlineScript = config?.inlineScript ?? "";
+  const key = `${scriptUrl}::${inlineScript}`;
+
+  useEffect(() => {
+    if (!enabled) return;
+    if (!scriptUrl && !inlineScript) return;
+    // اسکریپت ابزارک‌های خارجی معمولاً وضعیت سراسری می‌سازند؛ اجرای دوباره آن‌ها
+    // (رندر مجدد، StrictMode) باعث خطاهایی مثل «bootstrap failed» می‌شود.
+    if (injectedKeys.has(key)) return;
+    injectedKeys.add(key);
+
     let cancelled = false;
 
     function inject() {
-      if (cancelled || !cfg) return;
+      if (cancelled) return;
 
-      if (cfg.scriptUrl) {
+      if (scriptUrl) {
         const script = document.createElement("script");
-        script.src = cfg.scriptUrl;
+        script.src = scriptUrl;
         script.async = true;
         document.body.appendChild(script);
-        injected.push(script);
       }
 
-      if (cfg.inlineScript) {
+      if (inlineScript) {
         // کد نصب معمولاً یک قطعه HTML کامل است (شامل تگ <script>)؛ innerHTML اسکریپت‌ها را اجرا
         // نمی‌کند، پس هر <script> باید به‌صورت المان جدید بازسازی و درج شود.
         const parsed = document.createElement("div");
-        parsed.innerHTML = cfg.inlineScript;
-        const scripts = parsed.querySelectorAll("script");
+        parsed.innerHTML = inlineScript;
 
+        // ابتدا محتوای غیر اسکریپتی (مثل div محل نمایش ابزارک) درج شود
+        Array.from(parsed.childNodes).forEach((node) => {
+          if (node.nodeName.toLowerCase() === "script") return;
+          document.body.appendChild(node.cloneNode(true));
+        });
+
+        const scripts = parsed.querySelectorAll("script");
         if (scripts.length > 0) {
           scripts.forEach((original) => {
             const script = document.createElement("script");
@@ -42,29 +58,26 @@ export function ScriptWidget({ config }: { config?: WidgetScriptConfig }) {
             }
             if (original.textContent) script.text = original.textContent;
             document.body.appendChild(script);
-            injected.push(script);
           });
         } else {
           const inline = document.createElement("script");
-          inline.text = cfg.inlineScript;
+          inline.text = inlineScript;
           document.body.appendChild(inline);
-          injected.push(inline);
         }
       }
     }
 
-    const hasIdleCallback = typeof window.requestIdleCallback === "function";
-    const idleId = hasIdleCallback
-      ? window.requestIdleCallback(inject, { timeout: 2000 })
-      : window.setTimeout(inject, 1500);
+    // بعد از کامل شدن بارگذاری صفحه اجرا شود تا ابزارک به DOM آماده دسترسی داشته باشد
+    if (document.readyState === "complete") {
+      window.setTimeout(inject, 300);
+    } else {
+      window.addEventListener("load", () => window.setTimeout(inject, 300), { once: true });
+    }
 
     return () => {
       cancelled = true;
-      if (hasIdleCallback) window.cancelIdleCallback(idleId as number);
-      else window.clearTimeout(idleId as number);
-      injected.forEach((el) => el.remove());
     };
-  }, [config]);
+  }, [enabled, scriptUrl, inlineScript, key]);
 
   return null;
 }
