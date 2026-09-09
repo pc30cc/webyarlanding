@@ -286,30 +286,25 @@ function PricingPage() {
                   <th className="px-5 py-3 text-start text-xs font-semibold text-foreground">
                     امکانات
                   </th>
-                  <th className="px-5 py-3 text-center text-xs font-semibold text-foreground">
-                    رایگان
-                  </th>
-                  <th className="px-5 py-3 text-center text-xs font-semibold text-foreground">
-                    حرفه‌ای
-                  </th>
-                  <th className="px-5 py-3 text-center text-xs font-semibold text-foreground">
-                    سازمانی
-                  </th>
+                  {comparison.plans.map((name) => (
+                    <th
+                      key={name}
+                      className="px-5 py-3 text-center text-xs font-semibold text-foreground"
+                    >
+                      {name}
+                    </th>
+                  ))}
                 </tr>
               </thead>
               <tbody>
-                {comparisonRows.map((row) => (
+                {comparison.rows.map((row) => (
                   <tr key={row.label} className="border-b border-border/50 last:border-0">
                     <td className="px-5 py-3 text-muted-foreground">{row.label}</td>
-                    <td className="px-5 py-3 text-center text-foreground">
-                      <ComparisonCell value={row.free} />
-                    </td>
-                    <td className="px-5 py-3 text-center text-foreground">
-                      <ComparisonCell value={row.pro} />
-                    </td>
-                    <td className="px-5 py-3 text-center text-foreground">
-                      <ComparisonCell value={row.enterprise} />
-                    </td>
+                    {row.values.map((value, i) => (
+                      <td key={i} className="px-5 py-3 text-center text-foreground">
+                        <ComparisonCell value={value} />
+                      </td>
+                    ))}
                   </tr>
                 ))}
               </tbody>
