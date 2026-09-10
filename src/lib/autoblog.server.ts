@@ -1,5 +1,7 @@
 // اجرای هسته‌ی تولید خودکار مقالات — فقط سمت سرور.
 import { db, newId, nowIso, parseCsv, toBool, toCsv } from "./db.server";
+import { FEATURE_LABELS_FA } from "./plans";
+
 
 export interface AutoblogSettingsDto {
   id: string;
