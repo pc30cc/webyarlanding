@@ -289,7 +289,7 @@ export async function runAutoblog(
           ? ""
           : `\n\nتلاش قبلی عنوانی تکراری تولید کرد. این بار حتماً موضوع و عنوانی کاملاً متفاوت، تازه و بدون هم‌پوشانی با فهرست بالا بنویس.`;
       const candidate = await generatePostContent({
-        topic: `${settings.masterPrompt || DEFAULT_MASTER_PROMPT}\n\nموضوع این مقاله: ${topic}${avoidRepeatHint}${retryHint}`,
+        topic: `${settings.masterPrompt || DEFAULT_MASTER_PROMPT}${NO_PRICING_RULE}\n\nموضوع این مقاله: ${topic}${avoidRepeatHint}${retryHint}`,
         length: "medium",
       });
       generated = candidate;
