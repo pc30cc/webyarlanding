@@ -169,14 +169,57 @@ function pickTopic(pool: string[], seed: number): string {
   return list[seed % list.length]!;
 }
 
-/** عنوان چند مقاله‌ی اخیر — برای اینکه از تکرار موضوع/محتوای مشابه در تولید خودکار جلوگیری شود */
-async function recentPostTitles(limit = 8): Promise<string[]> {
+/** عنوان مقالات قبلی — برای اینکه از تکرار موضوع/عنوان مشابه در تولید خودکار جلوگیری شود */
+async function recentPostTitles(limit = 80): Promise<string[]> {
   const { data } = await db
     .from("blog_posts")
     .select("title")
     .order("created_at", { ascending: false })
     .limit(limit);
-  return (data ?? []).map((row) => row.title);
+  return (data ?? []).map((row) => row.title).filter(Boolean);
+}
+
+/** یکسان‌سازی متن فارسی برای مقایسه عنوان‌ها */
+function normalizeTitle(title: string): string {
+  return title
+    .replace(/[\u064B-\u0652\u200c]/g, " ")
+    .replace(/[يى]/g, "ی")
+    .replace(/ك/g, "ک")
+    .replace(/[^\p{L}\p{N}\s]/gu, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .toLowerCase();
+}
+
+const STOP_WORDS = new Set([
+  "و","در","به","از","با","برای","که","این","آن","را","یک","تا","بر","هم","چه","چگونه","چرا","راهنمای","کامل","بهترین","معرفی","نکات","روش","روشهای","های","ها",
+]);
+
+function titleTokens(title: string): Set<string> {
+  return new Set(
+    normalizeTitle(title)
+      .split(" ")
+      .filter((w) => w.length > 2 && !STOP_WORDS.has(w)),
+  );
+}
+
+/** آیا عنوان تازه با یکی از عنوان‌های قبلی تکراری یا خیلی نزدیک است؟ */
+function isDuplicateTitle(candidate: string, existing: string[]): boolean {
+  const norm = normalizeTitle(candidate);
+  if (!norm) return true;
+  const tokens = titleTokens(candidate);
+  for (const old of existing) {
+    const oldNorm = normalizeTitle(old);
+    if (!oldNorm) continue;
+    if (oldNorm === norm || oldNorm.includes(norm) || norm.includes(oldNorm)) return true;
+    const oldTokens = titleTokens(old);
+    if (!tokens.size || !oldTokens.size) continue;
+    let shared = 0;
+    for (const t of tokens) if (oldTokens.has(t)) shared++;
+    const similarity = shared / Math.min(tokens.size, oldTokens.size);
+    if (similarity >= 0.7) return true;
+  }
+  return false;
 }
 
 export async function runAutoblog(
@@ -210,15 +253,31 @@ export async function runAutoblog(
     const { generatePostContent } = await import("./ai.server");
     const { savePost } = await import("./blog.server");
 
-    const topic = pickTopic(settings.topicPool, settings.totalGenerated);
     const recentTitles = await recentPostTitles();
     const avoidRepeatHint = recentTitles.length
-      ? `\n\nعناوین مقالاتی که اخیراً منتشر شده‌اند (از تکرار موضوع یا محتوای مشابه با این‌ها جداً خودداری کن و زاویه‌ی کاملاً تازه‌ای انتخاب کن):\n- ${recentTitles.join("\n- ")}`
+      ? `\n\nعناوین همه مقالات قبلی سایت (به هیچ وجه عنوانی تکراری یا هم‌معنی با این‌ها نساز و موضوع/زاویه‌ی کاملاً تازه‌ای انتخاب کن):\n- ${recentTitles.join("\n- ")}`
       : "";
-    const generated = await generatePostContent({
-      topic: `${settings.masterPrompt || DEFAULT_MASTER_PROMPT}\n\nموضوع این مقاله: ${topic}${avoidRepeatHint}`,
-      length: "medium",
-    });
+
+    // تا سه بار تلاش می‌کنیم؛ اگر عنوان تولیدشده با مقالات قبلی تکراری یا خیلی نزدیک بود،
+    // با تأکید بیشتر دوباره تولید می‌شود.
+    let generated: Awaited<ReturnType<typeof generatePostContent>> | null = null;
+    for (let attempt = 0; attempt < 3; attempt++) {
+      const topic = pickTopic(settings.topicPool, settings.totalGenerated + attempt);
+      const retryHint =
+        attempt === 0
+          ? ""
+          : `\n\nتلاش قبلی عنوانی تکراری تولید کرد. این بار حتماً موضوع و عنوانی کاملاً متفاوت، تازه و بدون هم‌پوشانی با فهرست بالا بنویس.`;
+      const candidate = await generatePostContent({
+        topic: `${settings.masterPrompt || DEFAULT_MASTER_PROMPT}\n\nموضوع این مقاله: ${topic}${avoidRepeatHint}${retryHint}`,
+        length: "medium",
+      });
+      generated = candidate;
+      if (!isDuplicateTitle(candidate.title, recentTitles)) break;
+    }
+    if (!generated) throw new Error("تولید مقاله ناموفق بود");
+    if (isDuplicateTitle(generated.title, recentTitles)) {
+      throw new Error("مقاله‌ای با عنوان مشابه قبلاً منتشر شده است؛ تولید این نوبت لغو شد.");
+    }
 
     let coverImage = "";
     let imageError: string | undefined;
@@ -226,7 +285,10 @@ export async function runAutoblog(
       try {
         const { generateImage, buildCoverImagePrompt } = await import("./ai.server");
         const image = await generateImage({
-          prompt: buildCoverImagePrompt(generated.title),
+          prompt: buildCoverImagePrompt(
+            generated.title,
+            settings.totalGenerated + Math.floor(Math.random() * 3),
+          ),
           alt: generated.title,
         });
         coverImage = image.url;
