@@ -1,5 +1,4 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useState } from "react";
 import { motion } from "framer-motion";
 import {
   Check,
@@ -14,11 +13,17 @@ import {
   Users,
   UserRound,
   Bot,
-  Workflow,
-  Megaphone,
-  Share2,
+  Sparkles,
+  Search,
+  Eye,
+  Mail,
+  Plug,
+  BookOpen,
+  Globe,
+  Layers,
+  Phone,
+  MessageSquare,
   BarChart3,
-  Webhook,
   ShieldCheck,
 } from "lucide-react";
 import { fetchSettings } from "@/lib/settings.functions";
@@ -303,7 +308,7 @@ function OperatorAvatar({ className }: { className?: string }) {
 
 function IndexPage() {
   const { settings, seoOverride } = Route.useLoaderData();
-  const [period, setPeriod] = useState<"monthly" | "yearly">("monthly");
+
 
   const defaultJsonLd = [
     {
