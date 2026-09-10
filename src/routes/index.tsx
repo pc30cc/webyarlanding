@@ -12,8 +12,14 @@ import {
   Send,
   Clock,
   Users,
-  MessageSquare,
   UserRound,
+  Bot,
+  Workflow,
+  Megaphone,
+  Share2,
+  BarChart3,
+  Webhook,
+  ShieldCheck,
 } from "lucide-react";
 import { fetchSettings } from "@/lib/settings.functions";
 import { getPublicSeoPage } from "@/lib/seo.functions";
@@ -64,6 +70,49 @@ const videoFeatures = [
   { title: "کیفیت HD", desc: "تصویر روشن حتی با اینترنت محدود." },
 ];
 
+const platformFeatures = [
+  {
+    icon: Bot,
+    title: "دستیار هوش مصنوعی",
+    desc: "دستیار هوشمند وب‌یار بر اساس پایگاه دانش کسب‌وکار شما آموزش می‌بیند و بخش زیادی از سوالات پرتکرار مشتریان را بدون دخالت اپراتور پاسخ می‌دهد.",
+  },
+  {
+    icon: Users,
+    title: "CRM و مدیریت مشتریان",
+    desc: "سابقه کامل هر مشتری، برچسب‌گذاری، یادداشت و وضعیت پیگیری در یک پروفایل واحد — بدون نیاز به ابزار جداگانه.",
+  },
+  {
+    icon: Workflow,
+    title: "اتوماسیون و قوانین هوشمند",
+    desc: "با قوانین ساده، پیام خوش‌آمدگویی، ارجاع خودکار به اپراتور مناسب و پیگیری‌های تکراری را خودکار کنید.",
+  },
+  {
+    icon: Megaphone,
+    title: "کمپین و بازاریابی",
+    desc: "پیام‌های هدفمند برای بخش‌های مختلف مشتریان بفرستید و نرخ بازگشت و تبدیل را از همان پنل دنبال کنید.",
+  },
+  {
+    icon: Share2,
+    title: "ارتباط چندکاناله",
+    desc: "علاوه بر ابزارک چت سایت، به واتساپ و تلگرام هم وصل شوید و همه پیام‌ها را در یک صندوق واحد ببینید.",
+  },
+  {
+    icon: BarChart3,
+    title: "گزارش‌های پیشرفته",
+    desc: "زمان پاسخ‌گویی، رضایت مشتری و عملکرد هر اپراتور را با نمودارهای شفاف و قابل خروجی رصد کنید.",
+  },
+  {
+    icon: Webhook,
+    title: "API و Webhook",
+    desc: "با REST API کامل و Webhook، وب‌یار را به CRM، فروشگاه یا هر سرویس دیگری که استفاده می‌کنید وصل کنید.",
+  },
+  {
+    icon: ShieldCheck,
+    title: "امنیت و کنترل دسترسی",
+    desc: "رمزنگاری end-to-end و کنترل دسترسی مبتنی بر نقش (RBAC) با ۱۸ سطح مختلف، برای تیم‌های بزرگ و حساس به امنیت.",
+  },
+];
+
 const conversations = [
   { name: "سارا احمدی", msg: "قیمت پلن حرفه‌ای چقدره؟", time: "۲ دقیقه" },
   { name: "رضا کریمی", msg: "مشکل در پرداخت دارم", time: "۱۰ دقیقه" },
@@ -96,6 +145,7 @@ function getPlans(period: "monthly" | "yearly") {
       features: [
         "۱ اپراتور",
         "چت زنده نامحدود",
+        "CRM پایه (پروفایل مشتری)",
         "تاریخچه ۳۰ روزه",
         "ابزارک قابل شخصی‌سازی",
         "پشتیبانی ایمیلی",
@@ -110,9 +160,12 @@ function getPlans(period: "monthly" | "yearly") {
       cta: "۱۴ روز رایگان",
       features: [
         "۵ اپراتور",
-        "تماس ویدیویی HD",
-        "اشتراک‌گذاری صفحه",
-        "تاریخچه نامحدود",
+        "تماس ویدیویی HD + اشتراک صفحه",
+        "دستیار هوش مصنوعی",
+        "CRM کامل + برچسب‌گذاری",
+        "اتوماسیون و قوانین هوشمند",
+        "اتصال به واتساپ و تلگرام",
+        "کمپین بازاریابی",
         "گزارش‌های پیشرفته",
         "پشتیبانی اولویت‌دار",
       ],
@@ -126,10 +179,12 @@ function getPlans(period: "monthly" | "yearly") {
       cta: "گفتگو با فروش",
       features: [
         "اپراتور نامحدود",
-        "نصب روی سرور اختصاصی",
-        "SSO و کنترل دسترسی",
+        "چند دامنه هم‌زمان",
+        "API و Webhook کامل",
+        "کنترل دسترسی (RBAC) ۱۸ سطحی",
         "SLA اختصاصی",
         "مدیر حساب اختصاصی",
+        "یکپارچه‌سازی سفارشی",
       ],
       highlight: false,
     },
@@ -488,6 +543,35 @@ function IndexPage() {
             </div>
           </ScrollReveal>
         </div>
+      </section>
+
+      {/* ALL-IN-ONE PLATFORM */}
+      <section className="container-page py-20 sm:py-28">
+        <ScrollReveal className="mb-14 text-center">
+          {eyebrow("همه‌چیز در یک پلتفرم")}
+          <h2 className="mb-4 text-2xl font-extrabold text-foreground sm:text-4xl">
+            فراتر از چت — یک CRM کامل برای ارتباط با مشتری
+          </h2>
+          <p className="mx-auto max-w-2xl text-base leading-[1.9] text-muted-foreground">
+            چت زنده و تماس تصویری فقط شروع کار وب‌یار است؛ هوش مصنوعی، CRM، اتوماسیون، کمپین و
+            گزارش‌گیری هم در همان پنل، بدون نیاز به هیچ ابزار جداگانه‌ای در اختیار شماست.
+          </p>
+        </ScrollReveal>
+        <StaggerChildren className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
+          {platformFeatures.map((f) => (
+            <motion.div
+              key={f.title}
+              variants={childVariant}
+              className="rounded-2xl border border-border bg-card p-6 shadow-card transition-shadow hover:shadow-glow"
+            >
+              <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10">
+                <f.icon className="h-6 w-6 text-primary" />
+              </div>
+              <h3 className="mb-2 text-base font-bold text-foreground">{f.title}</h3>
+              <p className="text-sm leading-[1.8] text-muted-foreground">{f.desc}</p>
+            </motion.div>
+          ))}
+        </StaggerChildren>
       </section>
 
       {/* STEPS */}

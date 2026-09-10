@@ -63,7 +63,7 @@ function getPlans(period: "monthly" | "yearly"): DisplayPlan[] {
         { label: "گفتگوی ماهانه", value: "۵۰" },
         { label: "تعداد دامنه", value: "۱" },
       ],
-      features: ["ابزارک چت سایت", "مدیریت مخاطبین", "گزارش پایه"],
+      features: ["ابزارک چت سایت", "مدیریت مخاطبین (CRM پایه)", "گزارش پایه", "پشتیبانی ایمیلی"],
     },
     {
       slug: "professional",
@@ -81,12 +81,13 @@ function getPlans(period: "monthly" | "yearly"): DisplayPlan[] {
       ],
       features: [
         "ابزارک چت سایت",
-        "تماس صوتی و تصویری",
-        "اشتراک‌گذاری صفحه",
-        "گزارش و تحلیل کامل",
+        "تماس تصویری HD + اشتراک‌گذاری صفحه",
         "دستیار هوش مصنوعی",
-        "اتوماسیون",
-        "پایگاه دانش",
+        "اتوماسیون و پایگاه دانش",
+        "CRM کامل + برچسب‌گذاری",
+        "اتصال به واتساپ و تلگرام",
+        "کمپین بازاریابی",
+        "گزارش و تحلیل کامل",
       ],
     },
     {
@@ -104,12 +105,12 @@ function getPlans(period: "monthly" | "yearly"): DisplayPlan[] {
       ],
       features: [
         "همه امکانات پلن حرفه‌ای",
+        "چند دامنه هم‌زمان",
         "مرکز تماس و صف تماس",
-        "دسترسی API",
-        "ورود یکپارچه (SSO)",
+        "API و Webhook کامل",
+        "ورود یکپارچه (SSO) و کنترل دسترسی RBAC ۱۸ سطحی",
         "برچسب سفید",
-        "گزارش رویدادها",
-        "پشتیبانی اولویت‌دار",
+        "SLA و پشتیبانی اختصاصی",
       ],
     },
   ];
@@ -120,9 +121,17 @@ const staticComparison = {
   rows: [
     { label: "تعداد اپراتور", values: ["۱", "۵", "نامحدود"] },
     { label: "گفتگوی ماهانه", values: ["۵۰", "نامحدود", "نامحدود"] },
-    { label: "تماس تصویری", values: [false, true, true] },
+    { label: "تعداد دامنه", values: ["۱", "۳", "نامحدود"] },
+    { label: "تماس تصویری HD", values: [false, true, true] },
     { label: "اشتراک‌گذاری صفحه", values: [false, true, true] },
-    { label: "چند دامنه", values: [false, false, true] },
+    { label: "دستیار هوش مصنوعی", values: [false, true, true] },
+    { label: "CRM و مدیریت مشتریان", values: ["پایه", "کامل", "کامل"] },
+    { label: "اتوماسیون و پایگاه دانش", values: [false, true, true] },
+    { label: "کمپین و بازاریابی", values: [false, true, true] },
+    { label: "ارتباط چندکاناله (واتساپ، تلگرام)", values: [false, true, true] },
+    { label: "گزارش و تحلیل", values: ["پایه", "کامل", "کامل"] },
+    { label: "API و Webhook", values: [false, false, true] },
+    { label: "کنترل دسترسی (RBAC / SSO)", values: [false, false, true] },
     { label: "پشتیبانی اختصاصی", values: [false, false, true] },
   ] as { label: string; values: (string | boolean)[] }[],
 };
@@ -235,42 +244,45 @@ function PricingPage() {
           animate={{ opacity: 1, y: 0 }}
           className="mb-10 text-center"
         >
-          <h1 className="mb-4 text-3xl font-extrabold text-foreground sm:text-5xl">قیمت‌گذاری</h1>
-          <p className="mx-auto max-w-2xl text-base text-muted-foreground">
-            پلن مناسب کسب‌وکار خود را انتخاب کنید
+          <h1 className="mb-4 text-3xl font-extrabold text-foreground sm:text-5xl">
+            امکانات و قیمت‌گذاری
+          </h1>
+          <p className="mx-auto max-w-2xl text-base leading-[1.9] text-muted-foreground">
+            از چت زنده و تماس تصویری تا دستیار هوش مصنوعی، CRM، اتوماسیون، کمپین و گزارش‌گیری — پلن
+            مناسب کسب‌وکار خود را از میان امکانات کامل وب‌یار انتخاب کنید.
           </p>
         </motion.div>
 
         {showYearly && (
-        <div className="mb-14 flex justify-center">
-          <div className="inline-flex rounded-full bg-card p-1.5 shadow-card">
-            {(["monthly", "yearly"] as const).map((p) => (
-              <button
-                key={p}
-                type="button"
-                onClick={() => setPeriod(p)}
-                className={`flex items-center gap-2 rounded-full px-5 py-2.5 text-sm font-bold transition-colors ${
-                  period === p
-                    ? "bg-primary text-primary-foreground"
-                    : "text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                {p === "monthly" ? "ماهانه" : "سالانه"}
-                {p === "yearly" && (
-                  <span
-                    className={`rounded-full px-2 py-0.5 text-xs ${
-                      period === "yearly"
-                        ? "bg-primary-foreground/20"
-                        : "bg-success/15 text-success"
-                    }`}
-                  >
-                    ۲۰٪ تخفیف
-                  </span>
-                )}
-              </button>
-            ))}
+          <div className="mb-14 flex justify-center">
+            <div className="inline-flex rounded-full bg-card p-1.5 shadow-card">
+              {(["monthly", "yearly"] as const).map((p) => (
+                <button
+                  key={p}
+                  type="button"
+                  onClick={() => setPeriod(p)}
+                  className={`flex items-center gap-2 rounded-full px-5 py-2.5 text-sm font-bold transition-colors ${
+                    period === p
+                      ? "bg-primary text-primary-foreground"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  {p === "monthly" ? "ماهانه" : "سالانه"}
+                  {p === "yearly" && (
+                    <span
+                      className={`rounded-full px-2 py-0.5 text-xs ${
+                        period === "yearly"
+                          ? "bg-primary-foreground/20"
+                          : "bg-success/15 text-success"
+                      }`}
+                    >
+                      ۲۰٪ تخفیف
+                    </span>
+                  )}
+                </button>
+              ))}
+            </div>
           </div>
-        </div>
         )}
 
         <StaggerChildren className="mb-16 grid grid-cols-1 gap-5 sm:grid-cols-3">
@@ -292,99 +304,102 @@ function PricingPage() {
               Math.max(0, plan.features.length - 5) + Math.max(0, plan.limits.length - 3);
 
             return (
-            <motion.div
-              key={plan.slug}
-              variants={childVariant}
-              className={`relative flex flex-col rounded-2xl border bg-card p-6 shadow-card transition-transform hover:scale-[1.02] ${plan.popular ? "border-primary ring-2 ring-primary/10" : "border-border"}`}
-            >
-              {plan.popular && (
-                <div className="absolute -top-3 inset-x-0 mx-auto w-fit rounded-full bg-brand px-4 py-1 text-xs font-bold text-primary-foreground">
-                  پیشنهادی
+              <motion.div
+                key={plan.slug}
+                variants={childVariant}
+                className={`relative flex flex-col rounded-2xl border bg-card p-6 shadow-card transition-transform hover:scale-[1.02] ${plan.popular ? "border-primary ring-2 ring-primary/10" : "border-border"}`}
+              >
+                {plan.popular && (
+                  <div className="absolute -top-3 inset-x-0 mx-auto w-fit rounded-full bg-brand px-4 py-1 text-xs font-bold text-primary-foreground">
+                    پیشنهادی
+                  </div>
+                )}
+                <div className="mb-5 flex items-center gap-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-secondary/50">
+                    <plan.icon className="h-5 w-5 text-primary" />
+                  </div>
+                  <div>
+                    <h3 className="text-base font-bold text-foreground">{plan.name}</h3>
+                    <p className="text-[11px] text-muted-foreground">{plan.desc}</p>
+                  </div>
                 </div>
-              )}
-              <div className="mb-5 flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-secondary/50">
-                  <plan.icon className="h-5 w-5 text-primary" />
+                <div className="mb-5 flex items-baseline gap-1.5">
+                  <span className="text-2xl font-black text-foreground">{plan.price}</span>
+                  {plan.unit && <span className="text-xs text-muted-foreground">{plan.unit}</span>}
                 </div>
-                <div>
-                  <h3 className="text-base font-bold text-foreground">{plan.name}</h3>
-                  <p className="text-[11px] text-muted-foreground">{plan.desc}</p>
+                {plan.note && (
+                  <p className="-mt-3 mb-5 text-[11px] text-muted-foreground">{plan.note}</p>
+                )}
+                {plan.limits.length > 0 && (
+                  <div className="mb-5 rounded-xl border border-border/60 bg-secondary/30 p-3">
+                    <p className="mb-2 text-[11px] font-bold text-foreground">
+                      محدودیت‌ها و سقف‌ها
+                    </p>
+                    <ul className="space-y-1.5">
+                      {(expanded ? plan.limits : plan.limits.slice(0, 3)).map((l) => (
+                        <li
+                          key={l.label}
+                          className="flex items-center justify-between gap-2 text-[11px] text-muted-foreground"
+                        >
+                          <span>{l.label}</span>
+                          <span className="font-bold text-foreground">{l.value}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+                <p className="mb-2 text-[11px] font-bold text-foreground">امکانات</p>
+                <ul className="mb-3 space-y-2">
+                  {(expanded ? plan.features : plan.features.slice(0, 5)).map((f) => (
+                    <li key={f} className="flex items-center gap-2 text-xs text-muted-foreground">
+                      <CheckCircle2 className="h-3.5 w-3.5 shrink-0 text-success" />
+                      {f}
+                    </li>
+                  ))}
+                </ul>
+                <div className="mb-6 grow">
+                  {hiddenCount > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => setExpanded((v) => !v)}
+                      className="text-xs font-bold text-primary hover:underline"
+                    >
+                      {expanded ? "نمایش کمتر" : "مشاهده همه امکانات"}
+                    </button>
+                  )}
                 </div>
-              </div>
-              <div className="mb-5 flex items-baseline gap-1.5">
-                <span className="text-2xl font-black text-foreground">{plan.price}</span>
-                {plan.unit && <span className="text-xs text-muted-foreground">{plan.unit}</span>}
-              </div>
-              {plan.note && <p className="-mt-3 mb-5 text-[11px] text-muted-foreground">{plan.note}</p>}
-              {plan.limits.length > 0 && (
-                <div className="mb-5 rounded-xl border border-border/60 bg-secondary/30 p-3">
-                  <p className="mb-2 text-[11px] font-bold text-foreground">محدودیت‌ها و سقف‌ها</p>
-                  <ul className="space-y-1.5">
-                    {(expanded ? plan.limits : plan.limits.slice(0, 3)).map((l) => (
-                      <li
-                        key={l.label}
-                        className="flex items-center justify-between gap-2 text-[11px] text-muted-foreground"
-                      >
-                        <span>{l.label}</span>
-                        <span className="font-bold text-foreground">{l.value}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-              <p className="mb-2 text-[11px] font-bold text-foreground">امکانات</p>
-              <ul className="mb-3 space-y-2">
-                {(expanded ? plan.features : plan.features.slice(0, 5)).map((f) => (
-                  <li key={f} className="flex items-center gap-2 text-xs text-muted-foreground">
-                    <CheckCircle2 className="h-3.5 w-3.5 shrink-0 text-success" />
-                    {f}
-                  </li>
-                ))}
-              </ul>
-              <div className="mb-6 grow">
-                {hiddenCount > 0 && (
+                {isCurrent ? (
+                  <div className="flex w-full items-center justify-center gap-1 rounded-xl border border-success/40 bg-success/10 px-4 py-2.5 text-sm font-bold text-success">
+                    <CheckCircle2 className="h-3.5 w-3.5" /> {ctaLabel}
+                  </div>
+                ) : isBlocked ? (
                   <button
                     type="button"
-                    onClick={() => setExpanded((v) => !v)}
-                    className="text-xs font-bold text-primary hover:underline"
+                    disabled
+                    aria-disabled="true"
+                    className="flex w-full cursor-not-allowed items-center justify-center gap-1 rounded-xl border border-border bg-secondary/40 px-4 py-2.5 text-sm font-bold text-muted-foreground opacity-70"
                   >
-                    {expanded ? "نمایش کمتر" : "مشاهده همه امکانات"}
+                    {ctaLabel}
                   </button>
+                ) : (
+                  <a
+                    href={
+                      plan.slug === "enterprise"
+                        ? "/contact"
+                        : isUpgrade
+                          ? settings.auth.panelUrl || settings.auth.signupUrl || "/contact"
+                          : settings.auth.signupUrl || "/contact"
+                    }
+                    className={`flex w-full items-center justify-center gap-1 rounded-xl px-4 py-2.5 text-sm font-bold transition-colors ${
+                      isUpgrade || (plan.popular && currentIndex < 0)
+                        ? "bg-brand text-primary-foreground"
+                        : "border border-border text-foreground hover:bg-secondary"
+                    }`}
+                  >
+                    {ctaLabel} <ChevronLeft className="h-3.5 w-3.5" />
+                  </a>
                 )}
-              </div>
-              {isCurrent ? (
-                <div className="flex w-full items-center justify-center gap-1 rounded-xl border border-success/40 bg-success/10 px-4 py-2.5 text-sm font-bold text-success">
-                  <CheckCircle2 className="h-3.5 w-3.5" /> {ctaLabel}
-                </div>
-              ) : isBlocked ? (
-                <button
-                  type="button"
-                  disabled
-                  aria-disabled="true"
-                  className="flex w-full cursor-not-allowed items-center justify-center gap-1 rounded-xl border border-border bg-secondary/40 px-4 py-2.5 text-sm font-bold text-muted-foreground opacity-70"
-                >
-                  {ctaLabel}
-                </button>
-              ) : (
-                <a
-                  href={
-                    plan.slug === "enterprise"
-                      ? "/contact"
-                      : isUpgrade
-                        ? settings.auth.panelUrl || settings.auth.signupUrl || "/contact"
-                        : settings.auth.signupUrl || "/contact"
-                  }
-                  className={`flex w-full items-center justify-center gap-1 rounded-xl px-4 py-2.5 text-sm font-bold transition-colors ${
-                    isUpgrade || (plan.popular && currentIndex < 0)
-                      ? "bg-brand text-primary-foreground"
-                      : "border border-border text-foreground hover:bg-secondary"
-                  }`}
-                >
-                  {ctaLabel} <ChevronLeft className="h-3.5 w-3.5" />
-                </a>
-              )}
-
-            </motion.div>
+              </motion.div>
             );
           })}
         </StaggerChildren>
