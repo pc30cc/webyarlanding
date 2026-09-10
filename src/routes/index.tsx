@@ -366,7 +366,7 @@ function IndexPage() {
                 transition={{ duration: 2, repeat: Infinity }}
                 className="h-[7px] w-[7px] rounded-full bg-success"
               />
-              همین حالا ۲٬۰۰۰+ کسب‌وکار از وب‌یار استفاده می‌کنند
+              چت زنده، تماس تصویری، مرکز تماس و ایجنت هوش مصنوعی — در یک پنل
             </motion.div>
 
             <h1 className="mb-6 text-3xl font-extrabold leading-[1.25] text-foreground sm:text-5xl">
@@ -392,11 +392,11 @@ function IndexPage() {
                 to="/pricing"
                 className="inline-flex items-center rounded-xl border border-border px-8 py-4 text-base font-semibold text-foreground transition-colors hover:bg-secondary"
               >
-                مشاهده دمو
+                مشاهده امکانات
               </Link>
             </div>
             <p className="mt-4 text-xs text-muted-foreground">
-              بدون نیاز به کارت بانکی · لغو در هر زمان
+              نصب با یک قطعه کد · افزونه آماده برای وردپرس، ووکامرس، شاپیفای و پرستاشاپ
             </p>
           </div>
 
@@ -710,7 +710,7 @@ function IndexPage() {
             همین امروز وب‌یار را روی سایتتان نصب کنید
           </h2>
           <p className="relative mb-8 text-base text-primary-foreground/90">
-            ۱۴ روز استفاده رایگان از تمام امکانات، بدون نیاز به کارت بانکی
+            گفتگو، تماس، هوش مصنوعی، مخاطبین، سئو و گزارش‌ها — همه از یک پنل
           </p>
           <a
             href={settings.auth.signupUrl || "/contact"}
