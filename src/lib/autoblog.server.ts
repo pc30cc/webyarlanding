@@ -253,15 +253,31 @@ export async function runAutoblog(
     const { generatePostContent } = await import("./ai.server");
     const { savePost } = await import("./blog.server");
 
-    const topic = pickTopic(settings.topicPool, settings.totalGenerated);
     const recentTitles = await recentPostTitles();
     const avoidRepeatHint = recentTitles.length
-      ? `\n\nعناوین مقالاتی که اخیراً منتشر شده‌اند (از تکرار موضوع یا محتوای مشابه با این‌ها جداً خودداری کن و زاویه‌ی کاملاً تازه‌ای انتخاب کن):\n- ${recentTitles.join("\n- ")}`
+      ? `\n\nعناوین همه مقالات قبلی سایت (به هیچ وجه عنوانی تکراری یا هم‌معنی با این‌ها نساز و موضوع/زاویه‌ی کاملاً تازه‌ای انتخاب کن):\n- ${recentTitles.join("\n- ")}`
       : "";
-    const generated = await generatePostContent({
-      topic: `${settings.masterPrompt || DEFAULT_MASTER_PROMPT}\n\nموضوع این مقاله: ${topic}${avoidRepeatHint}`,
-      length: "medium",
-    });
+
+    // تا سه بار تلاش می‌کنیم؛ اگر عنوان تولیدشده با مقالات قبلی تکراری یا خیلی نزدیک بود،
+    // با تأکید بیشتر دوباره تولید می‌شود.
+    let generated: Awaited<ReturnType<typeof generatePostContent>> | null = null;
+    for (let attempt = 0; attempt < 3; attempt++) {
+      const topic = pickTopic(settings.topicPool, settings.totalGenerated + attempt);
+      const retryHint =
+        attempt === 0
+          ? ""
+          : `\n\nتلاش قبلی عنوانی تکراری تولید کرد. این بار حتماً موضوع و عنوانی کاملاً متفاوت، تازه و بدون هم‌پوشانی با فهرست بالا بنویس.`;
+      const candidate = await generatePostContent({
+        topic: `${settings.masterPrompt || DEFAULT_MASTER_PROMPT}\n\nموضوع این مقاله: ${topic}${avoidRepeatHint}${retryHint}`,
+        length: "medium",
+      });
+      generated = candidate;
+      if (!isDuplicateTitle(candidate.title, recentTitles)) break;
+    }
+    if (!generated) throw new Error("تولید مقاله ناموفق بود");
+    if (isDuplicateTitle(generated.title, recentTitles)) {
+      throw new Error("مقاله‌ای با عنوان مشابه قبلاً منتشر شده است؛ تولید این نوبت لغو شد.");
+    }
 
     let coverImage = "";
     let imageError: string | undefined;
@@ -269,7 +285,10 @@ export async function runAutoblog(
       try {
         const { generateImage, buildCoverImagePrompt } = await import("./ai.server");
         const image = await generateImage({
-          prompt: buildCoverImagePrompt(generated.title),
+          prompt: buildCoverImagePrompt(
+            generated.title,
+            settings.totalGenerated + Math.floor(Math.random() * 3),
+          ),
           alt: generated.title,
         });
         coverImage = image.url;
