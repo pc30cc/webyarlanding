@@ -625,121 +625,57 @@ function IndexPage() {
         </StaggerChildren>
       </section>
 
-      {/* PRICING */}
-      <section id="pricing" className="bg-secondary/30 px-4 py-20 sm:px-8 sm:py-28">
+      {/* MODULES */}
+      <section className="bg-secondary/30 px-4 py-20 sm:px-8 sm:py-28">
         <div className="mx-auto max-w-7xl">
-          <ScrollReveal className="text-center">
-            {eyebrow("قیمت‌گذاری")}
+          <ScrollReveal className="mb-14 text-center">
+            {eyebrow("داخل پنل")}
             <h2 className="mb-4 text-2xl font-extrabold text-foreground sm:text-4xl">
-              پلنی متناسب با کسب‌وکار شما
+              هر چیزی که پس از ورود در اختیار دارید
             </h2>
+            <p className="mx-auto max-w-2xl text-base leading-[1.9] text-muted-foreground">
+              فهرست بخش‌های واقعی پنل وب‌یار؛ از گفتگو و تماس تا هوش مصنوعی، سئو، مخاطبین و
+              تنظیمات حساب.
+            </p>
           </ScrollReveal>
-
-          <div className="mb-14 flex justify-center">
-            <div className="inline-flex rounded-full bg-card p-1.5 shadow-card">
-              {(["monthly", "yearly"] as const).map((p) => (
-                <button
-                  key={p}
-                  type="button"
-                  onClick={() => setPeriod(p)}
-                  className={`flex items-center gap-2 rounded-full px-5 py-2.5 text-sm font-bold transition-colors ${
-                    period === p
-                      ? "bg-primary text-primary-foreground"
-                      : "text-muted-foreground hover:text-foreground"
-                  }`}
-                >
-                  {p === "monthly" ? "ماهانه" : "سالانه"}
-                  {p === "yearly" && (
-                    <span
-                      className={`rounded-full px-2 py-0.5 text-xs ${
-                        period === "yearly"
-                          ? "bg-primary-foreground/20"
-                          : "bg-success/15 text-success"
-                      }`}
-                    >
-                      ۲۰٪ تخفیف
-                    </span>
-                  )}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <StaggerChildren className="grid gap-6 md:grid-cols-3">
-            {getPlans(period).map((plan) => (
+          <StaggerChildren className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {moduleGroups.map((g) => (
               <motion.div
-                key={plan.name}
+                key={g.title}
                 variants={childVariant}
-                className={`relative rounded-[20px] border bg-card p-8 ${plan.highlight ? "border-primary shadow-glow" : "border-border shadow-card"}`}
+                className="rounded-2xl border border-border bg-card p-7 shadow-card"
               >
-                {plan.highlight && (
-                  <span className="absolute -top-3.5 end-7 rounded-full bg-brand px-3.5 py-1.5 text-xs font-bold text-primary-foreground">
-                    پیشنهادی
+                <div className="mb-4 flex items-center gap-3">
+                  <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10">
+                    <g.icon className="h-5 w-5 text-primary" />
                   </span>
-                )}
-                <div className="mb-2 text-lg font-extrabold text-foreground">{plan.name}</div>
-                <p className="mb-6 text-sm leading-[1.7] text-muted-foreground">{plan.tagline}</p>
-                <div className="mb-7 flex items-baseline gap-1.5">
-                  <span className="text-3xl font-extrabold text-foreground">{plan.price}</span>
-                  {plan.unit && <span className="text-sm text-muted-foreground">{plan.unit}</span>}
+                  <h3 className="text-base font-bold text-foreground">{g.title}</h3>
                 </div>
-                <Link
-                  to="/pricing"
-                  className={`mb-7 block rounded-xl py-3.5 text-center text-sm font-bold transition-opacity hover:opacity-90 ${
-                    plan.highlight
-                      ? "bg-brand text-primary-foreground"
-                      : "bg-secondary text-secondary-foreground"
-                  }`}
-                >
-                  {plan.cta}
-                </Link>
-                <ul className="space-y-3.5">
-                  {plan.features.map((f) => (
-                    <li key={f} className="flex items-center gap-2.5 text-sm text-foreground/85">
-                      <span className="flex h-4 w-4 flex-none items-center justify-center rounded-[5px] bg-primary/15">
+                <ul className="space-y-3">
+                  {g.items.map((item) => (
+                    <li key={item} className="flex items-start gap-2.5 text-sm text-foreground/85">
+                      <span className="mt-1 flex h-4 w-4 flex-none items-center justify-center rounded-[5px] bg-primary/15">
                         <Check className="h-2.5 w-2.5 text-primary" />
                       </span>
-                      {f}
+                      <span className="leading-[1.7]">{item}</span>
                     </li>
                   ))}
                 </ul>
               </motion.div>
             ))}
           </StaggerChildren>
+
+          <ScrollReveal className="mt-12 text-center">
+            <Link
+              to="/pricing"
+              className="inline-flex items-center gap-2 rounded-xl bg-brand px-8 py-4 text-sm font-bold text-primary-foreground"
+            >
+              مقایسه پلن‌ها و امکانات هر پلن <ChevronLeft className="h-4 w-4" />
+            </Link>
+          </ScrollReveal>
         </div>
       </section>
 
-      {/* TESTIMONIALS */}
-      <section className="container-page py-20 sm:py-28">
-        <ScrollReveal className="mb-14 text-center">
-          {eyebrow("اعتماد مشتریان")}
-          <h2 className="text-2xl font-extrabold text-foreground sm:text-4xl">
-            آنچه کاربران می‌گویند
-          </h2>
-        </ScrollReveal>
-        <StaggerChildren className="grid gap-7 md:grid-cols-2">
-          {testimonials.map((tm) => (
-            <motion.figure
-              key={tm.name}
-              variants={childVariant}
-              className="rounded-[20px] bg-secondary/30 p-8"
-            >
-              <blockquote className="mb-6 text-base leading-[1.9] text-foreground sm:text-lg">
-                «{tm.text}»
-              </blockquote>
-              <figcaption className="flex items-center gap-3">
-                <span className="flex h-11 w-11 items-center justify-center rounded-full bg-primary/10 font-bold text-primary">
-                  {tm.name.charAt(0)}
-                </span>
-                <span>
-                  <span className="block text-sm font-bold text-foreground">{tm.name}</span>
-                  <span className="block text-xs text-muted-foreground">{tm.role}</span>
-                </span>
-              </figcaption>
-            </motion.figure>
-          ))}
-        </StaggerChildren>
-      </section>
 
       {/* FAQ */}
       <section id="faq" className="bg-secondary/30 px-4 py-20 sm:px-8 sm:py-28">
