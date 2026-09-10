@@ -1,5 +1,4 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useState } from "react";
 import { motion } from "framer-motion";
 import {
   Check,
@@ -14,11 +13,17 @@ import {
   Users,
   UserRound,
   Bot,
-  Workflow,
-  Megaphone,
-  Share2,
+  Sparkles,
+  Search,
+  Eye,
+  Mail,
+  Plug,
+  BookOpen,
+  Globe,
+  Layers,
+  Phone,
+  MessageSquare,
   BarChart3,
-  Webhook,
   ShieldCheck,
 } from "lucide-react";
 import { fetchSettings } from "@/lib/settings.functions";
@@ -54,7 +59,16 @@ const float = (delay = 0) => ({
   transition: { duration: 6 + delay, repeat: Infinity, ease: "easeInOut" as const, delay },
 });
 
-const trustLogos = ["دیجی‌مد", "فروشگاه آفتاب", "کالاباز", "نت‌برگ", "مدیا۲۴"];
+const trustLogos = [
+  "WordPress",
+  "WooCommerce",
+  "Shopify",
+  "PrestaShop",
+  "Telegram",
+  "WhatsApp",
+  "Instagram",
+  "Slack",
+];
 
 const chatFeatures = [
   { title: "گفتگوی بلادرنگ", desc: "پیام‌های بازدیدکننده‌ها را همان لحظه ببینید و پاسخ دهید." },
@@ -72,44 +86,64 @@ const videoFeatures = [
 
 const platformFeatures = [
   {
+    icon: MessageSquare,
+    title: "صندوق گفتگوی یکپارچه",
+    desc: "همه گفتگوهای ابزارک سایت، ایمیل و کانال‌های پیام‌رسان در یک صندوق مشترک؛ با پاسخ‌های آماده، گفتگوی تیمی و ارجاع به دپارتمان مناسب.",
+  },
+  {
+    icon: Phone,
+    title: "مرکز تماس",
+    desc: "تماس صوتی و تصویری، صف زنده تماس، درخواست تماس مجدد، ضبط مکالمه و تنظیمات ساعت پاسخ‌گویی — همه در پنل مرکز تماس.",
+  },
+  {
     icon: Bot,
-    title: "دستیار هوش مصنوعی",
-    desc: "دستیار هوشمند وب‌یار بر اساس پایگاه دانش کسب‌وکار شما آموزش می‌بیند و بخش زیادی از سوالات پرتکرار مشتریان را بدون دخالت اپراتور پاسخ می‌دهد.",
+    title: "ایجنت هوش مصنوعی پیشرفته",
+    desc: "آموزش ایجنت با محتوای سایت و پایگاه دانش، محیط آزمایش (Playground)، سناریوهای تست، مسیریابی گفتگو، تریگرها و گزارش عملکرد پاسخ‌ها.",
+  },
+  {
+    icon: Sparkles,
+    title: "کمک هوش مصنوعی به اپراتور",
+    desc: "پیشنهاد پاسخ، خلاصه گفتگو و اصلاح لحن در لحظه برای اپراتور، همراه با تحلیل اینکه چقدر این پیشنهادها استفاده شده‌اند.",
   },
   {
     icon: Users,
-    title: "CRM و مدیریت مشتریان",
-    desc: "سابقه کامل هر مشتری، برچسب‌گذاری، یادداشت و وضعیت پیگیری در یک پروفایل واحد — بدون نیاز به ابزار جداگانه.",
+    title: "مخاطبین و پروفایل مشتری",
+    desc: "پروفایل کامل هر مخاطب، یادداشت و برچسب، ورود گروهی مخاطبین با ویزارد و خروجی گرفتن از فهرست مخاطبین.",
   },
   {
-    icon: Workflow,
-    title: "اتوماسیون و قوانین هوشمند",
-    desc: "با قوانین ساده، پیام خوش‌آمدگویی، ارجاع خودکار به اپراتور مناسب و پیگیری‌های تکراری را خودکار کنید.",
+    icon: Eye,
+    title: "رهگیری بازدیدکننده",
+    desc: "ببینید هر بازدیدکننده در چه صفحه‌ای است، از کجا آمده و چه مسیری را طی کرده؛ و همان لحظه گفتگو را شروع کنید.",
   },
   {
-    icon: Megaphone,
-    title: "کمپین و بازاریابی",
-    desc: "پیام‌های هدفمند برای بخش‌های مختلف مشتریان بفرستید و نرخ بازگشت و تبدیل را از همان پنل دنبال کنید.",
+    icon: BookOpen,
+    title: "پایگاه دانش و مرکز راهنما",
+    desc: "نوشتن مقاله راهنما، ساخت خودکار پایگاه دانش از محتوای سایت و انتشار مرکز راهنما برای پاسخ‌گویی بدون اپراتور.",
   },
   {
-    icon: Share2,
-    title: "ارتباط چندکاناله",
-    desc: "علاوه بر ابزارک چت سایت، به واتساپ و تلگرام هم وصل شوید و همه پیام‌ها را در یک صندوق واحد ببینید.",
+    icon: Search,
+    title: "سئو و آنالیز وب",
+    desc: "کاوشگر سایت، اتصال به سرچ کنسول گوگل، رصد برند، تحلیل رفتار ربات‌ها و آمار بازدید وب‌سایت در یک بخش یکپارچه.",
+  },
+  {
+    icon: Mail,
+    title: "ایمیل و کمپین",
+    desc: "دریافت و پاسخ ایمیل در همان صندوق گفتگو و ارسال کمپین ایمیلی هدفمند برای بخش‌های مختلف مخاطبان.",
+  },
+  {
+    icon: Plug,
+    title: "افزونه‌ها و یکپارچه‌سازی",
+    desc: "نصب روی وردپرس، ووکامرس، شاپیفای و پرستاشاپ، اتصال کانال‌های پیام‌رسان و مدیریت دامنه‌های مجاز ابزارک.",
   },
   {
     icon: BarChart3,
-    title: "گزارش‌های پیشرفته",
-    desc: "زمان پاسخ‌گویی، رضایت مشتری و عملکرد هر اپراتور را با نمودارهای شفاف و قابل خروجی رصد کنید.",
-  },
-  {
-    icon: Webhook,
-    title: "API و Webhook",
-    desc: "با REST API کامل و Webhook، وب‌یار را به CRM، فروشگاه یا هر سرویس دیگری که استفاده می‌کنید وصل کنید.",
+    title: "گزارش و تحلیل",
+    desc: "زمان پاسخ‌گویی، حجم گفتگو، فعالیت هر اپراتور و عملکرد تماس‌ها با نمودارهای شفاف و قابل خروجی‌گیری.",
   },
   {
     icon: ShieldCheck,
-    title: "امنیت و کنترل دسترسی",
-    desc: "رمزنگاری end-to-end و کنترل دسترسی مبتنی بر نقش (RBAC) با ۱۸ سطح مختلف، برای تیم‌های بزرگ و حساس به امنیت.",
+    title: "امنیت، نقش‌ها و حریم خصوصی",
+    desc: "دسترسی مبتنی بر نقش برای اعضای تیم، تنظیمات امنیتی حساب، تأیید شماره و رسیدگی به درخواست‌های حریم خصوصی کاربران.",
   },
 ];
 
@@ -134,109 +168,108 @@ const steps = [
   },
 ];
 
-function getPlans(period: "monthly" | "yearly") {
-  return [
-    {
-      name: "شروع",
-      tagline: "برای سایت‌های کوچک و شروع کار",
-      price: "رایگان",
-      unit: "",
-      cta: "شروع کنید",
-      features: [
-        "۱ اپراتور",
-        "چت زنده نامحدود",
-        "CRM پایه (پروفایل مشتری)",
-        "تاریخچه ۳۰ روزه",
-        "ابزارک قابل شخصی‌سازی",
-        "پشتیبانی ایمیلی",
-      ],
-      highlight: false,
-    },
-    {
-      name: "حرفه‌ای",
-      tagline: "برای تیم‌های در حال رشد",
-      price: period === "yearly" ? "۳۹۲٬۰۰۰" : "۴۹۰٬۰۰۰",
-      unit: period === "yearly" ? "تومان / ماه، سالانه" : "تومان / ماهانه",
-      cta: "۱۴ روز رایگان",
-      features: [
-        "۵ اپراتور",
-        "تماس ویدیویی HD + اشتراک صفحه",
-        "دستیار هوش مصنوعی",
-        "CRM کامل + برچسب‌گذاری",
-        "اتوماسیون و قوانین هوشمند",
-        "اتصال به واتساپ و تلگرام",
-        "کمپین بازاریابی",
-        "گزارش‌های پیشرفته",
-        "پشتیبانی اولویت‌دار",
-      ],
-      highlight: true,
-    },
-    {
-      name: "سازمانی",
-      tagline: "برای کسب‌وکارهای بزرگ",
-      price: "تماس بگیرید",
-      unit: "",
-      cta: "گفتگو با فروش",
-      features: [
-        "اپراتور نامحدود",
-        "چند دامنه هم‌زمان",
-        "API و Webhook کامل",
-        "کنترل دسترسی (RBAC) ۱۸ سطحی",
-        "SLA اختصاصی",
-        "مدیر حساب اختصاصی",
-        "یکپارچه‌سازی سفارشی",
-      ],
-      highlight: false,
-    },
-  ];
-}
-
-const testimonials = [
+/** ماژول‌های واقعی پنل وب‌یار — همان بخش‌هایی که کاربر پس از ورود می‌بیند */
+const moduleGroups = [
   {
-    name: "سارا محمدی",
-    role: "مدیر پشتیبانی — دیجی‌استایل",
-    text: "از زمانی که وب‌یار رو جایگزین سیستم قبلی‌مون کردیم، زمان پاسخ‌دهی ۶۰٪ کاهش پیدا کرد.",
+    icon: Layers,
+    title: "میز کار و گفتگو",
+    items: [
+      "نمای کلی و شاخص‌های روزانه",
+      "صندوق گفتگو با پاسخ‌های آماده",
+      "گفتگوی تیمی و ارجاع داخلی",
+      "ساعات کاری و پیام خارج از دسترس",
+      "ابزارک سایت و شخصی‌سازی ظاهر آن",
+    ],
   },
   {
-    name: "امیر حسینی",
-    role: "بنیان‌گذار — تکنوشاپ",
-    text: "هوش مصنوعی وب‌یار ۴۰٪ از سوالات رو بدون دخالت اپراتور جواب میده. فوق‌العاده‌ست!",
+    icon: Phone,
+    title: "مرکز تماس",
+    items: [
+      "تماس صوتی و تصویری از داخل چت",
+      "صف زنده تماس‌ها",
+      "درخواست تماس مجدد",
+      "ضبط و بایگانی تماس",
+      "راهنمای نصب و تنظیمات تماس",
+    ],
   },
   {
-    name: "مریم رضایی",
-    role: "مدیر بازاریابی — فین‌تک‌پلاس",
-    text: "ابزار کمپین و CRM وب‌یار بهترین ترکیبی‌ه که دیدم. نرخ تبدیل ما ۳۵٪ رشد کرد.",
+    icon: Bot,
+    title: "هوش مصنوعی",
+    items: [
+      "آموزش ایجنت و منابع دانش",
+      "محیط آزمایش و سناریوهای تست",
+      "قوانین رفتاری، تریگر و مسیریابی",
+      "کمک هوشمند به اپراتور",
+      "گزارش عملکرد و موضوعات پرتکرار",
+    ],
+  },
+  {
+    icon: Search,
+    title: "سئو و آنالیز",
+    items: [
+      "کاوشگر سایت و بررسی صفحات",
+      "اتصال به سرچ کنسول گوگل",
+      "رصد برند",
+      "تحلیل رفتار ربات‌ها",
+      "آمار بازدید وب‌سایت",
+    ],
+  },
+  {
+    icon: Users,
+    title: "مشتریان و تیم",
+    items: [
+      "مخاطبین، برچسب و یادداشت",
+      "ورود و خروجی گرفتن مخاطبین",
+      "بازدیدکنندگان زنده",
+      "تیم، دپارتمان و سطح دسترسی",
+      "گزارش فعالیت اپراتورها",
+    ],
+  },
+  {
+    icon: Globe,
+    title: "اتصال‌ها و حساب",
+    items: [
+      "افزونه وردپرس، ووکامرس، شاپیفای و پرستاشاپ",
+      "کانال‌های پیام‌رسان",
+      "مدیریت دامنه‌های مجاز",
+      "کیف پول، صورتحساب و اعتبار هوش مصنوعی",
+      "تنظیمات امنیت و حریم خصوصی",
+    ],
   },
 ];
 
 const faqs = [
   {
-    q: "وب‌یار چیست و چه کاربردی دارد؟",
-    a: "وب‌یار یک پلتفرم جامع مدیریت ارتباط با مشتری (CRM) است که شامل چت زنده، هوش مصنوعی، اتوماسیون، کمپین، چت تصویری، ابزارهای سئو و گزارش‌دهی پیشرفته می‌شود.",
+    q: "وب‌یار دقیقاً چه چیزی به سایت من اضافه می‌کند؟",
+    a: "یک ابزارک گفتگو روی سایت شما می‌نشیند و پشت آن یک پنل کامل قرار دارد: صندوق گفتگوی یکپارچه، مرکز تماس صوتی و تصویری، ایجنت هوش مصنوعی، مخاطبین، بازدیدکنندگان زنده، پایگاه دانش، ابزارهای سئو و آنالیز، و گزارش‌ها.",
   },
   {
-    q: "آیا پلن رایگان محدودیتی دارد؟",
-    a: "پلن رایگان شامل ۱ اپراتور، چت زنده، CRM پایه و ۱٬۰۰۰ گفتگو در ماه است.",
+    q: "نصب چطور انجام می‌شود؟",
+    a: "یک قطعه کد کوتاه را پیش از تگ بسته body سایت قرار می‌دهید. برای وردپرس، ووکامرس، شاپیفای و پرستاشاپ هم راهنمای نصب اختصاصی در پنل موجود است.",
   },
   {
-    q: "آیا می‌توانم وب‌یار را روی سایت خودم نصب کنم؟",
-    a: "بله! فقط کافیه یک قطعه کد ساده را قبل از تگ </body> سایتتان قرار دهید.",
+    q: "تماس صوتی و تصویری چطور کار می‌کند؟",
+    a: "تماس مستقیم از داخل همان پنجره گفتگو و درون مرورگر برقرار می‌شود؛ مشتری نیازی به نصب اپلیکیشن ندارد. صف تماس، درخواست تماس مجدد و ضبط مکالمه هم در بخش مرکز تماس در دسترس است.",
   },
   {
-    q: "هوش مصنوعی وب‌یار چگونه کار می‌کند؟",
-    a: "دستیار هوشمند وب‌یار بر اساس پایگاه دانش شما آموزش می‌بیند و می‌تواند به سوالات متداول مشتریان پاسخ دهد.",
+    q: "ایجنت هوش مصنوعی چگونه آموزش می‌بیند؟",
+    a: "ایجنت را با محتوای صفحات سایت و مقاله‌های پایگاه دانش آموزش می‌دهید، در محیط آزمایش پاسخ‌هایش را می‌سنجید، برایش قانون رفتاری و مسیریابی تعریف می‌کنید و کیفیت پاسخ‌ها را در گزارش‌ها دنبال می‌کنید.",
   },
   {
-    q: "آیا امکان اتصال به واتساپ و تلگرام وجود دارد؟",
-    a: "بله، وب‌یار از ارتباط چندکاناله پشتیبانی می‌کند.",
+    q: "به چه کانال‌ها و سرویس‌هایی وصل می‌شود؟",
+    a: "افزونه‌های نصب برای وردپرس، ووکامرس، شاپیفای و پرستاشاپ موجود است و کانال‌های پیام‌رسان مانند تلگرام، واتساپ، اینستاگرام و اسلک در بخش یکپارچه‌سازی‌ها مدیریت می‌شوند؛ برخی از این اتصال‌ها در حال عرضه‌اند.",
   },
   {
-    q: "امنیت اطلاعات ما چگونه تضمین می‌شود؟",
-    a: "وب‌یار از رمزنگاری end-to-end، کنترل دسترسی مبتنی بر نقش (RBAC) با ۱۸ سطح مختلف استفاده می‌کند.",
+    q: "ابزارهای سئو و آنالیز شامل چه چیزهایی است؟",
+    a: "کاوشگر سایت برای بررسی صفحات، اتصال به سرچ کنسول گوگل، رصد برند، تحلیل رفتار ربات‌های خزنده و آمار بازدید وب‌سایت.",
   },
   {
-    q: "آیا API برای یکپارچه‌سازی دارید؟",
-    a: "بله، وب‌یار دارای REST API کامل و سیستم Webhook برای اتصال به هر سرویس خارجی است.",
+    q: "کنترل دسترسی اعضای تیم چگونه است؟",
+    a: "اعضای تیم را در دپارتمان‌ها سازمان‌دهی می‌کنید و برای هر نقش سطح دسترسی مشخص تعریف می‌شود؛ فعالیت اپراتورها هم قابل مشاهده و گزارش‌گیری است.",
+  },
+  {
+    q: "درخواست‌های حریم خصوصی کاربران چه می‌شود؟",
+    a: "بخش حریم خصوصی پنل، درخواست‌های مربوط به داده‌های کاربران را ثبت و مدیریت می‌کند و امکان تعیین محل ذخیره‌سازی خروجی‌ها را می‌دهد.",
   },
 ];
 
@@ -275,7 +308,7 @@ function OperatorAvatar({ className }: { className?: string }) {
 
 function IndexPage() {
   const { settings, seoOverride } = Route.useLoaderData();
-  const [period, setPeriod] = useState<"monthly" | "yearly">("monthly");
+
 
   const defaultJsonLd = [
     {
@@ -333,7 +366,7 @@ function IndexPage() {
                 transition={{ duration: 2, repeat: Infinity }}
                 className="h-[7px] w-[7px] rounded-full bg-success"
               />
-              همین حالا ۲٬۰۰۰+ کسب‌وکار از وب‌یار استفاده می‌کنند
+              چت زنده، تماس تصویری، مرکز تماس و ایجنت هوش مصنوعی — در یک پنل
             </motion.div>
 
             <h1 className="mb-6 text-3xl font-extrabold leading-[1.25] text-foreground sm:text-5xl">
@@ -359,11 +392,11 @@ function IndexPage() {
                 to="/pricing"
                 className="inline-flex items-center rounded-xl border border-border px-8 py-4 text-base font-semibold text-foreground transition-colors hover:bg-secondary"
               >
-                مشاهده دمو
+                مشاهده امکانات
               </Link>
             </div>
             <p className="mt-4 text-xs text-muted-foreground">
-              بدون نیاز به کارت بانکی · لغو در هر زمان
+              نصب با یک قطعه کد · افزونه آماده برای وردپرس، ووکامرس، شاپیفای و پرستاشاپ
             </p>
           </div>
 
@@ -597,121 +630,57 @@ function IndexPage() {
         </StaggerChildren>
       </section>
 
-      {/* PRICING */}
-      <section id="pricing" className="bg-secondary/30 px-4 py-20 sm:px-8 sm:py-28">
+      {/* MODULES */}
+      <section className="bg-secondary/30 px-4 py-20 sm:px-8 sm:py-28">
         <div className="mx-auto max-w-7xl">
-          <ScrollReveal className="text-center">
-            {eyebrow("قیمت‌گذاری")}
+          <ScrollReveal className="mb-14 text-center">
+            {eyebrow("داخل پنل")}
             <h2 className="mb-4 text-2xl font-extrabold text-foreground sm:text-4xl">
-              پلنی متناسب با کسب‌وکار شما
+              هر چیزی که پس از ورود در اختیار دارید
             </h2>
+            <p className="mx-auto max-w-2xl text-base leading-[1.9] text-muted-foreground">
+              فهرست بخش‌های واقعی پنل وب‌یار؛ از گفتگو و تماس تا هوش مصنوعی، سئو، مخاطبین و
+              تنظیمات حساب.
+            </p>
           </ScrollReveal>
-
-          <div className="mb-14 flex justify-center">
-            <div className="inline-flex rounded-full bg-card p-1.5 shadow-card">
-              {(["monthly", "yearly"] as const).map((p) => (
-                <button
-                  key={p}
-                  type="button"
-                  onClick={() => setPeriod(p)}
-                  className={`flex items-center gap-2 rounded-full px-5 py-2.5 text-sm font-bold transition-colors ${
-                    period === p
-                      ? "bg-primary text-primary-foreground"
-                      : "text-muted-foreground hover:text-foreground"
-                  }`}
-                >
-                  {p === "monthly" ? "ماهانه" : "سالانه"}
-                  {p === "yearly" && (
-                    <span
-                      className={`rounded-full px-2 py-0.5 text-xs ${
-                        period === "yearly"
-                          ? "bg-primary-foreground/20"
-                          : "bg-success/15 text-success"
-                      }`}
-                    >
-                      ۲۰٪ تخفیف
-                    </span>
-                  )}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <StaggerChildren className="grid gap-6 md:grid-cols-3">
-            {getPlans(period).map((plan) => (
+          <StaggerChildren className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {moduleGroups.map((g) => (
               <motion.div
-                key={plan.name}
+                key={g.title}
                 variants={childVariant}
-                className={`relative rounded-[20px] border bg-card p-8 ${plan.highlight ? "border-primary shadow-glow" : "border-border shadow-card"}`}
+                className="rounded-2xl border border-border bg-card p-7 shadow-card"
               >
-                {plan.highlight && (
-                  <span className="absolute -top-3.5 end-7 rounded-full bg-brand px-3.5 py-1.5 text-xs font-bold text-primary-foreground">
-                    پیشنهادی
+                <div className="mb-4 flex items-center gap-3">
+                  <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10">
+                    <g.icon className="h-5 w-5 text-primary" />
                   </span>
-                )}
-                <div className="mb-2 text-lg font-extrabold text-foreground">{plan.name}</div>
-                <p className="mb-6 text-sm leading-[1.7] text-muted-foreground">{plan.tagline}</p>
-                <div className="mb-7 flex items-baseline gap-1.5">
-                  <span className="text-3xl font-extrabold text-foreground">{plan.price}</span>
-                  {plan.unit && <span className="text-sm text-muted-foreground">{plan.unit}</span>}
+                  <h3 className="text-base font-bold text-foreground">{g.title}</h3>
                 </div>
-                <Link
-                  to="/pricing"
-                  className={`mb-7 block rounded-xl py-3.5 text-center text-sm font-bold transition-opacity hover:opacity-90 ${
-                    plan.highlight
-                      ? "bg-brand text-primary-foreground"
-                      : "bg-secondary text-secondary-foreground"
-                  }`}
-                >
-                  {plan.cta}
-                </Link>
-                <ul className="space-y-3.5">
-                  {plan.features.map((f) => (
-                    <li key={f} className="flex items-center gap-2.5 text-sm text-foreground/85">
-                      <span className="flex h-4 w-4 flex-none items-center justify-center rounded-[5px] bg-primary/15">
+                <ul className="space-y-3">
+                  {g.items.map((item) => (
+                    <li key={item} className="flex items-start gap-2.5 text-sm text-foreground/85">
+                      <span className="mt-1 flex h-4 w-4 flex-none items-center justify-center rounded-[5px] bg-primary/15">
                         <Check className="h-2.5 w-2.5 text-primary" />
                       </span>
-                      {f}
+                      <span className="leading-[1.7]">{item}</span>
                     </li>
                   ))}
                 </ul>
               </motion.div>
             ))}
           </StaggerChildren>
+
+          <ScrollReveal className="mt-12 text-center">
+            <Link
+              to="/pricing"
+              className="inline-flex items-center gap-2 rounded-xl bg-brand px-8 py-4 text-sm font-bold text-primary-foreground"
+            >
+              مقایسه پلن‌ها و امکانات هر پلن <ChevronLeft className="h-4 w-4" />
+            </Link>
+          </ScrollReveal>
         </div>
       </section>
 
-      {/* TESTIMONIALS */}
-      <section className="container-page py-20 sm:py-28">
-        <ScrollReveal className="mb-14 text-center">
-          {eyebrow("اعتماد مشتریان")}
-          <h2 className="text-2xl font-extrabold text-foreground sm:text-4xl">
-            آنچه کاربران می‌گویند
-          </h2>
-        </ScrollReveal>
-        <StaggerChildren className="grid gap-7 md:grid-cols-2">
-          {testimonials.map((tm) => (
-            <motion.figure
-              key={tm.name}
-              variants={childVariant}
-              className="rounded-[20px] bg-secondary/30 p-8"
-            >
-              <blockquote className="mb-6 text-base leading-[1.9] text-foreground sm:text-lg">
-                «{tm.text}»
-              </blockquote>
-              <figcaption className="flex items-center gap-3">
-                <span className="flex h-11 w-11 items-center justify-center rounded-full bg-primary/10 font-bold text-primary">
-                  {tm.name.charAt(0)}
-                </span>
-                <span>
-                  <span className="block text-sm font-bold text-foreground">{tm.name}</span>
-                  <span className="block text-xs text-muted-foreground">{tm.role}</span>
-                </span>
-              </figcaption>
-            </motion.figure>
-          ))}
-        </StaggerChildren>
-      </section>
 
       {/* FAQ */}
       <section id="faq" className="bg-secondary/30 px-4 py-20 sm:px-8 sm:py-28">
@@ -741,7 +710,7 @@ function IndexPage() {
             همین امروز وب‌یار را روی سایتتان نصب کنید
           </h2>
           <p className="relative mb-8 text-base text-primary-foreground/90">
-            ۱۴ روز استفاده رایگان از تمام امکانات، بدون نیاز به کارت بانکی
+            گفتگو، تماس، هوش مصنوعی، مخاطبین، سئو و گزارش‌ها — همه از یک پنل
           </p>
           <a
             href={settings.auth.signupUrl || "/contact"}
