@@ -76,6 +76,16 @@ export interface CallCenterWidgetSettings {
   position: "right" | "left";
 }
 
+/**
+ * نمایش عمومی تماس تصویری/صوتی در سایت — جدا از callCenterWidget (که یک ویجت نصبی دیگر است).
+ * خاموش یعنی همه‌ی بخش‌ها، امکانات پلن‌ها، ردیف‌های جدول مقایسه، Endpoint مستندات API و متن‌های
+ * سئو/JSON-LD مرتبط با تماس تصویری/صوتی در کل سایت پنهان می‌شوند — بدون حذف کد، تا هر وقت مجوز
+ * گرفتید دوباره روشنش کنید.
+ */
+export interface VideoCallSettings {
+  enabled: boolean;
+}
+
 export interface AiProviderModels {
   textModel: string;
   imageModel: string;
@@ -152,6 +162,7 @@ export interface SiteSettings {
   auth: AuthLinksSettings;
   chatWidget: ChatWidgetSettings;
   callCenterWidget: CallCenterWidgetSettings;
+  videoCall: VideoCallSettings;
   plans: PlansSettings;
   ai: AiSettings;
   analytics: AnalyticsSettings;
@@ -218,6 +229,9 @@ export const DEFAULT_SETTINGS: SiteSettings = {
     inlineScript: "",
     position: "right",
   },
+  videoCall: {
+    enabled: true,
+  },
   chatWidget: {
     enabled: false,
     scriptUrl: "",
@@ -255,6 +269,29 @@ export const DEFAULT_SETTINGS: SiteSettings = {
     lastChannelPostErrorAt: "",
   },
 };
+
+const CALL_KEYWORDS = [
+  "تماس تصویری",
+  "تماس ویدیویی",
+  "ویدیویی",
+  "تماس صوتی",
+  "مرکز تماس",
+  "صف تماس",
+  "اشتراک‌گذاری صفحه",
+];
+
+/**
+ * شعار/تگ‌لاین برند برای نمایش عمومی (فوتر، JSON-LD). چون این متن آزاد و قابل‌ویرایش توسط مدیر
+ * است، خودِ مقدار ذخیره‌شده هرگز تغییر نمی‌کند — فقط وقتی videoCall.enabled خاموش است و متن
+ * ذخیره‌شده به تماس تصویری/صوتی اشاره دارد، یک متن عمومی جایگزینش می‌شود؛ به‌محض روشن‌شدن دوباره
+ * همان تگ‌لاین اصلی برمی‌گردد.
+ */
+export function getPublicTagline(settings: SiteSettings): string {
+  const tagline = settings.brand.tagline;
+  if (!tagline || settings.videoCall.enabled) return tagline;
+  const mentionsCall = CALL_KEYWORDS.some((k) => tagline.includes(k));
+  return mentionsCall ? "چت زنده و دستیار هوشمند برای ارتباط با مشتری" : tagline;
+}
 
 /** ادغام عمیق تنظیمات ذخیره‌شده با مقادیر پیش‌فرض */
 export function mergeSettings(stored: Partial<SiteSettings> | null | undefined): SiteSettings {

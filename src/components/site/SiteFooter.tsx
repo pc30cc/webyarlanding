@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import type { SiteSettings } from "@/lib/settings";
+import { getPublicTagline, type SiteSettings } from "@/lib/settings";
 
 export function SiteFooter({ settings }: { settings: SiteSettings }) {
   const brandInitial = settings.brand.name?.charAt(0) || "و";
@@ -16,7 +16,7 @@ export function SiteFooter({ settings }: { settings: SiteSettings }) {
               <span className="text-base font-bold text-foreground">{settings.brand.name}</span>
             </Link>
             <p className="text-sm leading-relaxed text-muted-foreground">
-              {settings.brand.tagline ||
+              {getPublicTagline(settings) ||
                 "پلتفرم جامع مدیریت ارتباط با مشتری برای کسب‌وکارهای ایرانی"}
             </p>
           </div>

@@ -195,6 +195,27 @@ export default function GeneralSection() {
                 </Field>
               </div>
             </section>
+
+            <section className="mt-4 rounded-xl border border-border bg-card p-4 shadow-sm">
+              <div className="mb-1 flex items-center justify-between">
+                <h2 className="text-base font-semibold text-foreground">تماس تصویری و صوتی</h2>
+                <div className="flex items-center gap-2">
+                  <Label className="cursor-pointer text-xs">نمایش در سایت</Label>
+                  <Switch
+                    checked={form.videoCall.enabled}
+                    onCheckedChange={(v) =>
+                      setForm((f) => ({ ...f, videoCall: { ...f.videoCall, enabled: v } }))
+                    }
+                  />
+                </div>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                وقتی خاموش باشد، همه‌ی بخش‌ها، امکانات پلن‌ها، ردیف‌های جدول مقایسه، Endpoint
+                مستندات API و متن‌های سئوی مربوط به تماس تصویری/صوتی در کل سایت (صفحه اصلی،
+                قیمت‌گذاری، محصولات، درباره ما، مستندات API) پنهان می‌شوند — بدون حذف کد، تا هر وقت
+                مجوز لازم را گرفتید دوباره روشنش کنید.
+              </p>
+            </section>
           </TabsContent>
 
           <TabsContent value="auth" className="mt-6">

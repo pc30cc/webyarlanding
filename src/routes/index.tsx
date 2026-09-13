@@ -42,13 +42,17 @@ export const Route = createFileRoute("/")({
   },
   head: ({ loaderData }) => {
     if (!loaderData) return {};
+    const callEnabled = loaderData.settings.videoCall.enabled;
     return buildPageMeta({
       settings: loaderData.settings,
       path: "/",
       override: loaderData.seoOverride,
-      fallbackTitle: "وب‌یار | چت زنده و تماس ویدیویی، فقط با یک خط کد",
-      fallbackDescription:
-        "وب‌یار ابزارک چتی است که روی سایت شما می‌نشیند و امکان گفتگوی زنده و تماس تصویری مستقیم با بازدیدکننده‌ها را فراهم می‌کند.",
+      fallbackTitle: callEnabled
+        ? "وب‌یار | چت زنده و تماس ویدیویی، فقط با یک خط کد"
+        : "وب‌یار | چت زنده هوشمند، فقط با یک خط کد",
+      fallbackDescription: callEnabled
+        ? "وب‌یار ابزارک چتی است که روی سایت شما می‌نشیند و امکان گفتگوی زنده و تماس تصویری مستقیم با بازدیدکننده‌ها را فراهم می‌کند."
+        : "وب‌یار ابزارک چتی است که روی سایت شما می‌نشیند و امکان گفتگوی زنده مستقیم با بازدیدکننده‌ها را فراهم می‌کند.",
     });
   },
   component: IndexPage,
@@ -238,40 +242,48 @@ const moduleGroups = [
   },
 ];
 
-const faqs = [
-  {
-    q: "وب‌یار دقیقاً چه چیزی به سایت من اضافه می‌کند؟",
-    a: "یک ابزارک گفتگو روی سایت شما می‌نشیند و پشت آن یک پنل کامل قرار دارد: صندوق گفتگوی یکپارچه، مرکز تماس صوتی و تصویری، ایجنت هوش مصنوعی، مخاطبین، بازدیدکنندگان زنده، پایگاه دانش، ابزارهای سئو و آنالیز، و گزارش‌ها.",
-  },
-  {
-    q: "نصب چطور انجام می‌شود؟",
-    a: "یک قطعه کد کوتاه را پیش از تگ بسته body سایت قرار می‌دهید. برای وردپرس، ووکامرس، شاپیفای و پرستاشاپ هم راهنمای نصب اختصاصی در پنل موجود است.",
-  },
-  {
-    q: "تماس صوتی و تصویری چطور کار می‌کند؟",
-    a: "تماس مستقیم از داخل همان پنجره گفتگو و درون مرورگر برقرار می‌شود؛ مشتری نیازی به نصب اپلیکیشن ندارد. صف تماس، درخواست تماس مجدد و ضبط مکالمه هم در بخش مرکز تماس در دسترس است.",
-  },
-  {
-    q: "ایجنت هوش مصنوعی چگونه آموزش می‌بیند؟",
-    a: "ایجنت را با محتوای صفحات سایت و مقاله‌های پایگاه دانش آموزش می‌دهید، در محیط آزمایش پاسخ‌هایش را می‌سنجید، برایش قانون رفتاری و مسیریابی تعریف می‌کنید و کیفیت پاسخ‌ها را در گزارش‌ها دنبال می‌کنید.",
-  },
-  {
-    q: "به چه کانال‌ها و سرویس‌هایی وصل می‌شود؟",
-    a: "افزونه‌های نصب برای وردپرس، ووکامرس، شاپیفای و پرستاشاپ موجود است و کانال‌های پیام‌رسان مانند تلگرام، واتساپ، اینستاگرام و اسلک در بخش یکپارچه‌سازی‌ها مدیریت می‌شوند؛ برخی از این اتصال‌ها در حال عرضه‌اند.",
-  },
-  {
-    q: "ابزارهای سئو و آنالیز شامل چه چیزهایی است؟",
-    a: "کاوشگر سایت برای بررسی صفحات، اتصال به سرچ کنسول گوگل، رصد برند، تحلیل رفتار ربات‌های خزنده و آمار بازدید وب‌سایت.",
-  },
-  {
-    q: "کنترل دسترسی اعضای تیم چگونه است؟",
-    a: "اعضای تیم را در دپارتمان‌ها سازمان‌دهی می‌کنید و برای هر نقش سطح دسترسی مشخص تعریف می‌شود؛ فعالیت اپراتورها هم قابل مشاهده و گزارش‌گیری است.",
-  },
-  {
-    q: "درخواست‌های حریم خصوصی کاربران چه می‌شود؟",
-    a: "بخش حریم خصوصی پنل، درخواست‌های مربوط به داده‌های کاربران را ثبت و مدیریت می‌کند و امکان تعیین محل ذخیره‌سازی خروجی‌ها را می‌دهد.",
-  },
-];
+function getFaqs(callEnabled: boolean) {
+  return [
+    {
+      q: "وب‌یار دقیقاً چه چیزی به سایت من اضافه می‌کند؟",
+      a: callEnabled
+        ? "یک ابزارک گفتگو روی سایت شما می‌نشیند و پشت آن یک پنل کامل قرار دارد: صندوق گفتگوی یکپارچه، مرکز تماس صوتی و تصویری، ایجنت هوش مصنوعی، مخاطبین، بازدیدکنندگان زنده، پایگاه دانش، ابزارهای سئو و آنالیز، و گزارش‌ها."
+        : "یک ابزارک گفتگو روی سایت شما می‌نشیند و پشت آن یک پنل کامل قرار دارد: صندوق گفتگوی یکپارچه، ایجنت هوش مصنوعی، مخاطبین، بازدیدکنندگان زنده، پایگاه دانش، ابزارهای سئو و آنالیز، و گزارش‌ها.",
+    },
+    {
+      q: "نصب چطور انجام می‌شود؟",
+      a: "یک قطعه کد کوتاه را پیش از تگ بسته body سایت قرار می‌دهید. برای وردپرس، ووکامرس، شاپیفای و پرستاشاپ هم راهنمای نصب اختصاصی در پنل موجود است.",
+    },
+    ...(callEnabled
+      ? [
+          {
+            q: "تماس صوتی و تصویری چطور کار می‌کند؟",
+            a: "تماس مستقیم از داخل همان پنجره گفتگو و درون مرورگر برقرار می‌شود؛ مشتری نیازی به نصب اپلیکیشن ندارد. صف تماس، درخواست تماس مجدد و ضبط مکالمه هم در بخش مرکز تماس در دسترس است.",
+          },
+        ]
+      : []),
+    {
+      q: "ایجنت هوش مصنوعی چگونه آموزش می‌بیند؟",
+      a: "ایجنت را با محتوای صفحات سایت و مقاله‌های پایگاه دانش آموزش می‌دهید، در محیط آزمایش پاسخ‌هایش را می‌سنجید، برایش قانون رفتاری و مسیریابی تعریف می‌کنید و کیفیت پاسخ‌ها را در گزارش‌ها دنبال می‌کنید.",
+    },
+    {
+      q: "به چه کانال‌ها و سرویس‌هایی وصل می‌شود؟",
+      a: "افزونه‌های نصب برای وردپرس، ووکامرس، شاپیفای و پرستاشاپ موجود است و کانال‌های پیام‌رسان مانند تلگرام، واتساپ، اینستاگرام و اسلک در بخش یکپارچه‌سازی‌ها مدیریت می‌شوند؛ برخی از این اتصال‌ها در حال عرضه‌اند.",
+    },
+    {
+      q: "ابزارهای سئو و آنالیز شامل چه چیزهایی است؟",
+      a: "کاوشگر سایت برای بررسی صفحات، اتصال به سرچ کنسول گوگل، رصد برند، تحلیل رفتار ربات‌های خزنده و آمار بازدید وب‌سایت.",
+    },
+    {
+      q: "کنترل دسترسی اعضای تیم چگونه است؟",
+      a: "اعضای تیم را در دپارتمان‌ها سازمان‌دهی می‌کنید و برای هر نقش سطح دسترسی مشخص تعریف می‌شود؛ فعالیت اپراتورها هم قابل مشاهده و گزارش‌گیری است.",
+    },
+    {
+      q: "درخواست‌های حریم خصوصی کاربران چه می‌شود؟",
+      a: "بخش حریم خصوصی پنل، درخواست‌های مربوط به داده‌های کاربران را ثبت و مدیریت می‌کند و امکان تعیین محل ذخیره‌سازی خروجی‌ها را می‌دهد.",
+    },
+  ];
+}
 
 function eyebrow(text: string) {
   return <div className="mb-3 text-sm font-bold text-primary">{text}</div>;
@@ -308,7 +320,17 @@ function OperatorAvatar({ className }: { className?: string }) {
 
 function IndexPage() {
   const { settings, seoOverride } = Route.useLoaderData();
-
+  const callEnabled = settings.videoCall.enabled;
+  const faqs = getFaqs(callEnabled);
+  const visiblePlatformFeatures = callEnabled
+    ? platformFeatures
+    : platformFeatures.filter((f) => f.title !== "مرکز تماس");
+  const visibleModuleGroups = callEnabled
+    ? moduleGroups
+    : moduleGroups.filter((g) => g.title !== "مرکز تماس");
+  const visibleConversations = callEnabled
+    ? conversations
+    : conversations.filter((c) => c.name !== "امیر رضایی");
 
   const defaultJsonLd = [
     {
@@ -317,7 +339,9 @@ function IndexPage() {
       name: settings.brand.name,
       applicationCategory: "BusinessApplication",
       operatingSystem: "Web",
-      description: "چت زنده، CRM، هوش مصنوعی، اتوماسیون، چت تصویری، سئو و کمپین — همه در وب‌یار",
+      description: callEnabled
+        ? "چت زنده، CRM، هوش مصنوعی، اتوماسیون، چت تصویری، سئو و کمپین — همه در وب‌یار"
+        : "چت زنده، CRM، هوش مصنوعی، اتوماسیون، سئو و کمپین — همه در وب‌یار",
       offers: [{ "@type": "Offer", price: "0", priceCurrency: "IRR", name: "شروع" }],
     },
     // بازتاب همان سوالات و پاسخ‌های واقعی که در بخش FAQ همین صفحه نمایش داده می‌شود
@@ -366,19 +390,22 @@ function IndexPage() {
                 transition={{ duration: 2, repeat: Infinity }}
                 className="h-[7px] w-[7px] rounded-full bg-success"
               />
-              چت زنده، تماس تصویری، مرکز تماس و ایجنت هوش مصنوعی — در یک پنل
+              {callEnabled
+                ? "چت زنده، تماس تصویری، مرکز تماس و ایجنت هوش مصنوعی — در یک پنل"
+                : "چت زنده و ایجنت هوش مصنوعی — در یک پنل"}
             </motion.div>
 
             <h1 className="mb-6 text-3xl font-extrabold leading-[1.25] text-foreground sm:text-5xl">
-              چت زنده و تماس ویدیویی،
+              {callEnabled ? "چت زنده و تماس ویدیویی،" : "چت زنده هوشمند،"}
               <br />
               <span className="text-brand">فقط با یک خط کد</span>
             </h1>
 
             <p className="mb-9 max-w-xl text-base leading-[1.9] text-muted-foreground sm:text-lg">
-              وب‌یار ابزارک چتی است که روی سایت شما می‌نشیند و امکان گفتگوی زنده و تماس تصویری
-              مستقیم با بازدیدکننده‌ها را فراهم می‌کند. نصب در کمتر از ۵ دقیقه، بدون نیاز به
-              برنامه‌نویس.
+              {callEnabled
+                ? "وب‌یار ابزارک چتی است که روی سایت شما می‌نشیند و امکان گفتگوی زنده و تماس تصویری مستقیم با بازدیدکننده‌ها را فراهم می‌کند."
+                : "وب‌یار ابزارک چتی است که روی سایت شما می‌نشیند و امکان گفتگوی زنده مستقیم با بازدیدکننده‌ها را فراهم می‌کند."}{" "}
+              نصب در کمتر از ۵ دقیقه، بدون نیاز به برنامه‌نویس.
             </p>
 
             <div className="flex flex-wrap items-center gap-4">
@@ -423,7 +450,9 @@ function IndexPage() {
                   قیمت پلن حرفه‌ای چقدره؟
                 </div>
                 <div className="max-w-[80%] self-start rounded-[14px] rounded-es-sm bg-card px-3.5 py-2.5 text-xs text-card-foreground shadow-sm">
-                  الان با تماس تصویری راهنماییتون می‌کنم 👇
+                  {callEnabled
+                    ? "الان با تماس تصویری راهنماییتون می‌کنم 👇"
+                    : "الان با یکی از اپراتورهامون وصلتون می‌کنم 👇"}
                 </div>
               </div>
               <div className="flex items-center gap-2.5 border-t border-border px-4 py-3.5">
@@ -436,26 +465,28 @@ function IndexPage() {
               </div>
             </motion.div>
 
-            <motion.div
-              {...float(1)}
-              className="absolute end-0 bottom-0 w-[280px] rounded-[18px] bg-foreground/90 p-3.5 shadow-2xl"
-            >
-              <div className="relative h-[150px] overflow-hidden rounded-xl">
-                <VideoCallMock />
-                <OperatorAvatar className="absolute start-2.5 bottom-2.5 h-12 w-16 rounded-lg border-2 border-background/40" />
-              </div>
-              <div className="mt-3.5 flex items-center justify-center gap-3.5">
-                <div className="flex h-9 w-9 items-center justify-center rounded-full bg-background/10">
-                  <Mic className="h-4 w-4 text-background" />
+            {callEnabled && (
+              <motion.div
+                {...float(1)}
+                className="absolute end-0 bottom-0 w-[280px] rounded-[18px] bg-foreground/90 p-3.5 shadow-2xl"
+              >
+                <div className="relative h-[150px] overflow-hidden rounded-xl">
+                  <VideoCallMock />
+                  <OperatorAvatar className="absolute start-2.5 bottom-2.5 h-12 w-16 rounded-lg border-2 border-background/40" />
                 </div>
-                <div className="flex h-9 w-9 items-center justify-center rounded-full bg-background/10">
-                  <Video className="h-4 w-4 text-background" />
+                <div className="mt-3.5 flex items-center justify-center gap-3.5">
+                  <div className="flex h-9 w-9 items-center justify-center rounded-full bg-background/10">
+                    <Mic className="h-4 w-4 text-background" />
+                  </div>
+                  <div className="flex h-9 w-9 items-center justify-center rounded-full bg-background/10">
+                    <Video className="h-4 w-4 text-background" />
+                  </div>
+                  <div className="flex h-11 w-11 items-center justify-center rounded-full bg-destructive">
+                    <PhoneOff className="h-5 w-5 text-destructive-foreground" />
+                  </div>
                 </div>
-                <div className="flex h-11 w-11 items-center justify-center rounded-full bg-destructive">
-                  <PhoneOff className="h-5 w-5 text-destructive-foreground" />
-                </div>
-              </div>
-            </motion.div>
+              </motion.div>
+            )}
           </div>
         </div>
       </section>
@@ -502,7 +533,7 @@ function IndexPage() {
 
         <ScrollReveal className="rounded-3xl bg-secondary/30 p-5 lg:order-2 sm:p-7">
           <div className="rounded-2xl bg-card p-5 shadow-card">
-            {conversations.map((row, i) => (
+            {visibleConversations.map((row, i) => (
               <div
                 key={row.name}
                 className={`flex items-center gap-3 py-3.5 ${i ? "border-t border-border" : ""}`}
@@ -525,58 +556,60 @@ function IndexPage() {
       </section>
 
       {/* VIDEO CALL */}
-      <section className="relative overflow-hidden bg-foreground px-4 py-20 sm:px-8 sm:py-28">
-        <div
-          aria-hidden
-          className="pointer-events-none absolute -top-24 -end-24 h-[360px] w-[360px] rounded-full bg-primary/20 blur-3xl"
-        />
-        <div className="relative z-10 mx-auto grid max-w-7xl items-center gap-12 lg:grid-cols-2 lg:gap-[70px]">
-          <ScrollReveal>
-            {eyebrow("تماس ویدیویی")}
-            <h2 className="mb-5 text-2xl font-extrabold leading-[1.35] text-background sm:text-4xl">
-              وقتی متن کافی نیست، تصویر را روشن کنید
-            </h2>
-            <p className="mb-7 text-base leading-[1.9] text-background/70">
-              با یک کلیک از داخل همان چت، تماس تصویری HD با مشتری برقرار کنید؛ بدون نصب اپلیکیشن یا
-              افزونه از طرف او.
-            </p>
-            <div className="space-y-4">
-              {videoFeatures.map((f) => (
-                <div key={f.title} className="flex items-start gap-3">
-                  <span className="mt-0.5 flex h-[22px] w-[22px] flex-none items-center justify-center rounded-[7px] bg-accent/25">
-                    <Check className="h-3.5 w-3.5 text-background" />
-                  </span>
-                  <div>
-                    <div className="mb-0.5 text-sm font-bold text-background">{f.title}</div>
-                    <div className="text-sm leading-[1.7] text-background/65">{f.desc}</div>
+      {callEnabled && (
+        <section className="relative overflow-hidden bg-foreground px-4 py-20 sm:px-8 sm:py-28">
+          <div
+            aria-hidden
+            className="pointer-events-none absolute -top-24 -end-24 h-[360px] w-[360px] rounded-full bg-primary/20 blur-3xl"
+          />
+          <div className="relative z-10 mx-auto grid max-w-7xl items-center gap-12 lg:grid-cols-2 lg:gap-[70px]">
+            <ScrollReveal>
+              {eyebrow("تماس ویدیویی")}
+              <h2 className="mb-5 text-2xl font-extrabold leading-[1.35] text-background sm:text-4xl">
+                وقتی متن کافی نیست، تصویر را روشن کنید
+              </h2>
+              <p className="mb-7 text-base leading-[1.9] text-background/70">
+                با یک کلیک از داخل همان چت، تماس تصویری HD با مشتری برقرار کنید؛ بدون نصب اپلیکیشن
+                یا افزونه از طرف او.
+              </p>
+              <div className="space-y-4">
+                {videoFeatures.map((f) => (
+                  <div key={f.title} className="flex items-start gap-3">
+                    <span className="mt-0.5 flex h-[22px] w-[22px] flex-none items-center justify-center rounded-[7px] bg-accent/25">
+                      <Check className="h-3.5 w-3.5 text-background" />
+                    </span>
+                    <div>
+                      <div className="mb-0.5 text-sm font-bold text-background">{f.title}</div>
+                      <div className="text-sm leading-[1.7] text-background/65">{f.desc}</div>
+                    </div>
                   </div>
-                </div>
-              ))}
-            </div>
-          </ScrollReveal>
+                ))}
+              </div>
+            </ScrollReveal>
 
-          <ScrollReveal className="rounded-[20px] bg-background/5 p-4 shadow-2xl">
-            <div className="relative h-[280px] overflow-hidden rounded-[14px]">
-              <VideoCallMock />
-              <OperatorAvatar className="absolute start-4 bottom-4 h-20 w-28 rounded-xl border-2 border-background/30" />
-            </div>
-            <div className="mt-4 flex items-center justify-center gap-4">
-              <div className="flex h-11 w-11 items-center justify-center rounded-full bg-background/10">
-                <MicOff className="h-5 w-5 text-background" />
+            <ScrollReveal className="rounded-[20px] bg-background/5 p-4 shadow-2xl">
+              <div className="relative h-[280px] overflow-hidden rounded-[14px]">
+                <VideoCallMock />
+                <OperatorAvatar className="absolute start-4 bottom-4 h-20 w-28 rounded-xl border-2 border-background/30" />
               </div>
-              <div className="flex h-11 w-11 items-center justify-center rounded-full bg-background/10">
-                <Video className="h-5 w-5 text-background" />
+              <div className="mt-4 flex items-center justify-center gap-4">
+                <div className="flex h-11 w-11 items-center justify-center rounded-full bg-background/10">
+                  <MicOff className="h-5 w-5 text-background" />
+                </div>
+                <div className="flex h-11 w-11 items-center justify-center rounded-full bg-background/10">
+                  <Video className="h-5 w-5 text-background" />
+                </div>
+                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-destructive">
+                  <PhoneOff className="h-5 w-5 text-destructive-foreground" />
+                </div>
+                <div className="flex h-11 w-11 items-center justify-center rounded-full bg-background/10">
+                  <MonitorUp className="h-5 w-5 text-background" />
+                </div>
               </div>
-              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-destructive">
-                <PhoneOff className="h-5 w-5 text-destructive-foreground" />
-              </div>
-              <div className="flex h-11 w-11 items-center justify-center rounded-full bg-background/10">
-                <MonitorUp className="h-5 w-5 text-background" />
-              </div>
-            </div>
-          </ScrollReveal>
-        </div>
-      </section>
+            </ScrollReveal>
+          </div>
+        </section>
+      )}
 
       {/* ALL-IN-ONE PLATFORM */}
       <section className="container-page py-20 sm:py-28">
@@ -586,12 +619,15 @@ function IndexPage() {
             فراتر از چت — یک CRM کامل برای ارتباط با مشتری
           </h2>
           <p className="mx-auto max-w-2xl text-base leading-[1.9] text-muted-foreground">
-            چت زنده و تماس تصویری فقط شروع کار وب‌یار است؛ هوش مصنوعی، CRM، اتوماسیون، کمپین و
-            گزارش‌گیری هم در همان پنل، بدون نیاز به هیچ ابزار جداگانه‌ای در اختیار شماست.
+            {callEnabled
+              ? "چت زنده و تماس تصویری فقط شروع کار وب‌یار است؛"
+              : "چت زنده فقط شروع کار وب‌یار است؛"}{" "}
+            هوش مصنوعی، CRM، اتوماسیون، کمپین و گزارش‌گیری هم در همان پنل، بدون نیاز به هیچ ابزار
+            جداگانه‌ای در اختیار شماست.
           </p>
         </ScrollReveal>
         <StaggerChildren className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
-          {platformFeatures.map((f) => (
+          {visiblePlatformFeatures.map((f) => (
             <motion.div
               key={f.title}
               variants={childVariant}
@@ -639,12 +675,12 @@ function IndexPage() {
               هر چیزی که پس از ورود در اختیار دارید
             </h2>
             <p className="mx-auto max-w-2xl text-base leading-[1.9] text-muted-foreground">
-              فهرست بخش‌های واقعی پنل وب‌یار؛ از گفتگو و تماس تا هوش مصنوعی، سئو، مخاطبین و
-              تنظیمات حساب.
+              فهرست بخش‌های واقعی پنل وب‌یار؛ از گفتگو و تماس تا هوش مصنوعی، سئو، مخاطبین و تنظیمات
+              حساب.
             </p>
           </ScrollReveal>
           <StaggerChildren className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {moduleGroups.map((g) => (
+            {visibleModuleGroups.map((g) => (
               <motion.div
                 key={g.title}
                 variants={childVariant}
@@ -681,7 +717,6 @@ function IndexPage() {
         </div>
       </section>
 
-
       {/* FAQ */}
       <section id="faq" className="bg-secondary/30 px-4 py-20 sm:px-8 sm:py-28">
         <div className="mx-auto max-w-3xl">
@@ -710,7 +745,9 @@ function IndexPage() {
             همین امروز وب‌یار را روی سایتتان نصب کنید
           </h2>
           <p className="relative mb-8 text-base text-primary-foreground/90">
-            گفتگو، تماس، هوش مصنوعی، مخاطبین، سئو و گزارش‌ها — همه از یک پنل
+            {callEnabled
+              ? "گفتگو، تماس، هوش مصنوعی، مخاطبین، سئو و گزارش‌ها — همه از یک پنل"
+              : "گفتگو، هوش مصنوعی، مخاطبین، سئو و گزارش‌ها — همه از یک پنل"}
           </p>
           <a
             href={settings.auth.signupUrl || "/contact"}
