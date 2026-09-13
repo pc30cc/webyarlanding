@@ -3,7 +3,7 @@ import { SiteHeader } from "./SiteHeader";
 import { SiteFooter } from "./SiteFooter";
 import { ChatWidget } from "./ChatWidget";
 import { CallCenterWidget } from "./CallCenterWidget";
-import type { SiteSettings } from "@/lib/settings";
+import { getPublicTagline, type SiteSettings } from "@/lib/settings";
 import { safeJsonLdHtml } from "@/lib/seo-meta";
 
 /** JSON-LD سازمانی + وب‌سایت، سراسری برای همه صفحات (سئو). */
@@ -23,7 +23,7 @@ function buildSiteJsonLd(settings: SiteSettings): unknown[] {
       name: settings.brand.name,
       url: settings.brand.siteUrl || undefined,
       logo: settings.brand.logoUrl || undefined,
-      description: settings.brand.tagline,
+      description: getPublicTagline(settings),
       ...(settings.brand.email ? { email: settings.brand.email } : {}),
       ...(settings.brand.phone ? { telephone: settings.brand.phone } : {}),
       sameAs: [

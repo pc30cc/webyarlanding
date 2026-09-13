@@ -71,6 +71,10 @@ const endpoints = [
 
 function ApiDocsPage() {
   const { settings } = Route.useLoaderData();
+  const callEnabled = settings.videoCall.enabled;
+  const visibleEndpoints = callEnabled
+    ? endpoints
+    : endpoints.filter((ep) => ep.path !== "/v1/calls");
   const base = (settings.brand.siteUrl || "").replace(/\/$/, "");
   const jsonLd = [
     {
@@ -146,7 +150,7 @@ function ApiDocsPage() {
                 </tr>
               </thead>
               <tbody>
-                {endpoints.map((ep) => (
+                {visibleEndpoints.map((ep) => (
                   <tr key={ep.path + ep.method} className="border-b border-border/50 last:border-0">
                     <td className="px-5 py-3">
                       <span

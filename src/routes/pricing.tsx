@@ -138,6 +138,29 @@ const staticComparison = {
 
 const PLAN_ICONS = [Zap, Star, Crown];
 
+// وقتی videoCall.enabled خاموش است، هر آیتم امکانات/محدودیت یا ردیف مقایسه‌ای که به تماس
+// تصویری/صوتی اشاره دارد حذف می‌شود — چه از پلن‌های استاتیک این فایل بیاید، چه از پلن‌های
+// همگام‌شده با اپ (mapRemotePlans)، تا هیچ اشاره‌ای در صفحه باقی نماند.
+const CALL_KEYWORDS = [
+  "تماس تصویری",
+  "تماس ویدیویی",
+  "ویدیویی",
+  "تماس صوتی",
+  "مرکز تماس",
+  "صف تماس",
+  "اشتراک‌گذاری صفحه",
+];
+function mentionsCall(text: string): boolean {
+  return CALL_KEYWORDS.some((k) => text.includes(k));
+}
+function stripCallMentions(plans: DisplayPlan[]): DisplayPlan[] {
+  return plans.map((p) => ({
+    ...p,
+    features: p.features.filter((f) => !mentionsCall(f)),
+    limits: p.limits.filter((l) => !mentionsCall(l.label)),
+  }));
+}
+
 const faNumber = new Intl.NumberFormat("fa-IR");
 
 /** تبدیل پلن‌های همگام‌شده اپلیکیشن به مدل نمایش صفحه قیمت‌گذاری */
@@ -198,13 +221,18 @@ function PricingPage() {
   const currentSlug = useCurrentPlanSlug(settings.plans?.apiUrl || "");
   const showYearly = settings.plans?.showYearly === true;
   const activePeriod = showYearly ? period : "monthly";
-  const plans = remotePlans
+  const callEnabled = settings.videoCall.enabled;
+  const rawPlans = remotePlans
     ? mapRemotePlans(remotePlans.plans, activePeriod)
     : getPlans(activePeriod);
+  const plans = callEnabled ? rawPlans : stripCallMentions(rawPlans);
   const currentIndex = currentSlug ? plans.findIndex((p) => p.slug === currentSlug) : -1;
-  const comparison = remotePlans?.comparison?.rows.length
+  const rawComparison = remotePlans?.comparison?.rows.length
     ? remotePlans.comparison
     : staticComparison;
+  const comparison = callEnabled
+    ? rawComparison
+    : { ...rawComparison, rows: rawComparison.rows.filter((r) => !mentionsCall(r.label)) };
   const base = (settings.brand.siteUrl || "").replace(/\/$/, "");
 
   const jsonLd = [
@@ -248,8 +276,10 @@ function PricingPage() {
             امکانات و قیمت‌گذاری
           </h1>
           <p className="mx-auto max-w-2xl text-base leading-[1.9] text-muted-foreground">
-            از چت زنده و تماس تصویری تا دستیار هوش مصنوعی، CRM، اتوماسیون، کمپین و گزارش‌گیری — پلن
-            مناسب کسب‌وکار خود را از میان امکانات کامل وب‌یار انتخاب کنید.
+            {callEnabled
+              ? "از چت زنده و تماس تصویری تا دستیار هوش مصنوعی، CRM، اتوماسیون، کمپین و گزارش‌گیری"
+              : "از چت زنده تا دستیار هوش مصنوعی، CRM، اتوماسیون، کمپین و گزارش‌گیری"}{" "}
+            — پلن مناسب کسب‌وکار خود را از میان امکانات کامل وب‌یار انتخاب کنید.
           </p>
         </motion.div>
 
