@@ -2,20 +2,20 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 
-interface ColumnDef {
+export interface ColumnDef {
   name: string;
   type: "TEXT" | "VARCHAR" | "INT" | "SMALLINT" | "BIGINT" | "TIMESTAMP";
   length?: number;
 }
 
-interface TableDef {
+export interface TableDef {
   name: string;
   pk: string;
   columns: ColumnDef[];
 }
 
 // ترتیب جدول‌ها بر اساس وابستگی کلید خارجی (والد قبل از فرزند) — برای درج امن.
-const TABLES: TableDef[] = [
+export const TABLES: TableDef[] = [
   {
     name: "users",
     pk: "id",
