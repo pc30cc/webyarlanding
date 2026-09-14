@@ -260,10 +260,13 @@ async function buildTableExport(
   const pageSize = 1000;
   let from = 0;
   for (;;) {
-    const { data } = await source
+    const { data, error } = await source
       .from(table.name as any)
       .select("*")
       .range(from, from + pageSize - 1);
+    // کلاینت Supabase روی خطاهای API (RLS، جدول ناموجود، کلید نامعتبر و...) throw نمی‌کند —
+    // فقط error برمی‌گرداند؛ اگر این‌جا نادیده گرفته شود، خواندن ساکت با آرایه خالی جایگزین می‌شود.
+    if (error) throw new Error(`${table.name}: ${error.message}`);
     const chunk = (data ?? []) as unknown as Record<string, unknown>[];
     rows.push(...chunk);
     if (chunk.length < pageSize) break;
@@ -466,7 +469,7 @@ export const saveDestinationDbSettings = createServerFn({ method: "POST" })
 export const inspectDestinationDatabase = createServerFn({ method: "GET" }).handler(
   async (): Promise<{
     generatedAt: string | null;
-    tables: { name: string; rowCount: number }[];
+    tables: { name: string; rowCount: number; error: string | null }[];
   }> => {
     const { requireAdmin } = await import("./auth.server");
     await requireAdmin();
@@ -474,30 +477,28 @@ export const inspectDestinationDatabase = createServerFn({ method: "GET" }).hand
     const dest = await connectDestinationSupabase();
 
     let generatedAt: string | null = null;
-    try {
-      const { data } = await dest
-        .from("settings" as any)
-        .select("setting_value")
-        .eq("setting_key", META_SETTING_KEY)
-        .maybeSingle();
-      if (data?.setting_value) {
+    const { data: metaRow, error: metaError } = await dest
+      .from("settings" as any)
+      .select("setting_value")
+      .eq("setting_key", META_SETTING_KEY)
+      .maybeSingle();
+    if (!metaError && metaRow?.setting_value) {
+      try {
         generatedAt =
-          (JSON.parse(data.setting_value) as { generatedAt?: string }).generatedAt ?? null;
+          (JSON.parse(metaRow.setting_value) as { generatedAt?: string }).generatedAt ?? null;
+      } catch {
+        generatedAt = null;
       }
-    } catch {
-      generatedAt = null;
     }
 
     const tables = await Promise.all(
       TABLES.map(async (table) => {
-        try {
-          const { count } = await dest
-            .from(table.name as any)
-            .select("*", { count: "exact", head: true });
-          return { name: table.name, rowCount: count ?? 0 };
-        } catch {
-          return { name: table.name, rowCount: 0 };
-        }
+        const { count, error } = await dest
+          .from(table.name as any)
+          .select("*", { count: "exact", head: true });
+        // خطا (مثلاً RLS یا جدول ناموجود) نادیده گرفته نمی‌شود — دقیقاً همان پیامی که
+        // Supabase برمی‌گرداند نمایش داده می‌شود تا دلیل واقعی مشخص باشد
+        return { name: table.name, rowCount: count ?? 0, error: error?.message ?? null };
       }),
     );
 
@@ -510,29 +511,41 @@ export const backupToDestinationDb = createServerFn({ method: "POST" }).handler(
   async (): Promise<{
     ok: boolean;
     generatedAt: string;
-    tables: { name: string; rowCount: number }[];
+    tables: { name: string; rowCount: number; error: string | null }[];
   }> => {
     const { requireAdmin } = await import("./auth.server");
     await requireAdmin();
 
     const dest = await connectDestinationSupabase();
 
-    const summary: { name: string; rowCount: number }[] = [];
+    const summary: { name: string; rowCount: number; error: string | null }[] = [];
     for (const table of TABLES) {
       const rows = await buildTableExport(table);
       try {
-        await dest
+        const { error: deleteError } = await dest
           .from(table.name as any)
           .delete()
           .not(table.pk, "is", null);
+        if (deleteError) throw new Error(deleteError.message);
+
+        let inserted = 0;
         for (let i = 0; i < rows.length; i += CHUNK_SIZE) {
           const chunk = rows.slice(i, i + CHUNK_SIZE);
-          if (chunk.length > 0) await dest.from(table.name as any).insert(chunk as any);
+          if (chunk.length === 0) continue;
+          const { error: insertError } = await dest.from(table.name as any).insert(chunk as any);
+          // نادیده گرفتن error این‌جا دقیقاً همان چیزی بود که باعث می‌شد بک‌آپ ظاهراً موفق
+          // گزارش شود بدون این‌که واقعاً چیزی روی مقصد نوشته شده باشد
+          if (insertError) throw new Error(insertError.message);
+          inserted += chunk.length;
         }
-        summary.push({ name: table.name, rowCount: rows.length });
-      } catch {
-        // جدول روی مقصد وجود ندارد یا نوشتن در آن شکست خورد — این جدول رد می‌شود، بقیه ادامه پیدا می‌کنند
-        summary.push({ name: table.name, rowCount: 0 });
+        summary.push({ name: table.name, rowCount: inserted, error: null });
+      } catch (err) {
+        // این جدول رد می‌شود و پیام خطای واقعی گزارش می‌شود؛ بقیه جدول‌ها ادامه پیدا می‌کنند
+        summary.push({
+          name: table.name,
+          rowCount: 0,
+          error: err instanceof Error ? err.message : "خطای نامشخص",
+        });
       }
     }
 
@@ -571,12 +584,19 @@ export const restoreFromDestinationDb = createServerFn({ method: "POST" }).handl
     const dest = await connectDestinationSupabase();
 
     const gathered: Record<string, unknown[]> = {};
+    const failures: string[] = [];
     for (const table of TABLES) {
       try {
         gathered[table.name] = await buildTableExport(table, dest);
-      } catch {
-        // جدول روی مقصد وجود ندارد — نادیده گرفته می‌شود
+      } catch (err) {
+        // جدول روی مقصد وجود ندارد یا خواندن از آن شکست خورد — رد می‌شود، بقیه ادامه پیدا می‌کنند
+        failures.push(err instanceof Error ? err.message : `${table.name}: خطای نامشخص`);
       }
+    }
+    // اگر هیچ جدولی قابل خواندن نبود (مثلاً کلید اشتباه یا دسترسی رد شده)، به‌جای گزارش
+    // موفقیت با صفر رکورد، دلیل واقعی را نشان بده
+    if (failures.length === TABLES.length) {
+      throw new Error(failures[0] ?? "خواندن از Supabase مقصد ممکن نشد");
     }
     return performImport(gathered);
   },
