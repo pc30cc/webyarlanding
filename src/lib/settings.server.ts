@@ -123,3 +123,31 @@ export async function saveTelegramKeys(partial: Partial<TelegramApiKeys>): Promi
   const stored = await loadPrivateSettings<Partial<TelegramApiKeys>>({});
   await savePrivateSettings({ ...stored, ...partial });
 }
+
+/** اتصال به دیتابیس PostgreSQL مقصد برای ترانسفر مستقیم بک‌آپ — بخشی از تنظیمات محرمانه */
+export interface DestinationDbSettings {
+  dbHost: string;
+  dbPort: number;
+  dbUser: string;
+  dbPassword: string;
+  /** فعال کردن SSL برای اتصال — اکثر دیتابیس‌های مدیریت‌شده به آن نیاز دارند */
+  dbSsl: boolean;
+}
+
+const DESTINATION_DB_DEFAULTS: DestinationDbSettings = {
+  dbHost: "",
+  dbPort: 5432,
+  dbUser: "",
+  dbPassword: "",
+  dbSsl: true,
+};
+
+export async function loadDestinationDb(): Promise<DestinationDbSettings> {
+  const stored = await loadPrivateSettings<Partial<DestinationDbSettings>>({});
+  return { ...DESTINATION_DB_DEFAULTS, ...stored };
+}
+
+export async function saveDestinationDb(partial: Partial<DestinationDbSettings>): Promise<void> {
+  const stored = await loadPrivateSettings<Partial<DestinationDbSettings>>({});
+  await savePrivateSettings({ ...stored, ...partial });
+}

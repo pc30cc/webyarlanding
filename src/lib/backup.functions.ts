@@ -266,7 +266,9 @@ async function buildTableExport(table: TableDef): Promise<Record<string, unknown
   return rows;
 }
 
-function buildSqlDump(tables: { name: string; columns: ColumnDef[]; rows: Record<string, unknown>[] }[]): string {
+function buildSqlDump(
+  tables: { name: string; columns: ColumnDef[]; rows: Record<string, unknown>[] }[],
+): string {
   const lines: string[] = [];
   lines.push("-- نسخه‌پشتیبان دیتابیس WEBYAR — سازگار با PostgreSQL و MySQL/phpMyAdmin");
   lines.push(`-- تاریخ تولید: ${new Date().toISOString()}`);
@@ -298,59 +300,351 @@ export const getDatabaseInfo = createServerFn({ method: "GET" }).handler(async (
 
   const results = await Promise.all(
     TABLES.map(async (table) => {
-      const { count } = await db.from(table.name as any).select("*", { count: "exact", head: true });
+      const { count } = await db
+        .from(table.name as any)
+        .select("*", { count: "exact", head: true });
       return { name: table.name, rowCount: count ?? 0 };
     }),
   );
   return { tables: results };
 });
 
-export const exportBackup = createServerFn({ method: "GET" }).handler(async (): Promise<{ generatedAt: string; tables: string[]; data: Record<string, any[]>; sql: string }> => {
-  const { requireAdmin } = await import("./auth.server");
-  await requireAdmin();
+export const exportBackup = createServerFn({ method: "GET" }).handler(
+  async (): Promise<{
+    generatedAt: string;
+    tables: string[];
+    data: Record<string, any[]>;
+    sql: string;
+  }> => {
+    const { requireAdmin } = await import("./auth.server");
+    await requireAdmin();
 
-  const tablesWithRows = await Promise.all(
-    TABLES.map(async (table) => ({ ...table, rows: await buildTableExport(table) })),
-  );
+    const tablesWithRows = await Promise.all(
+      TABLES.map(async (table) => ({ ...table, rows: await buildTableExport(table) })),
+    );
 
-  const json: Record<string, Record<string, unknown>[]> = {};
-  for (const table of tablesWithRows) json[table.name] = table.rows;
+    const json: Record<string, Record<string, unknown>[]> = {};
+    for (const table of tablesWithRows) json[table.name] = table.rows;
 
-  const sql = buildSqlDump(tablesWithRows);
+    const sql = buildSqlDump(tablesWithRows);
 
-  return {
-    generatedAt: new Date().toISOString(),
-    tables: TABLES.map((t) => t.name),
-    data: json,
-    sql,
-  };
-});
+    return {
+      generatedAt: new Date().toISOString(),
+      tables: TABLES.map((t) => t.name),
+      data: json,
+      sql,
+    };
+  },
+);
 
 const importSchema = z.object({
   data: z.record(z.string(), z.array(z.record(z.string(), z.unknown()))),
 });
 
+/** منطق مشترک بازیابی — چه از فایل آپلودشده بیاید چه از یک دیتابیس مقصد */
+async function performImport(
+  data: Record<string, unknown[]>,
+): Promise<{ ok: true; totalInserted: number }> {
+  const { db } = await import("./db.server");
+
+  const deleteOrder = [...TABLES].reverse();
+  for (const table of deleteOrder) {
+    if (!data[table.name]) continue;
+    await db
+      .from(table.name as any)
+      .delete()
+      .not(table.pk, "is", null);
+  }
+
+  let totalInserted = 0;
+  for (const table of TABLES) {
+    const rows = data[table.name];
+    if (!rows || rows.length === 0) continue;
+    const { error } = await db.from(table.name as any).insert(rows as any);
+    if (!error) totalInserted += rows.length;
+  }
+
+  return { ok: true, totalInserted };
+}
+
 export const importBackup = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) => importSchema.parse(input))
   .handler(async ({ data }) => {
     const { requireAdmin } = await import("./auth.server");
-    const { db } = await import("./db.server");
+    await requireAdmin();
+    return performImport(data.data);
+  });
+
+/* ───────────── ترانسفر مستقیم به دیتابیس PostgreSQL مقصد ─────────────
+ * برخلاف export/import بالا (که فایل واسط دانلود/آپلود می‌شود)، این بخش مستقیماً
+ * از طریق یک اتصال TCP خام (Cloudflare Sockets API، از طریق پکیج postgres.js) به
+ * یک سرور PostgreSQL دیگر وصل می‌شود و جدول‌ها را همان‌جا می‌سازد/می‌خواند.
+ */
+
+/** نام امن دیتابیس/جدول پستگرس — چون این مقادیر مستقیم در DDL/شناسه استفاده می‌شوند نه به‌عنوان پارامتر */
+const SAFE_IDENTIFIER = /^[a-zA-Z_][a-zA-Z0-9_]{0,62}$/;
+const META_TABLE = "_webyar_backup_meta";
+const CHUNK_SIZE = 500;
+
+function assertSafeIdentifier(name: string): void {
+  if (!SAFE_IDENTIFIER.test(name)) {
+    throw new Error(
+      "نام دیتابیس فقط می‌تواند شامل حروف انگلیسی، عدد و زیرخط باشد و با عدد شروع نشود.",
+    );
+  }
+}
+
+/** اتصال کوتاه‌مدت به سرور مقصد — اگر databaseName ندهید به دیتابیس نگهداری «postgres» وصل می‌شود (برای LIST/CREATE DATABASE) */
+async function connectDestination(databaseName?: string) {
+  const { loadDestinationDb } = await import("./settings.server");
+  const conn = await loadDestinationDb();
+  if (!conn.dbHost || !conn.dbUser) {
+    throw new Error(
+      "اتصال دیتابیس مقصد هنوز تنظیم نشده — اول در بخش پشتیبان‌گیری مشخصات آن را وارد و ذخیره کنید.",
+    );
+  }
+  const postgresModule = await import("postgres");
+  const postgres = postgresModule.default;
+  const sql = postgres({
+    host: conn.dbHost,
+    port: conn.dbPort || 5432,
+    username: conn.dbUser,
+    password: conn.dbPassword,
+    database: databaseName || "postgres",
+    ssl: conn.dbSsl ? "require" : false,
+    max: 1,
+    idle_timeout: 5,
+    connect_timeout: 10,
+    // بدون این، postgres.js سعی می‌کند از prepared statement استفاده کند — روی اتصال مستقیم
+    // (بدون connection pooler مثل PgBouncer/Hyperdrive) با بعضی سرویس‌های PostgreSQL مدیریت‌شده مشکل ایجاد می‌کند
+    prepare: false,
+  });
+  return sql;
+}
+
+function pgColumnSql(col: ColumnDef): string {
+  switch (col.type) {
+    case "VARCHAR":
+      return `VARCHAR(${col.length ?? 191})`;
+    case "TEXT":
+      return "TEXT";
+    case "INT":
+      return "INTEGER";
+    case "SMALLINT":
+      return "SMALLINT";
+    case "BIGINT":
+      return "BIGINT";
+    case "TIMESTAMP":
+      return "TIMESTAMP";
+  }
+}
+
+/** وضعیت اتصال دیتابیس مقصد — رمز عبور واقعی هرگز به کلاینت برنمی‌گردد */
+export const getDestinationDbStatus = createServerFn({ method: "GET" }).handler(async () => {
+  const { requireAdmin } = await import("./auth.server");
+  await requireAdmin();
+  const { loadDestinationDb } = await import("./settings.server");
+  const conn = await loadDestinationDb();
+  return {
+    configured: !!(conn.dbHost && conn.dbUser),
+    dbHost: conn.dbHost,
+    dbPort: conn.dbPort,
+    dbUser: conn.dbUser,
+    dbSsl: conn.dbSsl,
+    passwordSet: !!conn.dbPassword,
+  };
+});
+
+const saveDestinationDbSchema = z.object({
+  dbHost: z.string().min(1, "آدرس سرور الزامی است"),
+  dbPort: z.number().int().min(1).max(65535).optional().default(5432),
+  dbUser: z.string().min(1, "نام کاربری الزامی است"),
+  dbPassword: z.string().optional(),
+  dbSsl: z.boolean().optional().default(true),
+});
+
+/** ذخیره مشخصات اتصال — اگر رمز عبور خالی بفرستید، رمز قبلی دست‌نخورده می‌ماند */
+export const saveDestinationDbSettings = createServerFn({ method: "POST" })
+  .inputValidator((input: unknown) => saveDestinationDbSchema.parse(input))
+  .handler(async ({ data }): Promise<{ ok: boolean }> => {
+    const { requireAdmin } = await import("./auth.server");
+    await requireAdmin();
+    const { saveDestinationDb } = await import("./settings.server");
+    const partial: {
+      dbHost: string;
+      dbPort: number;
+      dbUser: string;
+      dbSsl: boolean;
+      dbPassword?: string;
+    } = {
+      dbHost: data.dbHost,
+      dbPort: data.dbPort,
+      dbUser: data.dbUser,
+      dbSsl: data.dbSsl,
+    };
+    if (data.dbPassword) partial.dbPassword = data.dbPassword;
+    await saveDestinationDb(partial);
+    return { ok: true };
+  });
+
+/** فهرست دیتابیس‌های موجود روی سرور مقصد (به‌جز template0/template1) */
+export const listDestinationDatabases = createServerFn({ method: "GET" }).handler(
+  async (): Promise<string[]> => {
+    const { requireAdmin } = await import("./auth.server");
     await requireAdmin();
 
-    const deleteOrder = [...TABLES].reverse();
-
-    for (const table of deleteOrder) {
-      if (!data.data[table.name]) continue;
-      await db.from(table.name as any).delete().not(table.pk, "is", null);
+    const sql = await connectDestination();
+    try {
+      const rows = await sql<{ datname: string }[]>`
+      SELECT datname FROM pg_database
+      WHERE datistemplate = false AND datname NOT IN ('template0', 'template1')
+      ORDER BY datname
+    `;
+      return rows.map((r) => r.datname);
+    } finally {
+      await sql.end({ timeout: 3 });
     }
+  },
+);
 
-    let totalInserted = 0;
-    for (const table of TABLES) {
-      const rows = data.data[table.name];
-      if (!rows || rows.length === 0) continue;
-      const { error } = await db.from(table.name as any).insert(rows as any);
-      if (!error) totalInserted += rows.length;
+const dbNameSchema = z.object({ name: z.string().min(1) });
+
+/** ساخت یک دیتابیس خالی جدید روی سرور مقصد */
+export const createDestinationDatabase = createServerFn({ method: "POST" })
+  .inputValidator((input: unknown) => dbNameSchema.parse(input))
+  .handler(async ({ data }): Promise<{ ok: boolean }> => {
+    const { requireAdmin } = await import("./auth.server");
+    await requireAdmin();
+    assertSafeIdentifier(data.name);
+
+    const sql = await connectDestination();
+    try {
+      await sql.unsafe(`CREATE DATABASE "${data.name}"`);
+      return { ok: true };
+    } finally {
+      await sql.end({ timeout: 3 });
     }
+  });
 
-    return { ok: true, totalInserted };
+/** آمار یک دیتابیس مقصد مشخص — تعداد ردیف هر جدول و زمان آخرین بک‌آپ، قبل از انتخاب برای بازیابی */
+export const inspectDestinationDatabase = createServerFn({ method: "POST" })
+  .inputValidator((input: unknown) => dbNameSchema.parse(input))
+  .handler(
+    async ({
+      data,
+    }): Promise<{ generatedAt: string | null; tables: { name: string; rowCount: number }[] }> => {
+      const { requireAdmin } = await import("./auth.server");
+      await requireAdmin();
+      assertSafeIdentifier(data.name);
+
+      const sql = await connectDestination(data.name);
+      try {
+        let generatedAt: string | null = null;
+        try {
+          const meta = await sql<
+            { generated_at: string }[]
+          >`SELECT generated_at FROM ${sql(META_TABLE)} WHERE id = 1`;
+          generatedAt = meta[0]?.generated_at ?? null;
+        } catch {
+          generatedAt = null;
+        }
+
+        const tables = await Promise.all(
+          TABLES.map(async (table) => {
+            try {
+              const result = await sql<
+                { count: string }[]
+              >`SELECT count(*)::text FROM ${sql(table.name)}`;
+              return { name: table.name, rowCount: Number(result[0]?.count ?? 0) };
+            } catch {
+              return { name: table.name, rowCount: 0 };
+            }
+          }),
+        );
+
+        return { generatedAt, tables };
+      } finally {
+        await sql.end({ timeout: 3 });
+      }
+    },
+  );
+
+/** بک‌آپ مستقیم دیتابیس فعلی به داخل یک دیتابیس مشخص روی سرور مقصد — بدون فایل واسط */
+export const backupToDestinationDb = createServerFn({ method: "POST" })
+  .inputValidator((input: unknown) => dbNameSchema.parse(input))
+  .handler(
+    async ({
+      data,
+    }): Promise<{
+      ok: boolean;
+      generatedAt: string;
+      tables: { name: string; rowCount: number }[];
+    }> => {
+      const { requireAdmin } = await import("./auth.server");
+      await requireAdmin();
+      assertSafeIdentifier(data.name);
+
+      const sql = await connectDestination(data.name);
+      try {
+        await sql.unsafe(
+          `CREATE TABLE IF NOT EXISTS ${META_TABLE} (id INTEGER PRIMARY KEY, generated_at TIMESTAMP)`,
+        );
+
+        const summary: { name: string; rowCount: number }[] = [];
+        for (const table of TABLES) {
+          const columnsSql = table.columns.map((c) => `"${c.name}" ${pgColumnSql(c)}`).join(", ");
+          await sql.unsafe(`CREATE TABLE IF NOT EXISTS "${table.name}" (${columnsSql})`);
+          await sql.unsafe(`DELETE FROM "${table.name}"`);
+
+          const rows = await buildTableExport(table);
+          const columnNames = table.columns.map((c) => c.name);
+          for (let i = 0; i < rows.length; i += CHUNK_SIZE) {
+            const chunk = rows.slice(i, i + CHUNK_SIZE).map((row) => {
+              const clean: Record<string, unknown> = {};
+              for (const col of columnNames) clean[col] = row[col] ?? null;
+              return clean;
+            });
+            if (chunk.length > 0) {
+              await sql`INSERT INTO ${sql(table.name)} ${sql(chunk, ...columnNames)}`;
+            }
+          }
+          summary.push({ name: table.name, rowCount: rows.length });
+        }
+
+        const generatedAt = new Date().toISOString();
+        await sql`
+        INSERT INTO ${sql(META_TABLE)} (id, generated_at) VALUES (1, ${generatedAt})
+        ON CONFLICT (id) DO UPDATE SET generated_at = EXCLUDED.generated_at
+      `;
+
+        return { ok: true, generatedAt, tables: summary };
+      } finally {
+        await sql.end({ timeout: 3 });
+      }
+    },
+  );
+
+/** بازیابی دیتابیس فعلی سایت از یک دیتابیس مقصد که قبلاً با همین ابزار بک‌آپ گرفته شده */
+export const restoreFromDestinationDb = createServerFn({ method: "POST" })
+  .inputValidator((input: unknown) => dbNameSchema.parse(input))
+  .handler(async ({ data }): Promise<{ ok: boolean; totalInserted: number }> => {
+    const { requireAdmin } = await import("./auth.server");
+    await requireAdmin();
+    assertSafeIdentifier(data.name);
+
+    const sql = await connectDestination(data.name);
+    try {
+      const gathered: Record<string, unknown[]> = {};
+      for (const table of TABLES) {
+        try {
+          const rows = await sql.unsafe(`SELECT * FROM "${table.name}"`);
+          gathered[table.name] = rows as unknown[];
+        } catch {
+          // جدول روی مقصد وجود ندارد — نادیده گرفته می‌شود
+        }
+      }
+      return performImport(gathered);
+    } finally {
+      await sql.end({ timeout: 3 });
+    }
   });
