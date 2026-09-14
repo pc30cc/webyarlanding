@@ -8,8 +8,6 @@ import {
   Upload,
   Database,
   Server,
-  Plus,
-  RefreshCw,
   ArrowDownToLine,
   ArrowUpFromLine,
 } from "lucide-react";
@@ -19,8 +17,6 @@ import {
   importBackup,
   getDestinationDbStatus,
   saveDestinationDbSettings,
-  listDestinationDatabases,
-  createDestinationDatabase,
   inspectDestinationDatabase,
   backupToDestinationDb,
   restoreFromDestinationDb,
@@ -28,7 +24,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   AlertDialog,
@@ -239,8 +234,6 @@ export default function BackupSection() {
 function DestinationDbSection() {
   const statusFn = useServerFn(getDestinationDbStatus);
   const saveFn = useServerFn(saveDestinationDbSettings);
-  const listFn = useServerFn(listDestinationDatabases);
-  const createDbFn = useServerFn(createDestinationDatabase);
   const inspectFn = useServerFn(inspectDestinationDatabase);
   const backupFn = useServerFn(backupToDestinationDb);
   const restoreFn = useServerFn(restoreFromDestinationDb);
@@ -251,78 +244,48 @@ function DestinationDbSection() {
     queryFn: () => statusFn(),
   });
 
-  const [form, setForm] = useState({
-    dbHost: "",
-    dbPort: 5432,
-    dbUser: "",
-    dbPassword: "",
-    dbSsl: true,
-  });
-  const [databases, setDatabases] = useState<string[] | null>(null);
-  const [selectedDb, setSelectedDb] = useState<string | null>(null);
-  const [newDbName, setNewDbName] = useState("");
+  const [form, setForm] = useState({ url: "", serviceRoleKey: "" });
   const [confirmAction, setConfirmAction] = useState<"backup" | "restore" | null>(null);
 
   const saveMutation = useMutation({
     mutationFn: () => saveFn({ data: form }),
     onSuccess: () => {
       toast.success("مشخصات اتصال ذخیره شد");
-      setForm((f) => ({ ...f, dbPassword: "" }));
+      setForm((f) => ({ ...f, serviceRoleKey: "" }));
       qc.invalidateQueries({ queryKey: ["destination-db-status"] });
     },
     onError: () => toast.error("خطا در ذخیره مشخصات اتصال"),
   });
 
-  const listMutation = useMutation({
-    mutationFn: () => listFn(),
-    onSuccess: (res) => {
-      setDatabases(res);
-      if (res.length === 0) toast.info("هیچ دیتابیسی روی سرور مقصد پیدا نشد");
-    },
-    onError: (err: unknown) =>
-      toast.error(err instanceof Error ? err.message : "خطا در اتصال به سرور مقصد"),
-  });
-
-  const createDbMutation = useMutation({
-    mutationFn: () => createDbFn({ data: { name: newDbName.trim() } }),
-    onSuccess: () => {
-      toast.success("دیتابیس جدید ساخته شد");
-      setNewDbName("");
-      listMutation.mutate();
-    },
-    onError: (err: unknown) =>
-      toast.error(err instanceof Error ? err.message : "خطا در ساخت دیتابیس"),
-  });
-
   const inspectQuery = useQuery({
-    queryKey: ["destination-db-inspect", selectedDb],
-    queryFn: () => inspectFn({ data: { name: selectedDb ?? "" } }),
-    enabled: !!selectedDb,
+    queryKey: ["destination-db-inspect"],
+    queryFn: () => inspectFn(),
+    enabled: !!status?.configured,
   });
 
   const backupMutation = useMutation({
-    mutationFn: (name: string) => backupFn({ data: { name } }),
+    mutationFn: () => backupFn(),
     onSuccess: (res) => {
       const total = res.tables.reduce((sum, t) => sum + t.rowCount, 0);
-      toast.success(`بک‌آپ در دیتابیس مقصد نوشته شد — ${total} رکورد`);
+      toast.success(`بک‌آپ در Supabase مقصد نوشته شد — ${total} رکورد`);
       setConfirmAction(null);
-      qc.invalidateQueries({ queryKey: ["destination-db-inspect", selectedDb] });
+      qc.invalidateQueries({ queryKey: ["destination-db-inspect"] });
     },
     onError: (err: unknown) => {
-      toast.error(err instanceof Error ? err.message : "خطا در بک‌آپ به دیتابیس مقصد");
+      toast.error(err instanceof Error ? err.message : "خطا در بک‌آپ به Supabase مقصد");
       setConfirmAction(null);
     },
   });
 
   const restoreMutation = useMutation({
-    mutationFn: (name: string) => restoreFn({ data: { name } }),
+    mutationFn: () => restoreFn(),
     onSuccess: (res) => {
       toast.success(`بازیابی انجام شد — ${res.totalInserted} رکورد درج شد`);
       setConfirmAction(null);
       qc.invalidateQueries({ queryKey: ["backup-info"] });
     },
     onError: (err: unknown) => {
-      toast.error(err instanceof Error ? err.message : "خطا در بازیابی از دیتابیس مقصد");
+      toast.error(err instanceof Error ? err.message : "خطا در بازیابی از Supabase مقصد");
       setConfirmAction(null);
     },
   });
@@ -331,194 +294,108 @@ function DestinationDbSection() {
     <div className="flex flex-col gap-3 rounded-xl border border-border bg-card p-4 shadow-sm">
       <div className="flex items-center gap-2">
         <Server className="h-4 w-4 text-muted-foreground" />
-        <h3 className="font-semibold text-foreground">ترانسفر مستقیم به دیتابیس مقصد</h3>
+        <h3 className="font-semibold text-foreground">ترانسفر مستقیم به Supabase مقصد</h3>
       </div>
       <p className="text-sm text-muted-foreground">
-        مشخصات اتصال یک سرور PostgreSQL دیگر را وارد کنید — بدون فایل واسط، مستقیم از همین‌جا در
-        دیتابیس آن سرور بک‌آپ می‌گیرید یا از آن بازیابی می‌کنید.
+        آدرس پروژه و کلید Service Role یک پروژه Supabase دیگر (مثلاً یک نمونه دیگر از همین سایت) را
+        وارد کنید — دقیقاً همان روشی که این سایت با دیتابیس خودش صحبت می‌کند، بدون فایل واسط.
+        جدول‌های دیتابیس مقصد باید از قبل با همین ساختار وجود داشته باشند.
       </p>
 
       {statusLoading ? (
-        <Skeleton className="h-24 w-full" />
+        <Skeleton className="h-20 w-full" />
       ) : (
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <div className="flex flex-col gap-1.5">
-            <Label>آدرس سرور (Host)</Label>
+            <Label>آدرس پروژه Supabase (URL)</Label>
             <Input
               dir="ltr"
-              placeholder={status?.dbHost || "db.example.com"}
-              value={form.dbHost}
-              onChange={(e) => setForm((f) => ({ ...f, dbHost: e.target.value }))}
+              placeholder={status?.url || "https://xxxx.supabase.co"}
+              value={form.url}
+              onChange={(e) => setForm((f) => ({ ...f, url: e.target.value }))}
             />
           </div>
           <div className="flex flex-col gap-1.5">
-            <Label>پورت</Label>
-            <Input
-              dir="ltr"
-              type="number"
-              placeholder="5432"
-              value={form.dbPort || ""}
-              onChange={(e) => setForm((f) => ({ ...f, dbPort: Number(e.target.value) || 5432 }))}
-            />
-          </div>
-          <div className="flex flex-col gap-1.5">
-            <Label>نام کاربری</Label>
-            <Input
-              dir="ltr"
-              placeholder={status?.dbUser || "postgres"}
-              value={form.dbUser}
-              onChange={(e) => setForm((f) => ({ ...f, dbUser: e.target.value }))}
-            />
-          </div>
-          <div className="flex flex-col gap-1.5">
-            <Label>رمز عبور</Label>
+            <Label>کلید Service Role</Label>
             <Input
               dir="ltr"
               type="password"
-              placeholder={status?.passwordSet ? "برای تغییر، رمز جدید وارد کنید" : "رمز عبور"}
-              value={form.dbPassword}
-              onChange={(e) => setForm((f) => ({ ...f, dbPassword: e.target.value }))}
+              placeholder={
+                status?.serviceRoleKeySet ? "برای تغییر، کلید جدید وارد کنید" : "کلید Service Role"
+              }
+              value={form.serviceRoleKey}
+              onChange={(e) => setForm((f) => ({ ...f, serviceRoleKey: e.target.value }))}
             />
-          </div>
-          <div className="flex items-center gap-2 sm:col-span-2">
-            <Switch
-              checked={form.dbSsl}
-              onCheckedChange={(v) => setForm((f) => ({ ...f, dbSsl: v }))}
-            />
-            <Label className="cursor-pointer text-xs">
-              اتصال با SSL (برای اکثر سرویس‌های ابری لازم است)
-            </Label>
           </div>
         </div>
       )}
 
       {status?.configured && (
         <p dir="ltr" className="text-xs text-success">
-          اتصال فعلی: {status.dbUser}@{status.dbHost}:{status.dbPort}
+          اتصال فعلی: {status.url}
         </p>
       )}
 
       <div className="flex flex-wrap gap-3">
         <Button
           size="sm"
-          disabled={saveMutation.isPending || !form.dbHost || !form.dbUser}
+          disabled={saveMutation.isPending || !form.url}
           onClick={() => saveMutation.mutate()}
           className="gap-2"
         >
           {saveMutation.isPending && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
           ذخیره اتصال
         </Button>
-        <Button
-          size="sm"
-          variant="outline"
-          disabled={listMutation.isPending || !status?.configured}
-          onClick={() => listMutation.mutate()}
-          className="gap-2"
-        >
-          {listMutation.isPending ? (
-            <Loader2 className="h-3.5 w-3.5 animate-spin" />
-          ) : (
-            <RefreshCw className="h-3.5 w-3.5" />
-          )}
-          دریافت لیست دیتابیس‌ها
-        </Button>
       </div>
 
-      {databases && (
+      {status?.configured && (
         <div className="flex flex-col gap-3 border-t border-border pt-4">
-          <div className="flex flex-wrap items-center gap-2">
-            <Input
-              dir="ltr"
-              placeholder="نام دیتابیس جدید"
-              value={newDbName}
-              onChange={(e) => setNewDbName(e.target.value)}
-              className="max-w-[220px]"
-            />
+          {inspectQuery.isLoading ? (
+            <Skeleton className="h-16 w-full" />
+          ) : inspectQuery.data ? (
+            <>
+              <p className="text-xs text-muted-foreground">
+                {inspectQuery.data.generatedAt
+                  ? `آخرین بک‌آپ در این Supabase: ${new Date(inspectQuery.data.generatedAt).toLocaleString("fa-IR")}`
+                  : "هنوز با این ابزار در این Supabase بک‌آپی نوشته نشده"}
+              </p>
+              <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+                {inspectQuery.data.tables.map((t) => (
+                  <div
+                    key={t.name}
+                    className="rounded-md border border-border bg-background p-1.5 text-center"
+                  >
+                    <p dir="ltr" className="text-[11px] text-muted-foreground">
+                      {t.name}
+                    </p>
+                    <p className="text-sm font-bold text-foreground">{t.rowCount}</p>
+                  </div>
+                ))}
+              </div>
+            </>
+          ) : null}
+
+          <div className="flex flex-wrap gap-3">
+            <Button
+              size="sm"
+              disabled={backupMutation.isPending}
+              onClick={() => setConfirmAction("backup")}
+              className="gap-2"
+            >
+              <ArrowUpFromLine className="h-3.5 w-3.5" />
+              بک‌آپ در این Supabase
+            </Button>
             <Button
               size="sm"
               variant="outline"
-              disabled={createDbMutation.isPending || !newDbName.trim()}
-              onClick={() => createDbMutation.mutate()}
-              className="gap-1.5"
+              disabled={restoreMutation.isPending}
+              onClick={() => setConfirmAction("restore")}
+              className="gap-2"
             >
-              {createDbMutation.isPending ? (
-                <Loader2 className="h-3.5 w-3.5 animate-spin" />
-              ) : (
-                <Plus className="h-3.5 w-3.5" />
-              )}
-              ساخت دیتابیس خالی
+              <ArrowDownToLine className="h-3.5 w-3.5" />
+              بازیابی از این Supabase به سایت
             </Button>
           </div>
-
-          <div className="flex flex-col gap-2">
-            {databases.map((name) => (
-              <button
-                key={name}
-                type="button"
-                onClick={() => setSelectedDb(name === selectedDb ? null : name)}
-                dir="ltr"
-                className={`w-full rounded-lg border px-3 py-2 text-start text-sm transition-colors ${
-                  selectedDb === name
-                    ? "border-primary bg-primary/5 text-foreground"
-                    : "border-border text-muted-foreground hover:bg-secondary"
-                }`}
-              >
-                <Database className="me-2 inline h-3.5 w-3.5" />
-                {name}
-              </button>
-            ))}
-          </div>
-
-          {selectedDb && (
-            <div className="flex flex-col gap-3 rounded-lg border border-border bg-secondary/30 p-3">
-              {inspectQuery.isLoading ? (
-                <Skeleton className="h-16 w-full" />
-              ) : inspectQuery.data ? (
-                <>
-                  <p className="text-xs text-muted-foreground">
-                    {inspectQuery.data.generatedAt
-                      ? `آخرین بک‌آپ در این دیتابیس: ${new Date(inspectQuery.data.generatedAt).toLocaleString("fa-IR")}`
-                      : "هنوز با این ابزار در این دیتابیس بک‌آپی نوشته نشده"}
-                  </p>
-                  <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-                    {inspectQuery.data.tables.map((t) => (
-                      <div
-                        key={t.name}
-                        className="rounded-md border border-border bg-background p-1.5 text-center"
-                      >
-                        <p dir="ltr" className="text-[11px] text-muted-foreground">
-                          {t.name}
-                        </p>
-                        <p className="text-sm font-bold text-foreground">{t.rowCount}</p>
-                      </div>
-                    ))}
-                  </div>
-                </>
-              ) : null}
-
-              <div className="flex flex-wrap gap-3">
-                <Button
-                  size="sm"
-                  disabled={backupMutation.isPending}
-                  onClick={() => setConfirmAction("backup")}
-                  className="gap-2"
-                >
-                  <ArrowUpFromLine className="h-3.5 w-3.5" />
-                  بک‌آپ در این دیتابیس
-                </Button>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  disabled={restoreMutation.isPending}
-                  onClick={() => setConfirmAction("restore")}
-                  className="gap-2"
-                >
-                  <ArrowDownToLine className="h-3.5 w-3.5" />
-                  بازیابی از این دیتابیس به سایت
-                </Button>
-              </div>
-            </div>
-          )}
         </div>
       )}
 
@@ -526,12 +403,12 @@ function DestinationDbSection() {
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>
-              {confirmAction === "backup" ? "بک‌آپ در دیتابیس مقصد" : "بازیابی از دیتابیس مقصد"}
+              {confirmAction === "backup" ? "بک‌آپ در Supabase مقصد" : "بازیابی از Supabase مقصد"}
             </AlertDialogTitle>
             <AlertDialogDescription>
               {confirmAction === "backup"
-                ? `تمام جدول‌های دیتابیس «${selectedDb}» روی سرور مقصد حذف و با داده‌های فعلی سایت جایگزین می‌شوند.`
-                : `تمام داده‌های فعلی سایت حذف و با داده‌های دیتابیس «${selectedDb}» روی سرور مقصد جایگزین می‌شوند.`}{" "}
+                ? "تمام جدول‌های Supabase مقصد حذف و با داده‌های فعلی سایت جایگزین می‌شوند."
+                : "تمام داده‌های فعلی سایت حذف و با داده‌های Supabase مقصد جایگزین می‌شوند."}{" "}
               این عملیات بازگشت‌پذیر نیست.
             </AlertDialogDescription>
           </AlertDialogHeader>
@@ -540,9 +417,8 @@ function DestinationDbSection() {
             <AlertDialogAction
               disabled={backupMutation.isPending || restoreMutation.isPending}
               onClick={() => {
-                if (!selectedDb) return;
-                if (confirmAction === "backup") backupMutation.mutate(selectedDb);
-                else if (confirmAction === "restore") restoreMutation.mutate(selectedDb);
+                if (confirmAction === "backup") backupMutation.mutate();
+                else if (confirmAction === "restore") restoreMutation.mutate();
               }}
             >
               {(backupMutation.isPending || restoreMutation.isPending) && (
