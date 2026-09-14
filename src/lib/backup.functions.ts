@@ -387,13 +387,81 @@ export const importBackup = createServerFn({ method: "POST" })
 /* ───────────── ترانسفر مستقیم به یک پروژه Supabase مقصد ─────────────
  * دقیقاً همان روشی که این سایت با دیتابیس خودش صحبت می‌کند (@supabase/supabase-js
  * روی HTTP/PostgREST، بدون هیچ اتصال TCP خامی) — فقط با URL و Service Role Key یک
- * پروژه Supabase دیگر. جدول‌های مقصد باید از قبل با همین ساختار وجود داشته باشند
- * (PostgREST اجازه اجرای CREATE TABLE را نمی‌دهد)، برای همین این روش برای ترانسفر
- * بین دو نمونه از همین اپلیکیشن ساخته شده، نه هر Postgres دلخواه.
+ * پروژه Supabase دیگر.
+ *
+ * PostgREST خودش اجازه اجرای CREATE TABLE را نمی‌دهد (فقط CRUD روی جدول‌های موجود)،
+ * برای همین برای ساخت خودکار جدول‌های ناموجود روی مقصد از یک تابع کمکی کوچک در همان
+ * پروژه مقصد استفاده می‌شود (DESTINATION_BOOTSTRAP_SQL) که فقط یک‌بار، دستی، باید
+ * در SQL Editor مقصد اجرا شود. بعد از آن، دکمه بک‌آپ همیشه با یک کلیک هر جدول
+ * ناموجود را خودش می‌سازد — نیازی به اجرای دستی SQL دیگری نیست.
  */
 
 const META_SETTING_KEY = "_destination_backup_meta";
 const CHUNK_SIZE = 500;
+const EXEC_SQL_FN = "webyar_exec_sql";
+
+/** یک‌بار در SQL Editor پروژه Supabase مقصد اجرا شود تا بک‌آپ خودکار (با ساخت خودکار جدول‌ها) فعال شود */
+export const DESTINATION_BOOTSTRAP_SQL = `create or replace function public.${EXEC_SQL_FN}(query text)
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  execute query;
+end;
+$$;
+
+grant execute on function public.${EXEC_SQL_FN}(text) to service_role;
+revoke execute on function public.${EXEC_SQL_FN}(text) from anon, authenticated;`;
+
+function pgColumnType(col: ColumnDef): string {
+  switch (col.type) {
+    case "VARCHAR":
+      return `VARCHAR(${col.length ?? 191})`;
+    case "TEXT":
+      return "TEXT";
+    case "INT":
+      return "INTEGER";
+    case "SMALLINT":
+      return "SMALLINT";
+    case "BIGINT":
+      return "BIGINT";
+    case "TIMESTAMP":
+      return "TIMESTAMP";
+  }
+}
+
+function buildCreateTableSql(table: TableDef): string {
+  const cols = table.columns.map((c) => `"${c.name}" ${pgColumnType(c)}`).join(", ");
+  return `CREATE TABLE IF NOT EXISTS public."${table.name}" (${cols})`;
+}
+
+/**
+ * هر جدول ناموجود روی مقصد را از طریق تابع کمکی می‌سازد (idempotent — IF NOT EXISTS).
+ * اگر خودِ تابع کمکی هنوز نصب نشده باشد (اولین بار)، bootstrapRequired=true برمی‌گردد
+ * تا رابط کاربری اسکریپت نصب یک‌باره را نشان دهد.
+ */
+async function ensureDestinationSchema(
+  dest: Awaited<ReturnType<typeof connectDestinationSupabase>>,
+): Promise<{ bootstrapRequired: boolean; tableErrors: Record<string, string> }> {
+  const tableErrors: Record<string, string> = {};
+  for (const table of TABLES) {
+    const { error } = await dest.rpc(
+      EXEC_SQL_FN as any,
+      {
+        query: buildCreateTableSql(table),
+      } as any,
+    );
+    if (error) {
+      if (/Could not find the function|function .* does not exist/i.test(error.message)) {
+        return { bootstrapRequired: true, tableErrors: {} };
+      }
+      tableErrors[table.name] = error.message;
+    }
+  }
+  return { bootstrapRequired: false, tableErrors };
+}
 
 function isNewSupabaseApiKey(value: string): boolean {
   return value.startsWith("sb_publishable_") || value.startsWith("sb_secret_");
@@ -511,6 +579,8 @@ export const backupToDestinationDb = createServerFn({ method: "POST" }).handler(
   async (): Promise<{
     ok: boolean;
     generatedAt: string;
+    bootstrapRequired?: boolean;
+    bootstrapSql?: string;
     tables: { name: string; rowCount: number; error: string | null }[];
   }> => {
     const { requireAdmin } = await import("./auth.server");
@@ -518,8 +588,26 @@ export const backupToDestinationDb = createServerFn({ method: "POST" }).handler(
 
     const dest = await connectDestinationSupabase();
 
+    // هر جدول ناموجود روی مقصد را قبل از نوشتن داده خودش می‌سازد — به همین دلیل بک‌آپ
+    // همیشه با یک کلیک کار می‌کند، حتی روی یک پروژه Supabase کاملاً خالی
+    const schema = await ensureDestinationSchema(dest);
+    if (schema.bootstrapRequired) {
+      return {
+        ok: false,
+        generatedAt: new Date().toISOString(),
+        bootstrapRequired: true,
+        bootstrapSql: DESTINATION_BOOTSTRAP_SQL,
+        tables: [],
+      };
+    }
+
     const summary: { name: string; rowCount: number; error: string | null }[] = [];
     for (const table of TABLES) {
+      const schemaError = schema.tableErrors[table.name];
+      if (schemaError) {
+        summary.push({ name: table.name, rowCount: 0, error: schemaError });
+        continue;
+      }
       const rows = await buildTableExport(table);
       try {
         const { error: deleteError } = await dest
