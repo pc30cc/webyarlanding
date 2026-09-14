@@ -45,6 +45,37 @@ export const TABLES: TableDef[] = [
     ],
   },
   {
+    name: "catalog_categories",
+    pk: "id",
+    columns: [
+      { name: "id", type: "VARCHAR", length: 36 },
+      { name: "type", type: "VARCHAR", length: 16 },
+      { name: "name", type: "VARCHAR", length: 160 },
+      { name: "sort_order", type: "INT" },
+      { name: "created_at", type: "TIMESTAMP" },
+      { name: "updated_at", type: "TIMESTAMP" },
+    ],
+  },
+  {
+    name: "catalog_items",
+    pk: "id",
+    columns: [
+      { name: "id", type: "VARCHAR", length: 36 },
+      { name: "type", type: "VARCHAR", length: 16 },
+      { name: "category_id", type: "VARCHAR", length: 36 },
+      { name: "slug", type: "VARCHAR", length: 120 },
+      { name: "icon", type: "VARCHAR", length: 60 },
+      { name: "title", type: "VARCHAR", length: 200 },
+      { name: "short_desc", type: "TEXT" },
+      { name: "description", type: "TEXT" },
+      { name: "bullets_json", type: "TEXT" },
+      { name: "sort_order", type: "INT" },
+      { name: "published", type: "SMALLINT" },
+      { name: "created_at", type: "TIMESTAMP" },
+      { name: "updated_at", type: "TIMESTAMP" },
+    ],
+  },
+  {
     name: "blog_categories",
     pk: "id",
     columns: [
