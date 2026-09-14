@@ -248,13 +248,19 @@ function sqlLiteral(value: unknown): string {
   return `'${str}'`;
 }
 
-async function buildTableExport(table: TableDef): Promise<Record<string, unknown>[]> {
-  const { db } = await import("./db.server");
+/** کلاینت Supabase عمومی — هم دیتابیس خودِ سایت (db) و هم دیتابیس مقصد از همین شکل هستند */
+type SupabaseLike = { from: (table: string) => any };
+
+async function buildTableExport(
+  table: TableDef,
+  client?: SupabaseLike,
+): Promise<Record<string, unknown>[]> {
+  const source = client ?? (await import("./db.server")).db;
   const rows: Record<string, unknown>[] = [];
   const pageSize = 1000;
   let from = 0;
   for (;;) {
-    const { data } = await db
+    const { data } = await source
       .from(table.name as any)
       .select("*")
       .range(from, from + pageSize - 1);
@@ -375,276 +381,203 @@ export const importBackup = createServerFn({ method: "POST" })
     return performImport(data.data);
   });
 
-/* ───────────── ترانسفر مستقیم به دیتابیس PostgreSQL مقصد ─────────────
- * برخلاف export/import بالا (که فایل واسط دانلود/آپلود می‌شود)، این بخش مستقیماً
- * از طریق یک اتصال TCP خام (Cloudflare Sockets API، از طریق پکیج postgres.js) به
- * یک سرور PostgreSQL دیگر وصل می‌شود و جدول‌ها را همان‌جا می‌سازد/می‌خواند.
+/* ───────────── ترانسفر مستقیم به یک پروژه Supabase مقصد ─────────────
+ * دقیقاً همان روشی که این سایت با دیتابیس خودش صحبت می‌کند (@supabase/supabase-js
+ * روی HTTP/PostgREST، بدون هیچ اتصال TCP خامی) — فقط با URL و Service Role Key یک
+ * پروژه Supabase دیگر. جدول‌های مقصد باید از قبل با همین ساختار وجود داشته باشند
+ * (PostgREST اجازه اجرای CREATE TABLE را نمی‌دهد)، برای همین این روش برای ترانسفر
+ * بین دو نمونه از همین اپلیکیشن ساخته شده، نه هر Postgres دلخواه.
  */
 
-/** نام امن دیتابیس/جدول پستگرس — چون این مقادیر مستقیم در DDL/شناسه استفاده می‌شوند نه به‌عنوان پارامتر */
-const SAFE_IDENTIFIER = /^[a-zA-Z_][a-zA-Z0-9_]{0,62}$/;
-const META_TABLE = "_webyar_backup_meta";
+const META_SETTING_KEY = "_destination_backup_meta";
 const CHUNK_SIZE = 500;
 
-function assertSafeIdentifier(name: string): void {
-  if (!SAFE_IDENTIFIER.test(name)) {
-    throw new Error(
-      "نام دیتابیس فقط می‌تواند شامل حروف انگلیسی، عدد و زیرخط باشد و با عدد شروع نشود.",
-    );
-  }
+function isNewSupabaseApiKey(value: string): boolean {
+  return value.startsWith("sb_publishable_") || value.startsWith("sb_secret_");
 }
 
-/** اتصال کوتاه‌مدت به سرور مقصد — اگر databaseName ندهید به دیتابیس نگهداری «postgres» وصل می‌شود (برای LIST/CREATE DATABASE) */
-async function connectDestination(databaseName?: string) {
+/** همان wrapper که client.server.ts برای دیتابیس خودِ سایت استفاده می‌کند — این‌جا برای مقصد */
+function createSupabaseFetch(supabaseKey: string): typeof fetch {
+  return (input, init) => {
+    const headers = new Headers(
+      typeof Request !== "undefined" && input instanceof Request ? input.headers : undefined,
+    );
+    if (init?.headers) {
+      new Headers(init.headers).forEach((value, key) => headers.set(key, value));
+    }
+    if (
+      isNewSupabaseApiKey(supabaseKey) &&
+      headers.get("Authorization") === `Bearer ${supabaseKey}`
+    ) {
+      headers.delete("Authorization");
+    }
+    headers.set("apikey", supabaseKey);
+    return fetch(input, { ...init, headers });
+  };
+}
+
+async function connectDestinationSupabase() {
   const { loadDestinationDb } = await import("./settings.server");
   const conn = await loadDestinationDb();
-  if (!conn.dbHost || !conn.dbUser) {
+  if (!conn.url || !conn.serviceRoleKey) {
     throw new Error(
-      "اتصال دیتابیس مقصد هنوز تنظیم نشده — اول در بخش پشتیبان‌گیری مشخصات آن را وارد و ذخیره کنید.",
+      "اتصال Supabase مقصد هنوز تنظیم نشده — اول در بخش پشتیبان‌گیری آدرس پروژه و کلید Service Role را وارد و ذخیره کنید.",
     );
   }
-  const postgresModule = await import("postgres");
-  const postgres = postgresModule.default;
-  const sql = postgres({
-    host: conn.dbHost,
-    port: conn.dbPort || 5432,
-    username: conn.dbUser,
-    password: conn.dbPassword,
-    database: databaseName || "postgres",
-    ssl: conn.dbSsl ? "require" : false,
-    max: 1,
-    idle_timeout: 5,
-    connect_timeout: 10,
-    // بدون این، postgres.js سعی می‌کند از prepared statement استفاده کند — روی اتصال مستقیم
-    // (بدون connection pooler مثل PgBouncer/Hyperdrive) با بعضی سرویس‌های PostgreSQL مدیریت‌شده مشکل ایجاد می‌کند
-    prepare: false,
+  const { createClient } = await import("@supabase/supabase-js");
+  return createClient(conn.url, conn.serviceRoleKey, {
+    global: { fetch: createSupabaseFetch(conn.serviceRoleKey) },
+    auth: { persistSession: false, autoRefreshToken: false },
   });
-  return sql;
 }
 
-function pgColumnSql(col: ColumnDef): string {
-  switch (col.type) {
-    case "VARCHAR":
-      return `VARCHAR(${col.length ?? 191})`;
-    case "TEXT":
-      return "TEXT";
-    case "INT":
-      return "INTEGER";
-    case "SMALLINT":
-      return "SMALLINT";
-    case "BIGINT":
-      return "BIGINT";
-    case "TIMESTAMP":
-      return "TIMESTAMP";
-  }
-}
-
-/** وضعیت اتصال دیتابیس مقصد — رمز عبور واقعی هرگز به کلاینت برنمی‌گردد */
+/** وضعیت اتصال Supabase مقصد — کلید واقعی هرگز به کلاینت برنمی‌گردد */
 export const getDestinationDbStatus = createServerFn({ method: "GET" }).handler(async () => {
   const { requireAdmin } = await import("./auth.server");
   await requireAdmin();
   const { loadDestinationDb } = await import("./settings.server");
   const conn = await loadDestinationDb();
   return {
-    configured: !!(conn.dbHost && conn.dbUser),
-    dbHost: conn.dbHost,
-    dbPort: conn.dbPort,
-    dbUser: conn.dbUser,
-    dbSsl: conn.dbSsl,
-    passwordSet: !!conn.dbPassword,
+    configured: !!(conn.url && conn.serviceRoleKey),
+    url: conn.url,
+    serviceRoleKeySet: !!conn.serviceRoleKey,
   };
 });
 
 const saveDestinationDbSchema = z.object({
-  dbHost: z.string().min(1, "آدرس سرور الزامی است"),
-  dbPort: z.number().int().min(1).max(65535).optional().default(5432),
-  dbUser: z.string().min(1, "نام کاربری الزامی است"),
-  dbPassword: z.string().optional(),
-  dbSsl: z.boolean().optional().default(true),
+  url: z.string().min(1, "آدرس پروژه Supabase الزامی است"),
+  serviceRoleKey: z.string().optional(),
 });
 
-/** ذخیره مشخصات اتصال — اگر رمز عبور خالی بفرستید، رمز قبلی دست‌نخورده می‌ماند */
+/** ذخیره مشخصات اتصال — اگر کلید را خالی بفرستید، کلید قبلی دست‌نخورده می‌ماند */
 export const saveDestinationDbSettings = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) => saveDestinationDbSchema.parse(input))
   .handler(async ({ data }): Promise<{ ok: boolean }> => {
     const { requireAdmin } = await import("./auth.server");
     await requireAdmin();
     const { saveDestinationDb } = await import("./settings.server");
-    const partial: {
-      dbHost: string;
-      dbPort: number;
-      dbUser: string;
-      dbSsl: boolean;
-      dbPassword?: string;
-    } = {
-      dbHost: data.dbHost,
-      dbPort: data.dbPort,
-      dbUser: data.dbUser,
-      dbSsl: data.dbSsl,
-    };
-    if (data.dbPassword) partial.dbPassword = data.dbPassword;
+    const partial: { url: string; serviceRoleKey?: string } = { url: data.url.trim() };
+    if (data.serviceRoleKey) partial.serviceRoleKey = data.serviceRoleKey;
     await saveDestinationDb(partial);
     return { ok: true };
   });
 
-/** فهرست دیتابیس‌های موجود روی سرور مقصد (به‌جز template0/template1) */
-export const listDestinationDatabases = createServerFn({ method: "GET" }).handler(
-  async (): Promise<string[]> => {
+/** آمار دیتابیس مقصد — تعداد ردیف هر جدول و زمان آخرین بک‌آپ، قبل از بازیابی */
+export const inspectDestinationDatabase = createServerFn({ method: "GET" }).handler(
+  async (): Promise<{
+    generatedAt: string | null;
+    tables: { name: string; rowCount: number }[];
+  }> => {
     const { requireAdmin } = await import("./auth.server");
     await requireAdmin();
 
-    const sql = await connectDestination();
+    const dest = await connectDestinationSupabase();
+
+    let generatedAt: string | null = null;
     try {
-      const rows = await sql<{ datname: string }[]>`
-      SELECT datname FROM pg_database
-      WHERE datistemplate = false AND datname NOT IN ('template0', 'template1')
-      ORDER BY datname
-    `;
-      return rows.map((r) => r.datname);
-    } finally {
-      await sql.end({ timeout: 3 });
+      const { data } = await dest
+        .from("settings" as any)
+        .select("setting_value")
+        .eq("setting_key", META_SETTING_KEY)
+        .maybeSingle();
+      if (data?.setting_value) {
+        generatedAt =
+          (JSON.parse(data.setting_value) as { generatedAt?: string }).generatedAt ?? null;
+      }
+    } catch {
+      generatedAt = null;
     }
+
+    const tables = await Promise.all(
+      TABLES.map(async (table) => {
+        try {
+          const { count } = await dest
+            .from(table.name as any)
+            .select("*", { count: "exact", head: true });
+          return { name: table.name, rowCount: count ?? 0 };
+        } catch {
+          return { name: table.name, rowCount: 0 };
+        }
+      }),
+    );
+
+    return { generatedAt, tables };
   },
 );
 
-const dbNameSchema = z.object({ name: z.string().min(1) });
-
-/** ساخت یک دیتابیس خالی جدید روی سرور مقصد */
-export const createDestinationDatabase = createServerFn({ method: "POST" })
-  .inputValidator((input: unknown) => dbNameSchema.parse(input))
-  .handler(async ({ data }): Promise<{ ok: boolean }> => {
+/** بک‌آپ مستقیم دیتابیس فعلی سایت به داخل پروژه Supabase مقصد — بدون فایل واسط */
+export const backupToDestinationDb = createServerFn({ method: "POST" }).handler(
+  async (): Promise<{
+    ok: boolean;
+    generatedAt: string;
+    tables: { name: string; rowCount: number }[];
+  }> => {
     const { requireAdmin } = await import("./auth.server");
     await requireAdmin();
-    assertSafeIdentifier(data.name);
 
-    const sql = await connectDestination();
-    try {
-      await sql.unsafe(`CREATE DATABASE "${data.name}"`);
-      return { ok: true };
-    } finally {
-      await sql.end({ timeout: 3 });
+    const dest = await connectDestinationSupabase();
+
+    const summary: { name: string; rowCount: number }[] = [];
+    for (const table of TABLES) {
+      const rows = await buildTableExport(table);
+      try {
+        await dest
+          .from(table.name as any)
+          .delete()
+          .not(table.pk, "is", null);
+        for (let i = 0; i < rows.length; i += CHUNK_SIZE) {
+          const chunk = rows.slice(i, i + CHUNK_SIZE);
+          if (chunk.length > 0) await dest.from(table.name as any).insert(chunk as any);
+        }
+        summary.push({ name: table.name, rowCount: rows.length });
+      } catch {
+        // جدول روی مقصد وجود ندارد یا نوشتن در آن شکست خورد — این جدول رد می‌شود، بقیه ادامه پیدا می‌کنند
+        summary.push({ name: table.name, rowCount: 0 });
+      }
     }
-  });
 
-/** آمار یک دیتابیس مقصد مشخص — تعداد ردیف هر جدول و زمان آخرین بک‌آپ، قبل از انتخاب برای بازیابی */
-export const inspectDestinationDatabase = createServerFn({ method: "POST" })
-  .inputValidator((input: unknown) => dbNameSchema.parse(input))
-  .handler(
-    async ({
-      data,
-    }): Promise<{ generatedAt: string | null; tables: { name: string; rowCount: number }[] }> => {
-      const { requireAdmin } = await import("./auth.server");
-      await requireAdmin();
-      assertSafeIdentifier(data.name);
+    const generatedAt = new Date().toISOString();
+    const metaValue = JSON.stringify({ generatedAt });
+    const { data: existingMeta } = await dest
+      .from("settings" as any)
+      .select("id")
+      .eq("setting_key", META_SETTING_KEY)
+      .maybeSingle();
+    if (existingMeta) {
+      await dest
+        .from("settings" as any)
+        .update({ setting_value: metaValue, updated_at: generatedAt })
+        .eq("id", existingMeta.id);
+    } else {
+      await dest.from("settings" as any).insert({
+        id: crypto.randomUUID(),
+        setting_key: META_SETTING_KEY,
+        setting_value: metaValue,
+        is_private: 0,
+        updated_at: generatedAt,
+      } as any);
+    }
 
-      const sql = await connectDestination(data.name);
-      try {
-        let generatedAt: string | null = null;
-        try {
-          const meta = await sql<
-            { generated_at: string }[]
-          >`SELECT generated_at FROM ${sql(META_TABLE)} WHERE id = 1`;
-          generatedAt = meta[0]?.generated_at ?? null;
-        } catch {
-          generatedAt = null;
-        }
+    return { ok: true, generatedAt, tables: summary };
+  },
+);
 
-        const tables = await Promise.all(
-          TABLES.map(async (table) => {
-            try {
-              const result = await sql<
-                { count: string }[]
-              >`SELECT count(*)::text FROM ${sql(table.name)}`;
-              return { name: table.name, rowCount: Number(result[0]?.count ?? 0) };
-            } catch {
-              return { name: table.name, rowCount: 0 };
-            }
-          }),
-        );
-
-        return { generatedAt, tables };
-      } finally {
-        await sql.end({ timeout: 3 });
-      }
-    },
-  );
-
-/** بک‌آپ مستقیم دیتابیس فعلی به داخل یک دیتابیس مشخص روی سرور مقصد — بدون فایل واسط */
-export const backupToDestinationDb = createServerFn({ method: "POST" })
-  .inputValidator((input: unknown) => dbNameSchema.parse(input))
-  .handler(
-    async ({
-      data,
-    }): Promise<{
-      ok: boolean;
-      generatedAt: string;
-      tables: { name: string; rowCount: number }[];
-    }> => {
-      const { requireAdmin } = await import("./auth.server");
-      await requireAdmin();
-      assertSafeIdentifier(data.name);
-
-      const sql = await connectDestination(data.name);
-      try {
-        await sql.unsafe(
-          `CREATE TABLE IF NOT EXISTS ${META_TABLE} (id INTEGER PRIMARY KEY, generated_at TIMESTAMP)`,
-        );
-
-        const summary: { name: string; rowCount: number }[] = [];
-        for (const table of TABLES) {
-          const columnsSql = table.columns.map((c) => `"${c.name}" ${pgColumnSql(c)}`).join(", ");
-          await sql.unsafe(`CREATE TABLE IF NOT EXISTS "${table.name}" (${columnsSql})`);
-          await sql.unsafe(`DELETE FROM "${table.name}"`);
-
-          const rows = await buildTableExport(table);
-          const columnNames = table.columns.map((c) => c.name);
-          for (let i = 0; i < rows.length; i += CHUNK_SIZE) {
-            const chunk = rows.slice(i, i + CHUNK_SIZE).map((row) => {
-              const clean: Record<string, unknown> = {};
-              for (const col of columnNames) clean[col] = row[col] ?? null;
-              return clean;
-            });
-            if (chunk.length > 0) {
-              await sql`INSERT INTO ${sql(table.name)} ${sql(chunk, ...columnNames)}`;
-            }
-          }
-          summary.push({ name: table.name, rowCount: rows.length });
-        }
-
-        const generatedAt = new Date().toISOString();
-        await sql`
-        INSERT INTO ${sql(META_TABLE)} (id, generated_at) VALUES (1, ${generatedAt})
-        ON CONFLICT (id) DO UPDATE SET generated_at = EXCLUDED.generated_at
-      `;
-
-        return { ok: true, generatedAt, tables: summary };
-      } finally {
-        await sql.end({ timeout: 3 });
-      }
-    },
-  );
-
-/** بازیابی دیتابیس فعلی سایت از یک دیتابیس مقصد که قبلاً با همین ابزار بک‌آپ گرفته شده */
-export const restoreFromDestinationDb = createServerFn({ method: "POST" })
-  .inputValidator((input: unknown) => dbNameSchema.parse(input))
-  .handler(async ({ data }): Promise<{ ok: boolean; totalInserted: number }> => {
+/** بازیابی دیتابیس فعلی سایت از یک پروژه Supabase مقصد که قبلاً با همین ابزار بک‌آپ گرفته شده */
+export const restoreFromDestinationDb = createServerFn({ method: "POST" }).handler(
+  async (): Promise<{ ok: boolean; totalInserted: number }> => {
     const { requireAdmin } = await import("./auth.server");
     await requireAdmin();
-    assertSafeIdentifier(data.name);
 
-    const sql = await connectDestination(data.name);
-    try {
-      const gathered: Record<string, unknown[]> = {};
-      for (const table of TABLES) {
-        try {
-          const rows = await sql.unsafe(`SELECT * FROM "${table.name}"`);
-          gathered[table.name] = rows as unknown[];
-        } catch {
-          // جدول روی مقصد وجود ندارد — نادیده گرفته می‌شود
-        }
+    const dest = await connectDestinationSupabase();
+
+    const gathered: Record<string, unknown[]> = {};
+    for (const table of TABLES) {
+      try {
+        gathered[table.name] = await buildTableExport(table, dest);
+      } catch {
+        // جدول روی مقصد وجود ندارد — نادیده گرفته می‌شود
       }
-      return performImport(gathered);
-    } finally {
-      await sql.end({ timeout: 3 });
     }
-  });
+    return performImport(gathered);
+  },
+);

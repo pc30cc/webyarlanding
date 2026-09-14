@@ -124,22 +124,17 @@ export async function saveTelegramKeys(partial: Partial<TelegramApiKeys>): Promi
   await savePrivateSettings({ ...stored, ...partial });
 }
 
-/** اتصال به دیتابیس PostgreSQL مقصد برای ترانسفر مستقیم بک‌آپ — بخشی از تنظیمات محرمانه */
+/** اتصال به یک پروژه Supabase مقصد برای ترانسفر مستقیم بک‌آپ — بخشی از تنظیمات محرمانه */
 export interface DestinationDbSettings {
-  dbHost: string;
-  dbPort: number;
-  dbUser: string;
-  dbPassword: string;
-  /** فعال کردن SSL برای اتصال — اکثر دیتابیس‌های مدیریت‌شده به آن نیاز دارند */
-  dbSsl: boolean;
+  /** آدرس پروژه Supabase مقصد، مثل https://xxxx.supabase.co یا آدرس نمونه self-hosted شما */
+  url: string;
+  /** کلید Service Role همان پروژه مقصد — هرگز به کلاینت ارسال نمی‌شود */
+  serviceRoleKey: string;
 }
 
 const DESTINATION_DB_DEFAULTS: DestinationDbSettings = {
-  dbHost: "",
-  dbPort: 5432,
-  dbUser: "",
-  dbPassword: "",
-  dbSsl: true,
+  url: "",
+  serviceRoleKey: "",
 };
 
 export async function loadDestinationDb(): Promise<DestinationDbSettings> {
