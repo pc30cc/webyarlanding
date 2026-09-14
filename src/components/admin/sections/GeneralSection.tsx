@@ -216,6 +216,27 @@ export default function GeneralSection() {
                 مجوز لازم را گرفتید دوباره روشنش کنید.
               </p>
             </section>
+
+            <section className="mt-4 rounded-xl border border-border bg-card p-4 shadow-sm">
+              <div className="mb-1 flex items-center justify-between">
+                <h2 className="text-base font-semibold text-foreground">هوش مصنوعی</h2>
+                <div className="flex items-center gap-2">
+                  <Label className="cursor-pointer text-xs">نمایش در سایت</Label>
+                  <Switch
+                    checked={form.aiMarketing.enabled}
+                    onCheckedChange={(v) =>
+                      setForm((f) => ({ ...f, aiMarketing: { ...f.aiMarketing, enabled: v } }))
+                    }
+                  />
+                </div>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                وقتی خاموش باشد، همه‌ی کارت‌های ویژگی، بخش‌های پنل، امکانات پلن‌ها، ردیف‌های جدول
+                مقایسه و متن‌های سئوی مربوط به هوش مصنوعی/ایجنت هوشمند در کل سایت (صفحه اصلی،
+                قیمت‌گذاری، محصولات، راه‌کارها، درباره ما) پنهان می‌شوند — بدون حذف کد، تا هر وقت
+                خواستید دوباره روشنش کنید.
+              </p>
+            </section>
           </TabsContent>
 
           <TabsContent value="auth" className="mt-6">

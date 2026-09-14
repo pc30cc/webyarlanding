@@ -138,9 +138,9 @@ const staticComparison = {
 
 const PLAN_ICONS = [Zap, Star, Crown];
 
-// وقتی videoCall.enabled خاموش است، هر آیتم امکانات/محدودیت یا ردیف مقایسه‌ای که به تماس
-// تصویری/صوتی اشاره دارد حذف می‌شود — چه از پلن‌های استاتیک این فایل بیاید، چه از پلن‌های
-// همگام‌شده با اپ (mapRemotePlans)، تا هیچ اشاره‌ای در صفحه باقی نماند.
+// وقتی videoCall.enabled یا aiMarketing.enabled خاموش است، هر آیتم امکانات/محدودیت یا ردیف
+// مقایسه‌ای که به همان موضوع اشاره دارد حذف می‌شود — چه از پلن‌های استاتیک این فایل بیاید، چه از
+// پلن‌های همگام‌شده با اپ (mapRemotePlans)، تا هیچ اشاره‌ای در صفحه باقی نماند.
 const CALL_KEYWORDS = [
   "تماس تصویری",
   "تماس ویدیویی",
@@ -150,14 +150,20 @@ const CALL_KEYWORDS = [
   "صف تماس",
   "اشتراک‌گذاری صفحه",
 ];
+const AI_KEYWORDS = ["هوش مصنوعی", "دستیار هوشمند", "ایجنت"];
 function mentionsCall(text: string): boolean {
   return CALL_KEYWORDS.some((k) => text.includes(k));
 }
-function stripCallMentions(plans: DisplayPlan[]): DisplayPlan[] {
+function mentionsAi(text: string): boolean {
+  return AI_KEYWORDS.some((k) => text.includes(k));
+}
+function stripMentions(plans: DisplayPlan[], opts: { call: boolean; ai: boolean }): DisplayPlan[] {
+  const keep = (text: string) =>
+    (opts.call || !mentionsCall(text)) && (opts.ai || !mentionsAi(text));
   return plans.map((p) => ({
     ...p,
-    features: p.features.filter((f) => !mentionsCall(f)),
-    limits: p.limits.filter((l) => !mentionsCall(l.label)),
+    features: p.features.filter(keep),
+    limits: p.limits.filter((l) => keep(l.label)),
   }));
 }
 
@@ -202,6 +208,14 @@ function toAsciiNumber(input: string): string | null {
   return cleaned || null;
 }
 
+function pricingIntro(callEnabled: boolean, aiEnabled: boolean): string {
+  const start = callEnabled ? "از چت زنده و تماس تصویری تا" : "از چت زنده تا";
+  const mid = aiEnabled
+    ? " دستیار هوش مصنوعی، CRM، اتوماسیون، کمپین و گزارش‌گیری"
+    : " CRM، اتوماسیون، کمپین و گزارش‌گیری";
+  return `${start}${mid} — پلن مناسب کسب‌وکار خود را از میان امکانات کامل وب‌یار انتخاب کنید.`;
+}
+
 function ComparisonCell({ value }: { value: string | boolean }) {
   if (typeof value === "boolean") {
     return value ? (
@@ -222,17 +236,21 @@ function PricingPage() {
   const showYearly = settings.plans?.showYearly === true;
   const activePeriod = showYearly ? period : "monthly";
   const callEnabled = settings.videoCall.enabled;
+  const aiEnabled = settings.aiMarketing.enabled;
   const rawPlans = remotePlans
     ? mapRemotePlans(remotePlans.plans, activePeriod)
     : getPlans(activePeriod);
-  const plans = callEnabled ? rawPlans : stripCallMentions(rawPlans);
+  const plans = stripMentions(rawPlans, { call: callEnabled, ai: aiEnabled });
   const currentIndex = currentSlug ? plans.findIndex((p) => p.slug === currentSlug) : -1;
   const rawComparison = remotePlans?.comparison?.rows.length
     ? remotePlans.comparison
     : staticComparison;
-  const comparison = callEnabled
-    ? rawComparison
-    : { ...rawComparison, rows: rawComparison.rows.filter((r) => !mentionsCall(r.label)) };
+  const comparison = {
+    ...rawComparison,
+    rows: rawComparison.rows.filter(
+      (r) => (callEnabled || !mentionsCall(r.label)) && (aiEnabled || !mentionsAi(r.label)),
+    ),
+  };
   const base = (settings.brand.siteUrl || "").replace(/\/$/, "");
 
   const jsonLd = [
@@ -276,10 +294,7 @@ function PricingPage() {
             امکانات و قیمت‌گذاری
           </h1>
           <p className="mx-auto max-w-2xl text-base leading-[1.9] text-muted-foreground">
-            {callEnabled
-              ? "از چت زنده و تماس تصویری تا دستیار هوش مصنوعی، CRM، اتوماسیون، کمپین و گزارش‌گیری"
-              : "از چت زنده تا دستیار هوش مصنوعی، CRM، اتوماسیون، کمپین و گزارش‌گیری"}{" "}
-            — پلن مناسب کسب‌وکار خود را از میان امکانات کامل وب‌یار انتخاب کنید.
+            {pricingIntro(callEnabled, aiEnabled)}
           </p>
         </motion.div>
 

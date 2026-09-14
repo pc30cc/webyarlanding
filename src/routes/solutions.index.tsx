@@ -44,20 +44,29 @@ const TINTS = [
 ];
 
 // مثل products.index.tsx — راه‌کارهایی که در پنل مدیریت کاتالوگ ثبت شده‌اند از دیتابیس می‌آیند؛
-// این فیلتر با videoCall.enabled=false هر آیتمی که به تماس تصویری/صوتی اشاره دارد را از این
-// لیست پنهان می‌کند (برای حذف کامل، بهتر است در همان پنل هم از حالت انتشار خارج شود).
+// این فیلتر با videoCall.enabled=false یا aiMarketing.enabled=false هر آیتمی که به همان موضوع
+// اشاره دارد را از این لیست پنهان می‌کند (برای حذف کامل، بهتر است در همان پنل هم از حالت انتشار
+// خارج شود).
 const CALL_KEYWORDS = ["تماس تصویری", "تماس ویدیویی", "ویدیویی", "تماس صوتی", "مرکز تماس"];
-function mentionsCall(item: { title: string; shortDesc: string }): boolean {
-  return CALL_KEYWORDS.some((k) => item.title.includes(k) || item.shortDesc.includes(k));
+const AI_KEYWORDS = ["هوش مصنوعی", "دستیار هوشمند", "ایجنت"];
+function mentionsAny(item: { title: string; shortDesc: string }, keywords: string[]): boolean {
+  return keywords.some((k) => item.title.includes(k) || item.shortDesc.includes(k));
 }
 
 function SolutionsPage() {
   const { settings, seoOverride, categories: allCategories } = Route.useLoaderData();
-  const categories = settings.videoCall.enabled
-    ? allCategories
-    : allCategories
-        .map((c) => ({ ...c, items: c.items.filter((i) => !mentionsCall(i)) }))
-        .filter((c) => c.items.length > 0);
+  const callEnabled = settings.videoCall.enabled;
+  const aiEnabled = settings.aiMarketing.enabled;
+  const categories = allCategories
+    .map((c) => ({
+      ...c,
+      items: c.items.filter(
+        (i) =>
+          (callEnabled || !mentionsAny(i, CALL_KEYWORDS)) &&
+          (aiEnabled || !mentionsAny(i, AI_KEYWORDS)),
+      ),
+    }))
+    .filter((c) => c.items.length > 0);
   const base = (settings.brand.siteUrl || "").replace(/\/$/, "");
   const allSolutions = categories.flatMap((c) => c.items);
 
