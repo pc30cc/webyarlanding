@@ -11,6 +11,8 @@ export interface ColumnDef {
 export interface TableDef {
   name: string;
   pk: string;
+  /** کلید اصلی مرکب (در صورت وجود) — اولویت با این فهرست است */
+  pkColumns?: string[];
   columns: ColumnDef[];
 }
 
@@ -101,6 +103,7 @@ export const TABLES: TableDef[] = [
   {
     name: "blog_post_tags",
     pk: "post_id",
+    pkColumns: ["post_id", "tag_id"],
     columns: [
       { name: "post_id", type: "VARCHAR", length: 36 },
       { name: "tag_id", type: "VARCHAR", length: 36 },

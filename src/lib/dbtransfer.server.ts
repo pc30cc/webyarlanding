@@ -97,9 +97,40 @@ function quote(name: string): string {
   return `"${name.replace(/"/g, '""')}"`;
 }
 
+function pkCols(table: TableDef): string[] {
+  return table.pkColumns && table.pkColumns.length > 0 ? table.pkColumns : [table.pk];
+}
+
 function createTableSql(table: TableDef): string {
   const cols = table.columns.map((c) => `${quote(c.name)} ${pgColumnType(c)}`).join(", ");
-  return `create table if not exists public.${quote(table.name)} (${cols}, primary key (${quote(table.pk)}))`;
+  const pk = pkCols(table).map(quote).join(", ");
+  return `create table if not exists public.${quote(table.name)} (${cols}, primary key (${pk}))`;
+}
+
+/** اگر کلید اصلی مقصد با تعریف سایت یکی نبود، اصلاحش می‌کند (مثلاً کلید مرکب جدول برچسب‌ها) */
+async function ensurePrimaryKey(client: Client, table: TableDef): Promise<void> {
+  const expected = pkCols(table);
+  const { rows } = await client.query<{ column_name: string; conname: string }>(
+    `select a.attname as column_name, c.conname
+       from pg_constraint c
+       join pg_class t on t.oid = c.conrelid
+       join pg_namespace n on n.oid = t.relnamespace
+       join unnest(c.conkey) with ordinality as k(attnum, ord) on true
+       join pg_attribute a on a.attrelid = t.oid and a.attnum = k.attnum
+      where n.nspname = 'public' and t.relname = $1 and c.contype = 'p'
+      order by k.ord`,
+    [table.name],
+  );
+  const current = rows.map((r) => r.column_name);
+  if (current.length > 0 && current.join(",") === expected.join(",")) return;
+  if (current.length > 0) {
+    await client.query(
+      `alter table public.${quote(table.name)} drop constraint ${quote(rows[0]!.conname)}`,
+    );
+  }
+  await client.query(
+    `alter table public.${quote(table.name)} add primary key (${expected.map(quote).join(", ")})`,
+  );
 }
 
 function addColumnSql(table: TableDef, col: ColumnDef): string {
@@ -236,6 +267,9 @@ export async function runTransfer(options: TransferOptions): Promise<TransferRes
           for (const col of table.columns) {
             await client.query(addColumnSql(table, col));
           }
+          await ensurePrimaryKey(client, table).catch((e: Error) =>
+            warnings.push(`کلید اصلی ${table.name}: ${e.message}`),
+          );
         } catch (err) {
           warnings.push(`ساخت ${table.name}: ${(err as Error).message}`);
         }
