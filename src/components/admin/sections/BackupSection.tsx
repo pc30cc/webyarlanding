@@ -35,6 +35,7 @@ import {
   AlertDialogAction,
   AlertDialogCancel,
 } from "@/components/ui/alert-dialog";
+import DbTransferSection from "./DbTransferSection";
 
 function downloadFile(filename: string, content: string, mime: string) {
   const blob = new Blob([content], { type: mime });
@@ -201,6 +202,8 @@ export default function BackupSection() {
           مقاله» فعال باشد.
         </p>
       </div>
+
+      <DbTransferSection />
 
       <DestinationDbSection />
 
