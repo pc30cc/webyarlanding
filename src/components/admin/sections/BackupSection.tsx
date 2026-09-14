@@ -266,10 +266,19 @@ function DestinationDbSection() {
   const [backupResult, setBackupResult] = useState<
     { name: string; rowCount: number; error: string | null }[] | null
   >(null);
+  const [bootstrapSql, setBootstrapSql] = useState<string | null>(null);
 
   const backupMutation = useMutation({
     mutationFn: () => backupFn(),
     onSuccess: (res) => {
+      if (res.bootstrapRequired) {
+        setBootstrapSql(res.bootstrapSql ?? null);
+        setBackupResult(null);
+        toast.error("برای ساخت خودکار جدول‌ها، اول یک اسکریپت را یک‌بار اجرا کنید");
+        setConfirmAction(null);
+        return;
+      }
+      setBootstrapSql(null);
       setBackupResult(res.tables);
       const failed = res.tables.filter((t) => t.error);
       const total = res.tables.reduce((sum, t) => sum + t.rowCount, 0);
@@ -406,6 +415,34 @@ function DestinationDbSection() {
                     <span className="font-bold text-foreground">{t.name}</span>: {t.error}
                   </p>
                 ))}
+            </div>
+          )}
+
+          {bootstrapSql && (
+            <div className="flex flex-col gap-2 rounded-lg border border-warning/40 bg-warning/5 p-3">
+              <p className="text-xs font-bold text-foreground">
+                یک‌بار برای همیشه: این اسکریپت را در SQL Editor پروژه Supabase مقصد اجرا کنید تا
+                بک‌آپ بتواند جدول‌های ناموجود را خودش بسازد. بعد از اجرا، دوباره روی «بک‌آپ در این
+                Supabase» بزنید — از این به بعد همیشه با همین یک کلیک کار می‌کند.
+              </p>
+              <pre
+                dir="ltr"
+                className="max-h-48 overflow-auto rounded-md bg-muted p-2 text-[11px] text-foreground"
+              >
+                {bootstrapSql}
+              </pre>
+              <Button
+                size="sm"
+                variant="outline"
+                type="button"
+                onClick={() => {
+                  navigator.clipboard.writeText(bootstrapSql);
+                  toast.success("کپی شد");
+                }}
+                className="w-fit gap-1.5"
+              >
+                کپی اسکریپت
+              </Button>
             </div>
           )}
 
