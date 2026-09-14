@@ -267,6 +267,9 @@ export async function runTransfer(options: TransferOptions): Promise<TransferRes
           for (const col of table.columns) {
             await client.query(addColumnSql(table, col));
           }
+          await ensurePrimaryKey(client, table).catch((e: Error) =>
+            warnings.push(`کلید اصلی ${table.name}: ${e.message}`),
+          );
         } catch (err) {
           warnings.push(`ساخت ${table.name}: ${(err as Error).message}`);
         }
