@@ -11,6 +11,8 @@ export interface ColumnDef {
 export interface TableDef {
   name: string;
   pk: string;
+  /** کلید اصلی مرکب (در صورت وجود) — اولویت با این فهرست است */
+  pkColumns?: string[];
   columns: ColumnDef[];
 }
 
