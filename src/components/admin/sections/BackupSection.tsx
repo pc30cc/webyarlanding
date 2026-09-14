@@ -263,11 +263,21 @@ function DestinationDbSection() {
     enabled: !!status?.configured,
   });
 
+  const [backupResult, setBackupResult] = useState<
+    { name: string; rowCount: number; error: string | null }[] | null
+  >(null);
+
   const backupMutation = useMutation({
     mutationFn: () => backupFn(),
     onSuccess: (res) => {
+      setBackupResult(res.tables);
+      const failed = res.tables.filter((t) => t.error);
       const total = res.tables.reduce((sum, t) => sum + t.rowCount, 0);
-      toast.success(`بک‌آپ در Supabase مقصد نوشته شد — ${total} رکورد`);
+      if (failed.length > 0) {
+        toast.error(`${failed.length} جدول با خطا مواجه شد — جزئیات را پایین صفحه ببینید`);
+      } else {
+        toast.success(`بک‌آپ در Supabase مقصد نوشته شد — ${total} رکورد`);
+      }
       setConfirmAction(null);
       qc.invalidateQueries({ queryKey: ["destination-db-inspect"] });
     },
@@ -363,17 +373,41 @@ function DestinationDbSection() {
                 {inspectQuery.data.tables.map((t) => (
                   <div
                     key={t.name}
-                    className="rounded-md border border-border bg-background p-1.5 text-center"
+                    title={t.error ?? undefined}
+                    className={`rounded-md border p-1.5 text-center ${
+                      t.error
+                        ? "border-destructive/40 bg-destructive/5"
+                        : "border-border bg-background"
+                    }`}
                   >
                     <p dir="ltr" className="text-[11px] text-muted-foreground">
                       {t.name}
                     </p>
-                    <p className="text-sm font-bold text-foreground">{t.rowCount}</p>
+                    {t.error ? (
+                      <p className="text-[11px] text-destructive">خطا</p>
+                    ) : (
+                      <p className="text-sm font-bold text-foreground">{t.rowCount}</p>
+                    )}
                   </div>
                 ))}
               </div>
             </>
           ) : null}
+
+          {backupResult?.some((t) => t.error) && (
+            <div className="flex flex-col gap-1.5 rounded-lg border border-destructive/30 bg-destructive/5 p-3">
+              <p className="text-xs font-bold text-destructive">
+                این جدول‌ها روی Supabase مقصد نوشته نشدند:
+              </p>
+              {backupResult
+                .filter((t) => t.error)
+                .map((t) => (
+                  <p key={t.name} dir="ltr" className="text-[11px] text-muted-foreground">
+                    <span className="font-bold text-foreground">{t.name}</span>: {t.error}
+                  </p>
+                ))}
+            </div>
+          )}
 
           <div className="flex flex-wrap gap-3">
             <Button
