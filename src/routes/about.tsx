@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { motion } from "framer-motion";
 import { Target, Award, Heart, ChevronLeft } from "lucide-react";
 import { fetchSettings } from "@/lib/settings.functions";
+import { joinFa } from "@/lib/settings";
 import { getPublicSeoPage } from "@/lib/seo.functions";
 import { buildPageMeta, buildBreadcrumbJsonLd, safeJsonLdHtml } from "@/lib/seo-meta";
 import { SiteLayout } from "@/components/site/SiteLayout";
@@ -46,6 +47,8 @@ const values = [
 function AboutPage() {
   const { settings } = Route.useLoaderData();
   const callEnabled = settings.videoCall.enabled;
+  const aiEnabled = settings.aiMarketing.enabled;
+  const midText = joinFa(aiEnabled && "ایجنت هوش مصنوعی", callEnabled && "مرکز تماس");
   const base = (settings.brand.siteUrl || "").replace(/\/$/, "");
 
   const jsonLd = [
@@ -79,8 +82,8 @@ function AboutPage() {
             {settings.brand.name} برای این ساخته شد که کسب‌وکارهای آنلاین بدون نیاز به تیم فنی بزرگ،
             بتوانند مثل یک فروشگاه حضوری با مشتری صحبت کنند؛{" "}
             {callEnabled ? "از طریق چت زنده و تماس تصویری، دقیقاً" : "از طریق چت زنده، دقیقاً"}{" "}
-            همان‌جایی که مشتری تصمیم می‌گیرد. با گذشت زمان این ابزار به یک پلتفرم کامل تبدیل شد: از{" "}
-            {callEnabled ? "ایجنت هوش مصنوعی و مرکز تماس گرفته تا" : "ایجنت هوش مصنوعی گرفته تا"}{" "}
+            همان‌جایی که مشتری تصمیم می‌گیرد. با گذشت زمان این ابزار به یک پلتفرم کامل تبدیل شد:{" "}
+            {midText && `از ${midText} گرفته تا `}
             مخاطبین، پایگاه دانش، ابزارهای سئو و آنالیز وب — همه در یک پنل ساده و بدون نیاز به
             ابزارهای پراکنده.
           </p>

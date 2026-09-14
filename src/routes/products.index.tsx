@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { motion } from "framer-motion";
 import { Check, ChevronLeft } from "lucide-react";
 import { fetchSettings } from "@/lib/settings.functions";
+import { joinFa } from "@/lib/settings";
 import { getPublicSeoPage } from "@/lib/seo.functions";
 import { getPublicCatalog } from "@/lib/catalog.functions";
 import {
@@ -26,16 +27,22 @@ export const Route = createFileRoute("/products/")({
   head: ({ loaderData }) => {
     if (!loaderData) return {};
     const callEnabled = loaderData.settings.videoCall.enabled;
+    const aiEnabled = loaderData.settings.aiMarketing.enabled;
     return buildPageMeta({
       settings: loaderData.settings,
       path: "/products",
       override: loaderData.seoOverride,
-      fallbackTitle: callEnabled
-        ? "محصولات | چت زنده، تماس ویدیویی، CRM و هوش مصنوعی | وب‌یار"
-        : "محصولات | چت زنده، CRM و هوش مصنوعی | وب‌یار",
-      fallbackDescription: callEnabled
-        ? "معرفی کامل محصولات وب‌یار: چت زنده، تماس ویدیویی HD، دستیار هوش مصنوعی، CRM، اتوماسیون و کمپین، ارتباط چندکاناله، گزارش‌های پیشرفته و API — همه در یک پلتفرم."
-        : "معرفی کامل محصولات وب‌یار: چت زنده، دستیار هوش مصنوعی، CRM، اتوماسیون و کمپین، ارتباط چندکاناله، گزارش‌های پیشرفته و API — همه در یک پلتفرم.",
+      fallbackTitle: `محصولات | ${joinFa("چت زنده", callEnabled && "تماس ویدیویی", "CRM", aiEnabled && "هوش مصنوعی")} | وب‌یار`,
+      fallbackDescription: `معرفی کامل محصولات وب‌یار: ${joinFa(
+        "چت زنده",
+        callEnabled && "تماس ویدیویی HD",
+        aiEnabled && "دستیار هوش مصنوعی",
+        "CRM",
+        "اتوماسیون و کمپین",
+        "ارتباط چندکاناله",
+        "گزارش‌های پیشرفته",
+        "API",
+      )} — همه در یک پلتفرم.`,
     });
   },
   component: ProductsPage,
@@ -48,22 +55,29 @@ const TINTS = [
 ];
 
 // محصولاتی که در پنل مدیریت کاتالوگ ثبت شده‌اند از دیتابیس می‌آیند، نه این فایل — این فیلتر
-// تضمین می‌کند که وقتی videoCall.enabled خاموش است، هیچ آیتم کاتالوگی که عنوان/توضیحش به تماس
-// تصویری/صوتی اشاره دارد در این لیست نمایش داده نشود (برای حذف کامل، بهتر است در همان پنل هم
-// از حالت انتشار خارج شود).
+// تضمین می‌کند که وقتی videoCall.enabled یا aiMarketing.enabled خاموش است، هیچ آیتم کاتالوگی که
+// عنوان/توضیحش به همان موضوع اشاره دارد در این لیست نمایش داده نشود (برای حذف کامل، بهتر است در
+// همان پنل هم از حالت انتشار خارج شود).
 const CALL_KEYWORDS = ["تماس تصویری", "تماس ویدیویی", "ویدیویی", "تماس صوتی", "مرکز تماس"];
-function mentionsCall(item: { title: string; shortDesc: string }): boolean {
-  return CALL_KEYWORDS.some((k) => item.title.includes(k) || item.shortDesc.includes(k));
+const AI_KEYWORDS = ["هوش مصنوعی", "دستیار هوشمند", "ایجنت"];
+function mentionsAny(item: { title: string; shortDesc: string }, keywords: string[]): boolean {
+  return keywords.some((k) => item.title.includes(k) || item.shortDesc.includes(k));
 }
 
 function ProductsPage() {
   const { settings, seoOverride, categories: allCategories } = Route.useLoaderData();
   const callEnabled = settings.videoCall.enabled;
-  const categories = callEnabled
-    ? allCategories
-    : allCategories
-        .map((c) => ({ ...c, items: c.items.filter((i) => !mentionsCall(i)) }))
-        .filter((c) => c.items.length > 0);
+  const aiEnabled = settings.aiMarketing.enabled;
+  const categories = allCategories
+    .map((c) => ({
+      ...c,
+      items: c.items.filter(
+        (i) =>
+          (callEnabled || !mentionsAny(i, CALL_KEYWORDS)) &&
+          (aiEnabled || !mentionsAny(i, AI_KEYWORDS)),
+      ),
+    }))
+    .filter((c) => c.items.length > 0);
   const base = (settings.brand.siteUrl || "").replace(/\/$/, "");
   const allProducts = categories.flatMap((c) => c.items);
 
@@ -119,9 +133,13 @@ function ProductsPage() {
               هر چیزی که برای <span className="text-brand">ارتباط با مشتری</span> نیاز دارید
             </h1>
             <p className="mx-auto max-w-2xl text-base leading-[1.9] text-muted-foreground sm:text-lg">
-              {callEnabled
-                ? "چت زنده، تماس ویدیویی، هوش مصنوعی، CRM و اتوماسیون"
-                : "چت زنده، هوش مصنوعی، CRM و اتوماسیون"}{" "}
+              {joinFa(
+                "چت زنده",
+                callEnabled && "تماس ویدیویی",
+                aiEnabled && "هوش مصنوعی",
+                "CRM",
+                "اتوماسیون",
+              )}{" "}
               — همه در یک پلتفرم یکپارچه، با نصب در کمتر از ۵ دقیقه و بدون نیاز به تیم فنی.
             </p>
           </motion.div>

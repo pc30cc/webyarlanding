@@ -86,6 +86,16 @@ export interface VideoCallSettings {
   enabled: boolean;
 }
 
+/**
+ * نمایش عمومی هوش مصنوعی (ایجنت/دستیار هوشمند) در سایت — مستقل از ai (که تنظیمات سرویس تولید
+ * محتوای مقالات است، نه یک ویژگی محصول قابل نمایش). خاموش یعنی همه‌ی کارت‌های ویژگی، بخش‌های
+ * پنل، امکانات پلن‌ها، ردیف‌های جدول مقایسه و متن‌های سئو/JSON-LD مرتبط با هوش مصنوعی در کل سایت
+ * پنهان می‌شوند — بدون حذف کد، تا هر وقت خواستید دوباره روشنش کنید.
+ */
+export interface AiMarketingSettings {
+  enabled: boolean;
+}
+
 export interface AiProviderModels {
   textModel: string;
   imageModel: string;
@@ -163,6 +173,7 @@ export interface SiteSettings {
   chatWidget: ChatWidgetSettings;
   callCenterWidget: CallCenterWidgetSettings;
   videoCall: VideoCallSettings;
+  aiMarketing: AiMarketingSettings;
   plans: PlansSettings;
   ai: AiSettings;
   analytics: AnalyticsSettings;
@@ -232,6 +243,9 @@ export const DEFAULT_SETTINGS: SiteSettings = {
   videoCall: {
     enabled: true,
   },
+  aiMarketing: {
+    enabled: true,
+  },
   chatWidget: {
     enabled: false,
     scriptUrl: "",
@@ -270,7 +284,7 @@ export const DEFAULT_SETTINGS: SiteSettings = {
   },
 };
 
-const CALL_KEYWORDS = [
+export const CALL_KEYWORDS = [
   "تماس تصویری",
   "تماس ویدیویی",
   "ویدیویی",
@@ -280,17 +294,36 @@ const CALL_KEYWORDS = [
   "اشتراک‌گذاری صفحه",
 ];
 
+/** کلمات کلیدی مرتبط با هوش مصنوعی — برای فیلتر کردن محتوای مرتبط در کل سایت مارکتینگ، مشابه CALL_KEYWORDS */
+export const AI_KEYWORDS = ["هوش مصنوعی", "دستیار هوشمند", "ایجنت"];
+
+/**
+ * چند عبارت فارسی را با ویرگول و «و» قبل از آخرین مورد به هم وصل می‌کند — برای جمله‌هایی که
+ * بسته به چند تنظیم مستقل (مثل videoCall/aiMarketing) هرکدام از آیتم‌هایشان ممکن است حذف شود.
+ * آیتم‌های خالی/false نادیده گرفته می‌شوند.
+ */
+export function joinFa(...items: (string | false | null | undefined)[]): string {
+  const arr = items.filter((x): x is string => !!x);
+  if (arr.length <= 1) return arr[0] ?? "";
+  const last = arr[arr.length - 1] ?? "";
+  return arr.slice(0, -1).join("، ") + " و " + last;
+}
+
 /**
  * شعار/تگ‌لاین برند برای نمایش عمومی (فوتر، JSON-LD). چون این متن آزاد و قابل‌ویرایش توسط مدیر
- * است، خودِ مقدار ذخیره‌شده هرگز تغییر نمی‌کند — فقط وقتی videoCall.enabled خاموش است و متن
- * ذخیره‌شده به تماس تصویری/صوتی اشاره دارد، یک متن عمومی جایگزینش می‌شود؛ به‌محض روشن‌شدن دوباره
- * همان تگ‌لاین اصلی برمی‌گردد.
+ * است، خودِ مقدار ذخیره‌شده هرگز تغییر نمی‌کند — فقط وقتی videoCall.enabled یا aiMarketing.enabled
+ * خاموش است و متن ذخیره‌شده به همان موضوع اشاره دارد، یک متن عمومی جایگزینش می‌شود؛ به‌محض
+ * روشن‌شدن دوباره همان تگ‌لاین اصلی برمی‌گردد.
  */
 export function getPublicTagline(settings: SiteSettings): string {
   const tagline = settings.brand.tagline;
-  if (!tagline || settings.videoCall.enabled) return tagline;
-  const mentionsCall = CALL_KEYWORDS.some((k) => tagline.includes(k));
-  return mentionsCall ? "چت زنده و دستیار هوشمند برای ارتباط با مشتری" : tagline;
+  if (!tagline) return tagline;
+  const hideForCall = !settings.videoCall.enabled && CALL_KEYWORDS.some((k) => tagline.includes(k));
+  const hideForAi = !settings.aiMarketing.enabled && AI_KEYWORDS.some((k) => tagline.includes(k));
+  if (!hideForCall && !hideForAi) return tagline;
+  return (
+    joinFa("چت زنده", settings.aiMarketing.enabled && "دستیار هوشمند") + " برای ارتباط با مشتری"
+  );
 }
 
 /** ادغام عمیق تنظیمات ذخیره‌شده با مقادیر پیش‌فرض */

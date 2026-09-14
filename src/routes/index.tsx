@@ -27,6 +27,7 @@ import {
   ShieldCheck,
 } from "lucide-react";
 import { fetchSettings } from "@/lib/settings.functions";
+import { joinFa } from "@/lib/settings";
 import { getPublicSeoPage } from "@/lib/seo.functions";
 import { buildPageMeta, parseSchemaJson, safeJsonLdHtml } from "@/lib/seo-meta";
 import { SiteLayout } from "@/components/site/SiteLayout";
@@ -242,13 +243,20 @@ const moduleGroups = [
   },
 ];
 
-function getFaqs(callEnabled: boolean) {
+function getFaqs(callEnabled: boolean, aiEnabled: boolean) {
   return [
     {
       q: "وب‌یار دقیقاً چه چیزی به سایت من اضافه می‌کند؟",
-      a: callEnabled
-        ? "یک ابزارک گفتگو روی سایت شما می‌نشیند و پشت آن یک پنل کامل قرار دارد: صندوق گفتگوی یکپارچه، مرکز تماس صوتی و تصویری، ایجنت هوش مصنوعی، مخاطبین، بازدیدکنندگان زنده، پایگاه دانش، ابزارهای سئو و آنالیز، و گزارش‌ها."
-        : "یک ابزارک گفتگو روی سایت شما می‌نشیند و پشت آن یک پنل کامل قرار دارد: صندوق گفتگوی یکپارچه، ایجنت هوش مصنوعی، مخاطبین، بازدیدکنندگان زنده، پایگاه دانش، ابزارهای سئو و آنالیز، و گزارش‌ها.",
+      a: `یک ابزارک گفتگو روی سایت شما می‌نشیند و پشت آن یک پنل کامل قرار دارد: ${joinFa(
+        "صندوق گفتگوی یکپارچه",
+        callEnabled && "مرکز تماس صوتی و تصویری",
+        aiEnabled && "ایجنت هوش مصنوعی",
+        "مخاطبین",
+        "بازدیدکنندگان زنده",
+        "پایگاه دانش",
+        "ابزارهای سئو و آنالیز",
+        "گزارش‌ها",
+      )}.`,
     },
     {
       q: "نصب چطور انجام می‌شود؟",
@@ -262,10 +270,14 @@ function getFaqs(callEnabled: boolean) {
           },
         ]
       : []),
-    {
-      q: "ایجنت هوش مصنوعی چگونه آموزش می‌بیند؟",
-      a: "ایجنت را با محتوای صفحات سایت و مقاله‌های پایگاه دانش آموزش می‌دهید، در محیط آزمایش پاسخ‌هایش را می‌سنجید، برایش قانون رفتاری و مسیریابی تعریف می‌کنید و کیفیت پاسخ‌ها را در گزارش‌ها دنبال می‌کنید.",
-    },
+    ...(aiEnabled
+      ? [
+          {
+            q: "ایجنت هوش مصنوعی چگونه آموزش می‌بیند؟",
+            a: "ایجنت را با محتوای صفحات سایت و مقاله‌های پایگاه دانش آموزش می‌دهید، در محیط آزمایش پاسخ‌هایش را می‌سنجید، برایش قانون رفتاری و مسیریابی تعریف می‌کنید و کیفیت پاسخ‌ها را در گزارش‌ها دنبال می‌کنید.",
+          },
+        ]
+      : []),
     {
       q: "به چه کانال‌ها و سرویس‌هایی وصل می‌شود؟",
       a: "افزونه‌های نصب برای وردپرس، ووکامرس، شاپیفای و پرستاشاپ موجود است و کانال‌های پیام‌رسان مانند تلگرام، واتساپ، اینستاگرام و اسلک در بخش یکپارچه‌سازی‌ها مدیریت می‌شوند؛ برخی از این اتصال‌ها در حال عرضه‌اند.",
@@ -321,13 +333,17 @@ function OperatorAvatar({ className }: { className?: string }) {
 function IndexPage() {
   const { settings, seoOverride } = Route.useLoaderData();
   const callEnabled = settings.videoCall.enabled;
-  const faqs = getFaqs(callEnabled);
-  const visiblePlatformFeatures = callEnabled
-    ? platformFeatures
-    : platformFeatures.filter((f) => f.title !== "مرکز تماس");
-  const visibleModuleGroups = callEnabled
-    ? moduleGroups
-    : moduleGroups.filter((g) => g.title !== "مرکز تماس");
+  const aiEnabled = settings.aiMarketing.enabled;
+  const faqs = getFaqs(callEnabled, aiEnabled);
+  const AI_FEATURE_TITLES = ["ایجنت هوش مصنوعی پیشرفته", "کمک هوش مصنوعی به اپراتور"];
+  const visiblePlatformFeatures = platformFeatures.filter(
+    (f) =>
+      (callEnabled || f.title !== "مرکز تماس") &&
+      (aiEnabled || !AI_FEATURE_TITLES.includes(f.title)),
+  );
+  const visibleModuleGroups = moduleGroups.filter(
+    (g) => (callEnabled || g.title !== "مرکز تماس") && (aiEnabled || g.title !== "هوش مصنوعی"),
+  );
   const visibleConversations = callEnabled
     ? conversations
     : conversations.filter((c) => c.name !== "امیر رضایی");
@@ -339,9 +355,15 @@ function IndexPage() {
       name: settings.brand.name,
       applicationCategory: "BusinessApplication",
       operatingSystem: "Web",
-      description: callEnabled
-        ? "چت زنده، CRM، هوش مصنوعی، اتوماسیون، چت تصویری، سئو و کمپین — همه در وب‌یار"
-        : "چت زنده، CRM، هوش مصنوعی، اتوماسیون، سئو و کمپین — همه در وب‌یار",
+      description: `${joinFa(
+        "چت زنده",
+        "CRM",
+        aiEnabled && "هوش مصنوعی",
+        "اتوماسیون",
+        callEnabled && "چت تصویری",
+        "سئو",
+        "کمپین",
+      )} — همه در وب‌یار`,
       offers: [{ "@type": "Offer", price: "0", priceCurrency: "IRR", name: "شروع" }],
     },
     // بازتاب همان سوالات و پاسخ‌های واقعی که در بخش FAQ همین صفحه نمایش داده می‌شود
@@ -390,9 +412,13 @@ function IndexPage() {
                 transition={{ duration: 2, repeat: Infinity }}
                 className="h-[7px] w-[7px] rounded-full bg-success"
               />
-              {callEnabled
-                ? "چت زنده، تماس تصویری، مرکز تماس و ایجنت هوش مصنوعی — در یک پنل"
-                : "چت زنده و ایجنت هوش مصنوعی — در یک پنل"}
+              {joinFa(
+                "چت زنده",
+                callEnabled && "تماس تصویری",
+                callEnabled && "مرکز تماس",
+                aiEnabled && "ایجنت هوش مصنوعی",
+              )}{" "}
+              — در یک پنل
             </motion.div>
 
             <h1 className="mb-6 text-3xl font-extrabold leading-[1.25] text-foreground sm:text-5xl">
@@ -622,8 +648,8 @@ function IndexPage() {
             {callEnabled
               ? "چت زنده و تماس تصویری فقط شروع کار وب‌یار است؛"
               : "چت زنده فقط شروع کار وب‌یار است؛"}{" "}
-            هوش مصنوعی، CRM، اتوماسیون، کمپین و گزارش‌گیری هم در همان پنل، بدون نیاز به هیچ ابزار
-            جداگانه‌ای در اختیار شماست.
+            {joinFa(aiEnabled && "هوش مصنوعی", "CRM", "اتوماسیون", "کمپین", "گزارش‌گیری")} هم در
+            همان پنل، بدون نیاز به هیچ ابزار جداگانه‌ای در اختیار شماست.
           </p>
         </ScrollReveal>
         <StaggerChildren className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
@@ -675,8 +701,8 @@ function IndexPage() {
               هر چیزی که پس از ورود در اختیار دارید
             </h2>
             <p className="mx-auto max-w-2xl text-base leading-[1.9] text-muted-foreground">
-              فهرست بخش‌های واقعی پنل وب‌یار؛ از گفتگو و تماس تا هوش مصنوعی، سئو، مخاطبین و تنظیمات
-              حساب.
+              فهرست بخش‌های واقعی پنل وب‌یار؛ از گفتگو و تماس تا{" "}
+              {joinFa(aiEnabled && "هوش مصنوعی", "سئو", "مخاطبین", "تنظیمات حساب")}.
             </p>
           </ScrollReveal>
           <StaggerChildren className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
@@ -745,9 +771,15 @@ function IndexPage() {
             همین امروز وب‌یار را روی سایتتان نصب کنید
           </h2>
           <p className="relative mb-8 text-base text-primary-foreground/90">
-            {callEnabled
-              ? "گفتگو، تماس، هوش مصنوعی، مخاطبین، سئو و گزارش‌ها — همه از یک پنل"
-              : "گفتگو، هوش مصنوعی، مخاطبین، سئو و گزارش‌ها — همه از یک پنل"}
+            {joinFa(
+              "گفتگو",
+              callEnabled && "تماس",
+              aiEnabled && "هوش مصنوعی",
+              "مخاطبین",
+              "سئو",
+              "گزارش‌ها",
+            )}{" "}
+            — همه از یک پنل
           </p>
           <a
             href={settings.auth.signupUrl || "/contact"}
