@@ -7,7 +7,7 @@ import { MegaMenu } from "@/components/site/MegaMenu";
 import { getIcon } from "@/lib/icon-registry";
 import { useAppSession } from "@/lib/useAppSession";
 import type { CatalogCategoryDto } from "@/lib/catalog.functions";
-import type { SiteSettings } from "@/lib/settings";
+import { getBrandNameEn, type SiteSettings } from "@/lib/settings";
 
 const rootRoute = getRouteApi("__root__");
 
@@ -20,31 +20,63 @@ type NavLink =
       categories: CatalogCategoryDto[];
     };
 
-export function SiteHeader({ settings }: { settings: SiteSettings }) {
+export function SiteHeader({
+  settings,
+  english = false,
+}: {
+  settings: SiteSettings;
+  english?: boolean;
+}) {
   const [open, setOpen] = useState(false);
   const [mobileExpanded, setMobileExpanded] = useState<string | null>(null);
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const { productCatalog, solutionCatalog } = rootRoute.useLoaderData();
-  const brandInitial = settings.brand.name?.charAt(0) || "و";
+  const brandName = english ? getBrandNameEn(settings) : settings.brand.name;
+  const brandInitial = brandName?.charAt(0) || "و";
   const auth = settings.auth;
   const session = useAppSession(auth.sessionCheckUrl, auth.logoutUrl);
   const isLoggedIn = session.status === "loggedIn" && session.user !== null;
   // اگر fullName خالی بود، یک خوش‌آمدگویی عمومی نشان می‌دهیم — ایمیل کاربر هرگز به‌جای
   // نام نمایش داده نمی‌شود.
-  const welcomeText = session.user?.fullName ? `خوش آمدید، ${session.user.fullName}` : "خوش آمدید";
+  const welcomeText = english
+    ? session.user?.fullName
+      ? `Welcome, ${session.user.fullName}`
+      : "Welcome"
+    : session.user?.fullName
+      ? `خوش آمدید، ${session.user.fullName}`
+      : "خوش آمدید";
+  const label = {
+    panel: english ? "Dashboard" : auth.panelLabel || "پنل",
+    logout: english ? "Log out" : auth.logoutLabel || "خروج",
+    login: english ? "Log in" : auth.loginLabel || "ورود",
+    signup: english ? "Get started" : auth.signupLabel || "شروع رایگان",
+    menu: english ? "Open menu" : "باز کردن منو",
+    viewAllProducts: english ? "View all products" : "مشاهده همه محصولات",
+    viewAllSolutions: english ? "View all solutions" : "مشاهده همه راه‌کارها",
+    viewAll: english ? "View all" : "مشاهده همه",
+  };
 
   const handleLogout = () => {
     void session.logout();
   };
 
-  const NAV_LINKS: NavLink[] = [
-    { type: "mega", to: "/products", label: "محصولات", categories: productCatalog },
-    { type: "mega", to: "/solutions", label: "راه‌کارها", categories: solutionCatalog },
-    { type: "link", to: "/pricing", label: "قیمت‌گذاری" },
-    { type: "link", to: "/", hash: "features", label: "امکانات" },
-    { type: "link", to: "/blog", label: "بلاگ" },
-    { type: "link", to: "/api-docs", label: "مستندات API" },
-  ];
+  const NAV_LINKS: NavLink[] = english
+    ? [
+        { type: "mega", to: "/products", label: "Products", categories: productCatalog },
+        { type: "mega", to: "/solutions", label: "Solutions", categories: solutionCatalog },
+        { type: "link", to: "/pricing", label: "Pricing" },
+        { type: "link", to: "/", hash: "features", label: "Features" },
+        { type: "link", to: "/blog", label: "Blog" },
+        { type: "link", to: "/api-docs", label: "API Docs" },
+      ]
+    : [
+        { type: "mega", to: "/products", label: "محصولات", categories: productCatalog },
+        { type: "mega", to: "/solutions", label: "راه‌کارها", categories: solutionCatalog },
+        { type: "link", to: "/pricing", label: "قیمت‌گذاری" },
+        { type: "link", to: "/", hash: "features", label: "امکانات" },
+        { type: "link", to: "/blog", label: "بلاگ" },
+        { type: "link", to: "/api-docs", label: "مستندات API" },
+      ];
 
   return (
     <motion.header
@@ -58,7 +90,7 @@ export function SiteHeader({ settings }: { settings: SiteSettings }) {
           <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-brand text-primary-foreground">
             <span className="text-lg font-black">{brandInitial}</span>
           </div>
-          <span className="text-lg font-bold text-foreground">{settings.brand.name}</span>
+          <span className="text-lg font-bold text-foreground">{brandName}</span>
         </Link>
 
         <nav className="hidden items-center gap-7 text-sm font-medium text-muted-foreground md:flex">
@@ -71,7 +103,7 @@ export function SiteHeader({ settings }: { settings: SiteSettings }) {
                   basePath={link.to}
                   categories={link.categories}
                   viewAllLabel={
-                    link.to === "/products" ? "مشاهده همه محصولات" : "مشاهده همه راه‌کارها"
+                    link.to === "/products" ? label.viewAllProducts : label.viewAllSolutions
                   }
                 />
               );
@@ -97,7 +129,7 @@ export function SiteHeader({ settings }: { settings: SiteSettings }) {
               {auth.panelUrl && (
                 <a href={auth.panelUrl}>
                   <Button className="h-10 px-5 text-sm font-medium shadow-sm shadow-primary/20">
-                    {auth.panelLabel || "پنل"}
+                    {label.panel}
                   </Button>
                 </a>
               )}
@@ -107,7 +139,7 @@ export function SiteHeader({ settings }: { settings: SiteSettings }) {
                 className="h-10 px-4 text-sm font-medium"
                 onClick={handleLogout}
               >
-                {auth.logoutLabel || "خروج"}
+                {label.logout}
               </Button>
             </div>
           )}
@@ -116,14 +148,14 @@ export function SiteHeader({ settings }: { settings: SiteSettings }) {
               {auth.loginUrl && (
                 <a href={auth.loginUrl}>
                   <Button variant="ghost" className="h-10 px-4 text-sm font-medium">
-                    {auth.loginLabel || "ورود"}
+                    {label.login}
                   </Button>
                 </a>
               )}
               {auth.signupUrl && (
                 <a href={auth.signupUrl}>
                   <Button className="h-10 px-5 text-sm font-medium shadow-sm shadow-primary/20">
-                    {auth.signupLabel || "شروع رایگان"}
+                    {label.signup}
                   </Button>
                 </a>
               )}
@@ -133,7 +165,7 @@ export function SiteHeader({ settings }: { settings: SiteSettings }) {
             type="button"
             onClick={() => setOpen((v) => !v)}
             className="flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground md:hidden"
-            aria-label="باز کردن منو"
+            aria-label={label.menu}
           >
             {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
           </button>
@@ -207,7 +239,7 @@ export function SiteHeader({ settings }: { settings: SiteSettings }) {
                                 }}
                                 className="block px-3 py-1.5 text-sm font-semibold text-primary"
                               >
-                                مشاهده همه {link.label}
+                                {label.viewAll} {link.label}
                               </Link>
                             </div>
                           </motion.div>
@@ -233,7 +265,7 @@ export function SiteHeader({ settings }: { settings: SiteSettings }) {
                   <p className="px-1 text-sm text-muted-foreground">{welcomeText}</p>
                   {auth.panelUrl && (
                     <a href={auth.panelUrl} className="block">
-                      <Button className="h-10 w-full">{auth.panelLabel || "پنل"}</Button>
+                      <Button className="h-10 w-full">{label.panel}</Button>
                     </a>
                   )}
                   <Button
@@ -242,7 +274,7 @@ export function SiteHeader({ settings }: { settings: SiteSettings }) {
                     className="h-10 w-full"
                     onClick={handleLogout}
                   >
-                    {auth.logoutLabel || "خروج"}
+                    {label.logout}
                   </Button>
                 </div>
               )}
@@ -250,13 +282,13 @@ export function SiteHeader({ settings }: { settings: SiteSettings }) {
                 <div className="mt-3 space-y-2 border-t border-border pt-3">
                   {auth.signupUrl && (
                     <a href={auth.signupUrl} className="block">
-                      <Button className="h-10 w-full">{auth.signupLabel || "شروع رایگان"}</Button>
+                      <Button className="h-10 w-full">{label.signup}</Button>
                     </a>
                   )}
                   {auth.loginUrl && (
                     <a href={auth.loginUrl} className="block">
                       <Button variant="outline" className="h-10 w-full">
-                        {auth.loginLabel || "ورود"}
+                        {label.login}
                       </Button>
                     </a>
                   )}

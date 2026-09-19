@@ -1,8 +1,55 @@
 import { Link } from "@tanstack/react-router";
-import { getPublicTagline, type SiteSettings } from "@/lib/settings";
+import { getBrandNameEn, getPublicTagline, type SiteSettings } from "@/lib/settings";
 
-export function SiteFooter({ settings }: { settings: SiteSettings }) {
-  const brandInitial = settings.brand.name?.charAt(0) || "و";
+const FA = {
+  tagline: "پلتفرم جامع مدیریت ارتباط با مشتری برای کسب‌وکارهای ایرانی",
+  product: "محصول",
+  products: "محصولات",
+  solutions: "راه‌کارها",
+  pricing: "قیمت‌گذاری",
+  apiDocs: "مستندات API",
+  company: "شرکت",
+  about: "درباره ما",
+  blog: "بلاگ",
+  contact: "تماس با ما",
+  support: "پشتیبانی",
+  legal: "قانونی",
+  terms: "شرایط استفاده",
+  privacy: "حریم خصوصی",
+  sla: "SLA",
+};
+
+const EN: typeof FA = {
+  tagline: "Customer communication platform for modern businesses",
+  product: "Product",
+  products: "Products",
+  solutions: "Solutions",
+  pricing: "Pricing",
+  apiDocs: "API Docs",
+  company: "Company",
+  about: "About",
+  blog: "Blog",
+  contact: "Contact",
+  support: "Support",
+  legal: "Legal",
+  terms: "Terms of Use",
+  privacy: "Privacy Policy",
+  sla: "SLA",
+};
+
+export function SiteFooter({
+  settings,
+  english = false,
+}: {
+  settings: SiteSettings;
+  english?: boolean;
+}) {
+  const t = english ? EN : FA;
+  const brandName = english ? getBrandNameEn(settings) : settings.brand.name;
+  const brandInitial = brandName?.charAt(0) || "و";
+  const copyright = english
+    ? `© ${new Date().getFullYear()} ${getBrandNameEn(settings)} — All rights reserved`
+    : settings.brand.copyright || "© ۱۴۰۵ وب‌یار — تمامی حقوق محفوظ است";
 
   return (
     <footer className="border-t border-border bg-card/30">
@@ -13,66 +60,63 @@ export function SiteFooter({ settings }: { settings: SiteSettings }) {
               <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand text-primary-foreground">
                 <span className="text-sm font-bold">{brandInitial}</span>
               </div>
-              <span className="text-base font-bold text-foreground">{settings.brand.name}</span>
+              <span className="text-base font-bold text-foreground">{brandName}</span>
             </Link>
             <p className="text-sm leading-relaxed text-muted-foreground">
-              {getPublicTagline(settings) ||
-                "پلتفرم جامع مدیریت ارتباط با مشتری برای کسب‌وکارهای ایرانی"}
+              {english ? t.tagline : getPublicTagline(settings) || t.tagline}
             </p>
           </div>
           <div>
-            <h3 className="mb-3 text-sm font-semibold text-foreground">محصول</h3>
+            <h3 className="mb-3 text-sm font-semibold text-foreground">{t.product}</h3>
             <nav className="space-y-2 text-sm text-muted-foreground">
               <Link to="/products" className="block transition-colors hover:text-foreground">
-                محصولات
+                {t.products}
               </Link>
               <Link to="/solutions" className="block transition-colors hover:text-foreground">
-                راه‌کارها
+                {t.solutions}
               </Link>
               <Link to="/pricing" className="block transition-colors hover:text-foreground">
-                قیمت‌گذاری
+                {t.pricing}
               </Link>
               <Link to="/api-docs" className="block transition-colors hover:text-foreground">
-                مستندات API
+                {t.apiDocs}
               </Link>
             </nav>
           </div>
           <div>
-            <h3 className="mb-3 text-sm font-semibold text-foreground">شرکت</h3>
+            <h3 className="mb-3 text-sm font-semibold text-foreground">{t.company}</h3>
             <nav className="space-y-2 text-sm text-muted-foreground">
               <Link to="/about" className="block transition-colors hover:text-foreground">
-                درباره ما
+                {t.about}
               </Link>
               <Link to="/blog" className="block transition-colors hover:text-foreground">
-                بلاگ
+                {t.blog}
               </Link>
               <Link to="/contact" className="block transition-colors hover:text-foreground">
-                تماس با ما
+                {t.contact}
               </Link>
               <Link to="/help" className="block transition-colors hover:text-foreground">
-                Support
+                {english ? t.support : "Support"}
               </Link>
             </nav>
           </div>
           <div>
-            <h3 className="mb-3 text-sm font-semibold text-foreground">قانونی</h3>
+            <h3 className="mb-3 text-sm font-semibold text-foreground">{t.legal}</h3>
             <nav className="space-y-2 text-sm text-muted-foreground">
               <Link to="/terms" className="block transition-colors hover:text-foreground">
-                شرایط استفاده
+                {t.terms}
               </Link>
               <Link to="/privacy" className="block transition-colors hover:text-foreground">
-                حریم خصوصی
+                {t.privacy}
               </Link>
               <Link to="/sla" className="block transition-colors hover:text-foreground">
-                SLA
+                {t.sla}
               </Link>
             </nav>
           </div>
         </div>
         <div className="border-t border-border pt-6 text-center">
-          <p className="text-sm text-muted-foreground">
-            {settings.brand.copyright || "© ۱۴۰۵ وب‌یار — تمامی حقوق محفوظ است"}
-          </p>
+          <p className="text-sm text-muted-foreground">{copyright}</p>
         </div>
       </div>
     </footer>
