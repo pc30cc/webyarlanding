@@ -7,7 +7,7 @@ import { MegaMenu } from "@/components/site/MegaMenu";
 import { getIcon } from "@/lib/icon-registry";
 import { useAppSession } from "@/lib/useAppSession";
 import type { CatalogCategoryDto } from "@/lib/catalog.functions";
-import type { SiteSettings } from "@/lib/settings";
+import { getBrandNameEn, type SiteSettings } from "@/lib/settings";
 
 const rootRoute = getRouteApi("__root__");
 
@@ -20,31 +20,63 @@ type NavLink =
       categories: CatalogCategoryDto[];
     };
 
-export function SiteHeader({ settings }: { settings: SiteSettings }) {
+export function SiteHeader({
+  settings,
+  english = false,
+}: {
+  settings: SiteSettings;
+  english?: boolean;
+}) {
   const [open, setOpen] = useState(false);
   const [mobileExpanded, setMobileExpanded] = useState<string | null>(null);
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const { productCatalog, solutionCatalog } = rootRoute.useLoaderData();
-  const brandInitial = settings.brand.name?.charAt(0) || "و";
+  const brandName = english ? getBrandNameEn(settings) : settings.brand.name;
+  const brandInitial = brandName?.charAt(0) || "و";
   const auth = settings.auth;
   const session = useAppSession(auth.sessionCheckUrl, auth.logoutUrl);
   const isLoggedIn = session.status === "loggedIn" && session.user !== null;
   // اگر fullName خالی بود، یک خوش‌آمدگویی عمومی نشان می‌دهیم — ایمیل کاربر هرگز به‌جای
   // نام نمایش داده نمی‌شود.
-  const welcomeText = session.user?.fullName ? `خوش آمدید، ${session.user.fullName}` : "خوش آمدید";
+  const welcomeText = english
+    ? session.user?.fullName
+      ? `Welcome, ${session.user.fullName}`
+      : "Welcome"
+    : session.user?.fullName
+      ? `خوش آمدید، ${session.user.fullName}`
+      : "خوش آمدید";
+  const label = {
+    panel: english ? "Dashboard" : auth.panelLabel || "پنل",
+    logout: english ? "Log out" : auth.logoutLabel || "خروج",
+    login: english ? "Log in" : auth.loginLabel || "ورود",
+    signup: english ? "Get started" : auth.signupLabel || "شروع رایگان",
+    menu: english ? "Open menu" : "باز کردن منو",
+    viewAllProducts: english ? "View all products" : "مشاهده همه محصولات",
+    viewAllSolutions: english ? "View all solutions" : "مشاهده همه راه‌کارها",
+    viewAll: english ? "View all" : "مشاهده همه",
+  };
 
   const handleLogout = () => {
     void session.logout();
   };
 
-  const NAV_LINKS: NavLink[] = [
-    { type: "mega", to: "/products", label: "محصولات", categories: productCatalog },
-    { type: "mega", to: "/solutions", label: "راه‌کارها", categories: solutionCatalog },
-    { type: "link", to: "/pricing", label: "قیمت‌گذاری" },
-    { type: "link", to: "/", hash: "features", label: "امکانات" },
-    { type: "link", to: "/blog", label: "بلاگ" },
-    { type: "link", to: "/api-docs", label: "مستندات API" },
-  ];
+  const NAV_LINKS: NavLink[] = english
+    ? [
+        { type: "mega", to: "/products", label: "Products", categories: productCatalog },
+        { type: "mega", to: "/solutions", label: "Solutions", categories: solutionCatalog },
+        { type: "link", to: "/pricing", label: "Pricing" },
+        { type: "link", to: "/", hash: "features", label: "Features" },
+        { type: "link", to: "/blog", label: "Blog" },
+        { type: "link", to: "/api-docs", label: "API Docs" },
+      ]
+    : [
+        { type: "mega", to: "/products", label: "محصولات", categories: productCatalog },
+        { type: "mega", to: "/solutions", label: "راه‌کارها", categories: solutionCatalog },
+        { type: "link", to: "/pricing", label: "قیمت‌گذاری" },
+        { type: "link", to: "/", hash: "features", label: "امکانات" },
+        { type: "link", to: "/blog", label: "بلاگ" },
+        { type: "link", to: "/api-docs", label: "مستندات API" },
+      ];
 
   return (
     <motion.header
