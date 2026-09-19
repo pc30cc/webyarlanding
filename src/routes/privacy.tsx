@@ -4,6 +4,7 @@ import { fetchSettings } from "@/lib/settings.functions";
 import { getPublicSeoPage } from "@/lib/seo.functions";
 import { buildPageMeta, buildBreadcrumbJsonLd, safeJsonLdHtml } from "@/lib/seo-meta";
 import { SiteLayout } from "@/components/site/SiteLayout";
+import { getBrandNameEn } from "@/lib/settings";
 
 export const Route = createFileRoute("/privacy")({
   loader: async () => {
@@ -127,6 +128,7 @@ function sections(brand: string, email: string, address: string) {
 function PrivacyPage() {
   const { settings } = Route.useLoaderData();
   const base = (settings.brand.siteUrl || "").replace(/\/$/, "");
+  const brandEn = getBrandNameEn(settings);
   const email = settings.brand.email || "support@webyar.app";
   const jsonLd = [
     {
@@ -134,7 +136,7 @@ function PrivacyPage() {
       "@type": "WebPage",
       name: "Privacy Policy",
       url: base ? `${base}/privacy` : undefined,
-      isPartOf: { "@type": "WebSite", name: settings.brand.name, url: base || undefined },
+      isPartOf: { "@type": "WebSite", name: brandEn, url: base || undefined },
     },
     buildBreadcrumbJsonLd(settings, [
       { name: "خانه", path: "/" },
@@ -150,11 +152,11 @@ function PrivacyPage() {
             Privacy Policy
           </h1>
           <p className="mb-10 text-sm text-muted-foreground">
-            Effective date: {EFFECTIVE_DATE} · {settings.brand.name}
+            Effective date: {EFFECTIVE_DATE} · {brandEn}
           </p>
         </motion.div>
         <div className="space-y-8">
-          {sections(settings.brand.name, email, settings.brand.address || "").map((s, i) => (
+          {sections(brandEn, email, settings.brand.address || "").map((s, i) => (
             <motion.section
               key={s.title}
               initial={{ opacity: 0, y: 20 }}

@@ -4,6 +4,7 @@ import { fetchSettings } from "@/lib/settings.functions";
 import { getPublicSeoPage } from "@/lib/seo.functions";
 import { buildPageMeta, buildBreadcrumbJsonLd, safeJsonLdHtml } from "@/lib/seo-meta";
 import { SiteLayout } from "@/components/site/SiteLayout";
+import { getBrandNameEn } from "@/lib/settings";
 
 export const Route = createFileRoute("/terms")({
   loader: async () => {
@@ -122,6 +123,7 @@ function sections(brand: string, email: string) {
 function TermsPage() {
   const { settings } = Route.useLoaderData();
   const base = (settings.brand.siteUrl || "").replace(/\/$/, "");
+  const brandEn = getBrandNameEn(settings);
   const email = settings.brand.email || "support@webyar.app";
   const jsonLd = [
     {
@@ -129,7 +131,7 @@ function TermsPage() {
       "@type": "WebPage",
       name: "Terms of Use",
       url: base ? `${base}/terms` : undefined,
-      isPartOf: { "@type": "WebSite", name: settings.brand.name, url: base || undefined },
+      isPartOf: { "@type": "WebSite", name: brandEn, url: base || undefined },
     },
     buildBreadcrumbJsonLd(settings, [
       { name: "خانه", path: "/" },
@@ -143,11 +145,11 @@ function TermsPage() {
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
           <h1 className="mb-2 text-3xl font-extrabold text-foreground sm:text-4xl">Terms of Use</h1>
           <p className="mb-10 text-sm text-muted-foreground">
-            Effective date: {EFFECTIVE_DATE} · {settings.brand.name}
+            Effective date: {EFFECTIVE_DATE} · {brandEn}
           </p>
         </motion.div>
         <div className="space-y-8">
-          {sections(settings.brand.name, email).map((s, i) => (
+          {sections(brandEn, email).map((s, i) => (
             <motion.section
               key={s.title}
               initial={{ opacity: 0, y: 20 }}
