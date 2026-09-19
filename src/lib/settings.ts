@@ -3,6 +3,8 @@
 
 export interface BrandSettings {
   name: string;
+  /** نام برند به انگلیسی — در صفحات انگلیسی (Privacy/Terms/Support) استفاده می‌شود */
+  nameEn?: string;
   tagline: string;
   logoUrl: string;
   faviconUrl: string;
@@ -184,6 +186,7 @@ export interface SiteSettings {
 export const DEFAULT_SETTINGS: SiteSettings = {
   brand: {
     name: "وب‌یار",
+    nameEn: "Webyar",
     tagline: "چت زنده و تماس ویدیویی، فقط با یک خط کد",
     logoUrl: "",
     faviconUrl: "/favicon.png",
