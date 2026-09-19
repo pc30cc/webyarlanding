@@ -108,6 +108,21 @@ export default function GeneralSection() {
                     }
                   />
                 </Field>
+                <div className="flex items-center justify-between gap-4 rounded-lg border border-border p-3">
+                  <div>
+                    <p className="text-sm font-medium">صفحات حقوقی کاملاً انگلیسی</p>
+                    <p className="text-xs text-muted-foreground">
+                      با روشن بودن، در صفحات Privacy، Terms و Support منوی بالا، دکمه‌های ورود و
+                      فوتر هم انگلیسی می‌شوند. با خاموش کردن، همه‌چیز فارسی می‌شود.
+                    </p>
+                  </div>
+                  <Switch
+                    checked={form.brand.legalEnglishChrome !== false}
+                    onCheckedChange={(v) =>
+                      setForm((f) => ({ ...f, brand: { ...f.brand, legalEnglishChrome: v } }))
+                    }
+                  />
+                </div>
                 <Field label="شعار / تگ‌لاین">
                   <Input
                     value={form.brand.tagline}
