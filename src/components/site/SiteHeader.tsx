@@ -90,7 +90,7 @@ export function SiteHeader({
           <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-brand text-primary-foreground">
             <span className="text-lg font-black">{brandInitial}</span>
           </div>
-          <span className="text-lg font-bold text-foreground">{settings.brand.name}</span>
+          <span className="text-lg font-bold text-foreground">{brandName}</span>
         </Link>
 
         <nav className="hidden items-center gap-7 text-sm font-medium text-muted-foreground md:flex">
@@ -103,7 +103,7 @@ export function SiteHeader({
                   basePath={link.to}
                   categories={link.categories}
                   viewAllLabel={
-                    link.to === "/products" ? "مشاهده همه محصولات" : "مشاهده همه راه‌کارها"
+                    link.to === "/products" ? label.viewAllProducts : label.viewAllSolutions
                   }
                 />
               );
@@ -129,7 +129,7 @@ export function SiteHeader({
               {auth.panelUrl && (
                 <a href={auth.panelUrl}>
                   <Button className="h-10 px-5 text-sm font-medium shadow-sm shadow-primary/20">
-                    {auth.panelLabel || "پنل"}
+                    {label.panel}
                   </Button>
                 </a>
               )}
@@ -139,7 +139,7 @@ export function SiteHeader({
                 className="h-10 px-4 text-sm font-medium"
                 onClick={handleLogout}
               >
-                {auth.logoutLabel || "خروج"}
+                {label.logout}
               </Button>
             </div>
           )}
@@ -148,14 +148,14 @@ export function SiteHeader({
               {auth.loginUrl && (
                 <a href={auth.loginUrl}>
                   <Button variant="ghost" className="h-10 px-4 text-sm font-medium">
-                    {auth.loginLabel || "ورود"}
+                    {label.login}
                   </Button>
                 </a>
               )}
               {auth.signupUrl && (
                 <a href={auth.signupUrl}>
                   <Button className="h-10 px-5 text-sm font-medium shadow-sm shadow-primary/20">
-                    {auth.signupLabel || "شروع رایگان"}
+                    {label.signup}
                   </Button>
                 </a>
               )}
@@ -165,7 +165,7 @@ export function SiteHeader({
             type="button"
             onClick={() => setOpen((v) => !v)}
             className="flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground md:hidden"
-            aria-label="باز کردن منو"
+            aria-label={label.menu}
           >
             {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
           </button>
@@ -239,7 +239,7 @@ export function SiteHeader({
                                 }}
                                 className="block px-3 py-1.5 text-sm font-semibold text-primary"
                               >
-                                مشاهده همه {link.label}
+                                {label.viewAll} {link.label}
                               </Link>
                             </div>
                           </motion.div>
@@ -265,7 +265,7 @@ export function SiteHeader({
                   <p className="px-1 text-sm text-muted-foreground">{welcomeText}</p>
                   {auth.panelUrl && (
                     <a href={auth.panelUrl} className="block">
-                      <Button className="h-10 w-full">{auth.panelLabel || "پنل"}</Button>
+                      <Button className="h-10 w-full">{label.panel}</Button>
                     </a>
                   )}
                   <Button
@@ -274,7 +274,7 @@ export function SiteHeader({
                     className="h-10 w-full"
                     onClick={handleLogout}
                   >
-                    {auth.logoutLabel || "خروج"}
+                    {label.logout}
                   </Button>
                 </div>
               )}
@@ -282,13 +282,13 @@ export function SiteHeader({
                 <div className="mt-3 space-y-2 border-t border-border pt-3">
                   {auth.signupUrl && (
                     <a href={auth.signupUrl} className="block">
-                      <Button className="h-10 w-full">{auth.signupLabel || "شروع رایگان"}</Button>
+                      <Button className="h-10 w-full">{label.signup}</Button>
                     </a>
                   )}
                   {auth.loginUrl && (
                     <a href={auth.loginUrl} className="block">
                       <Button variant="outline" className="h-10 w-full">
-                        {auth.loginLabel || "ورود"}
+                        {label.login}
                       </Button>
                     </a>
                   )}
