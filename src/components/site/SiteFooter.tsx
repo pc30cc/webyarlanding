@@ -49,6 +49,9 @@ export function SiteFooter({ settings }: { settings: SiteSettings }) {
               <Link to="/contact" className="block transition-colors hover:text-foreground">
                 تماس با ما
               </Link>
+              <Link to="/help" className="block transition-colors hover:text-foreground">
+                Support
+              </Link>
             </nav>
           </div>
           <div>
