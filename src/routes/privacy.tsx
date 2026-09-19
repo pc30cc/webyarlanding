@@ -129,7 +129,7 @@ function PrivacyPage() {
   const { settings } = Route.useLoaderData();
   const base = (settings.brand.siteUrl || "").replace(/\/$/, "");
   const brandEn = getBrandNameEn(settings);
-  const email = settings.brand.email || "support@webyar.app";
+  const email = settings.brand.email || "support@webyar.ai";
   const jsonLd = [
     {
       "@context": "https://schema.org",
