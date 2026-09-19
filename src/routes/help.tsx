@@ -5,6 +5,7 @@ import { fetchSettings } from "@/lib/settings.functions";
 import { getPublicSeoPage } from "@/lib/seo.functions";
 import { buildPageMeta, buildBreadcrumbJsonLd, safeJsonLdHtml } from "@/lib/seo-meta";
 import { SiteLayout } from "@/components/site/SiteLayout";
+import { getBrandNameEn } from "@/lib/settings";
 
 export const Route = createFileRoute("/help")({
   loader: async () => {
@@ -58,6 +59,7 @@ const FAQS = [
 function HelpPage() {
   const { settings } = Route.useLoaderData();
   const base = (settings.brand.siteUrl || "").replace(/\/$/, "");
+  const brandEn = getBrandNameEn(settings);
   const email = settings.brand.email || "support@webyar.app";
   const phone = settings.brand.phone;
 
@@ -74,11 +76,11 @@ function HelpPage() {
     {
       "@context": "https://schema.org",
       "@type": "ContactPage",
-      name: `${settings.brand.name} Support`,
+      name: `${brandEn} Support`,
       url: base ? `${base}/help` : undefined,
       mainEntity: {
         "@type": "Organization",
-        name: settings.brand.name,
+        name: brandEn,
         email,
         ...(phone ? { telephone: phone } : {}),
         contactPoint: [
@@ -106,7 +108,7 @@ function HelpPage() {
             Support &amp; Help Center
           </h1>
           <p className="mb-10 text-sm leading-7 text-muted-foreground">
-            Need help with {settings.brand.name}? Our support team answers every message. Use the
+            Need help with {brandEn}? Our support team answers every message. Use the
             contact details below for technical issues, billing questions, privacy requests or
             account deletion.
           </p>
