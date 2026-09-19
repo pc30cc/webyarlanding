@@ -5,6 +5,8 @@ export interface BrandSettings {
   name: string;
   /** نام برند به انگلیسی — در صفحات انگلیسی (Privacy/Terms/Support) استفاده می‌شود */
   nameEn?: string;
+  /** اگر روشن باشد، منوی بالا، دکمه‌های ورود و فوتر در صفحات Privacy/Terms/Support هم انگلیسی می‌شوند */
+  legalEnglishChrome?: boolean;
   tagline: string;
   logoUrl: string;
   faviconUrl: string;
@@ -187,6 +189,7 @@ export const DEFAULT_SETTINGS: SiteSettings = {
   brand: {
     name: "وب‌یار",
     nameEn: "Webyar",
+    legalEnglishChrome: true,
     tagline: "چت زنده و تماس ویدیویی، فقط با یک خط کد",
     logoUrl: "",
     faviconUrl: "/favicon.png",
@@ -318,6 +321,16 @@ export function joinFa(...items: (string | false | null | undefined)[]): string 
  * خاموش است و متن ذخیره‌شده به همان موضوع اشاره دارد، یک متن عمومی جایگزینش می‌شود؛ به‌محض
  * روشن‌شدن دوباره همان تگ‌لاین اصلی برمی‌گردد.
  */
+/** مسیرهای حقوقی/پشتیبانی که می‌توانند کاملاً انگلیسی نمایش داده شوند. */
+export const LEGAL_EN_PATHS = ["/privacy", "/terms", "/help"];
+
+/** آیا این مسیر باید با پوسته انگلیسی (منو، دکمه‌ها، فوتر) نمایش داده شود؟ */
+export function isEnglishChrome(settings: SiteSettings, pathname: string): boolean {
+  if (settings.brand.legalEnglishChrome === false) return false;
+  const clean = pathname.replace(/\/+$/, "") || "/";
+  return LEGAL_EN_PATHS.includes(clean);
+}
+
 /** نام برند برای صفحات انگلیسی؛ اگر تنظیم نشده باشد به Webyar برمی‌گردد. */
 export function getBrandNameEn(settings: SiteSettings): string {
   const en = settings.brand.nameEn?.trim();
