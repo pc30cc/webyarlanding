@@ -318,6 +318,12 @@ export function joinFa(...items: (string | false | null | undefined)[]): string 
  * خاموش است و متن ذخیره‌شده به همان موضوع اشاره دارد، یک متن عمومی جایگزینش می‌شود؛ به‌محض
  * روشن‌شدن دوباره همان تگ‌لاین اصلی برمی‌گردد.
  */
+/** نام برند برای صفحات انگلیسی؛ اگر تنظیم نشده باشد به Webyar برمی‌گردد. */
+export function getBrandNameEn(settings: SiteSettings): string {
+  const en = settings.brand.nameEn?.trim();
+  return en && en.length > 0 ? en : "Webyar";
+}
+
 export function getPublicTagline(settings: SiteSettings): string {
   const tagline = settings.brand.tagline;
   if (!tagline) return tagline;

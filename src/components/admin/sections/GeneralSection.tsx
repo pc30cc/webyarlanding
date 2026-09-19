@@ -98,6 +98,16 @@ export default function GeneralSection() {
                     }
                   />
                 </Field>
+                <Field label="نام برند (انگلیسی)">
+                  <Input
+                    dir="ltr"
+                    placeholder="Webyar"
+                    value={form.brand.nameEn ?? ""}
+                    onChange={(e) =>
+                      setForm((f) => ({ ...f, brand: { ...f.brand, nameEn: e.target.value } }))
+                    }
+                  />
+                </Field>
                 <Field label="شعار / تگ‌لاین">
                   <Input
                     value={form.brand.tagline}
