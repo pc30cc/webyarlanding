@@ -169,6 +169,13 @@ export interface TelegramSettings {
   lastChannelPostErrorAt: string;
 }
 
+/** نماد اعتماد الکترونیکی (اینماد) — فقط در فوتر صفحه اصلی نمایش داده می‌شود */
+export interface TrustBadgeSettings {
+  enabled: boolean;
+  /** کد HTML نماد */
+  html: string;
+}
+
 export interface SiteSettings {
   brand: BrandSettings;
   seo: SeoSettings;
@@ -183,7 +190,9 @@ export interface SiteSettings {
   analytics: AnalyticsSettings;
   media: MediaSettings;
   telegram: TelegramSettings;
+  trustBadge: TrustBadgeSettings;
 }
+
 
 export const DEFAULT_SETTINGS: SiteSettings = {
   brand: {
