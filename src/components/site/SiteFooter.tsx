@@ -121,9 +121,16 @@ export function SiteFooter({
             </nav>
           </div>
         </div>
+        {showTrustBadge && (
+          <div
+            className="mb-6 flex justify-center"
+            dangerouslySetInnerHTML={{ __html: settings.trustBadge.html }}
+          />
+        )}
         <div className="border-t border-border pt-6 text-center">
           <p className="text-sm text-muted-foreground">{copyright}</p>
         </div>
+
       </div>
     </footer>
   );
