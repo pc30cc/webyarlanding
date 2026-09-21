@@ -297,7 +297,12 @@ export const DEFAULT_SETTINGS: SiteSettings = {
     lastChannelPostError: "",
     lastChannelPostErrorAt: "",
   },
+  trustBadge: {
+    enabled: false,
+    html: "<a referrerpolicy='origin' target='_blank' href='https://trustseal.enamad.ir/?id=7717709&Code=TYfltdwbKyutsb1wyJvU6L3ksRydHL6k'><img referrerpolicy='origin' src='https://trustseal.enamad.ir/logo.aspx?id=7717709&Code=TYfltdwbKyutsb1wyJvU6L3ksRydHL6k' alt='' style='cursor:pointer' code='TYfltdwbKyutsb1wyJvU6L3ksRydHL6k'></a>",
+  },
 };
+
 
 export const CALL_KEYWORDS = [
   "تماس تصویری",
