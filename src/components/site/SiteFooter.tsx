@@ -142,10 +142,7 @@ export function SiteFooter({
           {showTrustBadge && (
             <div>
               <h3 className="mb-3 text-sm font-semibold text-foreground">نماد اعتماد</h3>
-              <div
-                className="enamad-badge"
-                dangerouslySetInnerHTML={{ __html: settings.trustBadge.html }}
-              />
+              <TrustBadge html={settings.trustBadge.html} />
             </div>
           )}
         </div>
