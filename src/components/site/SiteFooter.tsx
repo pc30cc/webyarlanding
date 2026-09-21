@@ -76,9 +76,6 @@ export function SiteFooter({
                 <span className="text-xs font-semibold text-muted-foreground">
                   نماد اعتماد الکترونیکی
                 </span>
-                <p className="text-sm font-medium text-foreground">
-                  چت زنده و تماس ویدیویی، فقط با یک خط کد
-                </p>
                 <div dangerouslySetInnerHTML={{ __html: settings.trustBadge.html }} />
               </div>
             )}
