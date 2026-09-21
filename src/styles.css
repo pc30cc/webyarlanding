@@ -268,3 +268,38 @@
 @utility shadow-glow {
   box-shadow: var(--shadow-glow);
 }
+
+/* نماد اعتماد (اینماد): اگر تصویر نماد لود نشد، همان لینک با یک جای‌گزین متنی قابل کلیک بماند */
+.enamad-badge {
+  position: relative;
+  min-width: 6.5rem;
+  min-height: 6.5rem;
+}
+
+.enamad-badge::before {
+  content: "نماد اعتماد";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px dashed var(--border);
+  border-radius: 0.75rem;
+  font-size: 0.75rem;
+  color: var(--muted-foreground);
+}
+
+.enamad-badge > a {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 6.5rem;
+  min-height: 6.5rem;
+}
+
+.enamad-badge img {
+  max-width: 100%;
+}

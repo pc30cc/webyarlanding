@@ -76,7 +76,10 @@ export function SiteFooter({
                 <span className="text-xs font-semibold text-muted-foreground">
                   نماد اعتماد الکترونیکی
                 </span>
-                <div dangerouslySetInnerHTML={{ __html: settings.trustBadge.html }} />
+                <div
+                  className="enamad-badge"
+                  dangerouslySetInnerHTML={{ __html: settings.trustBadge.html }}
+                />
               </div>
             )}
           </div>
