@@ -122,11 +122,14 @@ export function SiteFooter({
           </div>
         </div>
         {showTrustBadge && (
-          <div
-            className="mb-6 flex justify-center"
-            dangerouslySetInnerHTML={{ __html: settings.trustBadge.html }}
-          />
+          <div className="mb-6 flex flex-col items-center gap-3">
+            <p className="text-center text-sm font-medium text-foreground">
+              چت زنده و تماس ویدیویی، فقط با یک خط کد
+            </p>
+            <div dangerouslySetInnerHTML={{ __html: settings.trustBadge.html }} />
+          </div>
         )}
+
         <div className="border-t border-border pt-6 text-center">
           <p className="text-sm text-muted-foreground">{copyright}</p>
         </div>
