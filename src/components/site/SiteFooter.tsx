@@ -71,6 +71,17 @@ export function SiteFooter({
             <p className="text-sm leading-relaxed text-muted-foreground">
               {english ? t.tagline : getPublicTagline(settings) || t.tagline}
             </p>
+            {showTrustBadge && (
+              <div className="mt-4 inline-flex flex-col items-start gap-2 rounded-xl border border-border bg-background/60 p-4">
+                <span className="text-xs font-semibold text-muted-foreground">
+                  نماد اعتماد الکترونیکی
+                </span>
+                <p className="text-sm font-medium text-foreground">
+                  چت زنده و تماس ویدیویی، فقط با یک خط کد
+                </p>
+                <div dangerouslySetInnerHTML={{ __html: settings.trustBadge.html }} />
+              </div>
+            )}
           </div>
           <div>
             <h3 className="mb-3 text-sm font-semibold text-foreground">{t.product}</h3>
