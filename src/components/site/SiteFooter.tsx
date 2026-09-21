@@ -122,17 +122,23 @@ export function SiteFooter({
           </div>
         </div>
         {showTrustBadge && (
-          <div className="mb-6 flex flex-col items-center gap-3">
-            <p className="text-center text-sm font-medium text-foreground">
-              چت زنده و تماس ویدیویی، فقط با یک خط کد
-            </p>
-            <div dangerouslySetInnerHTML={{ __html: settings.trustBadge.html }} />
+          <div className="mb-8 flex justify-center">
+            <div className="flex w-full max-w-xs flex-col items-center gap-3 rounded-xl border border-border bg-background/60 p-4 text-center">
+              <span className="text-xs font-semibold text-muted-foreground">
+                نماد اعتماد الکترونیکی
+              </span>
+              <div
+                className="flex h-[110px] w-[110px] items-center justify-center overflow-hidden rounded-lg bg-card"
+                dangerouslySetInnerHTML={{ __html: settings.trustBadge.html }}
+              />
+            </div>
           </div>
         )}
 
         <div className="border-t border-border pt-6 text-center">
           <p className="text-sm text-muted-foreground">{copyright}</p>
         </div>
+
 
       </div>
     </footer>
