@@ -60,7 +60,9 @@ export function SiteFooter({
   return (
     <footer className="border-t border-border bg-card/30">
       <div className="container-page py-12">
-        <div className="mb-8 grid grid-cols-2 gap-8 md:grid-cols-4">
+        <div
+          className={`mb-8 grid grid-cols-2 gap-8 ${showTrustBadge ? "md:grid-cols-5" : "md:grid-cols-4"}`}
+        >
           <div className="col-span-2 space-y-3 md:col-span-1">
             <Link to="/" className="flex items-center gap-2">
               <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand text-primary-foreground">
@@ -71,17 +73,6 @@ export function SiteFooter({
             <p className="text-sm leading-relaxed text-muted-foreground">
               {english ? t.tagline : getPublicTagline(settings) || t.tagline}
             </p>
-            {showTrustBadge && (
-              <div className="mt-4 inline-flex flex-col items-start gap-2 rounded-xl border border-border bg-background/60 p-4">
-                <span className="text-xs font-semibold text-muted-foreground">
-                  نماد اعتماد الکترونیکی
-                </span>
-                <div
-                  className="enamad-badge"
-                  dangerouslySetInnerHTML={{ __html: settings.trustBadge.html }}
-                />
-              </div>
-            )}
           </div>
           <div>
             <h3 className="mb-3 text-sm font-semibold text-foreground">{t.product}</h3>
@@ -131,7 +122,17 @@ export function SiteFooter({
               </Link>
             </nav>
           </div>
+          {showTrustBadge && (
+            <div>
+              <h3 className="mb-3 text-sm font-semibold text-foreground">نماد اعتماد</h3>
+              <div
+                className="enamad-badge"
+                dangerouslySetInnerHTML={{ __html: settings.trustBadge.html }}
+              />
+            </div>
+          )}
         </div>
+
 
         <div className="border-t border-border pt-6 text-center">
           <p className="text-sm text-muted-foreground">{copyright}</p>
