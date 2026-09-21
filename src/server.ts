@@ -28,6 +28,16 @@ function withSecurityHeaders(response: Response): Response {
   // same-origin-allow-popups (نه same-origin سخت‌گیرانه) چون ویجت چت خارجی ممکن است برای
   // تماس تصویری یا اتصال حساب از پاپ‌آپ استفاده کند و نباید رابطه‌اش با پنجره اصلی قطع شود.
   response.headers.set("Cross-Origin-Opener-Policy", "same-origin-allow-popups");
+
+  // صفحات HTML هرگز کش نشوند: بعد از هر دیپلوی نام فایل‌های CSS/JS تغییر می‌کند و اگر
+  // مرورگر (یا CDN) نسخه‌ی قدیمی HTML را نگه دارد، به فایل‌های حذف‌شده لینک می‌دهد و
+  // صفحه بدون استایل و بدون اسکریپت نمایش داده می‌شود.
+  const type = response.headers.get("content-type") ?? "";
+  if (type.includes("text/html")) {
+    response.headers.set("Cache-Control", "no-cache, no-store, must-revalidate");
+    response.headers.set("Pragma", "no-cache");
+    response.headers.set("Expires", "0");
+  }
   return response;
 }
 
