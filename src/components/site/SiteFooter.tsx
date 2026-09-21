@@ -1,5 +1,6 @@
-import { Link } from "@tanstack/react-router";
+import { Link, useRouterState } from "@tanstack/react-router";
 import { getBrandNameEn, getPublicTagline, type SiteSettings } from "@/lib/settings";
+
 
 const FA = {
   tagline: "پلتفرم جامع مدیریت ارتباط با مشتری برای کسب‌وکارهای ایرانی",
@@ -45,11 +46,16 @@ export function SiteFooter({
   english?: boolean;
 }) {
   const t = english ? EN : FA;
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const isHome = (pathname.replace(/\/+$/, "") || "/") === "/";
+  const showTrustBadge = isHome && settings.trustBadge?.enabled && !!settings.trustBadge?.html;
   const brandName = english ? getBrandNameEn(settings) : settings.brand.name;
   const brandInitial = brandName?.charAt(0) || "و";
   const copyright = english
     ? `© ${new Date().getFullYear()} ${getBrandNameEn(settings)} — All rights reserved`
     : settings.brand.copyright || "© ۱۴۰۵ وب‌یار — تمامی حقوق محفوظ است";
+
+
 
   return (
     <footer className="border-t border-border bg-card/30">
