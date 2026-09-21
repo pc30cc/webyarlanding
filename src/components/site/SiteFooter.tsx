@@ -50,7 +50,6 @@ export function SiteFooter({
   const isHome = (pathname.replace(/\/+$/, "") || "/") === "/";
   const showTrustBadge = isHome && settings.trustBadge?.enabled && !!settings.trustBadge?.html;
   const brandName = english ? getBrandNameEn(settings) : settings.brand.name;
-  const brandInitial = brandName?.charAt(0) || "و";
   const copyright = english
     ? `© ${new Date().getFullYear()} ${getBrandNameEn(settings)} — All rights reserved`
     : settings.brand.copyright || "© ۱۴۰۵ وب‌یار — تمامی حقوق محفوظ است";
@@ -65,9 +64,13 @@ export function SiteFooter({
         >
           <div className="col-span-2 space-y-3 md:col-span-1">
             <Link to="/" className="flex items-center gap-2">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand text-primary-foreground">
-                <span className="text-sm font-bold">{brandInitial}</span>
-              </div>
+              <img
+                src={settings.brand.logoUrl || "/webyar-logo.png"}
+                alt={brandName || "وب‌یار"}
+                width={32}
+                height={32}
+                className="h-8 w-8 rounded-lg object-cover"
+              />
               <span className="text-base font-bold text-foreground">{brandName}</span>
             </Link>
             <p className="text-sm leading-relaxed text-muted-foreground">
