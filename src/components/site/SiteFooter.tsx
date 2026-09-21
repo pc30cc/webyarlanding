@@ -7,7 +7,7 @@ import { getBrandNameEn, getPublicTagline, type SiteSettings } from "@/lib/setti
 function TrustBadge({ html }: { html: string }) {
   const [ready, setReady] = useState(false);
   useEffect(() => {
-    const timer = window.setTimeout(() => setReady(true), 1500);
+    const timer = window.setTimeout(() => setReady(true), 3000);
     return () => window.clearTimeout(timer);
   }, []);
   if (!ready) return <div className="enamad-badge min-h-[96px]" aria-hidden />;
