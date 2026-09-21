@@ -77,12 +77,8 @@ export function ScriptWidget({ config }: { config?: WidgetScriptConfig }) {
       inject();
     };
 
-    const timer = window.setTimeout(run, 1200);
-    if (document.readyState === "complete") {
-      window.setTimeout(run, 300);
-    } else {
-      window.addEventListener("load", () => window.setTimeout(run, 300), { once: true });
-    }
+    // ابزارک‌ها اولویت دارند: بلافاصله بعد از رندر اجرا می‌شوند (نماد اعتماد بعد از آن‌ها).
+    const timer = window.setTimeout(run, 200);
 
     return () => {
       cancelled = true;
