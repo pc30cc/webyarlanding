@@ -67,15 +67,26 @@ export function ScriptWidget({ config }: { config?: WidgetScriptConfig }) {
       }
     }
 
-    // بعد از کامل شدن بارگذاری صفحه اجرا شود تا ابزارک به DOM آماده دسترسی داشته باشد
+    // اجرا بعد از آماده شدن صفحه، اما هرگز وابسته به رویداد load نباشد: اگر یک منبع
+    // خارجی (مثل تصویر نماد اعتماد) کند یا مسدود باشد، رویداد load ممکن است هرگز
+    // اتفاق نیفتد و ابزارک‌ها اصلاً بارگذاری نشوند.
+    let done = false;
+    const run = () => {
+      if (done) return;
+      done = true;
+      inject();
+    };
+
+    const timer = window.setTimeout(run, 1200);
     if (document.readyState === "complete") {
-      window.setTimeout(inject, 300);
+      window.setTimeout(run, 300);
     } else {
-      window.addEventListener("load", () => window.setTimeout(inject, 300), { once: true });
+      window.addEventListener("load", () => window.setTimeout(run, 300), { once: true });
     }
 
     return () => {
       cancelled = true;
+      window.clearTimeout(timer);
     };
   }, [enabled, scriptUrl, inlineScript, key]);
 
