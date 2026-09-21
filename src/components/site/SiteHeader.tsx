@@ -32,7 +32,6 @@ export function SiteHeader({
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const { productCatalog, solutionCatalog } = rootRoute.useLoaderData();
   const brandName = english ? getBrandNameEn(settings) : settings.brand.name;
-  const brandInitial = brandName?.charAt(0) || "و";
   const auth = settings.auth;
   const session = useAppSession(auth.sessionCheckUrl, auth.logoutUrl);
   const isLoggedIn = session.status === "loggedIn" && session.user !== null;
