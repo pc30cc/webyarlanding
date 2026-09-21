@@ -1,5 +1,19 @@
 import { Link, useRouterState } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
 import { getBrandNameEn, getPublicTagline, type SiteSettings } from "@/lib/settings";
+
+/** نماد اعتماد بعد از بارگذاری بقیه صفحه تزریق می‌شود تا تصویر کند اینماد
+ *  جلوی بارگذاری ابزارک‌ها و رویداد load صفحه را نگیرد. کد اینماد بدون تغییر می‌ماند. */
+function TrustBadge({ html }: { html: string }) {
+  const [ready, setReady] = useState(false);
+  useEffect(() => {
+    const timer = window.setTimeout(() => setReady(true), 1500);
+    return () => window.clearTimeout(timer);
+  }, []);
+  if (!ready) return <div className="enamad-badge min-h-[96px]" aria-hidden />;
+  return <div className="enamad-badge" dangerouslySetInnerHTML={{ __html: html }} />;
+}
+
 
 
 const FA = {
@@ -128,10 +142,7 @@ export function SiteFooter({
           {showTrustBadge && (
             <div>
               <h3 className="mb-3 text-sm font-semibold text-foreground">نماد اعتماد</h3>
-              <div
-                className="enamad-badge"
-                dangerouslySetInnerHTML={{ __html: settings.trustBadge.html }}
-              />
+              <TrustBadge html={settings.trustBadge.html} />
             </div>
           )}
         </div>
