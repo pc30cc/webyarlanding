@@ -87,9 +87,13 @@ export function SiteHeader({
     >
       <div className="container-page flex h-16 items-center justify-between">
         <Link to="/" className="flex items-center gap-3">
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-brand text-primary-foreground">
-            <span className="text-lg font-black">{brandInitial}</span>
-          </div>
+          <img
+            src={settings.brand.logoUrl || "/webyar-logo.png"}
+            alt={brandName || "وب‌یار"}
+            width={36}
+            height={36}
+            className="h-9 w-9 rounded-lg object-cover"
+          />
           <span className="text-lg font-bold text-foreground">{brandName}</span>
         </Link>
 
