@@ -60,7 +60,9 @@ export function SiteFooter({
   return (
     <footer className="border-t border-border bg-card/30">
       <div className="container-page py-12">
-        <div className="mb-8 grid grid-cols-2 gap-8 md:grid-cols-4">
+        <div
+          className={`mb-8 grid grid-cols-2 gap-8 ${showTrustBadge ? "md:grid-cols-5" : "md:grid-cols-4"}`}
+        >
           <div className="col-span-2 space-y-3 md:col-span-1">
             <Link to="/" className="flex items-center gap-2">
               <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand text-primary-foreground">
