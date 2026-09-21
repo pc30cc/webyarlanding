@@ -120,7 +120,17 @@ export function SiteFooter({
               </Link>
             </nav>
           </div>
+          {showTrustBadge && (
+            <div>
+              <h3 className="mb-3 text-sm font-semibold text-foreground">نماد اعتماد</h3>
+              <div
+                className="enamad-badge"
+                dangerouslySetInnerHTML={{ __html: settings.trustBadge.html }}
+              />
+            </div>
+          )}
         </div>
+
 
         <div className="border-t border-border pt-6 text-center">
           <p className="text-sm text-muted-foreground">{copyright}</p>
