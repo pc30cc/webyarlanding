@@ -50,7 +50,6 @@ export function SiteFooter({
   const isHome = (pathname.replace(/\/+$/, "") || "/") === "/";
   const showTrustBadge = isHome && settings.trustBadge?.enabled && !!settings.trustBadge?.html;
   const brandName = english ? getBrandNameEn(settings) : settings.brand.name;
-  const brandInitial = brandName?.charAt(0) || "و";
   const copyright = english
     ? `© ${new Date().getFullYear()} ${getBrandNameEn(settings)} — All rights reserved`
     : settings.brand.copyright || "© ۱۴۰۵ وب‌یار — تمامی حقوق محفوظ است";
