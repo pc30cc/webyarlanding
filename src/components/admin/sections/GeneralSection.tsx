@@ -973,7 +973,38 @@ export default function GeneralSection() {
                 </Field>
               </div>
             </section>
+
+            <section className="mt-6 rounded-xl border border-border bg-card p-4 shadow-sm">
+              <h2 className="mb-4 text-base font-semibold text-foreground">نماد اعتماد (اینماد)</h2>
+              <div className="grid grid-cols-1 gap-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex flex-col gap-0.5">
+                    <Label>نمایش نماد در فوتر صفحه اول</Label>
+                    <span className="text-xs text-muted-foreground">
+                      فقط در صفحه اصلی سایت و در پایین صفحه نمایش داده می‌شود.
+                    </span>
+                  </div>
+                  <Switch
+                    checked={form.trustBadge.enabled}
+                    onCheckedChange={(v) =>
+                      setForm((f) => ({ ...f, trustBadge: { ...f.trustBadge, enabled: v } }))
+                    }
+                  />
+                </div>
+                <Field label="کد نماد اعتماد">
+                  <Textarea
+                    dir="ltr"
+                    rows={5}
+                    value={form.trustBadge.html}
+                    onChange={(e) =>
+                      setForm((f) => ({ ...f, trustBadge: { ...f.trustBadge, html: e.target.value } }))
+                    }
+                  />
+                </Field>
+              </div>
+            </section>
           </TabsContent>
+
         </Tabs>
 
         <div>
