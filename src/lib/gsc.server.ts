@@ -123,6 +123,27 @@ export function coversTarget(siteUrl: string, target: string): boolean {
   }
 }
 
+/** ایمیل سرویس‌اکانتی که باید در سرچ کنسول به‌عنوان کاربر اضافه شود */
+export async function getServiceAccountEmail(): Promise<string> {
+  const { gscServiceAccountJson } = await loadGscKeys();
+  if (!gscServiceAccountJson) return "";
+  try {
+    return parseServiceAccount(gscServiceAccountJson).client_email;
+  } catch {
+    return "";
+  }
+}
+
+/** بررسی مستقیم یک پراپرتی؛ اگر دسترسی باشد true برمی‌گرداند */
+async function canAccessProperty(property: string): Promise<boolean> {
+  try {
+    await gscFetch(`${GSC_BASE}/sites/${encodeURIComponent(property)}`);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 /** انتخاب پراپرتی مناسب: اول انتخاب دستی مدیر، بعد تطابق خودکار با آدرس سایت */
 export async function resolveProperty(
   siteUrl: string,
@@ -131,10 +152,18 @@ export async function resolveProperty(
   const sites = await listSites();
   const candidates = sites.map((s) => s.siteUrl);
   if (preferred && candidates.includes(preferred)) return { property: preferred, candidates };
+  // گاهی فهرست پراپرتی‌ها برای سرویس‌اکانت خالی برمی‌گردد؛ اگر مدیر پراپرتی را دستی وارد کرده باشد
+  // همان را مستقیم بررسی می‌کنیم.
+  if (preferred && (await canAccessProperty(preferred))) {
+    return { property: preferred, candidates: [...candidates, preferred] };
+  }
   const matches = candidates.filter((s) => coversTarget(s, siteUrl));
   if (matches.length === 0) {
+    const email = await getServiceAccountEmail();
     throw new Error(
-      "هیچ پراپرتی تأییدشده‌ای برای این دامنه در حساب سرویس‌اکانت پیدا نشد. ایمیل سرویس‌اکانت را در سرچ کنسول به‌عنوان کاربر اضافه کنید.",
+      candidates.length === 0
+        ? `حساب سرویس‌اکانت به هیچ پراپرتی‌ای در سرچ کنسول دسترسی ندارد. در سرچ کنسول از مسیر Settings → Users and permissions ایمیل ${email || "سرویس‌اکانت"} را با دسترسی Full اضافه کنید (روی همان پراپرتی سایت)، سپس دوباره تلاش کنید.`
+        : `پراپرتی مناسب برای ${siteUrl} پیدا نشد. پراپرتی‌های در دسترس: ${candidates.join("، ")}. یکی را در فیلد پراپرتی وارد کنید.`,
     );
   }
   const exact = matches.find((m) => !m.startsWith("sc-domain:")) ?? matches[0]!;
