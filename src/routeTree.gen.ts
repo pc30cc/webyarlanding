@@ -35,6 +35,7 @@ import { Route as AdminGeneralRouteImport } from './routes/admin.general'
 import { Route as AdminLoginsRouteImport } from './routes/admin.logins'
 import { Route as AdminMediaRouteImport } from './routes/admin.media'
 import { Route as AdminMessagesRouteImport } from './routes/admin.messages'
+import { Route as AdminSearchconsoleRouteImport } from './routes/admin.searchconsole'
 import { Route as AdminSecurityRouteImport } from './routes/admin.security'
 import { Route as AdminSeoRouteImport } from './routes/admin.seo'
 import { Route as AdminTagsRouteImport } from './routes/admin.tags'
@@ -179,6 +180,11 @@ const AdminMessagesRoute = AdminMessagesRouteImport.update({
   path: '/messages',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminSearchconsoleRoute = AdminSearchconsoleRouteImport.update({
+  id: '/searchconsole',
+  path: '/searchconsole',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminSecurityRoute = AdminSecurityRouteImport.update({
   id: '/security',
   path: '/security',
@@ -272,6 +278,7 @@ export interface FileRoutesByFullPath {
   '/admin/logins': typeof AdminLoginsRoute
   '/admin/media': typeof AdminMediaRoute
   '/admin/messages': typeof AdminMessagesRoute
+  '/admin/searchconsole': typeof AdminSearchconsoleRoute
   '/admin/security': typeof AdminSecurityRoute
   '/admin/seo': typeof AdminSeoRoute
   '/admin/tags': typeof AdminTagsRoute
@@ -312,6 +319,7 @@ export interface FileRoutesByTo {
   '/admin/logins': typeof AdminLoginsRoute
   '/admin/media': typeof AdminMediaRoute
   '/admin/messages': typeof AdminMessagesRoute
+  '/admin/searchconsole': typeof AdminSearchconsoleRoute
   '/admin/security': typeof AdminSecurityRoute
   '/admin/seo': typeof AdminSeoRoute
   '/admin/tags': typeof AdminTagsRoute
@@ -354,6 +362,7 @@ export interface FileRoutesById {
   '/admin/logins': typeof AdminLoginsRoute
   '/admin/media': typeof AdminMediaRoute
   '/admin/messages': typeof AdminMessagesRoute
+  '/admin/searchconsole': typeof AdminSearchconsoleRoute
   '/admin/security': typeof AdminSecurityRoute
   '/admin/seo': typeof AdminSeoRoute
   '/admin/tags': typeof AdminTagsRoute
@@ -397,6 +406,7 @@ export interface FileRouteTypes {
     | '/admin/logins'
     | '/admin/media'
     | '/admin/messages'
+    | '/admin/searchconsole'
     | '/admin/security'
     | '/admin/seo'
     | '/admin/tags'
@@ -437,6 +447,7 @@ export interface FileRouteTypes {
     | '/admin/logins'
     | '/admin/media'
     | '/admin/messages'
+    | '/admin/searchconsole'
     | '/admin/security'
     | '/admin/seo'
     | '/admin/tags'
@@ -478,6 +489,7 @@ export interface FileRouteTypes {
     | '/admin/logins'
     | '/admin/media'
     | '/admin/messages'
+    | '/admin/searchconsole'
     | '/admin/security'
     | '/admin/seo'
     | '/admin/tags'
@@ -704,6 +716,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminMessagesRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/searchconsole': {
+      id: '/admin/searchconsole'
+      path: '/searchconsole'
+      fullPath: '/admin/searchconsole'
+      preLoaderRoute: typeof AdminSearchconsoleRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/security': {
       id: '/admin/security'
       path: '/security'
@@ -811,6 +830,7 @@ interface AdminRouteChildren {
   AdminLoginsRoute: typeof AdminLoginsRoute
   AdminMediaRoute: typeof AdminMediaRoute
   AdminMessagesRoute: typeof AdminMessagesRoute
+  AdminSearchconsoleRoute: typeof AdminSearchconsoleRoute
   AdminSecurityRoute: typeof AdminSecurityRoute
   AdminSeoRoute: typeof AdminSeoRoute
   AdminTagsRoute: typeof AdminTagsRoute
@@ -830,6 +850,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminLoginsRoute: AdminLoginsRoute,
   AdminMediaRoute: AdminMediaRoute,
   AdminMessagesRoute: AdminMessagesRoute,
+  AdminSearchconsoleRoute: AdminSearchconsoleRoute,
   AdminSecurityRoute: AdminSecurityRoute,
   AdminSeoRoute: AdminSeoRoute,
   AdminTagsRoute: AdminTagsRoute,
