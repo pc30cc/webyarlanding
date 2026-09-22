@@ -124,6 +124,24 @@ export async function saveTelegramKeys(partial: Partial<TelegramApiKeys>): Promi
   await savePrivateSettings({ ...stored, ...partial });
 }
 
+/** کلید سرویس‌اکانت گوگل برای اتصال به سرچ کنسول — بخشی از تنظیمات محرمانه */
+export interface GscApiKeys {
+  /** محتوای کامل فایل JSON کلید سرویس‌اکانت گوگل */
+  gscServiceAccountJson: string;
+}
+
+const GSC_KEYS_DEFAULTS: GscApiKeys = { gscServiceAccountJson: "" };
+
+export async function loadGscKeys(): Promise<GscApiKeys> {
+  const stored = await loadPrivateSettings<Partial<GscApiKeys>>({});
+  return { ...GSC_KEYS_DEFAULTS, ...stored };
+}
+
+export async function saveGscKeys(partial: Partial<GscApiKeys>): Promise<void> {
+  const stored = await loadPrivateSettings<Partial<GscApiKeys>>({});
+  await savePrivateSettings({ ...stored, ...partial });
+}
+
 /** اتصال به یک پروژه Supabase مقصد برای ترانسفر مستقیم بک‌آپ — بخشی از تنظیمات محرمانه */
 export interface DestinationDbSettings {
   /** آدرس پروژه Supabase مقصد، مثل https://xxxx.supabase.co یا آدرس نمونه self-hosted شما */
