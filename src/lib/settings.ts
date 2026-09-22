@@ -176,6 +176,21 @@ export interface TrustBadgeSettings {
   html: string;
 }
 
+/** اتصال به گوگل سرچ کنسول و بررسی/رفع خودکار مشکلات سئو */
+export interface SearchConsoleSettings {
+  enabled: boolean;
+  /** شناسه پراپرتی انتخاب‌شده در سرچ کنسول (مثل https://webyar.ai/ یا sc-domain:webyar.ai) */
+  property: string;
+  /** رفع خودکار مشکلات بدون تأیید تک‌به‌تک */
+  autoFix: boolean;
+  /** ارسال نتیجه بررسی به ربات تلگرام */
+  notifyTelegram: boolean;
+  /** زمان آخرین بررسی (ISO) */
+  lastRunAt: string;
+  /** آخرین گزارش به صورت JSON */
+  lastReport: string;
+}
+
 export interface SiteSettings {
   brand: BrandSettings;
   seo: SeoSettings;
@@ -191,6 +206,7 @@ export interface SiteSettings {
   media: MediaSettings;
   telegram: TelegramSettings;
   trustBadge: TrustBadgeSettings;
+  searchConsole: SearchConsoleSettings;
 }
 
 
