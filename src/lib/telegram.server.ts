@@ -90,6 +90,7 @@ function buildMainMenu(settings: SiteSettings): InlineButton[][] {
     [{ text: "📰 وضعیت مقالات", callback_data: "posts_status" }],
     [{ text: "✍️ تولید مقاله جدید", callback_data: "generate_post" }],
     [{ text: "📩 پیام‌های تماس", callback_data: "messages" }],
+    [{ text: "🔎 بررسی و رفع سئو (سرچ کنسول)", callback_data: "seo_audit" }],
     [
       {
         text: `🔔 اعلان بازدید لحظه‌ای: ${t.notifyOnVisit ? "روشن ✅" : "خاموش ⛔"}`,
@@ -176,6 +177,44 @@ async function handleGeneratePost(chatId: number, botToken: string): Promise<voi
   }
 }
 
+async function handleSeoAudit(chatId: number, botToken: string): Promise<void> {
+  await tgCall(botToken, "sendMessage", {
+    chat_id: chatId,
+    text: "⏳ در حال بررسی گوگل سرچ کنسول و رفع خودکار مشکلات سئو... (ممکن است یک تا دو دقیقه طول بکشد)",
+  });
+  try {
+    const { runSeoAudit, formatAuditForTelegram } = await import("./seoaudit.server");
+    const report = await runSeoAudit({ autoFix: true });
+    await tgCall(botToken, "sendMessage", {
+      chat_id: chatId,
+      text: formatAuditForTelegram(report),
+      disable_web_page_preview: true,
+    });
+  } catch (e) {
+    await tgCall(botToken, "sendMessage", {
+      chat_id: chatId,
+      text: `⚠️ بررسی سئو انجام نشد: ${e instanceof Error ? e.message : "خطای نامشخص"}`,
+    });
+  }
+}
+
+/** ارسال یک پیام آزاد به همه مدیران مجاز ربات — برای گزارش‌هایی که از پنل اجرا می‌شوند */
+export async function sendTelegramToAdmins(text: string): Promise<void> {
+  const [settings, keys] = await Promise.all([loadSettings(), loadTelegramKeys()]);
+  if (!settings.telegram.enabled || !keys.telegramBotToken) return;
+  for (const chatId of adminChatIdList(settings.telegram.adminChatIds)) {
+    try {
+      await tgCall(keys.telegramBotToken, "sendMessage", {
+        chat_id: chatId,
+        text,
+        disable_web_page_preview: true,
+      });
+    } catch (e) {
+      console.error("sendTelegramToAdmins failed:", e);
+    }
+  }
+}
+
 async function toggleTelegramFlag(
   field: "notifyOnVisit" | "notifyOnPublish",
 ): Promise<SiteSettings> {
@@ -243,6 +282,9 @@ async function handleCallback(
       break;
     case "generate_post":
       await handleGeneratePost(chatId, botToken);
+      break;
+    case "seo_audit":
+      await handleSeoAudit(chatId, botToken);
       break;
     case "toggle_notify_visit": {
       const next = await toggleTelegramFlag("notifyOnVisit");
