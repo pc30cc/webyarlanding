@@ -342,6 +342,18 @@ export async function improveText(input: { text: string; instruction: string }):
   ]);
 }
 
+/** فراخوانی عمومی هوش مصنوعی با خروجی JSON — برای ماژول‌های دیگر سرور (مثل بررسی سئو) */
+export async function aiJson<T>(system: string, user: string, fallback: T): Promise<T> {
+  const raw = await chat(
+    [
+      { role: "system", content: system },
+      { role: "user", content: user },
+    ],
+    true,
+  );
+  return extractJson<T>(raw, fallback);
+}
+
 export interface SeoMeta {
   seoTitle: string;
   seoDescription: string;
