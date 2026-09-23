@@ -9,7 +9,7 @@ import {
   decideSeoProposal,
   approveAllSeoProposals,
 } from "@/lib/seoproposals.functions";
-import type { SeoProposal } from "@/lib/seoproposals.server";
+import type { SeoProposal } from "@/lib/seoproposals.functions";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";

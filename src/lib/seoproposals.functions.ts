@@ -2,6 +2,8 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import type { ReviewResult, SeoProposal } from "./seoproposals.server";
 
+export type { ReviewResult, SeoProposal };
+
 /** فهرست پیشنهادهای سئو و محتوا */
 export const listSeoProposals = createServerFn({ method: "GET" }).handler(
   async (): Promise<SeoProposal[]> => {
