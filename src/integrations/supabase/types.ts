@@ -455,6 +455,27 @@ export type Database = {
         }
         Relationships: []
       }
+      scheduler_runs: {
+        Row: {
+          job: string
+          last_note: string | null
+          last_run_at: string
+          last_status: string | null
+        }
+        Insert: {
+          job: string
+          last_note?: string | null
+          last_run_at?: string
+          last_status?: string | null
+        }
+        Update: {
+          job?: string
+          last_note?: string | null
+          last_run_at?: string
+          last_status?: string | null
+        }
+        Relationships: []
+      }
       seo_pages: {
         Row: {
           canonical_url: string | null
