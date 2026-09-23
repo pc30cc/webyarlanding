@@ -38,8 +38,8 @@ async function handle(request: Request): Promise<Response> {
   const result = await runSeoReview("cron");
   await pruneProposals();
   if (settings.searchConsole.notifyTelegram) {
-    const { sendTelegramToAdmins } = await import("@/lib/telegram.server");
-    await sendTelegramToAdmins(formatReviewForTelegram(result));
+    const { sendProposalsForApproval } = await import("@/lib/telegram.server");
+    await sendProposalsForApproval(formatReviewForTelegram(result), result.created);
   }
 
   return new Response(
