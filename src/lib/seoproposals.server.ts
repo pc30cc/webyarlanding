@@ -133,7 +133,7 @@ async function insertProposal(p: NewProposal, source: string): Promise<SeoPropos
 export interface ReviewResult {
   runAt: string;
   connected: boolean;
-  error?: string;
+  error?: string | undefined;
   auditSummary: string;
   created: SeoProposal[];
   pendingCount: number;
@@ -456,7 +456,7 @@ export async function applyProposal(id: string): Promise<{ ok: boolean; error?: 
 export async function decideProposal(
   id: string,
   approve: boolean,
-): Promise<{ ok: boolean; error?: string; status: ProposalStatus }> {
+): Promise<{ ok: boolean; error?: string | undefined; status: ProposalStatus }> {
   if (!approve) {
     await db
       .from("seo_proposals")
