@@ -14,7 +14,7 @@ const staticPaths = [
   "/terms",
   "/privacy",
   "/sla",
-  "/api-docs",
+  "/download",
 ];
 
 interface SitemapUrl {

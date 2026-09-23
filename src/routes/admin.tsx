@@ -29,6 +29,7 @@ import {
   KeyRound,
   LogOut,
   Menu,
+  Smartphone,
 } from "lucide-react";
 import { getSessionUser, logoutAdmin } from "@/lib/auth.functions";
 import { Button } from "@/components/ui/button";
@@ -54,6 +55,7 @@ const NAV_ITEMS = [
   { to: "/admin/seo", label: "سئو", icon: Search },
   { to: "/admin/searchconsole", label: "گوگل سرچ کنسول", icon: Globe },
   { to: "/admin/catalog", label: "محصولات و راه‌کارها", icon: LayoutGrid },
+  { to: "/admin/apps", label: "برنامه‌ها و دانلود", icon: Smartphone },
   { to: "/admin/blog", label: "مقالات", icon: FileText },
   { to: "/admin/categories", label: "دسته‌بندی‌ها", icon: FolderTree },
   { to: "/admin/tags", label: "برچسب‌ها", icon: Tags },
