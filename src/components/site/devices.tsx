@@ -261,7 +261,7 @@ export function InboxScreen({ android }: { android?: boolean }) {
   );
 }
 
-export function ChatScreen() {
+export function ChatScreen(_props: { android?: boolean } = {}) {
   return (
     <div className="flex h-full flex-col" dir="rtl">
       <div className="flex items-center gap-2 border-b border-border px-3 py-2">
@@ -285,7 +285,7 @@ export function ChatScreen() {
   );
 }
 
-export function CallScreen() {
+export function CallScreen(_props: { android?: boolean } = {}) {
   return (
     <div className="relative h-full overflow-hidden bg-gradient-to-b from-secondary to-background" dir="rtl">
       <img src="/videos/video-call-poster.jpg" alt="" className="absolute inset-0 h-full w-full object-cover opacity-90" />
@@ -313,7 +313,7 @@ export function CallScreen() {
   );
 }
 
-export function ContactScreen() {
+export function ContactScreen(_props: { android?: boolean } = {}) {
   return (
     <div className="h-full" dir="rtl">
       <div className="flex flex-col items-center gap-1.5 border-b border-border px-4 pt-4 pb-3">

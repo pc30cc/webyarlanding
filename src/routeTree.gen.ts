@@ -42,6 +42,8 @@ import { Route as AdminSeoRouteImport } from './routes/admin.seo'
 import { Route as AdminTagsRouteImport } from './routes/admin.tags'
 import { Route as BlogIndexRouteImport } from './routes/blog.index'
 import { Route as BlogSlugRouteImport } from './routes/blog.$slug'
+import { Route as DownloadIndexRouteImport } from './routes/download.index'
+import { Route as DownloadSlugRouteImport } from './routes/download.$slug'
 import { Route as GoSlugRouteImport } from './routes/go.$slug'
 import { Route as ProductsIndexRouteImport } from './routes/products.index'
 import { Route as ProductsSlugRouteImport } from './routes/products.$slug'
@@ -218,6 +220,16 @@ const BlogSlugRoute = BlogSlugRouteImport.update({
   path: '/blog/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
+const DownloadIndexRoute = DownloadIndexRouteImport.update({
+  id: '/download/',
+  path: '/download/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DownloadSlugRoute = DownloadSlugRouteImport.update({
+  id: '/download/$slug',
+  path: '/download/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const GoSlugRoute = GoSlugRouteImport.update({
   id: '/go/$slug',
   path: '/go/$slug',
@@ -302,12 +314,14 @@ export interface FileRoutesByFullPath {
   '/admin/seo': typeof AdminSeoRoute
   '/admin/tags': typeof AdminTagsRoute
   '/blog/$slug': typeof BlogSlugRoute
+  '/download/$slug': typeof DownloadSlugRoute
   '/go/$slug': typeof GoSlugRoute
   '/products/$slug': typeof ProductsSlugRoute
   '/solutions/$slug': typeof SolutionsSlugRoute
   '/tag/$slug': typeof TagSlugRoute
   '/admin/': typeof AdminIndexRoute
   '/blog/': typeof BlogIndexRoute
+  '/download/': typeof DownloadIndexRoute
   '/products/': typeof ProductsIndexRoute
   '/solutions/': typeof SolutionsIndexRoute
   '/api/public/autoblog-cron': typeof ApiPublicAutoblogCronRoute
@@ -346,12 +360,14 @@ export interface FileRoutesByTo {
   '/admin/seo': typeof AdminSeoRoute
   '/admin/tags': typeof AdminTagsRoute
   '/blog/$slug': typeof BlogSlugRoute
+  '/download/$slug': typeof DownloadSlugRoute
   '/go/$slug': typeof GoSlugRoute
   '/products/$slug': typeof ProductsSlugRoute
   '/solutions/$slug': typeof SolutionsSlugRoute
   '/tag/$slug': typeof TagSlugRoute
   '/admin': typeof AdminIndexRoute
   '/blog': typeof BlogIndexRoute
+  '/download': typeof DownloadIndexRoute
   '/products': typeof ProductsIndexRoute
   '/solutions': typeof SolutionsIndexRoute
   '/api/public/autoblog-cron': typeof ApiPublicAutoblogCronRoute
@@ -392,12 +408,14 @@ export interface FileRoutesById {
   '/admin/seo': typeof AdminSeoRoute
   '/admin/tags': typeof AdminTagsRoute
   '/blog/$slug': typeof BlogSlugRoute
+  '/download/$slug': typeof DownloadSlugRoute
   '/go/$slug': typeof GoSlugRoute
   '/products/$slug': typeof ProductsSlugRoute
   '/solutions/$slug': typeof SolutionsSlugRoute
   '/tag/$slug': typeof TagSlugRoute
   '/admin/': typeof AdminIndexRoute
   '/blog/': typeof BlogIndexRoute
+  '/download/': typeof DownloadIndexRoute
   '/products/': typeof ProductsIndexRoute
   '/solutions/': typeof SolutionsIndexRoute
   '/api/public/autoblog-cron': typeof ApiPublicAutoblogCronRoute
@@ -439,12 +457,14 @@ export interface FileRouteTypes {
     | '/admin/seo'
     | '/admin/tags'
     | '/blog/$slug'
+    | '/download/$slug'
     | '/go/$slug'
     | '/products/$slug'
     | '/solutions/$slug'
     | '/tag/$slug'
     | '/admin/'
     | '/blog/'
+    | '/download/'
     | '/products/'
     | '/solutions/'
     | '/api/public/autoblog-cron'
@@ -483,12 +503,14 @@ export interface FileRouteTypes {
     | '/admin/seo'
     | '/admin/tags'
     | '/blog/$slug'
+    | '/download/$slug'
     | '/go/$slug'
     | '/products/$slug'
     | '/solutions/$slug'
     | '/tag/$slug'
     | '/admin'
     | '/blog'
+    | '/download'
     | '/products'
     | '/solutions'
     | '/api/public/autoblog-cron'
@@ -528,12 +550,14 @@ export interface FileRouteTypes {
     | '/admin/seo'
     | '/admin/tags'
     | '/blog/$slug'
+    | '/download/$slug'
     | '/go/$slug'
     | '/products/$slug'
     | '/solutions/$slug'
     | '/tag/$slug'
     | '/admin/'
     | '/blog/'
+    | '/download/'
     | '/products/'
     | '/solutions/'
     | '/api/public/autoblog-cron'
@@ -557,11 +581,13 @@ export interface RootRouteChildren {
   SlaRoute: typeof SlaRoute
   TermsRoute: typeof TermsRoute
   BlogSlugRoute: typeof BlogSlugRoute
+  DownloadSlugRoute: typeof DownloadSlugRoute
   GoSlugRoute: typeof GoSlugRoute
   ProductsSlugRoute: typeof ProductsSlugRoute
   SolutionsSlugRoute: typeof SolutionsSlugRoute
   TagSlugRoute: typeof TagSlugRoute
   BlogIndexRoute: typeof BlogIndexRoute
+  DownloadIndexRoute: typeof DownloadIndexRoute
   ProductsIndexRoute: typeof ProductsIndexRoute
   SolutionsIndexRoute: typeof SolutionsIndexRoute
   ApiPublicAutoblogCronRoute: typeof ApiPublicAutoblogCronRoute
@@ -803,6 +829,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof BlogSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/download/': {
+      id: '/download/'
+      path: '/download'
+      fullPath: '/download/'
+      preLoaderRoute: typeof DownloadIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/download/$slug': {
+      id: '/download/$slug'
+      path: '/download/$slug'
+      fullPath: '/download/$slug'
+      preLoaderRoute: typeof DownloadSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/go/$slug': {
       id: '/go/$slug'
       path: '/go/$slug'
@@ -935,11 +975,13 @@ const rootRouteChildren: RootRouteChildren = {
   SlaRoute: SlaRoute,
   TermsRoute: TermsRoute,
   BlogSlugRoute: BlogSlugRoute,
+  DownloadSlugRoute: DownloadSlugRoute,
   GoSlugRoute: GoSlugRoute,
   ProductsSlugRoute: ProductsSlugRoute,
   SolutionsSlugRoute: SolutionsSlugRoute,
   TagSlugRoute: TagSlugRoute,
   BlogIndexRoute: BlogIndexRoute,
+  DownloadIndexRoute: DownloadIndexRoute,
   ProductsIndexRoute: ProductsIndexRoute,
   SolutionsIndexRoute: SolutionsIndexRoute,
   ApiPublicAutoblogCronRoute: ApiPublicAutoblogCronRoute,
