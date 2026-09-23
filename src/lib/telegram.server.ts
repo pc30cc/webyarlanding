@@ -348,6 +348,12 @@ async function handleCallback(
 
   await tgCall(botToken, "answerCallbackQuery", { callback_query_id: cq.id });
 
+  const data = cq.data ?? "";
+  if (data.startsWith("spok:") || data.startsWith("spno:")) {
+    await handleProposalDecision(chatId, botToken, data.slice(5), data.startsWith("spok:"));
+    return;
+  }
+
   switch (cq.data) {
     case "stats":
       await tgCall(botToken, "sendMessage", { chat_id: chatId, text: await getVisitStatsText() });
