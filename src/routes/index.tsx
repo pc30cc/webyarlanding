@@ -44,6 +44,7 @@ import {
   siTelegram,
   siWhatsapp,
   siInstagram,
+  siGmail,
 } from "simple-icons";
 
 export const Route = createFileRoute("/")({
@@ -78,14 +79,19 @@ const float = (delay = 0) => ({
   transition: { duration: 6 + delay, repeat: Infinity, ease: "easeInOut" as const, delay },
 });
 
-const trustLogos = [
-  { name: "WordPress", path: siWordpress.path },
-  { name: "WooCommerce", path: siWoocommerce.path },
-  { name: "Shopify", path: siShopify.path },
-  { name: "PrestaShop", path: siPrestashop.path },
-  { name: "Telegram", path: siTelegram.path },
-  { name: "WhatsApp", path: siWhatsapp.path },
-  { name: "Instagram", path: siInstagram.path },
+type Channel = { name: string; hex: string; path?: string; mark?: string; ltr?: boolean };
+const trustLogos: Channel[] = [
+  { name: "تلگرام", hex: "26A5E4", path: siTelegram.path },
+  { name: "واتس‌اپ", hex: "25D366", path: siWhatsapp.path },
+  { name: "اینستاگرام", hex: "FF0069", path: siInstagram.path },
+  { name: "بله", hex: "1FB57A", mark: "ب" },
+  { name: "جیمیل", hex: "EA4335", path: siGmail.path },
+  { name: "یاهو", hex: "6001D2", mark: "Y!" },
+  { name: "WHMCS", hex: "1C7BD1", mark: "W", ltr: true },
+  { name: "وردپرس", hex: "21759B", path: siWordpress.path },
+  { name: "ووکامرس", hex: "96588A", path: siWoocommerce.path },
+  { name: "شاپیفای", hex: "7AB55C", path: siShopify.path },
+  { name: "پرستاشاپ", hex: "DF0067", path: siPrestashop.path },
 ];
 
 const chatFeatures = [
@@ -527,18 +533,45 @@ function IndexPage() {
         </div>
       </section>
 
-      {/* TRUST LOGOS */}
-      <section className="border-y border-border py-8">
-        <p className="mb-5 text-center text-xs font-semibold text-muted-foreground">
-          افزونه آماده و اتصال مستقیم به پلتفرم‌ها و کانال‌های محبوب
-        </p>
-        <Marquee duration={35}>
+      {/* TRUST LOGOS — صندوق یکپارچه */}
+      <section className="relative overflow-hidden border-y border-border py-14 sm:py-20">
+        <div aria-hidden className="pointer-events-none absolute inset-x-0 top-0 mx-auto h-64 max-w-3xl rounded-full bg-primary/15 blur-3xl" />
+        <div className="container-page relative mb-10 text-center">
+          <span className="mb-4 inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-3.5 py-1.5 text-xs font-bold text-primary">
+            <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-primary" />
+            صندوق گفتگوی یکپارچه
+          </span>
+          <h2 className="mx-auto max-w-3xl text-2xl font-extrabold leading-[1.4] text-foreground sm:text-4xl">
+            همه‌ی پیام‌هایتان را{" "}
+            <span className="bg-gradient-to-l from-primary to-accent bg-clip-text text-transparent">در یک صندوق</span>{" "}
+            جواب بدهید
+          </h2>
+          <p className="mx-auto mt-4 max-w-2xl text-sm leading-[1.9] text-muted-foreground sm:text-base">
+            پیام‌های تلگرام، واتس‌اپ، اینستاگرام، بله، ایمیل‌های جیمیل و یاهو، تیکت‌های WHMCS و سفارش‌های
+            فروشگاه ووکامرس و شاپیفای، همه یک‌جا کنار چت زنده‌ی سایت؛ بدون جابه‌جایی بین ده‌ها برنامه.
+          </p>
+        </div>
+        <Marquee duration={40}>
           {trustLogos.map((logo) => (
-            <span key={logo.name} className="flex items-center gap-2.5 text-muted-foreground transition-colors hover:text-foreground">
-              <svg viewBox="0 0 24 24" className="h-6 w-6" fill="currentColor" aria-hidden>
-                <path d={logo.path} />
-              </svg>
-              <span dir="ltr" className="text-base font-bold">{logo.name}</span>
+            <span
+              key={logo.name}
+              className="group flex items-center gap-3 rounded-2xl border border-border bg-card/60 px-4 py-2.5 shadow-sm backdrop-blur transition-all duration-300 hover:-translate-y-1 hover:border-foreground/20"
+            >
+              <span
+                className="flex h-9 w-9 items-center justify-center rounded-xl transition-transform duration-300 group-hover:scale-110"
+                style={{ backgroundColor: `#${logo.hex}22`, color: `#${logo.hex}` }}
+              >
+                {logo.path ? (
+                  <svg viewBox="0 0 24 24" className="h-5 w-5" fill="currentColor" aria-hidden>
+                    <path d={logo.path} />
+                  </svg>
+                ) : (
+                  <span className="text-sm font-black" dir={logo.ltr || logo.mark === "Y!" ? "ltr" : undefined}>{logo.mark}</span>
+                )}
+              </span>
+              <span dir={logo.ltr ? "ltr" : undefined} className="whitespace-nowrap text-sm font-bold text-foreground sm:text-base">
+                {logo.name}
+              </span>
             </span>
           ))}
         </Marquee>
