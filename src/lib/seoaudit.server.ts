@@ -273,34 +273,79 @@ export async function runSeoAudit(options?: { autoFix?: boolean }): Promise<SeoA
       console.error("listSitemaps failed:", e);
     }
 
-    // ۴) وضعیت ایندکس صفحه اصلی و پربازدیدترین صفحات
-    const inspectTargets = [site + "/", ...report.topPages.slice(0, 6).map((p) => p.page)].filter(
-      (v, i, arr) => v && arr.indexOf(v) === i,
-    );
-    for (const url of inspectTargets) {
-      const result = await gsc.inspectUrl(property, url);
+    // ۴) وضعیت ایندکس همه آدرس‌های سایت (مثل بخش Page indexing سرچ کنسول)
+    const sitemapUrls = await fetchSitemapUrls(site);
+    const inspectTargets = [
+      site + "/",
+      ...sitemapUrls,
+      ...report.topPages.map((p) => p.page),
+    ].filter((v, i, arr) => v && arr.indexOf(v) === i);
+    // سهمیه روزانه URL Inspection محدود است؛ حداکثر ۱۵۰ آدرس در هر بررسی
+    const limited = inspectTargets.slice(0, 150);
+
+    const results = await mapLimit(limited, 4, async (url) => ({
+      url,
+      result: await gsc.inspectUrl(property, url),
+    }));
+
+    const groups = new Map<string, string[]>();
+    let indexed = 0;
+    let checked = 0;
+    for (const { url, result } of results) {
       if (!result) continue;
-      if (result.robotsTxtState === "DISALLOWED") {
-        issues.push({
-          kind: "robots",
-          target: url,
-          title: "این صفحه با robots.txt برای گوگل مسدود شده است",
-          detail: "گوگل اجازه خزیدن این آدرس را ندارد.",
-          severity: "error",
-          fixed: false,
-          fixNote: "",
-        });
-      } else if (result.verdict !== "PASS") {
-        issues.push({
-          kind: "indexing",
-          target: url,
-          title: "این صفحه در گوگل ایندکس نشده است",
-          detail: result.coverageState || result.indexingState || "وضعیت نامشخص",
-          severity: "warning",
-          fixed: false,
-          fixNote: "",
-        });
+      checked++;
+      if (result.verdict === "PASS" && result.robotsTxtState !== "DISALLOWED") {
+        indexed++;
+        continue;
       }
+      const reason =
+        result.robotsTxtState === "DISALLOWED"
+          ? "Blocked by robots.txt"
+          : result.coverageState || result.indexingState || "وضعیت نامشخص";
+      const list = groups.get(reason) ?? [];
+      list.push(url);
+      groups.set(reason, list);
+    }
+
+    const notIndexed = checked - indexed;
+    report.coverage = {
+      checked,
+      indexed,
+      notIndexed,
+      groups: [...groups.entries()]
+        .map(([reason, urls]) => ({
+          reason: coverageFa(reason),
+          count: urls.length,
+          examples: urls.slice(0, 5),
+        }))
+        .sort((a, b) => b.count - a.count),
+    };
+
+    for (const g of report.coverage.groups) {
+      issues.push({
+        kind: "indexing",
+        target: g.examples.join("، "),
+        title: `${g.count} صفحه ایندکس نشده — ${g.reason}`,
+        detail:
+          g.reason === "با robots.txt مسدود شده"
+            ? "گوگل اجازه خزیدن این آدرس‌ها را ندارد."
+            : "این آدرس‌ها در نتایج گوگل نیستند؛ نمونه‌ها در کنار عنوان آمده است.",
+        severity: g.count > 0 && /robots|۴۰۴|خطای سرور|noindex/.test(g.reason) ? "error" : "warning",
+        fixed: false,
+        fixNote: "",
+      });
+    }
+
+    if (notIndexed === 0 && checked > 0) {
+      issues.push({
+        kind: "indexing",
+        target: site,
+        title: `همه ${checked} صفحه بررسی‌شده ایندکس شده‌اند`,
+        detail: "مشکلی در بخش Page indexing پیدا نشد.",
+        severity: "info",
+        fixed: true,
+        fixNote: "",
+      });
     }
   }
 
