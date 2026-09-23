@@ -504,18 +504,18 @@ function IndexPage() {
             {callEnabled && (
               <motion.div
                 {...float(1)}
-                className="absolute end-0 bottom-0 w-[280px] rounded-[18px] bg-foreground/90 p-3.5 shadow-2xl"
+                className="absolute end-0 bottom-0 w-[280px] rounded-[18px] bg-card p-3.5 shadow-2xl"
               >
                 <div className="relative h-[150px] overflow-hidden rounded-xl">
                   <VideoCallMock />
                   <OperatorAvatar className="absolute start-2.5 bottom-2.5 h-12 w-16 rounded-lg border-2 border-background/40" />
                 </div>
                 <div className="mt-3.5 flex items-center justify-center gap-3.5">
-                  <div className="flex h-9 w-9 items-center justify-center rounded-full bg-background/10">
-                    <Mic className="h-4 w-4 text-background" />
+                  <div className="flex h-9 w-9 items-center justify-center rounded-full bg-foreground/10">
+                    <Mic className="h-4 w-4 text-foreground" />
                   </div>
-                  <div className="flex h-9 w-9 items-center justify-center rounded-full bg-background/10">
-                    <Video className="h-4 w-4 text-background" />
+                  <div className="flex h-9 w-9 items-center justify-center rounded-full bg-foreground/10">
+                    <Video className="h-4 w-4 text-foreground" />
                   </div>
                   <div className="flex h-11 w-11 items-center justify-center rounded-full bg-destructive">
                     <PhoneOff className="h-5 w-5 text-destructive-foreground" />
@@ -602,7 +602,7 @@ function IndexPage() {
 
       {/* VIDEO CALL */}
       {callEnabled && (
-        <section className="relative overflow-hidden bg-foreground px-4 py-20 sm:px-8 sm:py-28">
+        <section className="relative overflow-hidden bg-card px-4 py-20 sm:px-8 sm:py-28">
           <div
             aria-hidden
             className="pointer-events-none absolute -top-24 -end-24 h-[360px] w-[360px] rounded-full bg-primary/20 blur-3xl"
@@ -610,10 +610,10 @@ function IndexPage() {
           <div className="relative z-10 mx-auto grid max-w-7xl items-center gap-12 lg:grid-cols-2 lg:gap-[70px]">
             <ScrollReveal>
               {eyebrow("تماس ویدیویی")}
-              <h2 className="mb-5 text-2xl font-extrabold leading-[1.35] text-background sm:text-4xl">
+              <h2 className="mb-5 text-2xl font-extrabold leading-[1.35] text-foreground sm:text-4xl">
                 وقتی متن کافی نیست، تصویر را روشن کنید
               </h2>
-              <p className="mb-7 text-base leading-[1.9] text-background/70">
+              <p className="mb-7 text-base leading-[1.9] text-foreground/70">
                 با یک کلیک از داخل همان چت، تماس تصویری HD با مشتری برقرار کنید؛ بدون نصب اپلیکیشن
                 یا افزونه از طرف او.
               </p>
@@ -621,11 +621,11 @@ function IndexPage() {
                 {videoFeatures.map((f) => (
                   <div key={f.title} className="flex items-start gap-3">
                     <span className="mt-0.5 flex h-[22px] w-[22px] flex-none items-center justify-center rounded-[7px] bg-accent/25">
-                      <Check className="h-3.5 w-3.5 text-background" />
+                      <Check className="h-3.5 w-3.5 text-foreground" />
                     </span>
                     <div>
-                      <div className="mb-0.5 text-sm font-bold text-background">{f.title}</div>
-                      <div className="text-sm leading-[1.7] text-background/65">{f.desc}</div>
+                      <div className="mb-0.5 text-sm font-bold text-foreground">{f.title}</div>
+                      <div className="text-sm leading-[1.7] text-foreground/65">{f.desc}</div>
                     </div>
                   </div>
                 ))}
@@ -638,17 +638,17 @@ function IndexPage() {
                 <OperatorAvatar className="absolute start-4 bottom-4 h-20 w-28 rounded-xl border-2 border-background/30" />
               </div>
               <div className="mt-4 flex items-center justify-center gap-4">
-                <div className="flex h-11 w-11 items-center justify-center rounded-full bg-background/10">
-                  <MicOff className="h-5 w-5 text-background" />
+                <div className="flex h-11 w-11 items-center justify-center rounded-full bg-foreground/10">
+                  <MicOff className="h-5 w-5 text-foreground" />
                 </div>
-                <div className="flex h-11 w-11 items-center justify-center rounded-full bg-background/10">
-                  <Video className="h-5 w-5 text-background" />
+                <div className="flex h-11 w-11 items-center justify-center rounded-full bg-foreground/10">
+                  <Video className="h-5 w-5 text-foreground" />
                 </div>
                 <div className="flex h-12 w-12 items-center justify-center rounded-full bg-destructive">
                   <PhoneOff className="h-5 w-5 text-destructive-foreground" />
                 </div>
-                <div className="flex h-11 w-11 items-center justify-center rounded-full bg-background/10">
-                  <MonitorUp className="h-5 w-5 text-background" />
+                <div className="flex h-11 w-11 items-center justify-center rounded-full bg-foreground/10">
+                  <MonitorUp className="h-5 w-5 text-foreground" />
                 </div>
               </div>
             </ScrollReveal>
