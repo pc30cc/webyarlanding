@@ -24,6 +24,7 @@ import { Route as SlaRouteImport } from './routes/sla'
 import { Route as TermsRouteImport } from './routes/terms'
 import { Route as AdminIndexRouteImport } from './routes/admin.index'
 import { Route as AdminAiRouteImport } from './routes/admin.ai'
+import { Route as AdminAppsRouteImport } from './routes/admin.apps'
 import { Route as AdminAutoblogRouteImport } from './routes/admin.autoblog'
 import { Route as AdminBackupRouteImport } from './routes/admin.backup'
 import { Route as AdminBlogRouteImport } from './routes/admin.blog'
@@ -125,6 +126,11 @@ const AdminIndexRoute = AdminIndexRouteImport.update({
 const AdminAiRoute = AdminAiRouteImport.update({
   id: '/ai',
   path: '/ai',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminAppsRoute = AdminAppsRouteImport.update({
+  id: '/apps',
+  path: '/apps',
   getParentRoute: () => AdminRoute,
 } as any)
 const AdminAutoblogRoute = AdminAutoblogRouteImport.update({
@@ -279,6 +285,7 @@ export interface FileRoutesByFullPath {
   '/sla': typeof SlaRoute
   '/terms': typeof TermsRoute
   '/admin/ai': typeof AdminAiRoute
+  '/admin/apps': typeof AdminAppsRoute
   '/admin/autoblog': typeof AdminAutoblogRoute
   '/admin/backup': typeof AdminBackupRoute
   '/admin/blog': typeof AdminBlogRoute
@@ -322,6 +329,7 @@ export interface FileRoutesByTo {
   '/sla': typeof SlaRoute
   '/terms': typeof TermsRoute
   '/admin/ai': typeof AdminAiRoute
+  '/admin/apps': typeof AdminAppsRoute
   '/admin/autoblog': typeof AdminAutoblogRoute
   '/admin/backup': typeof AdminBackupRoute
   '/admin/blog': typeof AdminBlogRoute
@@ -367,6 +375,7 @@ export interface FileRoutesById {
   '/sla': typeof SlaRoute
   '/terms': typeof TermsRoute
   '/admin/ai': typeof AdminAiRoute
+  '/admin/apps': typeof AdminAppsRoute
   '/admin/autoblog': typeof AdminAutoblogRoute
   '/admin/backup': typeof AdminBackupRoute
   '/admin/blog': typeof AdminBlogRoute
@@ -413,6 +422,7 @@ export interface FileRouteTypes {
     | '/sla'
     | '/terms'
     | '/admin/ai'
+    | '/admin/apps'
     | '/admin/autoblog'
     | '/admin/backup'
     | '/admin/blog'
@@ -456,6 +466,7 @@ export interface FileRouteTypes {
     | '/sla'
     | '/terms'
     | '/admin/ai'
+    | '/admin/apps'
     | '/admin/autoblog'
     | '/admin/backup'
     | '/admin/blog'
@@ -500,6 +511,7 @@ export interface FileRouteTypes {
     | '/sla'
     | '/terms'
     | '/admin/ai'
+    | '/admin/apps'
     | '/admin/autoblog'
     | '/admin/backup'
     | '/admin/blog'
@@ -663,6 +675,13 @@ declare module '@tanstack/react-router' {
       path: '/ai'
       fullPath: '/admin/ai'
       preLoaderRoute: typeof AdminAiRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/apps': {
+      id: '/admin/apps'
+      path: '/apps'
+      fullPath: '/admin/apps'
+      preLoaderRoute: typeof AdminAppsRouteImport
       parentRoute: typeof AdminRoute
     }
     '/admin/autoblog': {
@@ -859,6 +878,7 @@ declare module '@tanstack/react-router' {
 
 interface AdminRouteChildren {
   AdminAiRoute: typeof AdminAiRoute
+  AdminAppsRoute: typeof AdminAppsRoute
   AdminAutoblogRoute: typeof AdminAutoblogRoute
   AdminBackupRoute: typeof AdminBackupRoute
   AdminBlogRoute: typeof AdminBlogRoute
@@ -879,6 +899,7 @@ interface AdminRouteChildren {
 
 const AdminRouteChildren: AdminRouteChildren = {
   AdminAiRoute: AdminAiRoute,
+  AdminAppsRoute: AdminAppsRoute,
   AdminAutoblogRoute: AdminAutoblogRoute,
   AdminBackupRoute: AdminBackupRoute,
   AdminBlogRoute: AdminBlogRoute,

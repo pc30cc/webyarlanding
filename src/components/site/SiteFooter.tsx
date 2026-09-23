@@ -22,7 +22,7 @@ const FA = {
   products: "محصولات",
   solutions: "راه‌کارها",
   pricing: "قیمت‌گذاری",
-  apiDocs: "مستندات API",
+  apiDocs: "دانلود برنامه",
   company: "شرکت",
   about: "درباره ما",
   blog: "بلاگ",
@@ -40,7 +40,7 @@ const EN: typeof FA = {
   products: "Products",
   solutions: "Solutions",
   pricing: "Pricing",
-  apiDocs: "API Docs",
+  apiDocs: "Download apps",
   company: "Company",
   about: "About",
   blog: "Blog",
@@ -103,7 +103,7 @@ export function SiteFooter({
               <Link to="/pricing" className="block transition-colors hover:text-foreground">
                 {t.pricing}
               </Link>
-              <Link to="/api-docs" className="block transition-colors hover:text-foreground">
+              <Link to="/download" className="block transition-colors hover:text-foreground">
                 {t.apiDocs}
               </Link>
             </nav>

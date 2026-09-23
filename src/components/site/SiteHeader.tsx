@@ -66,7 +66,7 @@ export function SiteHeader({
         { type: "link", to: "/pricing", label: "Pricing" },
         { type: "link", to: "/", hash: "features", label: "Features" },
         { type: "link", to: "/blog", label: "Blog" },
-        { type: "link", to: "/api-docs", label: "API Docs" },
+        { type: "link", to: "/download", label: "Download" },
       ]
     : [
         { type: "mega", to: "/products", label: "محصولات", categories: productCatalog },
@@ -74,7 +74,7 @@ export function SiteHeader({
         { type: "link", to: "/pricing", label: "قیمت‌گذاری" },
         { type: "link", to: "/", hash: "features", label: "امکانات" },
         { type: "link", to: "/blog", label: "بلاگ" },
-        { type: "link", to: "/api-docs", label: "مستندات API" },
+        { type: "link", to: "/download", label: "دانلود برنامه" },
       ];
 
   return (
