@@ -27,9 +27,68 @@ export interface SeoAuditReport {
   totals: { clicks: number; impressions: number; ctr: number; position: number };
   topQueries: { query: string; clicks: number; impressions: number; position: number }[];
   topPages: { page: string; clicks: number; impressions: number; position: number }[];
+  /** وضعیت ایندکس همه آدرس‌های نقشه سایت (مثل بخش Page indexing در سرچ کنسول) */
+  coverage?: {
+    checked: number;
+    indexed: number;
+    notIndexed: number;
+    groups: { reason: string; count: number; examples: string[] }[];
+  };
   issues: SeoIssue[];
   fixedCount: number;
   summary: string;
+}
+
+/** ترجمه فارسی دلیل‌های رایج ایندکس‌نشدن در سرچ کنسول */
+const COVERAGE_FA: Record<string, string> = {
+  "Discovered - currently not indexed": "کشف شده ولی هنوز ایندکس نشده",
+  "Crawled - currently not indexed": "خزیده شده ولی ایندکس نشده",
+  "Duplicate without user-selected canonical": "تکراری بدون کنونیکال مشخص",
+  "Duplicate, Google chose different canonical than user":
+    "تکراری؛ گوگل کنونیکال دیگری انتخاب کرده",
+  "Alternate page with proper canonical tag": "صفحه جایگزین با کنونیکال درست",
+  "Excluded by ‘noindex’ tag": "با دستور noindex حذف شده",
+  "Blocked by robots.txt": "با robots.txt مسدود شده",
+  "Page with redirect": "صفحه دارای تغییر مسیر",
+  "Not found (404)": "پیدا نشد (۴۰۴)",
+  "Soft 404": "۴۰۴ نرم",
+  "Server error (5xx)": "خطای سرور",
+  "URL is unknown to Google": "گوگل این آدرس را نمی‌شناسد",
+};
+
+function coverageFa(reason: string): string {
+  return COVERAGE_FA[reason] ?? reason ?? "دلیل نامشخص";
+}
+
+/** خواندن همه آدرس‌های نقشه سایت */
+async function fetchSitemapUrls(site: string): Promise<string[]> {
+  try {
+    const res = await fetch(`${site}/sitemap.xml`, { headers: { Accept: "application/xml" } });
+    if (!res.ok) return [];
+    const xml = await res.text();
+    const locs = [...xml.matchAll(/<loc>([^<]+)<\/loc>/g)].map((m) =>
+      m[1]!.trim().replace(/&amp;/g, "&"),
+    );
+    return [...new Set(locs)];
+  } catch (e) {
+    console.error("fetchSitemapUrls failed:", e);
+    return [];
+  }
+}
+
+/** اجرای موازی محدود */
+async function mapLimit<T, R>(items: T[], limit: number, fn: (item: T) => Promise<R>): Promise<R[]> {
+  const out: R[] = new Array(items.length) as R[];
+  let cursor = 0;
+  await Promise.all(
+    Array.from({ length: Math.min(limit, items.length) }, async () => {
+      while (cursor < items.length) {
+        const i = cursor++;
+        out[i] = await fn(items[i]!);
+      }
+    }),
+  );
+  return out;
 }
 
 const STATIC_PAGES: { path: string; label: string }[] = [
