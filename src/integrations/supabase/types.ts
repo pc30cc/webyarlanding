@@ -14,6 +14,96 @@ export type Database = {
   }
   public: {
     Tables: {
+      app_download_clicks: {
+        Row: {
+          app_id: string
+          created_at: string
+          id: string
+          platform: string
+          referrer: string | null
+          user_agent: string | null
+        }
+        Insert: {
+          app_id: string
+          created_at?: string
+          id: string
+          platform?: string
+          referrer?: string | null
+          user_agent?: string | null
+        }
+        Update: {
+          app_id?: string
+          created_at?: string
+          id?: string
+          platform?: string
+          referrer?: string | null
+          user_agent?: string | null
+        }
+        Relationships: []
+      }
+      apps: {
+        Row: {
+          created_at: string
+          description: string
+          download_url: string
+          enabled: number
+          features_json: string
+          icon_url: string
+          id: string
+          min_os: string
+          name: string
+          platform: string
+          screenshots_json: string
+          short_desc: string
+          size: string
+          slug: string
+          sort_order: number
+          subtitle: string
+          updated_at: string
+          version: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string
+          download_url?: string
+          enabled?: number
+          features_json?: string
+          icon_url?: string
+          id: string
+          min_os?: string
+          name: string
+          platform?: string
+          screenshots_json?: string
+          short_desc?: string
+          size?: string
+          slug: string
+          sort_order?: number
+          subtitle?: string
+          updated_at?: string
+          version?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string
+          download_url?: string
+          enabled?: number
+          features_json?: string
+          icon_url?: string
+          id?: string
+          min_os?: string
+          name?: string
+          platform?: string
+          screenshots_json?: string
+          short_desc?: string
+          size?: string
+          slug?: string
+          sort_order?: number
+          subtitle?: string
+          updated_at?: string
+          version?: string
+        }
+        Relationships: []
+      }
       autoblog_runs: {
         Row: {
           details: string | null
