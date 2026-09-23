@@ -1,7 +1,7 @@
 import { siApple, siGoogleplay, siAndroid } from "simple-icons";
 import type { AppPlatform } from "@/lib/apps.functions";
 
-function SiIcon({ path, className }: { path: string; className?: string }) {
+function SiIcon({ path, className }: { path: string; className?: string | undefined }) {
   return (
     <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden className={className}>
       <path d={path} />
@@ -9,16 +9,16 @@ function SiIcon({ path, className }: { path: string; className?: string }) {
   );
 }
 
-export function AppleIcon({ className }: { className?: string }) {
+export function AppleIcon({ className }: { className?: string | undefined }) {
   return <SiIcon path={siApple.path} className={className} />;
 }
-export function GooglePlayIcon({ className }: { className?: string }) {
+export function GooglePlayIcon({ className }: { className?: string | undefined }) {
   return <SiIcon path={siGoogleplay.path} className={className} />;
 }
-export function AndroidIcon({ className }: { className?: string }) {
+export function AndroidIcon({ className }: { className?: string | undefined }) {
   return <SiIcon path={siAndroid.path} className={className} />;
 }
-export function WindowsIcon({ className }: { className?: string }) {
+export function WindowsIcon({ className }: { className?: string | undefined }) {
   return (
     <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden className={className}>
       <path d="M0 3.4 9.8 2v9.5H0zM11 1.8 24 0v11.5H11zM0 12.5h9.8V22L0 20.6zM11 12.5h13V24l-13-1.8z" />
@@ -28,7 +28,7 @@ export function WindowsIcon({ className }: { className?: string }) {
 
 export const PLATFORM_META: Record<
   AppPlatform,
-  { label: string; store: string; storeTop: string; Icon: (p: { className?: string }) => React.ReactElement }
+  { label: string; store: string; storeTop: string; Icon: (p: { className?: string | undefined }) => React.ReactElement }
 > = {
   ios: { label: "آیفون و آیپد", store: "App Store", storeTop: "دریافت از", Icon: AppleIcon },
   android: { label: "اندروید", store: "Google Play", storeTop: "دریافت از", Icon: GooglePlayIcon },
@@ -45,7 +45,7 @@ export function StoreBadge({
   platform: AppPlatform;
   slug: string;
   available: boolean;
-  className?: string;
+  className?: string | undefined;
 }) {
   const m = PLATFORM_META[platform];
   const inner = (

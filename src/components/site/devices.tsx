@@ -35,7 +35,7 @@ export function PhoneFrame({
 }: {
   children: ReactNode;
   variant?: "ios" | "android";
-  className?: string;
+  className?: string | undefined;
 }) {
   return (
     <div
@@ -75,7 +75,7 @@ function StatusBar() {
   );
 }
 
-export function DesktopFrame({ children, className }: { children: ReactNode; className?: string }) {
+export function DesktopFrame({ children, className }: { children: ReactNode; className?: string | undefined }) {
   return (
     <div className={`w-full overflow-hidden rounded-2xl border border-border bg-card shadow-[0_40px_90px_-30px_oklch(0_0_0/0.8)] ${className ?? ""}`}>
       <div dir="ltr" className="flex h-8 items-center justify-between border-b border-border bg-secondary/60 px-3">
@@ -207,7 +207,7 @@ function Composer() {
 
 /* ───────── صفحات موبایل ───────── */
 
-function MobileHeader({ title, android }: { title: string; android?: boolean }) {
+function MobileHeader({ title, android }: { title: string; android?: boolean | undefined }) {
   return (
     <div className="px-4 pt-2 pb-2">
       <div className={`font-extrabold text-foreground ${android ? "text-[17px]" : "text-[22px]"}`}>{title}</div>
@@ -218,7 +218,7 @@ function MobileHeader({ title, android }: { title: string; android?: boolean }) 
   );
 }
 
-function TabBar({ active, android }: { active: number; android?: boolean }) {
+function TabBar({ active, android }: { active: number; android?: boolean | undefined }) {
   const tabs = [
     { Icon: Inbox, label: "صندوق" },
     { Icon: Mail, label: "ایمیل" },
@@ -240,7 +240,7 @@ function TabBar({ active, android }: { active: number; android?: boolean }) {
   );
 }
 
-export function InboxScreen({ android }: { android?: boolean }) {
+export function InboxScreen({ android }: { android?: boolean | undefined }) {
   return (
     <div className="relative h-full" dir="rtl">
       <MobileHeader title="صندوق گفتگو" android={android} />
@@ -261,7 +261,7 @@ export function InboxScreen({ android }: { android?: boolean }) {
   );
 }
 
-export function ChatScreen(_props: { android?: boolean } = {}) {
+export function ChatScreen(_props: { android?: boolean | undefined } = {}) {
   return (
     <div className="flex h-full flex-col" dir="rtl">
       <div className="flex items-center gap-2 border-b border-border px-3 py-2">
@@ -285,7 +285,7 @@ export function ChatScreen(_props: { android?: boolean } = {}) {
   );
 }
 
-export function CallScreen(_props: { android?: boolean } = {}) {
+export function CallScreen(_props: { android?: boolean | undefined } = {}) {
   return (
     <div className="relative h-full overflow-hidden bg-gradient-to-b from-secondary to-background" dir="rtl">
       <img src="/videos/video-call-poster.jpg" alt="" className="absolute inset-0 h-full w-full object-cover opacity-90" />
@@ -313,7 +313,7 @@ export function CallScreen(_props: { android?: boolean } = {}) {
   );
 }
 
-export function ContactScreen(_props: { android?: boolean } = {}) {
+export function ContactScreen(_props: { android?: boolean | undefined } = {}) {
   return (
     <div className="h-full" dir="rtl">
       <div className="flex flex-col items-center gap-1.5 border-b border-border px-4 pt-4 pb-3">
@@ -351,7 +351,7 @@ export function ContactScreen(_props: { android?: boolean } = {}) {
   );
 }
 
-export function EmailScreen({ android }: { android?: boolean }) {
+export function EmailScreen({ android }: { android?: boolean | undefined }) {
   const mails = [
     { n: "نگار حسینی", s: "فاکتور سفارش ۱۲۸۴", p: "سلام، فاکتور رو پیوست کردم…" },
     { n: "شرکت آریا", s: "درخواست همکاری", p: "برای نسخه سازمانی تماس بگیرید" },
@@ -438,7 +438,7 @@ export function WindowsScreen() {
 }
 
 /** پیش‌نمایش اصلی یک پلتفرم (برای کارت‌ها و لندینگ) */
-export function PlatformPreview({ platform, className }: { platform: AppPlatform; className?: string }) {
+export function PlatformPreview({ platform, className }: { platform: AppPlatform; className?: string | undefined }) {
   if (platform === "windows") {
     return (
       <DesktopFrame className={className}>

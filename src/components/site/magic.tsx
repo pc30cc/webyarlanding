@@ -3,7 +3,7 @@ import { useRef, type ReactNode, type MouseEvent } from "react";
 import { motion, useScroll, useTransform } from "framer-motion";
 
 /** پس‌زمینه شفق (Aurora) با لکه‌های رنگی متحرک + شبکه محو */
-export function AuroraBackdrop({ className }: { className?: string }) {
+export function AuroraBackdrop({ className }: { className?: string | undefined }) {
   return (
     <div aria-hidden className={`pointer-events-none absolute inset-0 overflow-hidden ${className ?? ""}`}>
       <div className="animate-aurora absolute -top-40 start-[10%] h-[420px] w-[420px] rounded-full bg-primary/25 blur-[110px] sm:h-[560px] sm:w-[560px]" />
@@ -21,7 +21,7 @@ export function AuroraBackdrop({ className }: { className?: string }) {
 }
 
 /** نوار چرخان بی‌پایان (Marquee) */
-export function Marquee({ children, duration = 40, className }: { children: ReactNode; duration?: number; className?: string }) {
+export function Marquee({ children, duration = 40, className }: { children: ReactNode; duration?: number; className?: string | undefined }) {
   return (
     <div
       className={`relative flex overflow-hidden [mask-image:linear-gradient(to_right,transparent,black_12%,black_88%,transparent)] ${className ?? ""}`}
@@ -40,7 +40,7 @@ export function Marquee({ children, duration = 40, className }: { children: Reac
 }
 
 /** کارت با نورافکن دنبال‌کننده ماوس */
-export function SpotlightCard({ children, className }: { children: ReactNode; className?: string }) {
+export function SpotlightCard({ children, className }: { children: ReactNode; className?: string | undefined }) {
   const onMove = (e: MouseEvent<HTMLDivElement>) => {
     const r = e.currentTarget.getBoundingClientRect();
     e.currentTarget.style.setProperty("--mx", `${e.clientX - r.left}px`);
@@ -67,7 +67,7 @@ export function LiveBadge({ children }: { children: ReactNode }) {
 }
 
 /** پارالاکس ملایم هنگام اسکرول */
-export function Parallax({ children, offset = 60, className }: { children: ReactNode; offset?: number; className?: string }) {
+export function Parallax({ children, offset = 60, className }: { children: ReactNode; offset?: number; className?: string | undefined }) {
   const ref = useRef<HTMLDivElement>(null);
   const { scrollYProgress } = useScroll({ target: ref, offset: ["start end", "end start"] });
   const y = useTransform(scrollYProgress, [0, 1], [offset, -offset]);

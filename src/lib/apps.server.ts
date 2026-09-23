@@ -6,22 +6,22 @@ type Row = Record<string, unknown>;
 
 function mapRow(r: Row): AppDto {
   return {
-    id: String(r.id),
-    slug: String(r.slug),
-    platform: (String(r.platform) as AppDto["platform"]) || "ios",
-    name: String(r.name ?? ""),
-    subtitle: String(r.subtitle ?? ""),
-    iconUrl: String(r.icon_url ?? ""),
-    shortDesc: String(r.short_desc ?? ""),
-    description: String(r.description ?? ""),
-    features: parseJson<string[]>(r.features_json as string, []),
-    screenshots: parseJson<string[]>(r.screenshots_json as string, []),
-    version: String(r.version ?? ""),
-    size: String(r.size ?? ""),
-    minOs: String(r.min_os ?? ""),
-    downloadUrl: String(r.download_url ?? ""),
-    sortOrder: Number(r.sort_order ?? 0),
-    enabled: toBool(r.enabled),
+    id: String(r['id']),
+    slug: String(r['slug']),
+    platform: (String(r['platform']) as AppDto["platform"]) || "ios",
+    name: String(r['name'] ?? ""),
+    subtitle: String(r['subtitle'] ?? ""),
+    iconUrl: String(r['icon_url'] ?? ""),
+    shortDesc: String(r['short_desc'] ?? ""),
+    description: String(r['description'] ?? ""),
+    features: parseJson<string[]>(r['features_json'] as string, []),
+    screenshots: parseJson<string[]>(r['screenshots_json'] as string, []),
+    version: String(r['version'] ?? ""),
+    size: String(r['size'] ?? ""),
+    minOs: String(r['min_os'] ?? ""),
+    downloadUrl: String(r['download_url'] ?? ""),
+    sortOrder: Number(r['sort_order'] ?? 0),
+    enabled: toBool(r['enabled']),
   };
 }
 
@@ -130,7 +130,7 @@ export async function fetchAppStats(): Promise<AppStats> {
     byDay.set(new Date(Date.now() - i * 86400000).toISOString().slice(0, 10), 0);
   }
   for (const r of data ?? []) {
-    const d = String((r as Row).created_at).slice(0, 10);
+    const d = String((r as Row)['created_at']).slice(0, 10);
     if (byDay.has(d)) byDay.set(d, (byDay.get(d) ?? 0) + 1);
   }
   return { total, perApp, daily: [...byDay].map(([date, count]) => ({ date, count })) };
