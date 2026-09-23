@@ -32,14 +32,28 @@ import { getPublicSeoPage } from "@/lib/seo.functions";
 import { buildPageMeta, parseSchemaJson, safeJsonLdHtml } from "@/lib/seo-meta";
 import { SiteLayout } from "@/components/site/SiteLayout";
 import { ScrollReveal, StaggerChildren, childVariant, FAQItem } from "@/components/site/animations";
+import { AuroraBackdrop, Marquee, SectionHeading } from "@/components/site/magic";
+import { StoreBadge, AppleIcon, AndroidIcon, WindowsIcon } from "@/components/site/brand-icons";
+import { PhoneFrame, DesktopFrame, InboxScreen, CallScreen, WindowsScreen } from "@/components/site/devices";
+import { getPublicApps } from "@/lib/apps.functions";
+import {
+  siWordpress,
+  siWoocommerce,
+  siShopify,
+  siPrestashop,
+  siTelegram,
+  siWhatsapp,
+  siInstagram,
+} from "simple-icons";
 
 export const Route = createFileRoute("/")({
   loader: async () => {
-    const [settings, seoOverride] = await Promise.all([
+    const [settings, seoOverride, apps] = await Promise.all([
       fetchSettings(),
       getPublicSeoPage({ data: { path: "/" } }),
+      getPublicApps(),
     ]);
-    return { settings, seoOverride };
+    return { settings, seoOverride, apps };
   },
   head: ({ loaderData }) => {
     if (!loaderData) return {};
@@ -65,14 +79,13 @@ const float = (delay = 0) => ({
 });
 
 const trustLogos = [
-  "WordPress",
-  "WooCommerce",
-  "Shopify",
-  "PrestaShop",
-  "Telegram",
-  "WhatsApp",
-  "Instagram",
-  "Slack",
+  { name: "WordPress", path: siWordpress.path },
+  { name: "WooCommerce", path: siWoocommerce.path },
+  { name: "Shopify", path: siShopify.path },
+  { name: "PrestaShop", path: siPrestashop.path },
+  { name: "Telegram", path: siTelegram.path },
+  { name: "WhatsApp", path: siWhatsapp.path },
+  { name: "Instagram", path: siInstagram.path },
 ];
 
 const chatFeatures = [
@@ -331,7 +344,7 @@ function OperatorAvatar({ className }: { className?: string }) {
 }
 
 function IndexPage() {
-  const { settings, seoOverride } = Route.useLoaderData();
+  const { settings, seoOverride, apps } = Route.useLoaderData();
   const callEnabled = settings.videoCall.enabled;
   const aiEnabled = settings.aiMarketing.enabled;
   const faqs = getFaqs(callEnabled, aiEnabled);
@@ -385,19 +398,7 @@ function IndexPage() {
 
       {/* HERO */}
       <section className="relative overflow-hidden pt-16 pb-12 sm:pt-24 sm:pb-16">
-        {/* پس‌زمینه — نسبت به کل عرض section (نه ستون محتوا) تا در نمایش‌های عریض هم کامل باشد */}
-        <div
-          aria-hidden
-          className="pointer-events-none absolute inset-0 bg-gradient-to-br from-accent/[0.06] via-transparent to-primary/[0.06]"
-        />
-        <div
-          aria-hidden
-          className="pointer-events-none absolute -top-40 -start-24 h-[420px] w-[420px] rounded-full bg-accent/15 blur-3xl xl:-start-10 xl:h-[560px] xl:w-[560px] 2xl:h-[680px] 2xl:w-[680px]"
-        />
-        <div
-          aria-hidden
-          className="pointer-events-none absolute top-32 -end-16 h-[340px] w-[340px] rounded-full bg-primary/15 blur-3xl xl:top-24 xl:-end-4 xl:h-[460px] xl:w-[460px] 2xl:h-[560px] 2xl:w-[560px]"
-        />
+        <AuroraBackdrop />
 
         <div className="container-page relative z-10 grid items-center gap-12 lg:grid-cols-2 lg:gap-16">
           <div>
@@ -405,7 +406,7 @@ function IndexPage() {
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.4 }}
-              className="mb-6 inline-flex items-center gap-2 rounded-full bg-primary/10 px-4 py-2 text-xs font-semibold text-primary"
+              className="glass mb-6 inline-flex items-center gap-2 rounded-full px-4 py-2 text-xs font-semibold text-foreground"
             >
               <motion.span
                 animate={{ opacity: [1, 0.35, 1] }}
@@ -421,7 +422,7 @@ function IndexPage() {
               — در یک پنل
             </motion.div>
 
-            <h1 className="mb-6 text-3xl font-extrabold leading-[1.25] text-foreground sm:text-5xl">
+            <h1 className="mb-6 text-[34px] font-extrabold leading-[1.3] text-foreground sm:text-5xl lg:text-[64px] lg:leading-[1.2]">
               {callEnabled ? "چت زنده و تماس ویدیویی،" : "چت زنده هوشمند،"}
               <br />
               <span className="text-brand">فقط با یک خط کد</span>
@@ -437,15 +438,24 @@ function IndexPage() {
             <div className="flex flex-wrap items-center gap-4">
               <a
                 href={settings.auth.signupUrl || "/contact"}
-                className="inline-flex items-center gap-2 rounded-xl bg-brand px-8 py-4 text-base font-bold text-primary-foreground shadow-lg shadow-primary/30"
+                className="btn-shimmer inline-flex min-h-[52px] items-center gap-2 rounded-2xl px-8 py-4 text-base font-bold"
               >
                 {settings.auth.signupLabel || "شروع رایگان"} <ChevronLeft className="h-4 w-4" />
               </a>
               <Link
                 to="/pricing"
-                className="inline-flex items-center rounded-xl border border-border px-8 py-4 text-base font-semibold text-foreground transition-colors hover:bg-secondary"
+                className="glass inline-flex min-h-[52px] items-center gap-2 rounded-2xl px-6 py-4 text-base font-semibold text-foreground transition-colors hover:border-primary/40"
               >
                 مشاهده امکانات
+              </Link>
+              <Link
+                to="/download"
+                className="inline-flex min-h-[52px] items-center gap-2 px-2 text-sm font-semibold text-muted-foreground transition-colors hover:text-foreground"
+              >
+                <AppleIcon className="h-4 w-4" />
+                <AndroidIcon className="h-4 w-4" />
+                <WindowsIcon className="h-3.5 w-3.5" />
+                دانلود اپ
               </Link>
             </div>
             <p className="mt-4 text-xs text-muted-foreground">
@@ -456,7 +466,7 @@ function IndexPage() {
           <div className="relative hidden h-[430px] sm:block sm:h-[520px]">
             <motion.div
               {...float(0)}
-              className="absolute end-[10%] top-5 w-[320px] overflow-hidden rounded-[20px] bg-card shadow-card"
+              className="beam-border absolute end-[10%] top-5 w-[320px] overflow-hidden rounded-[20px] bg-card shadow-card"
             >
               <div className="flex items-center gap-3 bg-brand p-5">
                 <div className="h-9 w-9 rounded-full bg-primary-foreground/90" />
@@ -518,15 +528,24 @@ function IndexPage() {
       </section>
 
       {/* TRUST LOGOS */}
-      <section className="border-y border-border px-4 py-9 sm:px-8">
-        <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-center gap-x-14 gap-y-5">
+      <section className="border-y border-border py-8">
+        <p className="mb-5 text-center text-xs font-semibold text-muted-foreground">
+          افزونه آماده و اتصال مستقیم به پلتفرم‌ها و کانال‌های محبوب
+        </p>
+        <Marquee duration={35}>
           {trustLogos.map((logo) => (
-            <span key={logo} className="text-base font-bold tracking-wide text-muted-foreground">
-              {logo}
+            <span key={logo.name} className="flex items-center gap-2.5 text-muted-foreground transition-colors hover:text-foreground">
+              <svg viewBox="0 0 24 24" className="h-6 w-6" fill="currentColor" aria-hidden>
+                <path d={logo.path} />
+              </svg>
+              <span dir="ltr" className="text-base font-bold">{logo.name}</span>
             </span>
           ))}
-        </div>
+        </Marquee>
       </section>
+
+      {/* APPS */}
+      <AppsShowcase apps={apps} />
 
       {/* LIVE CHAT */}
       <section
@@ -790,5 +809,66 @@ function IndexPage() {
         </div>
       </ScrollReveal>
     </SiteLayout>
+  );
+}
+
+function AppsShowcase({ apps }: { apps: import("@/lib/apps.functions").AppDto[] }) {
+  if (apps.length === 0) return null;
+  const find = (p: string) => apps.find((a) => a.platform === p);
+  return (
+    <section className="relative overflow-hidden py-20 sm:py-28">
+      <div aria-hidden className="bg-dots pointer-events-none absolute inset-0 opacity-60 [mask-image:radial-gradient(ellipse_at_center,black,transparent_70%)]" />
+      <div className="container-page relative">
+        <SectionHeading
+          eyebrow="اپلیکیشن‌های نیتیو"
+          title={
+            <>
+              وب‌یار <span className="text-brand">همیشه همراه شماست</span>
+            </>
+          }
+          desc="روی آیفون، اندروید و ویندوز به چت‌ها پاسخ دهید، تماس تصویری بگیرید و هیچ مشتری‌ای را از دست ندهید؛ با اعلان لحظه‌ای."
+        />
+        <div className="relative mx-auto max-w-5xl">
+          <ScrollReveal className="mx-auto w-full sm:w-[82%]">
+            <DesktopFrame>
+              <WindowsScreen />
+            </DesktopFrame>
+          </ScrollReveal>
+          <motion.div
+            initial={{ opacity: 0, y: 80, rotate: -6 }}
+            whileInView={{ opacity: 1, y: 0, rotate: -4 }}
+            viewport={{ once: true, margin: "-80px" }}
+            transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1] }}
+            className="absolute -bottom-16 -start-2 hidden scale-[0.78] md:block lg:start-0 lg:scale-90"
+          >
+            <PhoneFrame variant="ios">
+              <InboxScreen />
+            </PhoneFrame>
+          </motion.div>
+          <motion.div
+            initial={{ opacity: 0, y: 80, rotate: 6 }}
+            whileInView={{ opacity: 1, y: 0, rotate: 4 }}
+            viewport={{ once: true, margin: "-80px" }}
+            transition={{ duration: 0.9, delay: 0.1, ease: [0.22, 1, 0.36, 1] }}
+            className="absolute -bottom-20 -end-2 hidden scale-[0.78] md:block lg:end-0 lg:scale-90"
+          >
+            <PhoneFrame variant="android">
+              <CallScreen />
+            </PhoneFrame>
+          </motion.div>
+        </div>
+        <div className="mt-14 flex flex-wrap justify-center gap-3 md:mt-28">
+          {(["ios", "android", "windows"] as const).map((p) => {
+            const a = find(p);
+            return a ? <StoreBadge key={p} platform={p} slug={a.slug} available={!!a.downloadUrl} /> : null;
+          })}
+        </div>
+        <div className="mt-5 text-center">
+          <Link to="/download" className="inline-flex items-center gap-1 text-sm font-bold text-primary">
+            همه برنامه‌ها و تصاویر <ChevronLeft className="h-4 w-4" />
+          </Link>
+        </div>
+      </div>
+    </section>
   );
 }
