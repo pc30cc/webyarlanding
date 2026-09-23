@@ -79,15 +79,15 @@ const float = (delay = 0) => ({
   transition: { duration: 6 + delay, repeat: Infinity, ease: "easeInOut" as const, delay },
 });
 
-type Channel = { name: string; hex: string; path?: string; mark?: string; ltr?: boolean };
+type Channel = { name: string; hex: string; path?: string; img?: string; viewBox?: string; ltr?: boolean };
 const trustLogos: Channel[] = [
   { name: "تلگرام", hex: "26A5E4", path: siTelegram.path },
   { name: "واتس‌اپ", hex: "25D366", path: siWhatsapp.path },
   { name: "اینستاگرام", hex: "FF0069", path: siInstagram.path },
-  { name: "بله", hex: "1FB57A", mark: "ب" },
+  { name: "بله", hex: "4CEBB4", img: "/brands/bale.svg" },
   { name: "جیمیل", hex: "EA4335", path: siGmail.path },
-  { name: "یاهو", hex: "6001D2", mark: "Y!" },
-  { name: "WHMCS", hex: "1C7BD1", mark: "W", ltr: true },
+  { name: "یاهو", hex: "6001D2", path: "M18.86 1.56L14.27 11.87H19.4L24 1.56H18.86M0 6.71L5.15 18.27L3.3 22.44H7.83L14.69 6.71H10.19L7.39 13.44L4.62 6.71H0M15.62 12.87C13.95 12.87 12.71 14.12 12.71 15.58C12.71 17 13.91 18.19 15.5 18.19C17.18 18.19 18.43 16.96 18.43 15.5C18.43 14.03 17.23 12.87 15.62 12.87Z" },
+  { name: "WHMCS", hex: "840FFF", path: "M1.93206 17.9126C-0.935444 14.0008 -0.616832 8.46645 2.92652 4.92173C6.83675 1.02931 13.1607 1.01965 17.0709 4.93139C20.9812 8.84313 20.9715 15.1695 17.0709 19.0716C13.5373 22.6067 8.00499 22.9447 4.0851 20.0665C4.22993 18.7625 4.79957 17.5166 5.79402 16.5217C8.1112 14.2037 11.8476 14.1554 14.1455 16.4541C14.1841 16.4928 14.3676 16.6763 14.522 16.5217C14.6765 16.3672 14.4834 16.174 14.4545 16.1451C12.2338 13.9236 12.1373 10.176 14.4545 7.85796C14.4834 7.82898 14.6765 7.65512 14.5124 7.49093C14.3483 7.32673 14.1648 7.52956 14.1455 7.54888C11.9152 9.78002 8.15947 9.84763 5.86161 7.54888C5.82299 7.51024 5.62023 7.34605 5.48506 7.48127C5.3499 7.61649 5.49472 7.8 5.55265 7.85796C7.82155 10.1277 7.82155 13.8753 5.48506 16.2127C4.50992 17.1882 3.23547 17.7677 1.93206 17.9126Z", viewBox: "-1 0 22 24", ltr: true },
   { name: "وردپرس", hex: "21759B", path: siWordpress.path },
   { name: "ووکامرس", hex: "96588A", path: siWoocommerce.path },
   { name: "شاپیفای", hex: "7AB55C", path: siShopify.path },
@@ -561,12 +561,12 @@ function IndexPage() {
                 className="flex h-9 w-9 items-center justify-center rounded-xl transition-transform duration-300 group-hover:scale-110"
                 style={{ backgroundColor: `#${logo.hex}22`, color: `#${logo.hex}` }}
               >
-                {logo.path ? (
-                  <svg viewBox="0 0 24 24" className="h-5 w-5" fill="currentColor" aria-hidden>
+                {logo.img ? (
+                  <img src={logo.img} alt="" className="h-6 w-6" loading="lazy" />
+                ) : (
+                  <svg viewBox={logo.viewBox ?? "0 0 24 24"} className="h-5 w-5" fill="currentColor" aria-hidden>
                     <path d={logo.path} />
                   </svg>
-                ) : (
-                  <span className="text-sm font-black" dir={logo.ltr || logo.mark === "Y!" ? "ltr" : undefined}>{logo.mark}</span>
                 )}
               </span>
               <span dir={logo.ltr ? "ltr" : undefined} className="whitespace-nowrap text-sm font-bold text-foreground sm:text-base">
