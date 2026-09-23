@@ -446,7 +446,7 @@ function IndexPage() {
                 href={settings.auth.signupUrl || "/contact"}
                 className="btn-shimmer inline-flex min-h-[52px] items-center gap-2 rounded-2xl px-8 py-4 text-base font-bold"
               >
-                {settings.auth.signupLabel || "شروع رایگان"} <ChevronLeft className="h-4 w-4" />
+                ۷ روز رایگان از تمام امکانات استفاده کنید <ChevronLeft className="h-4 w-4" />
               </a>
               <Link
                 to="/pricing"
