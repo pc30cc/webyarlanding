@@ -97,8 +97,8 @@ export function DesktopFrame({ children, className }: { children: ReactNode; cla
 
 const CHATS = [
   { name: "سارا محمدی", msg: "سفارشم کی ارسال می‌شه؟", time: "الان", ch: "web", unread: 2 },
-  { name: "علی رضایی", msg: "🎤 پیام صوتی (۰:۱۴)", time: "۲ دقیقه", ch: "telegram", unread: 1 },
-  { name: "مریم کریمی", msg: "ممنون از راهنمایی‌تون 🙏", time: "۵ دقیقه", ch: "instagram", unread: 0 },
+  { name: "علی رضایی", msg: "پیام صوتی (۰:۱۴)", time: "۲ دقیقه", ch: "telegram", unread: 1 },
+  { name: "مریم کریمی", msg: "ممنون از راهنمایی‌تون", time: "۵ دقیقه", ch: "instagram", unread: 0 },
   { name: "رضا احمدی", msg: "امکان تماس تصویری هست؟", time: "۱۲ دقیقه", ch: "whatsapp", unread: 0 },
   { name: "نگار حسینی", msg: "فاکتور رو ایمیل کردم", time: "۱ ساعت", ch: "email", unread: 0 },
   { name: "امید نوری", msg: "ایجنت هوشمند پاسخ داد", time: "۲ ساعت", ch: "web", unread: 0 },
@@ -175,7 +175,7 @@ function ChatThread({ compact }: { compact?: boolean }) {
           <Bot className="h-3 w-3" /> ایجنت هوشمند وضعیت را بررسی کرد
         </span>
       </div>
-      <Bubble me time="۱۰:۲۲">سلام سارا جان 🌷 سفارش شما امروز بسته‌بندی شد و فردا تحویل پست می‌شه.</Bubble>
+      <Bubble me time="۱۰:۲۲">سلام سارا جان سفارش شما امروز بسته‌بندی شد و فردا تحویل پست می‌شه.</Bubble>
       <Bubble time="۱۰:۲۳">
         <span className="flex items-center gap-2">
           <Mic className="h-3.5 w-3.5" />
@@ -187,7 +187,7 @@ function ChatThread({ compact }: { compact?: boolean }) {
           ۰:۰۸
         </span>
       </Bubble>
-      <Bubble me time="۱۰:۲۴">اگر مایل باشید با تماس تصویری محصول رو نشونتون می‌دم 📹</Bubble>
+      <Bubble me time="۱۰:۲۴">اگر مایل باشید با تماس تصویری محصول رو نشونتون می‌دم</Bubble>
     </div>
   );
 }
