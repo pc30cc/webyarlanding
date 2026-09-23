@@ -497,6 +497,60 @@ export type Database = {
         }
         Relationships: []
       }
+      seo_proposals: {
+        Row: {
+          action: string
+          after_json: string
+          applied_at: string | null
+          before_json: string
+          created_at: string
+          decided_at: string | null
+          detail: string
+          error: string
+          id: string
+          kind: string
+          severity: string
+          source: string
+          status: string
+          target: string
+          title: string
+        }
+        Insert: {
+          action: string
+          after_json?: string
+          applied_at?: string | null
+          before_json?: string
+          created_at?: string
+          decided_at?: string | null
+          detail?: string
+          error?: string
+          id: string
+          kind?: string
+          severity?: string
+          source?: string
+          status?: string
+          target?: string
+          title?: string
+        }
+        Update: {
+          action?: string
+          after_json?: string
+          applied_at?: string | null
+          before_json?: string
+          created_at?: string
+          decided_at?: string | null
+          detail?: string
+          error?: string
+          id?: string
+          kind?: string
+          severity?: string
+          source?: string
+          status?: string
+          target?: string
+          title?: string
+        }
+        Relationships: []
+      }
       settings: {
         Row: {
           id: string
