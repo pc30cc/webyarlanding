@@ -178,6 +178,27 @@ export const TABLES: TableDef[] = [
     ],
   },
   {
+    name: "seo_proposals",
+    pk: "id",
+    columns: [
+      { name: "id", type: "VARCHAR", length: 36 },
+      { name: "kind", type: "VARCHAR", length: 40 },
+      { name: "action", type: "VARCHAR", length: 40 },
+      { name: "target", type: "VARCHAR", length: 500 },
+      { name: "title", type: "VARCHAR", length: 500 },
+      { name: "detail", type: "TEXT" },
+      { name: "severity", type: "VARCHAR", length: 20 },
+      { name: "before_json", type: "TEXT" },
+      { name: "after_json", type: "TEXT" },
+      { name: "status", type: "VARCHAR", length: 20 },
+      { name: "error", type: "TEXT" },
+      { name: "source", type: "VARCHAR", length: 20 },
+      { name: "created_at", type: "TIMESTAMP" },
+      { name: "decided_at", type: "TIMESTAMP" },
+      { name: "applied_at", type: "TIMESTAMP" },
+    ],
+  },
+  {
     name: "autoblog_settings",
     pk: "id",
     columns: [
