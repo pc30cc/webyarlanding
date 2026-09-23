@@ -88,7 +88,7 @@ export function DesktopFrame({ children, className }: { children: ReactNode; cla
           <span>✕</span>
         </div>
       </div>
-      <div className="aspect-[16/10]">{children}</div>
+      <div className="aspect-[16/10] overflow-hidden">{children}</div>
     </div>
   );
 }

@@ -463,10 +463,10 @@ function IndexPage() {
             </p>
           </div>
 
-          <div className="relative hidden h-[430px] sm:block sm:h-[520px]">
+          <div className="relative mx-auto hidden h-[500px] w-full max-w-[420px] sm:block">
             <motion.div
               {...float(0)}
-              className="beam-border absolute end-[10%] top-5 w-[320px] overflow-hidden rounded-[20px] bg-card shadow-card"
+              className="beam-border absolute start-0 top-0 w-[300px] overflow-hidden rounded-[20px] bg-card shadow-card"
             >
               <div className="flex items-center gap-3 bg-brand p-5">
                 <div className="h-9 w-9 rounded-full bg-primary-foreground/90" />
@@ -504,7 +504,7 @@ function IndexPage() {
             {callEnabled && (
               <motion.div
                 {...float(1)}
-                className="absolute end-0 bottom-0 w-[280px] rounded-[18px] bg-card p-3.5 shadow-2xl"
+                className="absolute end-0 bottom-0 w-[260px] rounded-[18px] bg-card p-3.5 shadow-2xl"
               >
                 <div className="relative h-[150px] overflow-hidden rounded-xl">
                   <VideoCallMock />

@@ -105,20 +105,20 @@ function DownloadPage() {
             transition={{ delay: 0.35, duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
             className="relative mx-auto mt-16 max-w-5xl"
           >
-            <div className="mx-auto w-[92%] sm:w-[80%]">
+            <div className="relative mx-auto w-full sm:w-[88%]">
               <DesktopFrame>
                 <WindowsScreen />
               </DesktopFrame>
-            </div>
-            <div className="absolute -bottom-10 start-0 hidden scale-[0.8] sm:block lg:start-4 lg:scale-90">
-              <PhoneFrame variant="ios">
-                <InboxScreen />
-              </PhoneFrame>
-            </div>
-            <div className="absolute -bottom-14 end-0 hidden scale-[0.8] sm:block lg:end-4 lg:scale-90">
-              <PhoneFrame variant="android">
-                <ChatScreen />
-              </PhoneFrame>
+              <div className="absolute start-3 bottom-3 hidden origin-bottom-left scale-[0.55] sm:block lg:scale-[0.65] rtl:origin-bottom-right">
+                <PhoneFrame variant="ios">
+                  <InboxScreen />
+                </PhoneFrame>
+              </div>
+              <div className="absolute end-3 bottom-3 hidden origin-bottom-right scale-[0.55] sm:block lg:scale-[0.65] rtl:origin-bottom-left">
+                <PhoneFrame variant="android">
+                  <ChatScreen />
+                </PhoneFrame>
+              </div>
             </div>
           </motion.div>
         </div>
