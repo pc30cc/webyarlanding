@@ -507,6 +507,14 @@ export function formatAuditForTelegram(report: SeoAuditReport): string {
     `📈 ۲۸ روز اخیر — کلیک: ${report.totals.clicks} | نمایش: ${report.totals.impressions} | CTR: ${report.totals.ctr}% | میانگین رتبه: ${report.totals.position}`,
   );
   lines.push("");
+  if (report.coverage) {
+    lines.push(
+      `📄 ایندکس صفحات — بررسی‌شده ${report.coverage.checked} | ایندکس‌شده ${report.coverage.indexed} | ایندکس‌نشده ${report.coverage.notIndexed}`,
+    );
+    for (const g of report.coverage.groups.slice(0, 6)) {
+      lines.push(`   • ${g.reason}: ${g.count}`);
+    }
+  }
   lines.push(`🛠 ${report.summary}`);
   const shown = report.issues.slice(0, 12);
   for (const i of shown) {
