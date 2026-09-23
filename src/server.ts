@@ -85,10 +85,23 @@ function wwwToApexRedirect(request: Request): Response | null {
   });
 }
 
+// کرون داخلی (برای دیپلوی خودمیزبان روی Coolify) — فقط یک‌بار و بعد از اولین درخواست
+// راه‌اندازی می‌شود تا در محیط‌های بدون پروسه‌ی ماندگار هزینه‌ای نداشته باشد.
+let schedulerBooted = false;
+function bootScheduler(): void {
+  if (schedulerBooted) return;
+  schedulerBooted = true;
+  void import("./lib/scheduler.server")
+    .then((m) => m.startScheduler())
+    .catch((error) => console.error("[scheduler] boot failed:", error));
+}
+
 export default {
   async fetch(request: Request, env: unknown, ctx: unknown) {
+    bootScheduler();
     const redirect = wwwToApexRedirect(request);
     if (redirect) return withSecurityHeaders(redirect);
+
 
     try {
       const handler = await getServerEntry();
