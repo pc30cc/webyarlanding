@@ -401,7 +401,7 @@ function IndexPage() {
         <AuroraBackdrop />
 
         <div className="container-page relative z-10 grid items-center gap-12 lg:grid-cols-2 lg:gap-16">
-          <div>
+          <div className="text-center lg:text-start">
             <motion.div
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
@@ -428,14 +428,14 @@ function IndexPage() {
               <span className="text-brand">فقط با یک خط کد</span>
             </h1>
 
-            <p className="mb-9 max-w-xl text-base leading-[1.9] text-muted-foreground sm:text-lg">
+            <p className="mx-auto mb-9 max-w-xl text-base lg:mx-0 leading-[1.9] text-muted-foreground sm:text-lg">
               {callEnabled
                 ? "وب‌یار ابزارک چتی است که روی سایت شما می‌نشیند و امکان گفتگوی زنده و تماس تصویری مستقیم با بازدیدکننده‌ها را فراهم می‌کند."
                 : "وب‌یار ابزارک چتی است که روی سایت شما می‌نشیند و امکان گفتگوی زنده مستقیم با بازدیدکننده‌ها را فراهم می‌کند."}{" "}
               نصب در کمتر از ۵ دقیقه، بدون نیاز به برنامه‌نویس.
             </p>
 
-            <div className="flex flex-wrap items-center gap-4">
+            <div className="flex flex-wrap items-center justify-center gap-4 lg:justify-start">
               <a
                 href={settings.auth.signupUrl || "/contact"}
                 className="btn-shimmer inline-flex min-h-[52px] items-center gap-2 rounded-2xl px-8 py-4 text-base font-bold"
