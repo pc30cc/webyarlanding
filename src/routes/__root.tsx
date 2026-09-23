@@ -168,7 +168,8 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     return {
       meta: [
         { charSet: "utf-8" },
-        { name: "viewport", content: "width=device-width, initial-scale=1" },
+        { name: "viewport", content: "width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover, interactive-widget=resizes-content" },
+        { name: "theme-color", content: "#12141f" },
         { name: "author", content: "وب‌یار" },
         { property: "og:type", content: "website" },
         { property: "og:locale", content: "fa_IR" },
