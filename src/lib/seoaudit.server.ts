@@ -27,9 +27,68 @@ export interface SeoAuditReport {
   totals: { clicks: number; impressions: number; ctr: number; position: number };
   topQueries: { query: string; clicks: number; impressions: number; position: number }[];
   topPages: { page: string; clicks: number; impressions: number; position: number }[];
+  /** وضعیت ایندکس همه آدرس‌های نقشه سایت (مثل بخش Page indexing در سرچ کنسول) */
+  coverage?: {
+    checked: number;
+    indexed: number;
+    notIndexed: number;
+    groups: { reason: string; count: number; examples: string[] }[];
+  };
   issues: SeoIssue[];
   fixedCount: number;
   summary: string;
+}
+
+/** ترجمه فارسی دلیل‌های رایج ایندکس‌نشدن در سرچ کنسول */
+const COVERAGE_FA: Record<string, string> = {
+  "Discovered - currently not indexed": "کشف شده ولی هنوز ایندکس نشده",
+  "Crawled - currently not indexed": "خزیده شده ولی ایندکس نشده",
+  "Duplicate without user-selected canonical": "تکراری بدون کنونیکال مشخص",
+  "Duplicate, Google chose different canonical than user":
+    "تکراری؛ گوگل کنونیکال دیگری انتخاب کرده",
+  "Alternate page with proper canonical tag": "صفحه جایگزین با کنونیکال درست",
+  "Excluded by ‘noindex’ tag": "با دستور noindex حذف شده",
+  "Blocked by robots.txt": "با robots.txt مسدود شده",
+  "Page with redirect": "صفحه دارای تغییر مسیر",
+  "Not found (404)": "پیدا نشد (۴۰۴)",
+  "Soft 404": "۴۰۴ نرم",
+  "Server error (5xx)": "خطای سرور",
+  "URL is unknown to Google": "گوگل این آدرس را نمی‌شناسد",
+};
+
+function coverageFa(reason: string): string {
+  return COVERAGE_FA[reason] ?? reason ?? "دلیل نامشخص";
+}
+
+/** خواندن همه آدرس‌های نقشه سایت */
+async function fetchSitemapUrls(site: string): Promise<string[]> {
+  try {
+    const res = await fetch(`${site}/sitemap.xml`, { headers: { Accept: "application/xml" } });
+    if (!res.ok) return [];
+    const xml = await res.text();
+    const locs = [...xml.matchAll(/<loc>([^<]+)<\/loc>/g)].map((m) =>
+      m[1]!.trim().replace(/&amp;/g, "&"),
+    );
+    return [...new Set(locs)];
+  } catch (e) {
+    console.error("fetchSitemapUrls failed:", e);
+    return [];
+  }
+}
+
+/** اجرای موازی محدود */
+async function mapLimit<T, R>(items: T[], limit: number, fn: (item: T) => Promise<R>): Promise<R[]> {
+  const out: R[] = new Array(items.length) as R[];
+  let cursor = 0;
+  await Promise.all(
+    Array.from({ length: Math.min(limit, items.length) }, async () => {
+      while (cursor < items.length) {
+        const i = cursor++;
+        out[i] = await fn(items[i]!);
+      }
+    }),
+  );
+  return out;
 }
 
 const STATIC_PAGES: { path: string; label: string }[] = [
@@ -214,34 +273,79 @@ export async function runSeoAudit(options?: { autoFix?: boolean }): Promise<SeoA
       console.error("listSitemaps failed:", e);
     }
 
-    // ۴) وضعیت ایندکس صفحه اصلی و پربازدیدترین صفحات
-    const inspectTargets = [site + "/", ...report.topPages.slice(0, 6).map((p) => p.page)].filter(
-      (v, i, arr) => v && arr.indexOf(v) === i,
-    );
-    for (const url of inspectTargets) {
-      const result = await gsc.inspectUrl(property, url);
+    // ۴) وضعیت ایندکس همه آدرس‌های سایت (مثل بخش Page indexing سرچ کنسول)
+    const sitemapUrls = await fetchSitemapUrls(site);
+    const inspectTargets = [
+      site + "/",
+      ...sitemapUrls,
+      ...report.topPages.map((p) => p.page),
+    ].filter((v, i, arr) => v && arr.indexOf(v) === i);
+    // سهمیه روزانه URL Inspection محدود است؛ حداکثر ۱۵۰ آدرس در هر بررسی
+    const limited = inspectTargets.slice(0, 150);
+
+    const results = await mapLimit(limited, 4, async (url) => ({
+      url,
+      result: await gsc.inspectUrl(property, url),
+    }));
+
+    const groups = new Map<string, string[]>();
+    let indexed = 0;
+    let checked = 0;
+    for (const { url, result } of results) {
       if (!result) continue;
-      if (result.robotsTxtState === "DISALLOWED") {
-        issues.push({
-          kind: "robots",
-          target: url,
-          title: "این صفحه با robots.txt برای گوگل مسدود شده است",
-          detail: "گوگل اجازه خزیدن این آدرس را ندارد.",
-          severity: "error",
-          fixed: false,
-          fixNote: "",
-        });
-      } else if (result.verdict !== "PASS") {
-        issues.push({
-          kind: "indexing",
-          target: url,
-          title: "این صفحه در گوگل ایندکس نشده است",
-          detail: result.coverageState || result.indexingState || "وضعیت نامشخص",
-          severity: "warning",
-          fixed: false,
-          fixNote: "",
-        });
+      checked++;
+      if (result.verdict === "PASS" && result.robotsTxtState !== "DISALLOWED") {
+        indexed++;
+        continue;
       }
+      const reason =
+        result.robotsTxtState === "DISALLOWED"
+          ? "Blocked by robots.txt"
+          : result.coverageState || result.indexingState || "وضعیت نامشخص";
+      const list = groups.get(reason) ?? [];
+      list.push(url);
+      groups.set(reason, list);
+    }
+
+    const notIndexed = checked - indexed;
+    report.coverage = {
+      checked,
+      indexed,
+      notIndexed,
+      groups: [...groups.entries()]
+        .map(([reason, urls]) => ({
+          reason: coverageFa(reason),
+          count: urls.length,
+          examples: urls.slice(0, 5),
+        }))
+        .sort((a, b) => b.count - a.count),
+    };
+
+    for (const g of report.coverage.groups) {
+      issues.push({
+        kind: "indexing",
+        target: g.examples.join("، "),
+        title: `${g.count} صفحه ایندکس نشده — ${g.reason}`,
+        detail:
+          g.reason === "با robots.txt مسدود شده"
+            ? "گوگل اجازه خزیدن این آدرس‌ها را ندارد."
+            : "این آدرس‌ها در نتایج گوگل نیستند؛ نمونه‌ها در کنار عنوان آمده است.",
+        severity: g.count > 0 && /robots|۴۰۴|خطای سرور|noindex/.test(g.reason) ? "error" : "warning",
+        fixed: false,
+        fixNote: "",
+      });
+    }
+
+    if (notIndexed === 0 && checked > 0) {
+      issues.push({
+        kind: "indexing",
+        target: site,
+        title: `همه ${checked} صفحه بررسی‌شده ایندکس شده‌اند`,
+        detail: "مشکلی در بخش Page indexing پیدا نشد.",
+        severity: "info",
+        fixed: true,
+        fixNote: "",
+      });
     }
   }
 
@@ -403,6 +507,14 @@ export function formatAuditForTelegram(report: SeoAuditReport): string {
     `📈 ۲۸ روز اخیر — کلیک: ${report.totals.clicks} | نمایش: ${report.totals.impressions} | CTR: ${report.totals.ctr}% | میانگین رتبه: ${report.totals.position}`,
   );
   lines.push("");
+  if (report.coverage) {
+    lines.push(
+      `📄 ایندکس صفحات — بررسی‌شده ${report.coverage.checked} | ایندکس‌شده ${report.coverage.indexed} | ایندکس‌نشده ${report.coverage.notIndexed}`,
+    );
+    for (const g of report.coverage.groups.slice(0, 6)) {
+      lines.push(`   • ${g.reason}: ${g.count}`);
+    }
+  }
   lines.push(`🛠 ${report.summary}`);
   const shown = report.issues.slice(0, 12);
   for (const i of shown) {

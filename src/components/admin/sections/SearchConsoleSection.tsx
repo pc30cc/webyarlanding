@@ -270,6 +270,27 @@ export default function SearchConsoleSection() {
                   <Stat label="میانگین رتبه" value={report.totals.position} />
                 </div>
               )}
+              {report.coverage && (
+                <div className="space-y-2 rounded-md border border-border p-3">
+                  <div className="text-sm font-medium">
+                    وضعیت ایندکس صفحات — بررسی‌شده {report.coverage.checked} • ایندکس‌شده{" "}
+                    {report.coverage.indexed} • ایندکس‌نشده {report.coverage.notIndexed}
+                  </div>
+                  {report.coverage.groups.map((g) => (
+                    <div key={g.reason} className="rounded-md bg-muted/40 px-3 py-2 text-xs">
+                      <div className="flex justify-between gap-2">
+                        <span>{g.reason}</span>
+                        <span className="text-muted-foreground">{g.count} صفحه</span>
+                      </div>
+                      {g.examples.length > 0 && (
+                        <div className="mt-1 break-all text-[11px] text-muted-foreground" dir="ltr">
+                          {g.examples.join(" • ")}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
               <div className="text-sm font-medium">{report.summary}</div>
               <div className="space-y-2">
                 {report.issues.map((issue, idx) => (
