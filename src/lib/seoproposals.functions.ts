@@ -36,7 +36,7 @@ export const decideSeoProposal = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) =>
     z.object({ id: z.string().min(1), approve: z.boolean() }).parse(input),
   )
-  .handler(async ({ data }): Promise<{ ok: boolean; error?: string; status: string }> => {
+  .handler(async ({ data }): Promise<{ ok: boolean; error?: string | undefined; status: string }> => {
     const { requireAdmin } = await import("./auth.server");
     await requireAdmin();
     const { decideProposal } = await import("./seoproposals.server");
