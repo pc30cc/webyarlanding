@@ -61,7 +61,7 @@ export function SiteLayout({
   return (
     <div
       {...(english ? { dir: "ltr" as const, lang: "en" } : {})}
-      className="site-theme relative flex min-h-dvh flex-col overflow-x-clip bg-background text-foreground antialiased"
+      className={`site-theme ${settings.brand.siteTheme === "light" ? "site-light" : ""} relative flex min-h-dvh flex-col overflow-x-clip bg-background text-foreground antialiased`}
     >
       {/* گرادیان‌های ملایم برند در گوشه‌های صفحه — پس‌زمینه یکدست در تمام صفحات، حتی در نمایش خیلی عریض */}
       <div

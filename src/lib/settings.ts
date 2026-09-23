@@ -7,6 +7,8 @@ export interface BrandSettings {
   nameEn?: string;
   /** اگر روشن باشد، منوی بالا، دکمه‌های ورود و فوتر در صفحات Privacy/Terms/Support هم انگلیسی می‌شوند */
   legalEnglishChrome?: boolean;
+  /** پوسته سایت عمومی: شب (پیش‌فرض) یا روز */
+  siteTheme?: "dark" | "light";
   tagline: string;
   logoUrl: string;
   faviconUrl: string;
