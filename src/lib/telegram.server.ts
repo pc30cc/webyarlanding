@@ -180,7 +180,7 @@ async function handleGeneratePost(chatId: number, botToken: string): Promise<voi
 
 /** ارسال یک پیشنهاد همراه دکمه‌های تأیید/رد */
 async function sendProposalCard(
-  chatId: number,
+  chatId: number | string,
   botToken: string,
   p: { id: string; kind: string; title: string; detail: string; target: string },
 ): Promise<void> {
