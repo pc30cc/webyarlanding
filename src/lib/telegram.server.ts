@@ -90,7 +90,8 @@ function buildMainMenu(settings: SiteSettings): InlineButton[][] {
     [{ text: "📰 وضعیت مقالات", callback_data: "posts_status" }],
     [{ text: "✍️ تولید مقاله جدید", callback_data: "generate_post" }],
     [{ text: "📩 پیام‌های تماس", callback_data: "messages" }],
-    [{ text: "🔎 بررسی و رفع سئو (سرچ کنسول)", callback_data: "seo_audit" }],
+    [{ text: "🔎 بررسی سئو و محتوا (پیشنهادها)", callback_data: "seo_audit" }],
+    [{ text: "📝 پیشنهادهای در انتظار تأیید", callback_data: "seo_pending" }],
     [
       {
         text: `🔔 اعلان بازدید لحظه‌ای: ${t.notifyOnVisit ? "روشن ✅" : "خاموش ⛔"}`,
@@ -177,24 +178,101 @@ async function handleGeneratePost(chatId: number, botToken: string): Promise<voi
   }
 }
 
+/** ارسال یک پیشنهاد همراه دکمه‌های تأیید/رد */
+async function sendProposalCard(
+  chatId: number | string,
+  botToken: string,
+  p: { id: string; kind: string; title: string; detail: string; target: string },
+): Promise<void> {
+  await tgCall(botToken, "sendMessage", {
+    chat_id: chatId,
+    text: `📝 [${p.kind}] ${p.title}\n${p.target}\n\n${p.detail}`.slice(0, 3500),
+    disable_web_page_preview: true,
+    reply_markup: {
+      inline_keyboard: [
+        [
+          { text: "✅ تأیید و اعمال", callback_data: `spok:${p.id}` },
+          { text: "❌ رد", callback_data: `spno:${p.id}` },
+        ],
+      ],
+    },
+  });
+}
+
 async function handleSeoAudit(chatId: number, botToken: string): Promise<void> {
   await tgCall(botToken, "sendMessage", {
     chat_id: chatId,
-    text: "⏳ در حال بررسی گوگل سرچ کنسول و رفع خودکار مشکلات سئو... (ممکن است یک تا دو دقیقه طول بکشد)",
+    text: "⏳ در حال بررسی سایت و ساخت پیشنهادها... (ممکن است یک تا دو دقیقه طول بکشد)",
   });
   try {
-    const { runSeoAudit, formatAuditForTelegram } = await import("./seoaudit.server");
-    const report = await runSeoAudit({ autoFix: true });
+    const { runSeoReview, formatReviewForTelegram } = await import("./seoproposals.server");
+    const result = await runSeoReview("telegram");
     await tgCall(botToken, "sendMessage", {
       chat_id: chatId,
-      text: formatAuditForTelegram(report),
+      text: formatReviewForTelegram(result),
       disable_web_page_preview: true,
     });
+    for (const p of result.created.slice(0, 10)) await sendProposalCard(chatId, botToken, p);
   } catch (e) {
     await tgCall(botToken, "sendMessage", {
       chat_id: chatId,
       text: `⚠️ بررسی سئو انجام نشد: ${e instanceof Error ? e.message : "خطای نامشخص"}`,
     });
+  }
+}
+
+async function handleSeoPending(chatId: number, botToken: string): Promise<void> {
+  const { listProposals } = await import("./seoproposals.server");
+  const pending = await listProposals("pending");
+  if (pending.length === 0) {
+    await tgCall(botToken, "sendMessage", { chat_id: chatId, text: "✅ پیشنهادی در انتظار نیست." });
+    return;
+  }
+  await tgCall(botToken, "sendMessage", {
+    chat_id: chatId,
+    text: `📝 ${pending.length} پیشنهاد در انتظار تأیید:`,
+  });
+  for (const p of pending.slice(0, 10)) await sendProposalCard(chatId, botToken, p);
+}
+
+async function handleProposalDecision(
+  chatId: number,
+  botToken: string,
+  id: string,
+  approve: boolean,
+): Promise<void> {
+  const { decideProposal } = await import("./seoproposals.server");
+  const result = await decideProposal(id, approve);
+  await tgCall(botToken, "sendMessage", {
+    chat_id: chatId,
+    text: result.ok
+      ? approve
+        ? "✅ پیشنهاد تأیید و روی سایت اعمال شد."
+        : "❌ پیشنهاد رد شد."
+      : `⚠️ اعمال نشد: ${result.error ?? "خطای نامشخص"}`,
+  });
+}
+
+/** ارسال پیشنهادهای تازه به همه مدیران ربات همراه دکمه تأیید */
+export async function sendProposalsForApproval(
+  summary: string,
+  proposals: { id: string; kind: string; title: string; detail: string; target: string }[],
+): Promise<void> {
+  const [settings, keys] = await Promise.all([loadSettings(), loadTelegramKeys()]);
+  if (!settings.telegram.enabled || !keys.telegramBotToken) return;
+  for (const chatId of adminChatIdList(settings.telegram.adminChatIds)) {
+    try {
+      await tgCall(keys.telegramBotToken, "sendMessage", {
+        chat_id: chatId,
+        text: summary,
+        disable_web_page_preview: true,
+      });
+      for (const p of proposals.slice(0, 10)) {
+        await sendProposalCard(chatId, keys.telegramBotToken, p);
+      }
+    } catch (e) {
+      console.error("sendProposalsForApproval failed:", e);
+    }
   }
 }
 
@@ -270,6 +348,12 @@ async function handleCallback(
 
   await tgCall(botToken, "answerCallbackQuery", { callback_query_id: cq.id });
 
+  const data = cq.data ?? "";
+  if (data.startsWith("spok:") || data.startsWith("spno:")) {
+    await handleProposalDecision(chatId, botToken, data.slice(5), data.startsWith("spok:"));
+    return;
+  }
+
   switch (cq.data) {
     case "stats":
       await tgCall(botToken, "sendMessage", { chat_id: chatId, text: await getVisitStatsText() });
@@ -285,6 +369,9 @@ async function handleCallback(
       break;
     case "seo_audit":
       await handleSeoAudit(chatId, botToken);
+      break;
+    case "seo_pending":
+      await handleSeoPending(chatId, botToken);
       break;
     case "toggle_notify_visit": {
       const next = await toggleTelegramFlag("notifyOnVisit");
