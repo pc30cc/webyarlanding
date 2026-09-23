@@ -364,6 +364,9 @@ async function handleCallback(
     case "seo_audit":
       await handleSeoAudit(chatId, botToken);
       break;
+    case "seo_pending":
+      await handleSeoPending(chatId, botToken);
+      break;
     case "toggle_notify_visit": {
       const next = await toggleTelegramFlag("notifyOnVisit");
       await sendMainMenu(chatId, next, botToken);
