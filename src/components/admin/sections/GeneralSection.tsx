@@ -123,6 +123,20 @@ export default function GeneralSection() {
                     }
                   />
                 </div>
+                <div className="flex items-center justify-between gap-4 rounded-lg border border-border p-3">
+                  <div>
+                    <p className="text-sm font-medium">حالت روز سایت</p>
+                    <p className="text-xs text-muted-foreground">
+                      با روشن بودن، ظاهر سایت اصلی روشن (روز) می‌شود؛ با خاموش کردن به حالت شب برمی‌گردد.
+                    </p>
+                  </div>
+                  <Switch
+                    checked={form.brand.siteTheme === "light"}
+                    onCheckedChange={(v) =>
+                      setForm((f) => ({ ...f, brand: { ...f.brand, siteTheme: v ? "light" : "dark" } }))
+                    }
+                  />
+                </div>
                 <Field label="شعار / تگ‌لاین">
                   <Input
                     value={form.brand.tagline}

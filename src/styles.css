@@ -349,6 +349,59 @@ body:has(.site-theme) {
   background-color: oklch(0.145 0.022 268);
 }
 
+/* حالت روز: عاج گرم + فیروزه‌ای عمیق + بنفش الکتریک + مرجانی — الهام از Magic UI */
+.site-theme.site-light {
+  color-scheme: light;
+  --background: oklch(0.985 0.008 95);
+  --foreground: oklch(0.2 0.035 265);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.2 0.035 265);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.2 0.035 265);
+  --primary: oklch(0.56 0.13 180);
+  --primary-foreground: oklch(0.99 0.005 180);
+  --secondary: oklch(0.955 0.014 250);
+  --secondary-foreground: oklch(0.25 0.04 265);
+  --muted: oklch(0.96 0.012 95);
+  --muted-foreground: oklch(0.47 0.03 265);
+  --accent: oklch(0.58 0.22 292);
+  --accent-foreground: oklch(0.99 0 0);
+  --destructive: oklch(0.58 0.22 25);
+  --success: oklch(0.6 0.16 152);
+  --success-foreground: oklch(0.99 0 0);
+  --warning: oklch(0.72 0.16 70);
+  --info: oklch(0.58 0.15 240);
+  --info-foreground: oklch(0.99 0 0);
+  --coral: oklch(0.68 0.19 35);
+  --border: oklch(0.22 0.04 265 / 10%);
+  --input: oklch(0.22 0.04 265 / 14%);
+  --ring: oklch(0.56 0.13 180);
+  --gradient-brand: linear-gradient(120deg, oklch(0.6 0.14 178), oklch(0.56 0.18 245) 45%, oklch(0.58 0.23 300) 80%, oklch(0.68 0.19 35));
+  --gradient-soft: linear-gradient(160deg, oklch(0.95 0.04 180), oklch(0.95 0.04 300));
+  --shadow-card: 0 1px 2px oklch(0.22 0.04 265 / 6%), 0 24px 50px -28px oklch(0.3 0.08 270 / 0.35);
+  --shadow-glow: 0 18px 44px -16px oklch(0.56 0.18 250 / 0.5);
+  background-image:
+    radial-gradient(60rem 30rem at 100% -5%, oklch(0.9 0.08 185 / 0.55), transparent 60%),
+    radial-gradient(50rem 28rem at -10% 30%, oklch(0.9 0.08 300 / 0.45), transparent 60%),
+    radial-gradient(40rem 24rem at 60% 110%, oklch(0.92 0.07 40 / 0.4), transparent 60%);
+}
+html:has(.site-light),
+body:has(.site-light) {
+  background-color: oklch(0.985 0.008 95);
+}
+.site-light .bg-grid {
+  background-image:
+    linear-gradient(to right, oklch(0.25 0.05 265 / 6%) 1px, transparent 1px),
+    linear-gradient(to bottom, oklch(0.25 0.05 265 / 6%) 1px, transparent 1px);
+}
+.site-light .bg-dots {
+  background-image: radial-gradient(oklch(0.25 0.05 265 / 14%) 1px, transparent 1px);
+}
+.site-light .glass {
+  background-color: color-mix(in oklab, var(--card) 75%, transparent);
+  box-shadow: var(--shadow-card);
+}
+
 /* پایداری عرض صفحه در موبایل: بدون اسکرول افقی، بدون زوم خودکار iOS روی فیلدها */
 html {
   -webkit-text-size-adjust: 100%;
