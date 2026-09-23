@@ -82,9 +82,9 @@ export function SiteHeader({
       initial={{ y: -20, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
       transition={{ duration: 0.4 }}
-      className="sticky top-0 z-50 border-b border-border bg-background/80 backdrop-blur-xl"
+      className="sticky top-0 z-50 px-3 pt-[max(0.5rem,env(safe-area-inset-top))] sm:px-5 sm:pt-3"
     >
-      <div className="container-page flex h-16 items-center justify-between">
+      <div className="glass mx-auto flex h-14 max-w-7xl items-center justify-between rounded-2xl px-3 shadow-[0_10px_40px_-20px_oklch(0_0_0/0.8)] sm:h-16 sm:px-5">
         <Link to="/" className="flex items-center gap-3">
           <img
             src={settings.brand.logoUrl || "/webyar-logo.png"}
@@ -157,7 +157,7 @@ export function SiteHeader({
               )}
               {auth.signupUrl && (
                 <a href={auth.signupUrl}>
-                  <Button className="h-10 px-5 text-sm font-medium shadow-sm shadow-primary/20">
+                  <Button className="h-10 px-5 text-sm font-medium btn-shimmer">
                     {label.signup}
                   </Button>
                 </a>
@@ -167,7 +167,7 @@ export function SiteHeader({
           <button
             type="button"
             onClick={() => setOpen((v) => !v)}
-            className="flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground md:hidden"
+            className="flex h-11 w-11 items-center justify-center rounded-xl text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground md:hidden"
             aria-label={label.menu}
           >
             {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
@@ -181,9 +181,9 @@ export function SiteHeader({
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: "auto", opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
-            className="overflow-hidden border-t border-border bg-background/95 backdrop-blur-xl md:hidden"
+            className="glass mx-auto mt-2 max-w-7xl overflow-hidden rounded-2xl md:hidden"
           >
-            <div className="max-h-[70vh] space-y-1 overflow-y-auto px-4 py-4">
+            <div className="max-h-[calc(100dvh-6rem)] space-y-1 overflow-y-auto overscroll-contain px-3 py-3">
               {NAV_LINKS.map((link) => {
                 if (link.type === "mega") {
                   const expanded = mobileExpanded === link.label;

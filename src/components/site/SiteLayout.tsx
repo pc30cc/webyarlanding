@@ -61,16 +61,16 @@ export function SiteLayout({
   return (
     <div
       {...(english ? { dir: "ltr" as const, lang: "en" } : {})}
-      className="relative flex min-h-screen flex-col overflow-x-clip bg-background"
+      className="site-theme relative flex min-h-dvh flex-col overflow-x-clip bg-background text-foreground antialiased"
     >
       {/* گرادیان‌های ملایم برند در گوشه‌های صفحه — پس‌زمینه یکدست در تمام صفحات، حتی در نمایش خیلی عریض */}
       <div
         aria-hidden
-        className="pointer-events-none absolute -top-24 -start-24 -z-10 h-72 w-72 rounded-full bg-accent/10 blur-3xl"
+        className="pointer-events-none absolute -top-24 -start-24 -z-10 h-72 w-72 rounded-full bg-accent/15 blur-3xl"
       />
       <div
         aria-hidden
-        className="pointer-events-none absolute -bottom-24 -end-24 -z-10 h-72 w-72 rounded-full bg-primary/10 blur-3xl"
+        className="pointer-events-none absolute -bottom-24 -end-24 -z-10 h-72 w-72 rounded-full bg-primary/15 blur-3xl"
       />
       <script type="application/ld+json" dangerouslySetInnerHTML={safeJsonLdHtml(siteJsonLd)} />
       <SiteHeader settings={settings} english={english} />
