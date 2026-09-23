@@ -41,6 +41,7 @@ import { Route as AdminSeoRouteImport } from './routes/admin.seo'
 import { Route as AdminTagsRouteImport } from './routes/admin.tags'
 import { Route as BlogIndexRouteImport } from './routes/blog.index'
 import { Route as BlogSlugRouteImport } from './routes/blog.$slug'
+import { Route as GoSlugRouteImport } from './routes/go.$slug'
 import { Route as ProductsIndexRouteImport } from './routes/products.index'
 import { Route as ProductsSlugRouteImport } from './routes/products.$slug'
 import { Route as SolutionsIndexRouteImport } from './routes/solutions.index'
@@ -211,6 +212,11 @@ const BlogSlugRoute = BlogSlugRouteImport.update({
   path: '/blog/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
+const GoSlugRoute = GoSlugRouteImport.update({
+  id: '/go/$slug',
+  path: '/go/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ProductsIndexRoute = ProductsIndexRouteImport.update({
   id: '/products/',
   path: '/products/',
@@ -289,6 +295,7 @@ export interface FileRoutesByFullPath {
   '/admin/seo': typeof AdminSeoRoute
   '/admin/tags': typeof AdminTagsRoute
   '/blog/$slug': typeof BlogSlugRoute
+  '/go/$slug': typeof GoSlugRoute
   '/products/$slug': typeof ProductsSlugRoute
   '/solutions/$slug': typeof SolutionsSlugRoute
   '/tag/$slug': typeof TagSlugRoute
@@ -331,6 +338,7 @@ export interface FileRoutesByTo {
   '/admin/seo': typeof AdminSeoRoute
   '/admin/tags': typeof AdminTagsRoute
   '/blog/$slug': typeof BlogSlugRoute
+  '/go/$slug': typeof GoSlugRoute
   '/products/$slug': typeof ProductsSlugRoute
   '/solutions/$slug': typeof SolutionsSlugRoute
   '/tag/$slug': typeof TagSlugRoute
@@ -375,6 +383,7 @@ export interface FileRoutesById {
   '/admin/seo': typeof AdminSeoRoute
   '/admin/tags': typeof AdminTagsRoute
   '/blog/$slug': typeof BlogSlugRoute
+  '/go/$slug': typeof GoSlugRoute
   '/products/$slug': typeof ProductsSlugRoute
   '/solutions/$slug': typeof SolutionsSlugRoute
   '/tag/$slug': typeof TagSlugRoute
@@ -420,6 +429,7 @@ export interface FileRouteTypes {
     | '/admin/seo'
     | '/admin/tags'
     | '/blog/$slug'
+    | '/go/$slug'
     | '/products/$slug'
     | '/solutions/$slug'
     | '/tag/$slug'
@@ -462,6 +472,7 @@ export interface FileRouteTypes {
     | '/admin/seo'
     | '/admin/tags'
     | '/blog/$slug'
+    | '/go/$slug'
     | '/products/$slug'
     | '/solutions/$slug'
     | '/tag/$slug'
@@ -505,6 +516,7 @@ export interface FileRouteTypes {
     | '/admin/seo'
     | '/admin/tags'
     | '/blog/$slug'
+    | '/go/$slug'
     | '/products/$slug'
     | '/solutions/$slug'
     | '/tag/$slug'
@@ -533,6 +545,7 @@ export interface RootRouteChildren {
   SlaRoute: typeof SlaRoute
   TermsRoute: typeof TermsRoute
   BlogSlugRoute: typeof BlogSlugRoute
+  GoSlugRoute: typeof GoSlugRoute
   ProductsSlugRoute: typeof ProductsSlugRoute
   SolutionsSlugRoute: typeof SolutionsSlugRoute
   TagSlugRoute: typeof TagSlugRoute
@@ -771,6 +784,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof BlogSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/go/$slug': {
+      id: '/go/$slug'
+      path: '/go/$slug'
+      fullPath: '/go/$slug'
+      preLoaderRoute: typeof GoSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/products/': {
       id: '/products/'
       path: '/products'
@@ -894,6 +914,7 @@ const rootRouteChildren: RootRouteChildren = {
   SlaRoute: SlaRoute,
   TermsRoute: TermsRoute,
   BlogSlugRoute: BlogSlugRoute,
+  GoSlugRoute: GoSlugRoute,
   ProductsSlugRoute: ProductsSlugRoute,
   SolutionsSlugRoute: SolutionsSlugRoute,
   TagSlugRoute: TagSlugRoute,

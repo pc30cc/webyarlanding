@@ -15,7 +15,7 @@ export const Route = createFileRoute("/go/$slug")({
         } catch (e) {
           console.error("download click failed:", e);
         }
-        const location = target && /^https?:\/\//i.test(target) ? target : `/download/${params.slug}`;
+        const location = target && /^(https?:\/\/|\/[^/])/i.test(target) ? target : `/download/${params.slug}`;
         return new Response(null, {
           status: 302,
           headers: { Location: location, "Cache-Control": "no-store" },
