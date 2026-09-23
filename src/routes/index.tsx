@@ -551,11 +551,11 @@ function IndexPage() {
             فروشگاه ووکامرس و شاپیفای، همه یک‌جا کنار چت زنده‌ی سایت؛ بدون جابه‌جایی بین ده‌ها برنامه.
           </p>
         </div>
-        <Marquee duration={40}>
+        <div className="container-page relative flex flex-wrap items-center justify-center gap-2.5 sm:gap-3">
           {trustLogos.map((logo) => (
             <span
               key={logo.name}
-              className="group flex items-center gap-3 rounded-2xl border border-border bg-card/60 px-4 py-2.5 shadow-sm backdrop-blur transition-all duration-300 hover:-translate-y-1 hover:border-foreground/20"
+              className="group flex items-center gap-3 rounded-2xl border border-border bg-card/60 px-3 py-2 sm:px-3.5 shadow-sm backdrop-blur transition-all duration-300 hover:-translate-y-1 hover:border-foreground/20"
             >
               <span
                 className="flex h-9 w-9 items-center justify-center rounded-xl transition-transform duration-300 group-hover:scale-110"
@@ -574,7 +574,7 @@ function IndexPage() {
               </span>
             </span>
           ))}
-        </Marquee>
+        </div>
       </section>
 
       {/* APPS */}
