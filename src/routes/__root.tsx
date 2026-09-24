@@ -152,8 +152,8 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
   loader: async () => {
     const [settings, productCatalog, solutionCatalog] = await Promise.all([
       fetchSettings(),
-      getPublicCatalog({ data: { type: "product" } }),
-      getPublicCatalog({ data: { type: "solution" } }),
+      getPublicCatalog({ data: { type: "product" } }).catch(() => []),
+      getPublicCatalog({ data: { type: "solution" } }).catch(() => []),
     ]);
     return { settings, productCatalog, solutionCatalog };
   },
