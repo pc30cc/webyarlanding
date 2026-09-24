@@ -34,7 +34,8 @@ function withSecurityHeaders(response: Response, request?: Request): Response {
   const type = response.headers.get("content-type") ?? "";
   if (type.includes("text/html")) {
     const pathname = request ? new URL(request.url).pathname : "";
-    const isPublicGet = request?.method === "GET" && !pathname.startsWith("/admin");
+    const isPublicGet =
+      response.status === 200 && request?.method === "GET" && !pathname.startsWith("/admin");
     response.headers.set(
       "Cache-Control",
       isPublicGet
