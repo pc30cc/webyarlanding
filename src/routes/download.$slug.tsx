@@ -6,7 +6,7 @@ import { getPublicApp, getPublicApps } from "@/lib/apps.functions";
 import { buildPageMeta, buildBreadcrumbJsonLd, safeJsonLdHtml } from "@/lib/seo-meta";
 import { SiteLayout } from "@/components/site/SiteLayout";
 import { AuroraBackdrop } from "@/components/site/magic";
-import { PLATFORM_META, StoreBadge, AppleIcon, AndroidIcon, WindowsIcon } from "@/components/site/brand-icons";
+import { PLATFORM_META, StoreBadge, PlatformTile } from "@/components/site/brand-icons";
 import { DesktopFrame, MOBILE_SCREENS, PhoneFrame, WindowsScreen } from "@/components/site/devices";
 
 export const Route = createFileRoute("/download/$slug")({
@@ -78,15 +78,9 @@ function AppPage() {
             دانلود برنامه <ChevronLeft className="h-4 w-4" /> <span className="text-foreground">{app.name}</span>
           </Link>
           <div className="flex flex-col gap-6 sm:flex-row sm:items-center">
-            <motion.img
-              initial={{ scale: 0.8, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              src={app.iconUrl || "/webyar-logo.png"}
-              alt={app.name}
-              width={112}
-              height={112}
-              className="h-24 w-24 rounded-[26px] shadow-[0_20px_50px_-15px_oklch(0.8_0.15_172/0.5)] sm:h-28 sm:w-28"
-            />
+            <motion.div initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="self-start sm:self-auto">
+              <PlatformTile platform={app.platform} glow className="h-24 w-24 rounded-[26px] sm:h-28 sm:w-28" iconClassName="h-12 w-12 sm:h-14 sm:w-14" />
+            </motion.div>
             <div className="min-w-0 flex-1">
               <h1 className="text-3xl font-extrabold text-foreground sm:text-4xl">{app.name}</h1>
               {app.subtitle && <p className="mt-1 text-base text-muted-foreground sm:text-lg">{app.subtitle}</p>}
@@ -179,22 +173,7 @@ function AppPage() {
           <div className="grid gap-4 sm:grid-cols-2">
             {others.map((o) => (
               <Link key={o.id} to="/download/$slug" params={{ slug: o.slug }} className="glass flex items-center gap-4 rounded-2xl p-4 transition-colors hover:border-primary/40">
-                {(() => {
-                  const tile = {
-                    ios: { Icon: AppleIcon, bg: "linear-gradient(145deg,#3a3a3c,#0b0b0d)", fg: "#ffffff" },
-                    android: { Icon: AndroidIcon, bg: "linear-gradient(145deg,#5ff0a4,#1fb866)", fg: "#073b22" },
-                    windows: { Icon: WindowsIcon, bg: "linear-gradient(145deg,#2aa5ff,#0063b8)", fg: "#ffffff" },
-                  }[o.platform];
-                  const Icon = tile.Icon;
-                  return (
-                    <span
-                      className="grid h-12 w-12 shrink-0 place-items-center rounded-xl shadow-lg ring-1 ring-border/50"
-                      style={{ background: tile.bg, color: tile.fg }}
-                    >
-                      <Icon className="h-6 w-6 drop-shadow" />
-                    </span>
-                  );
-                })()}
+                <PlatformTile platform={o.platform} className="h-12 w-12 rounded-xl" iconClassName="h-6 w-6" />
                 <div className="min-w-0 flex-1">
                   <div className="truncate font-bold text-foreground">{o.name}</div>
                   <div className="truncate text-xs text-muted-foreground">{o.subtitle}</div>
