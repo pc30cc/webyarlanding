@@ -7,7 +7,7 @@ import { getPublicApps } from "@/lib/apps.functions";
 import { buildPageMeta, buildBreadcrumbJsonLd, safeJsonLdHtml } from "@/lib/seo-meta";
 import { SiteLayout } from "@/components/site/SiteLayout";
 import { AuroraBackdrop, LiveBadge, SectionHeading, SpotlightCard } from "@/components/site/magic";
-import { PLATFORM_META, StoreBadge } from "@/components/site/brand-icons";
+import { PLATFORM_META, PlatformTile, StoreBadge } from "@/components/site/brand-icons";
 import { ChatScreen, InboxScreen, PhoneFrame, DesktopFrame, WindowsScreen } from "@/components/site/devices";
 import { ScrollReveal } from "@/components/site/animations";
 
@@ -134,7 +134,7 @@ function DownloadPage() {
                 <Link to="/download/$slug" params={{ slug: a.slug }} className="group block h-full">
                   <SpotlightCard className="flex h-full flex-col p-6 transition-colors group-hover:border-primary/40">
                     <div className="flex items-center gap-4">
-                      <img src={a.iconUrl || "/webyar-logo.png"} alt="" width={64} height={64} className="h-16 w-16 rounded-[18px] shadow-lg" />
+                      <PlatformTile platform={a.platform} glow className="h-16 w-16 rounded-[18px]" iconClassName="h-8 w-8" />
                       <div className="min-w-0">
                         <div className="truncate text-lg font-extrabold text-foreground">{a.name}</div>
                         <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
