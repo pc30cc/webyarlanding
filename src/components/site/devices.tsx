@@ -1,7 +1,7 @@
 // قاب دستگاه‌ها و پیش‌نمایش صفحات واقعی اپ‌های نیتیو وب‌یار (iOS / Android / Windows)
 // محتوای هر صفحه بر اساس صفحات واقعی اپ‌ها ساخته شده: صندوق گفتگو، چت، تماس، مخاطبین، ایمیل.
 import type { ReactNode } from "react";
-import operatorWoman from "@/assets/operator-avatar.jpg";
+import callerWoman from "@/assets/caller-woman.jpg";
 import operatorMan from "@/assets/operator-man.jpg";
 import {
   Bot,
@@ -291,23 +291,33 @@ export function CallScreen(_props: { android?: boolean | undefined } = {}) {
   return (
     <div className="relative h-full overflow-hidden bg-gradient-to-b from-secondary to-background" dir="rtl">
       <video
-        src="/videos/operator.mp4"
-        poster={operatorWoman}
+        src="/videos/caller-woman.mp4"
+        poster={callerWoman}
         autoPlay
         muted
         loop
         playsInline
         preload="metadata"
         aria-hidden="true"
-        className="absolute inset-0 h-full w-full object-cover opacity-90"
+        className="absolute inset-0 h-full w-full object-cover object-top"
       />
-      <div className="absolute inset-0 bg-gradient-to-b from-background/50 via-transparent to-background/80" />
+      <div className="absolute inset-0 bg-gradient-to-b from-background/40 via-transparent to-background/70" />
       <div className="relative flex flex-col items-center pt-6 text-center">
         <div className="text-[14px] font-bold text-foreground">سارا محمدی</div>
         <div className="text-[10px] text-foreground/80">تماس تصویری · ۰۲:۱۴</div>
       </div>
-      <div className="absolute top-20 end-3 h-24 w-16 overflow-hidden rounded-xl border-2 border-foreground/30 bg-secondary">
-        <img src={operatorMan} alt="" loading="lazy" className="h-full w-full object-cover" />
+      <div className="absolute bottom-24 right-3 h-24 w-16 overflow-hidden rounded-xl border-2 border-foreground/30 bg-secondary shadow-lg">
+        <video
+          src="/videos/operator-man.mp4"
+          poster={operatorMan}
+          autoPlay
+          muted
+          loop
+          playsInline
+          preload="metadata"
+          aria-hidden="true"
+          className="h-full w-full object-cover"
+        />
       </div>
       <div className="absolute inset-x-0 bottom-8 flex justify-center gap-3">
         {[MicOff, Camera, Video].map((I, i) => (
