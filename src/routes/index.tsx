@@ -716,7 +716,7 @@ function IndexPage() {
         <ScrollReveal className="mb-14 text-center">
           {eyebrow("همه‌چیز در یک پلتفرم")}
           <h2 className="mb-4 text-2xl font-extrabold text-foreground sm:text-4xl">
-            فراتر از چت: یک CRM کامل برای ارتباط با مشتری
+            فراتر از چت ، یک CRM کامل برای ارتباط با مشتری
           </h2>
           <p className="mx-auto max-w-2xl text-base leading-[1.9] text-muted-foreground">
             {callEnabled
