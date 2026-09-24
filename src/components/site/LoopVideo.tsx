@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 type Props = {
   src: string;
@@ -20,24 +20,25 @@ export function LoopVideo({ src, poster, title, className, width, height }: Prop
   const [shouldLoad, setShouldLoad] = useState(false);
   const preferredSrc = src.replace(/\.mp4(?:\?.*)?$/i, ".webm");
 
-  const tryPlay = () => {
+  const tryPlay = useCallback(() => {
     const el = ref.current;
     if (!el) return;
     el.muted = true;
     el.defaultMuted = true;
-    void el.play().catch(() => undefined);
-  };
+    void el.play().catch(() => {
+      // Some browsers defer autoplay until the page becomes active or receives
+      // the first interaction. The listeners below retry without showing controls.
+    });
+  }, []);
 
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
-    if (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) return;
-
     const io = new IntersectionObserver(
       ([entry]) => {
         if (entry?.isIntersecting) {
           setShouldLoad(true);
-          if (el.currentSrc) void el.play().catch(() => undefined);
+          tryPlay();
         } else {
           el.pause();
         }
@@ -48,14 +49,30 @@ export function LoopVideo({ src, poster, title, className, width, height }: Prop
     return () => {
       io.disconnect();
     };
-  }, []);
+  }, [tryPlay]);
 
   useEffect(() => {
     const el = ref.current;
     if (!el || !shouldLoad) return;
+    el.preload = "auto";
     el.load();
     tryPlay();
-  }, [shouldLoad]);
+
+    const resume = () => tryPlay();
+    const resumeWhenVisible = () => {
+      if (document.visibilityState === "visible") tryPlay();
+    };
+    window.addEventListener("pageshow", resume);
+    document.addEventListener("visibilitychange", resumeWhenVisible);
+    document.addEventListener("pointerdown", resume, { once: true });
+    document.addEventListener("touchstart", resume, { once: true, passive: true });
+    return () => {
+      window.removeEventListener("pageshow", resume);
+      document.removeEventListener("visibilitychange", resumeWhenVisible);
+      document.removeEventListener("pointerdown", resume);
+      document.removeEventListener("touchstart", resume);
+    };
+  }, [shouldLoad, tryPlay]);
 
   return (
     <video
@@ -65,11 +82,11 @@ export function LoopVideo({ src, poster, title, className, width, height }: Prop
       aria-label={title}
       width={width}
       height={height}
-      autoPlay={shouldLoad}
+      autoPlay
       muted
       loop
       playsInline
-      preload={shouldLoad ? "metadata" : "none"}
+      preload="none"
       disablePictureInPicture
       disableRemotePlayback
       controlsList="nodownload nofullscreen noremoteplayback"
@@ -77,12 +94,8 @@ export function LoopVideo({ src, poster, title, className, width, height }: Prop
       onCanPlay={tryPlay}
       onLoadedData={tryPlay}
     >
-      {shouldLoad ? (
-        <>
-          <source src={preferredSrc} type="video/webm" />
-          <source src={src} type="video/mp4" />
-        </>
-      ) : null}
+      <source src={preferredSrc} type="video/webm" />
+      <source src={src} type="video/mp4" />
     </video>
   );
 }
