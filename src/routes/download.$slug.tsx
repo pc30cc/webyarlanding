@@ -6,7 +6,7 @@ import { getPublicApp, getPublicApps } from "@/lib/apps.functions";
 import { buildPageMeta, buildBreadcrumbJsonLd, safeJsonLdHtml } from "@/lib/seo-meta";
 import { SiteLayout } from "@/components/site/SiteLayout";
 import { AuroraBackdrop } from "@/components/site/magic";
-import { PLATFORM_META, StoreBadge } from "@/components/site/brand-icons";
+import { PLATFORM_META, StoreBadge, AppleIcon, AndroidIcon, WindowsIcon } from "@/components/site/brand-icons";
 import { DesktopFrame, MOBILE_SCREENS, PhoneFrame, WindowsScreen } from "@/components/site/devices";
 
 export const Route = createFileRoute("/download/$slug")({
@@ -179,7 +179,14 @@ function AppPage() {
           <div className="grid gap-4 sm:grid-cols-2">
             {others.map((o) => (
               <Link key={o.id} to="/download/$slug" params={{ slug: o.slug }} className="glass flex items-center gap-4 rounded-2xl p-4 transition-colors hover:border-primary/40">
-                <img src={o.iconUrl || "/webyar-logo.png"} alt="" className="h-12 w-12 rounded-xl" />
+                {(() => {
+                  const Icon = o.platform === "ios" ? AppleIcon : o.platform === "android" ? AndroidIcon : WindowsIcon;
+                  return (
+                    <span className="grid h-12 w-12 shrink-0 place-items-center rounded-xl bg-secondary text-foreground">
+                      <Icon className="h-6 w-6" />
+                    </span>
+                  );
+                })()}
                 <div className="min-w-0 flex-1">
                   <div className="truncate font-bold text-foreground">{o.name}</div>
                   <div className="truncate text-xs text-muted-foreground">{o.subtitle}</div>
