@@ -77,7 +77,7 @@ function ProductDetailPage() {
     <SiteLayout settings={settings}>
       <script type="application/ld+json" dangerouslySetInnerHTML={safeJsonLdHtml(jsonLd)} />
 
-      <section className="relative overflow-hidden pt-12 pb-16 sm:pt-16 sm:pb-24">
+      <section className="relative -mt-16 overflow-hidden pt-28 pb-16 sm:-mt-[4.75rem] sm:pt-[8.75rem] sm:pb-24">
         <div
           aria-hidden
           className="pointer-events-none absolute inset-0 bg-gradient-to-br from-accent/[0.06] via-transparent to-primary/[0.06]"
