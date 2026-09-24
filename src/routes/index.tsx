@@ -447,7 +447,7 @@ function IndexPage() {
                 callEnabled && "مرکز تماس",
                 aiEnabled && "ایجنت هوش مصنوعی",
               )}{" "}
-              در یک پنل
+              ، در یک پنل
             </motion.div>
 
             <h1 className="mb-6 text-[34px] font-extrabold leading-[1.3] text-foreground sm:text-5xl lg:text-[64px] lg:leading-[1.2]">
@@ -853,7 +853,7 @@ function IndexPage() {
               "سئو",
               "گزارش‌ها",
             )}{" "}
-            همه از یک پنل
+            ، همه از یک پنل
           </p>
           <a
             href={settings.auth.signupUrl || "/contact"}
