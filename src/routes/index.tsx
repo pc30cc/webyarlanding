@@ -340,11 +340,19 @@ function VideoCallMock({ className }: { className?: string }) {
   );
 }
 
-/** Picture-in-picture "operator" avatar — a plain static icon, not a photo. */
+/** Picture-in-picture caller photo. */
 function OperatorAvatar({ className }: { className?: string }) {
   return (
-    <div className={`flex items-center justify-center bg-foreground ${className ?? ""}`}>
-      <UserRound className="h-4 w-4 text-background/85" />
+    <div className={`overflow-hidden bg-foreground ${className ?? ""}`}>
+      <img
+        src={operatorAvatar}
+        alt=""
+        aria-hidden="true"
+        loading="lazy"
+        width={240}
+        height={297}
+        className="h-full w-full object-cover"
+      />
     </div>
   );
 }
