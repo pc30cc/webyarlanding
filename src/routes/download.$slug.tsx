@@ -180,10 +180,18 @@ function AppPage() {
             {others.map((o) => (
               <Link key={o.id} to="/download/$slug" params={{ slug: o.slug }} className="glass flex items-center gap-4 rounded-2xl p-4 transition-colors hover:border-primary/40">
                 {(() => {
-                  const Icon = o.platform === "ios" ? AppleIcon : o.platform === "android" ? AndroidIcon : WindowsIcon;
+                  const tile = {
+                    ios: { Icon: AppleIcon, bg: "linear-gradient(145deg,#3a3a3c,#0b0b0d)", fg: "#ffffff" },
+                    android: { Icon: AndroidIcon, bg: "linear-gradient(145deg,#5ff0a4,#1fb866)", fg: "#073b22" },
+                    windows: { Icon: WindowsIcon, bg: "linear-gradient(145deg,#2aa5ff,#0063b8)", fg: "#ffffff" },
+                  }[o.platform];
+                  const Icon = tile.Icon;
                   return (
-                    <span className="grid h-12 w-12 shrink-0 place-items-center rounded-xl bg-secondary text-foreground">
-                      <Icon className="h-6 w-6" />
+                    <span
+                      className="grid h-12 w-12 shrink-0 place-items-center rounded-xl shadow-lg ring-1 ring-border/50"
+                      style={{ background: tile.bg, color: tile.fg }}
+                    >
+                      <Icon className="h-6 w-6 drop-shadow" />
                     </span>
                   );
                 })()}
