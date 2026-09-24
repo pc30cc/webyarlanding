@@ -24,6 +24,7 @@ export function LoopVideo({ src, poster, title, className, width, height }: Prop
     const el = ref.current;
     if (!el) return;
     el.muted = true;
+    el.defaultMuted = true;
     void el.play().catch(() => undefined);
   };
 
@@ -66,7 +67,6 @@ export function LoopVideo({ src, poster, title, className, width, height }: Prop
       height={height}
       autoPlay={shouldLoad}
       muted
-      defaultMuted
       loop
       playsInline
       preload={shouldLoad ? "metadata" : "none"}
