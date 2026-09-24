@@ -175,7 +175,7 @@ function HelpPage() {
             </div>
             <p className="mt-1 text-sm text-muted-foreground">
               {english
-                ? "Within 1 business day (Saturday–Thursday)."
+                ? "Within 1 business day (Saturday to Thursday)."
                 : "حداکثر یک روز کاری (شنبه تا پنجشنبه)."}
             </p>
             {phone ? (

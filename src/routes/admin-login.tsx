@@ -65,7 +65,7 @@ function AdminLoginPage() {
             <span className="text-2xl font-black text-primary-foreground">و</span>
           </div>
           <h1 className="text-xl font-bold text-foreground">ورود به پنل مدیریت</h1>
-          <p className="text-sm text-muted-foreground">دسترسی محدود — فقط برای مدیران وب‌یار</p>
+          <p className="text-sm text-muted-foreground">دسترسی محدود؛ فقط برای مدیران وب‌یار</p>
         </div>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">

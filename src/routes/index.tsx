@@ -138,7 +138,7 @@ const platformFeatures = [
   {
     icon: Phone,
     title: "مرکز تماس",
-    desc: "تماس صوتی و تصویری، صف زنده تماس، درخواست تماس مجدد، ضبط مکالمه و تنظیمات ساعت پاسخ‌گویی — همه در پنل مرکز تماس.",
+    desc: "تماس صوتی و تصویری، صف زنده تماس، درخواست تماس مجدد، ضبط مکالمه و تنظیمات ساعت پاسخ‌گویی؛ همه در پنل مرکز تماس.",
   },
   {
     icon: Bot,
@@ -404,7 +404,7 @@ function IndexPage() {
         callEnabled && "چت تصویری",
         "سئو",
         "کمپین",
-      )} — همه در وب‌یار`,
+      )}، همه در وب‌یار`,
       offers: [{ "@type": "Offer", price: "0", priceCurrency: "IRR", name: "شروع" }],
     },
     // بازتاب همان سوالات و پاسخ‌های واقعی که در بخش FAQ همین صفحه نمایش داده می‌شود
@@ -447,7 +447,7 @@ function IndexPage() {
                 callEnabled && "مرکز تماس",
                 aiEnabled && "ایجنت هوش مصنوعی",
               )}{" "}
-              — در یک پنل
+              ، در یک پنل
             </motion.div>
 
             <h1 className="mb-6 text-[34px] font-extrabold leading-[1.3] text-foreground sm:text-5xl lg:text-[64px] lg:leading-[1.2]">
@@ -716,7 +716,7 @@ function IndexPage() {
         <ScrollReveal className="mb-14 text-center">
           {eyebrow("همه‌چیز در یک پلتفرم")}
           <h2 className="mb-4 text-2xl font-extrabold text-foreground sm:text-4xl">
-            فراتر از چت — یک CRM کامل برای ارتباط با مشتری
+            فراتر از چت: یک CRM کامل برای ارتباط با مشتری
           </h2>
           <p className="mx-auto max-w-2xl text-base leading-[1.9] text-muted-foreground">
             {callEnabled
@@ -853,7 +853,7 @@ function IndexPage() {
               "سئو",
               "گزارش‌ها",
             )}{" "}
-            — همه از یک پنل
+            ، همه از یک پنل
           </p>
           <a
             href={settings.auth.signupUrl || "/contact"}
