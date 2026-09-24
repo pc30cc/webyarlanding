@@ -326,33 +326,24 @@ function VideoCallMock({ className }: { className?: string }) {
     // این ویدیو کاملاً تزیینی و بی‌صداست (فقط نمایش بصری دمو، بدون گفتار)؛ اطلاعاتش هم در
     // متن اطراف صفحه (تیتر و توضیحات) به‌طور کامل آمده، پس از دید فناوری‌های کمکی مخفی است
     // و به زیرنویس نیاز ندارد.
-    <video
+    <LoopVideo
       className={`h-full w-full object-cover ${className ?? ""}`}
       src="/videos/video-call.mp4"
       poster="/videos/video-call-poster.jpg"
-      autoPlay
-      muted
-      loop
-      playsInline
-      preload="metadata"
-      aria-hidden="true"
+      title="تماس تصویری زنده با بازدیدکننده سایت در وب‌یار"
+      width={960}
+      height={540}
     />
   );
 }
 
-/** Picture-in-picture caller photo. */
 function OperatorAvatar({ className }: { className?: string }) {
   return (
     <div className={`overflow-hidden bg-foreground ${className ?? ""}`}>
-      <video
+      <LoopVideo
         src="/videos/operator.mp4"
         poster={operatorAvatar}
-        aria-hidden="true"
-        autoPlay
-        muted
-        loop
-        playsInline
-        preload="metadata"
+        title="اپراتور وب‌یار در حال گوش دادن به مشتری"
         className="h-full w-full object-cover"
       />
     </div>
