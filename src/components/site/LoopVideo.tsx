@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 
 type Props = {
   src: string;
@@ -17,36 +17,36 @@ type Props = {
  */
 export function LoopVideo({ src, poster, title, className, width, height }: Props) {
   const ref = useRef<HTMLVideoElement>(null);
-  const webmSrc = src.replace(/\.mp4(?:\?.*)?$/i, ".webm");
+  const [shouldLoad, setShouldLoad] = useState(false);
+  const preferredSrc = src.replace(/\.mp4(?:\?.*)?$/i, ".webm");
 
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
     if (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) return;
 
-    const play = () => {
-      el.muted = true;
-      void el.play().catch(() => undefined);
-    };
-
     const io = new IntersectionObserver(
       ([entry]) => {
         if (entry?.isIntersecting) {
-          play();
+          setShouldLoad(true);
         } else {
           el.pause();
         }
       },
-      { rootMargin: "200px" },
+      { rootMargin: "300px 0px" },
     );
     io.observe(el);
-    el.addEventListener("canplay", play);
-    play();
     return () => {
       io.disconnect();
-      el.removeEventListener("canplay", play);
     };
-  }, [src]);
+  }, []);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el || !shouldLoad) return;
+    el.load();
+    void el.play().catch(() => undefined);
+  }, [shouldLoad]);
 
   return (
     <video
@@ -57,17 +57,15 @@ export function LoopVideo({ src, poster, title, className, width, height }: Prop
       width={width}
       height={height}
       muted
-      autoPlay
       loop
       playsInline
-      preload="metadata"
+      preload="none"
       disablePictureInPicture
       disableRemotePlayback
       controlsList="nodownload nofullscreen noremoteplayback"
       className={className}
     >
-      <source src={webmSrc} type="video/webm" />
-      <source src={src} type="video/mp4" />
+      {shouldLoad ? <source src={preferredSrc} type="video/webm" /> : null}
     </video>
   );
 }

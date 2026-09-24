@@ -28,7 +28,7 @@ import {
   ShieldCheck,
 } from "lucide-react";
 import { fetchSettings } from "@/lib/settings.functions";
-import { joinFa } from "@/lib/settings";
+import { joinFa, mergeSettings } from "@/lib/settings";
 import { getPublicSeoPage } from "@/lib/seo.functions";
 import { buildPageMeta, parseSchemaJson, safeJsonLdHtml } from "@/lib/seo-meta";
 import { SiteLayout } from "@/components/site/SiteLayout";
@@ -51,9 +51,18 @@ import {
 export const Route = createFileRoute("/")({
   loader: async () => {
     const [settings, seoOverride, apps] = await Promise.all([
-      fetchSettings(),
-      getPublicSeoPage({ data: { path: "/" } }),
-      getPublicApps(),
+      fetchSettings().catch((error) => {
+        console.error("home settings load failed, using defaults:", error);
+        return mergeSettings({});
+      }),
+      getPublicSeoPage({ data: { path: "/" } }).catch((error) => {
+        console.error("home SEO load failed, using defaults:", error);
+        return null;
+      }),
+      getPublicApps().catch((error) => {
+        console.error("home apps load failed, using empty list:", error);
+        return [];
+      }),
     ]);
     return { settings, seoOverride, apps };
   },
