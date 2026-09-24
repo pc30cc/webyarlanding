@@ -224,7 +224,7 @@ export const DEFAULT_SETTINGS: SiteSettings = {
     phone: "",
     email: "info@webyar.ai",
     address: "",
-    copyright: "© ۱۴۰۵ وب‌یار — تمامی حقوق محفوظ است",
+    copyright: "© ۱۴۰۵ وب‌یار. تمامی حقوق محفوظ است",
     timezone: "Europe/Istanbul",
   },
   seo: {

@@ -84,7 +84,7 @@ function DownloadPage() {
             transition={{ delay: 0.2 }}
             className="mx-auto mt-5 max-w-xl text-base leading-[1.9] text-muted-foreground sm:text-lg"
           >
-            صندوق گفتگو، چت، تماس تصویری و ایمیل — روی آیفون، اندروید و ویندوز. همه در یک حساب.
+            صندوق گفتگو، چت، تماس تصویری و ایمیل، روی آیفون، اندروید و ویندوز. همه در یک حساب.
           </motion.p>
           <motion.div
             initial={{ opacity: 0, y: 20 }}

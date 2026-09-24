@@ -86,7 +86,7 @@ export function DesktopFrame({ children, className }: { children: ReactNode; cla
           <img src="/apps/windows.png" alt="" className="h-4 w-4 rounded" /> Webyar
         </div>
         <div className="flex items-center gap-4 text-[11px] text-muted-foreground">
-          <span>—</span>
+          <span>-</span>
           <span>▢</span>
           <span>✕</span>
         </div>

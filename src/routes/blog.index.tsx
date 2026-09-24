@@ -45,7 +45,7 @@ export const Route = createFileRoute("/blog/")({
       settings,
       path,
       override: seoOverride,
-      fallbackTitle: page.page > 1 ? `بلاگ — صفحه ${page.page} | وب‌یار` : "بلاگ | وب‌یار",
+      fallbackTitle: page.page > 1 ? `بلاگ، صفحه ${page.page} | وب‌یار` : "بلاگ | وب‌یار",
       fallbackDescription:
         "آخرین مقالات و اخبار وب‌یار درباره چت زنده، CRM، هوش مصنوعی و بازاریابی.",
       defaultRobots: q ? "noindex,follow" : "index,follow",

@@ -187,7 +187,7 @@ function ContactPage() {
               <div>
                 <Label className="flex items-center gap-1.5 text-xs">
                   <ShieldCheck className="h-3.5 w-3.5" />
-                  کد امنیتی — حاصل جمع زیر چند می‌شود؟
+                  کد امنیتی: حاصل جمع زیر چند می‌شود؟
                 </Label>
                 <div className="mt-1 flex items-center gap-3">
                   <div

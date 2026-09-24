@@ -213,7 +213,7 @@ function pricingIntro(callEnabled: boolean, aiEnabled: boolean): string {
   const mid = aiEnabled
     ? " دستیار هوش مصنوعی، CRM، اتوماسیون، کمپین و گزارش‌گیری"
     : " CRM، اتوماسیون، کمپین و گزارش‌گیری";
-  return `${start}${mid} — پلن مناسب کسب‌وکار خود را از میان امکانات کامل وب‌یار انتخاب کنید.`;
+  return `${start}${mid}. پلن مناسب کسب‌وکار خود را از میان امکانات کامل وب‌یار انتخاب کنید.`;
 }
 
 function ComparisonCell({ value }: { value: string | boolean }) {
@@ -221,7 +221,7 @@ function ComparisonCell({ value }: { value: string | boolean }) {
     return value ? (
       <Check className="mx-auto h-4 w-4 text-success" />
     ) : (
-      <span className="text-muted-foreground">—</span>
+      <span className="text-muted-foreground">-</span>
     );
   }
   return <span>{value}</span>;

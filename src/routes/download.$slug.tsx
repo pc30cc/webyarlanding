@@ -119,7 +119,7 @@ function AppPage() {
                 <img
                   key={src + i}
                   src={src}
-                  alt={`${app.name} — تصویر ${i + 1}`}
+                  alt={`${app.name}، تصویر ${i + 1}`}
                   loading="lazy"
                   className={`shrink-0 snap-start rounded-3xl border border-border object-cover ${app.platform === "windows" ? "h-[340px] sm:h-[420px]" : "h-[480px] sm:h-[540px]"}`}
                 />

@@ -65,8 +65,8 @@ export function SiteFooter({
   const showTrustBadge = isHome && settings.trustBadge?.enabled && !!settings.trustBadge?.html;
   const brandName = english ? getBrandNameEn(settings) : settings.brand.name;
   const copyright = english
-    ? `© ${new Date().getFullYear()} ${getBrandNameEn(settings)} — All rights reserved`
-    : settings.brand.copyright || "© ۱۴۰۵ وب‌یار — تمامی حقوق محفوظ است";
+    ? `© ${new Date().getFullYear()} ${getBrandNameEn(settings)}. All rights reserved`
+    : settings.brand.copyright || "© ۱۴۰۵ وب‌یار. تمامی حقوق محفوظ است";
 
 
 
