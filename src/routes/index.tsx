@@ -60,7 +60,7 @@ export const Route = createFileRoute("/")({
   head: ({ loaderData }) => {
     if (!loaderData) return {};
     const callEnabled = loaderData.settings.videoCall.enabled;
-    return buildPageMeta({
+    const meta = buildPageMeta({
       settings: loaderData.settings,
       path: "/",
       override: loaderData.seoOverride,
@@ -71,6 +71,26 @@ export const Route = createFileRoute("/")({
         ? "وب‌یار ابزارک چتی است که روی سایت شما می‌نشیند و امکان گفتگوی زنده و تماس تصویری مستقیم با بازدیدکننده‌ها را فراهم می‌کند."
         : "وب‌یار ابزارک چتی است که روی سایت شما می‌نشیند و امکان گفتگوی زنده مستقیم با بازدیدکننده‌ها را فراهم می‌کند.",
     });
+    const origin = "https://webyar.ai";
+    const videoLd = {
+      "@context": "https://schema.org",
+      "@type": "VideoObject",
+      name: "تماس تصویری زنده با بازدیدکننده سایت در وب‌یار",
+      description:
+        "نمونه‌ای کوتاه از تماس تصویری مستقیم اپراتور با بازدیدکننده سایت از طریق ابزارک وب‌یار.",
+      thumbnailUrl: [`${origin}/videos/video-call-poster.jpg`],
+      contentUrl: `${origin}/videos/video-call.mp4`,
+      uploadDate: "2026-09-24T06:00:00Z",
+      duration: "PT6S",
+      inLanguage: "fa-IR",
+    };
+    return {
+      ...meta,
+      scripts: [
+        ...((meta as { scripts?: unknown[] }).scripts ?? []),
+        { type: "application/ld+json", children: JSON.stringify(videoLd) },
+      ],
+    } as typeof meta;
   },
   component: IndexPage,
 });
