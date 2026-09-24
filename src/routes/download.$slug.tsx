@@ -71,7 +71,7 @@ function AppPage() {
     <SiteLayout settings={settings}>
       <script type="application/ld+json" dangerouslySetInnerHTML={safeJsonLdHtml(jsonLd)} />
 
-      <section className="relative overflow-hidden pt-10 pb-12 sm:pt-16">
+      <section className="relative -mt-16 overflow-hidden pt-26 pb-12 sm:-mt-[4.75rem] sm:pt-[8.75rem]">
         <AuroraBackdrop />
         <div className="container-page relative z-10">
           <Link to="/download" className="mb-8 inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
