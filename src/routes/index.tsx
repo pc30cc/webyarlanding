@@ -202,10 +202,10 @@ const platformFeatures = [
 ];
 
 const conversations = [
-  { name: "سارا احمدی", msg: "قیمت پلن حرفه‌ای چقدره؟", time: "۲ دقیقه" },
-  { name: "رضا کریمی", msg: "مشکل در پرداخت دارم", time: "۱۰ دقیقه" },
-  { name: "مریم توکلی", msg: "ممنون از راهنمایی‌تون", time: "۲۵ دقیقه" },
-  { name: "امیر رضایی", msg: "امکان تماس ویدیویی هست؟", time: "۱ ساعت" },
+  { name: "سارا احمدی", msg: "قیمت پلن حرفه‌ای چقدره؟", time: "۲ دقیقه", avatar: "/avatars/c1.jpg" },
+  { name: "رضا کریمی", msg: "مشکل در پرداخت دارم", time: "۱۰ دقیقه", avatar: "/avatars/c2.jpg" },
+  { name: "مریم توکلی", msg: "ممنون از راهنمایی‌تون", time: "۲۵ دقیقه", avatar: "/avatars/c3.jpg" },
+  { name: "امیر رضایی", msg: "امکان تماس ویدیویی هست؟", time: "۱ ساعت", avatar: "/avatars/c4.jpg" },
 ];
 
 const steps = [
@@ -647,8 +647,18 @@ function IndexPage() {
                 key={row.name}
                 className={`flex items-center gap-3 py-3.5 ${i ? "border-t border-border" : ""}`}
               >
-                <span className="flex h-9 w-9 flex-none items-center justify-center rounded-full bg-primary/10 text-sm font-bold text-primary">
-                  {row.name.charAt(0)}
+                <span className="relative flex-none">
+                  <img
+                    src={(row as { avatar?: string }).avatar}
+                    alt={row.name}
+                    width={40}
+                    height={40}
+                    loading="lazy"
+                    className="h-10 w-10 rounded-full object-cover ring-2 ring-primary/20"
+                  />
+                  {i === 0 && (
+                    <span className="absolute -bottom-0.5 -end-0.5 h-3 w-3 rounded-full bg-primary ring-2 ring-card" />
+                  )}
                 </span>
                 <div className="min-w-0 flex-1">
                   <div className="truncate text-sm font-semibold text-foreground">{row.name}</div>
