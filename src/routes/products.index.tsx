@@ -203,7 +203,7 @@ function ProductsPage() {
             راه‌کار مناسب کسب‌وکار خودتان را پیدا کنید
           </h2>
           <p className="mb-10 text-base leading-relaxed text-muted-foreground sm:text-lg">
-            محصولات وب‌یار برای صنایع مختلف، از فروشگاه اینترنتی تا کلینیک درمانی، به‌صورت اختصاصی
+            محصولات وب‌یار برای صنایع مختلف، از فروشگاه اینترنتی تا آموزش آنلاین، به‌صورت اختصاصی
             چیده می‌شوند.
           </p>
           <div className="flex flex-wrap items-center justify-center gap-4">
