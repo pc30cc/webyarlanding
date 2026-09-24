@@ -64,7 +64,7 @@ function DownloadPage() {
     <SiteLayout settings={settings}>
       <script type="application/ld+json" dangerouslySetInnerHTML={safeJsonLdHtml(jsonLd)} />
 
-      <section className="relative overflow-hidden pt-14 pb-20 sm:pt-20 sm:pb-28">
+      <section className="relative -mt-16 overflow-hidden pt-30 pb-20 sm:-mt-[4.75rem] sm:pt-[9.75rem] sm:pb-28">
         <AuroraBackdrop />
         <div className="container-page relative z-10 text-center">
           <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}>
