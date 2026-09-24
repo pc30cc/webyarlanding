@@ -119,7 +119,7 @@ function AppPage() {
       {/* گالری تصاویر مثل صفحه اپ‌استور */}
       <section className="py-8">
         <div className="container-page mb-4 text-lg font-bold text-foreground">پیش‌نمایش</div>
-        <div className="no-scrollbar flex snap-x snap-mandatory gap-6 overflow-x-auto px-5 pb-8 sm:px-[max(1.25rem,calc((100vw-80rem)/2+1.25rem))]">
+        <div className="no-scrollbar mx-auto flex max-w-[1600px] snap-x snap-mandatory gap-6 overflow-x-auto px-5 pb-8 [justify-content:safe_center]">
           {customShots.length > 0
             ? customShots.map((src, i) => (
                 <img
