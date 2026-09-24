@@ -344,13 +344,15 @@ function VideoCallMock({ className }: { className?: string }) {
 function OperatorAvatar({ className }: { className?: string }) {
   return (
     <div className={`overflow-hidden bg-foreground ${className ?? ""}`}>
-      <img
-        src={operatorAvatar}
-        alt=""
+      <video
+        src="/videos/operator.mp4"
+        poster={operatorAvatar}
         aria-hidden="true"
-        loading="lazy"
-        width={240}
-        height={297}
+        autoPlay
+        muted
+        loop
+        playsInline
+        preload="metadata"
         className="h-full w-full object-cover"
       />
     </div>
