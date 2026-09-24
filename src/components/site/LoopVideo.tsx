@@ -20,6 +20,14 @@ export function LoopVideo({ src, poster, title, className, width, height }: Prop
   const [shouldLoad, setShouldLoad] = useState(false);
   const preferredSrc = src.replace(/\.mp4(?:\?.*)?$/i, ".webm");
 
+  const tryPlay = () => {
+    const el = ref.current;
+    if (!el) return;
+    el.muted = true;
+    el.defaultMuted = true;
+    void el.play().catch(() => undefined);
+  };
+
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
@@ -29,6 +37,7 @@ export function LoopVideo({ src, poster, title, className, width, height }: Prop
       ([entry]) => {
         if (entry?.isIntersecting) {
           setShouldLoad(true);
+          if (el.currentSrc) void el.play().catch(() => undefined);
         } else {
           el.pause();
         }
@@ -45,7 +54,7 @@ export function LoopVideo({ src, poster, title, className, width, height }: Prop
     const el = ref.current;
     if (!el || !shouldLoad) return;
     el.load();
-    void el.play().catch(() => undefined);
+    tryPlay();
   }, [shouldLoad]);
 
   return (
@@ -56,16 +65,24 @@ export function LoopVideo({ src, poster, title, className, width, height }: Prop
       aria-label={title}
       width={width}
       height={height}
+      autoPlay={shouldLoad}
       muted
       loop
       playsInline
-      preload="none"
+      preload={shouldLoad ? "metadata" : "none"}
       disablePictureInPicture
       disableRemotePlayback
       controlsList="nodownload nofullscreen noremoteplayback"
       className={className}
+      onCanPlay={tryPlay}
+      onLoadedData={tryPlay}
     >
-      {shouldLoad ? <source src={preferredSrc} type="video/webm" /> : null}
+      {shouldLoad ? (
+        <>
+          <source src={preferredSrc} type="video/webm" />
+          <source src={src} type="video/mp4" />
+        </>
+      ) : null}
     </video>
   );
 }
