@@ -15,7 +15,8 @@ nixPkgs = ["nodejs_22"]
 cmds = ["npm ci --include=dev"]
 
 [phases.build]
-cmds = ["npm run build"]
+# بعد از build وابستگی‌های توسعه و cacheها پاک می‌شوند تا حجم image کم شود.
+cmds = ["npm run build", "npm prune --omit=dev", "rm -rf /tmp/node-compile-cache /root/.npm/_cacache node_modules/.cache"]
 
 [start]
 # Nitro node-server output: dist/server/index.mjs serves SSR + dist/client assets.
