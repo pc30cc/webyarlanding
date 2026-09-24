@@ -19,15 +19,18 @@ export function LoopVideo({ src, poster, title, className, width, height }: Prop
   const ref = useRef<HTMLVideoElement>(null);
   const [active, setActive] = useState(false);
 
+  const visible = useRef(false);
+
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
     if (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) return;
     const io = new IntersectionObserver(
       ([entry]) => {
+        visible.current = !!entry?.isIntersecting;
         if (entry?.isIntersecting) {
           setActive(true);
-          el.play().catch(() => {});
+          if (el.currentSrc) el.play().catch(() => {});
         } else {
           el.pause();
         }
@@ -37,6 +40,15 @@ export function LoopVideo({ src, poster, title, className, width, height }: Prop
     io.observe(el);
     return () => io.disconnect();
   }, []);
+
+  // بعد از اینکه آدرس ویدیو ست شد، فایل را لود و پخش کن
+  useEffect(() => {
+    const el = ref.current;
+    if (!el || !active) return;
+    el.muted = true;
+    el.load();
+    if (visible.current) el.play().catch(() => {});
+  }, [active, src]);
 
   return (
     <video
