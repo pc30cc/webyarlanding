@@ -204,7 +204,7 @@ export async function runSeoReview(source: "cron" | "manual" | "telegram"): Prom
     const suggestion = await aiJson<{
       items: { key: string; seoTitle: string; seoDescription: string; focusKeyword: string }[];
     }>(
-      "شما متخصص سئوی فارسی هستید و فقط یک JSON معتبر برمی‌گردانید. درباره قیمت، تعرفه، تخفیف یا پلن چیزی ننویسید.",
+      "شما متخصص سئوی فارسی هستید و فقط یک JSON معتبر برمی‌گردانید. درباره قیمت، تعرفه، تخفیف یا پلن چیزی ننویسید. هرگز از خط تیره بلند (— یا –) یا -- استفاده نکنید.",
       `برای هر مورد یک عنوان سئو (حداکثر ۶۰ کاراکتر، نام برند «${brand}» فقط در صورت جا داشتن)، ` +
         `یک توضیح متا (۱۲۰ تا ۱۵۵ کاراکتر) و یک کلمه کلیدی هدف فارسی بنویس.\n\n${payload}\n\n` +
         `خروجی دقیقاً: {"items":[{"key":"...","seoTitle":"...","seoDescription":"...","focusKeyword":"..."}]}`,
@@ -260,7 +260,7 @@ export async function runSeoReview(source: "cron" | "manual" | "telegram"): Prom
     const suggestion = await aiJson<{
       items: { key: string; seoTitle: string; seoDescription: string }[];
     }>(
-      "شما متخصص سئوی فارسی هستید و فقط یک JSON معتبر برمی‌گردانید. درباره قیمت، تعرفه، تخفیف یا پلن چیزی ننویسید.",
+      "شما متخصص سئوی فارسی هستید و فقط یک JSON معتبر برمی‌گردانید. درباره قیمت، تعرفه، تخفیف یا پلن چیزی ننویسید. هرگز از خط تیره بلند (— یا –) یا -- استفاده نکنید.",
       `برای هر صفحه یک عنوان سئو (حداکثر ۶۰ کاراکتر) و یک توضیح متا (۱۲۰ تا ۱۵۵ کاراکتر) فارسی بنویس.\n\n${payload}\n\n` +
         `خروجی دقیقاً: {"items":[{"key":"...","seoTitle":"...","seoDescription":"..."}]}`,
       { items: [] },
