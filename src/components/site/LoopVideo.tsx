@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 
 type Props = {
   src: string;
@@ -17,20 +17,22 @@ type Props = {
  */
 export function LoopVideo({ src, poster, title, className, width, height }: Props) {
   const ref = useRef<HTMLVideoElement>(null);
-  const [active, setActive] = useState(false);
-
-  const visible = useRef(false);
+  const webmSrc = src.replace(/\.mp4(?:\?.*)?$/i, ".webm");
 
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
     if (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) return;
+
+    const play = () => {
+      el.muted = true;
+      void el.play().catch(() => undefined);
+    };
+
     const io = new IntersectionObserver(
       ([entry]) => {
-        visible.current = !!entry?.isIntersecting;
         if (entry?.isIntersecting) {
-          setActive(true);
-          if (el.currentSrc) el.play().catch(() => {});
+          play();
         } else {
           el.pause();
         }
@@ -38,35 +40,34 @@ export function LoopVideo({ src, poster, title, className, width, height }: Prop
       { rootMargin: "200px" },
     );
     io.observe(el);
-    return () => io.disconnect();
-  }, []);
-
-  // بعد از اینکه آدرس ویدیو ست شد، فایل را لود و پخش کن
-  useEffect(() => {
-    const el = ref.current;
-    if (!el || !active) return;
-    el.muted = true;
-    el.load();
-    if (visible.current) el.play().catch(() => {});
-  }, [active, src]);
+    el.addEventListener("canplay", play);
+    play();
+    return () => {
+      io.disconnect();
+      el.removeEventListener("canplay", play);
+    };
+  }, [src]);
 
   return (
     <video
       ref={ref}
-      src={active ? src : undefined}
       poster={poster}
       title={title}
       aria-label={title}
       width={width}
       height={height}
       muted
+      autoPlay
       loop
       playsInline
-      preload="none"
+      preload="metadata"
       disablePictureInPicture
       disableRemotePlayback
       controlsList="nodownload nofullscreen noremoteplayback"
       className={className}
-    />
+    >
+      <source src={webmSrc} type="video/webm" />
+      <source src={src} type="video/mp4" />
+    </video>
   );
 }
