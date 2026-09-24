@@ -68,3 +68,24 @@ export function StoreBadge({
     </a>
   );
 }
+
+/** کاشی آیکون پلتفرم به سبک آیکون اپ‌استور — گرادیان رنگ برند، هایلایت شیشه‌ای و درخشش (الهام از Magic UI) */
+const TILE_STYLE: Record<AppPlatform, { bg: string; fg: string; glow: string }> = {
+  ios: { bg: "linear-gradient(145deg,#4a4a4f 0%,#1c1c1f 55%,#050506 100%)", fg: "#ffffff", glow: "rgba(180,180,200,.45)" },
+  android: { bg: "linear-gradient(145deg,#7cf5b6 0%,#34d17f 50%,#12a05a 100%)", fg: "#063a20", glow: "rgba(61,220,132,.55)" },
+  windows: { bg: "linear-gradient(145deg,#4cc2ff 0%,#0a84ff 50%,#0050a8 100%)", fg: "#ffffff", glow: "rgba(10,132,255,.55)" },
+};
+
+export function PlatformTile({ platform, className, iconClassName, glow }: { platform: AppPlatform; className?: string; iconClassName?: string; glow?: boolean }) {
+  const t = TILE_STYLE[platform];
+  const Icon = platform === "ios" ? AppleIcon : platform === "android" ? AndroidIcon : WindowsIcon;
+  return (
+    <span
+      className={`relative grid shrink-0 place-items-center overflow-hidden ${className ?? ""}`}
+      style={{ background: t.bg, color: t.fg, boxShadow: `${glow ? `0 20px 50px -15px ${t.glow}, ` : ""}inset 0 1px 0 rgba(255,255,255,.35), inset 0 -8px 20px rgba(0,0,0,.18)` }}
+    >
+      <span aria-hidden className="pointer-events-none absolute inset-x-0 top-0 h-1/2 bg-gradient-to-b from-white/25 to-transparent" />
+      <Icon className={`relative drop-shadow-[0_2px_4px_rgba(0,0,0,.25)] ${iconClassName ?? ""}`} />
+    </span>
+  );
+}
