@@ -19,7 +19,7 @@ import { getPublicCatalog } from "../lib/catalog.functions";
 import { VisitTracker } from "../components/site/VisitTracker";
 import { SiteLayout } from "../components/site/SiteLayout";
 import { extractScriptTags } from "../lib/seo-meta";
-import type { SiteSettings } from "../lib/settings";
+import { mergeSettings, type SiteSettings } from "../lib/settings";
 
 /** اسکریپت‌های گوگل آنالیتیکس (در صورت تنظیم) + اسکریپت‌های سفارشی head از تنظیمات عمومی */
 function buildHeadScripts(settings: SiteSettings | undefined): Array<Record<string, unknown>> {
@@ -151,7 +151,10 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
 export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()({
   loader: async () => {
     const [settings, productCatalog, solutionCatalog] = await Promise.all([
-      fetchSettings(),
+      fetchSettings().catch((error) => {
+        console.error("root settings load failed, using defaults:", error);
+        return mergeSettings({});
+      }),
       getPublicCatalog({ data: { type: "product" } }).catch(() => []),
       getPublicCatalog({ data: { type: "solution" } }).catch(() => []),
     ]);
