@@ -1,6 +1,7 @@
 // قاب دستگاه‌ها و پیش‌نمایش صفحات واقعی اپ‌های نیتیو وب‌یار (iOS / Android / Windows)
 // محتوای هر صفحه بر اساس صفحات واقعی اپ‌ها ساخته شده: صندوق گفتگو، چت، تماس، مخاطبین، ایمیل.
 import type { ReactNode } from "react";
+import { LoopVideo } from "@/components/site/LoopVideo";
 import callerWoman from "@/assets/caller-woman.jpg";
 import operatorMan from "@/assets/operator-man.jpg";
 import {
@@ -290,15 +291,10 @@ export function ChatScreen(_props: { android?: boolean | undefined } = {}) {
 export function CallScreen(_props: { android?: boolean | undefined } = {}) {
   return (
     <div className="relative h-full overflow-hidden bg-gradient-to-b from-secondary to-background" dir="rtl">
-      <video
+      <LoopVideo
         src="/videos/caller-woman.mp4"
         poster={callerWoman}
-        autoPlay
-        muted
-        loop
-        playsInline
-        preload="metadata"
-        aria-hidden="true"
+        title="نمونه تماس تصویری با مشتری در اپلیکیشن وب‌یار"
         className="absolute inset-0 h-full w-full object-cover object-top"
       />
       <div className="absolute inset-0 bg-gradient-to-b from-background/40 via-transparent to-background/70" />
@@ -307,15 +303,10 @@ export function CallScreen(_props: { android?: boolean | undefined } = {}) {
         <div className="text-[10px] text-foreground/80">تماس تصویری · ۰۲:۱۴</div>
       </div>
       <div className="absolute bottom-24 right-3 h-24 w-16 overflow-hidden rounded-xl border-2 border-foreground/30 bg-secondary shadow-lg">
-        <video
+        <LoopVideo
           src="/videos/operator-man.mp4"
           poster={operatorMan}
-          autoPlay
-          muted
-          loop
-          playsInline
-          preload="metadata"
-          aria-hidden="true"
+          title="اپراتور پشتیبانی وب‌یار در تماس تصویری"
           className="h-full w-full object-cover"
         />
       </div>

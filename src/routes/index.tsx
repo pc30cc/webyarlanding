@@ -1,4 +1,5 @@
 import operatorAvatar from "@/assets/operator-avatar.jpg";
+import { LoopVideo } from "@/components/site/LoopVideo";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { motion } from "framer-motion";
 import {
@@ -59,7 +60,7 @@ export const Route = createFileRoute("/")({
   head: ({ loaderData }) => {
     if (!loaderData) return {};
     const callEnabled = loaderData.settings.videoCall.enabled;
-    return buildPageMeta({
+    const meta = buildPageMeta({
       settings: loaderData.settings,
       path: "/",
       override: loaderData.seoOverride,
@@ -70,6 +71,26 @@ export const Route = createFileRoute("/")({
         ? "وب‌یار ابزارک چتی است که روی سایت شما می‌نشیند و امکان گفتگوی زنده و تماس تصویری مستقیم با بازدیدکننده‌ها را فراهم می‌کند."
         : "وب‌یار ابزارک چتی است که روی سایت شما می‌نشیند و امکان گفتگوی زنده مستقیم با بازدیدکننده‌ها را فراهم می‌کند.",
     });
+    const origin = "https://webyar.ai";
+    const videoLd = {
+      "@context": "https://schema.org",
+      "@type": "VideoObject",
+      name: "تماس تصویری زنده با بازدیدکننده سایت در وب‌یار",
+      description:
+        "نمونه‌ای کوتاه از تماس تصویری مستقیم اپراتور با بازدیدکننده سایت از طریق ابزارک وب‌یار.",
+      thumbnailUrl: [`${origin}/videos/video-call-poster.jpg`],
+      contentUrl: `${origin}/videos/video-call.mp4`,
+      uploadDate: "2026-09-24T06:00:00Z",
+      duration: "PT6S",
+      inLanguage: "fa-IR",
+    };
+    return {
+      ...meta,
+      scripts: [
+        ...((meta as { scripts?: unknown[] }).scripts ?? []),
+        { type: "application/ld+json", children: JSON.stringify(videoLd) },
+      ],
+    } as typeof meta;
   },
   component: IndexPage,
 });
@@ -326,33 +347,24 @@ function VideoCallMock({ className }: { className?: string }) {
     // این ویدیو کاملاً تزیینی و بی‌صداست (فقط نمایش بصری دمو، بدون گفتار)؛ اطلاعاتش هم در
     // متن اطراف صفحه (تیتر و توضیحات) به‌طور کامل آمده، پس از دید فناوری‌های کمکی مخفی است
     // و به زیرنویس نیاز ندارد.
-    <video
+    <LoopVideo
       className={`h-full w-full object-cover ${className ?? ""}`}
       src="/videos/video-call.mp4"
       poster="/videos/video-call-poster.jpg"
-      autoPlay
-      muted
-      loop
-      playsInline
-      preload="metadata"
-      aria-hidden="true"
+      title="تماس تصویری زنده با بازدیدکننده سایت در وب‌یار"
+      width={960}
+      height={540}
     />
   );
 }
 
-/** Picture-in-picture caller photo. */
 function OperatorAvatar({ className }: { className?: string }) {
   return (
     <div className={`overflow-hidden bg-foreground ${className ?? ""}`}>
-      <video
+      <LoopVideo
         src="/videos/operator.mp4"
         poster={operatorAvatar}
-        aria-hidden="true"
-        autoPlay
-        muted
-        loop
-        playsInline
-        preload="metadata"
+        title="اپراتور وب‌یار در حال گوش دادن به مشتری"
         className="h-full w-full object-cover"
       />
     </div>
