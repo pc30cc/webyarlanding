@@ -425,7 +425,7 @@ function IndexPage() {
       <script type="application/ld+json" dangerouslySetInnerHTML={safeJsonLdHtml(jsonLd)} />
 
       {/* HERO */}
-      <section className="relative overflow-hidden pt-16 pb-12 sm:pt-24 sm:pb-16">
+      <section className="relative -mt-16 overflow-hidden pt-32 pb-12 sm:-mt-[4.75rem] sm:pt-[10.75rem] sm:pb-16">
         <AuroraBackdrop />
 
         <div className="container-page relative z-10 grid items-center gap-12 lg:grid-cols-2 lg:gap-16">
