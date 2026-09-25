@@ -10,6 +10,9 @@ NITRO_PRESET = "node-server"
 
 [phases.setup]
 nixPkgs = ["nodejs_22"]
+# nixpkgs پیش‌فرض nixpacks فقط Node 22.14 دارد؛ jsdom و undici حداقل 22.22.2 می‌خواهند.
+# این commit از شاخهٔ پایدار nixos-26.05 است و nodejs_22 = 22.23.3 دارد.
+nixpkgsArchive = "c508844df6c28fa6dabc1b6af70f3ccbd65c5201"
 
 [phases.install]
 cmds = ["npm ci --include=dev"]
