@@ -16,7 +16,9 @@ cmds = ["npm ci --include=dev"]
 
 [phases.build]
 # بعد از build وابستگی‌های توسعه و cacheها پاک می‌شوند تا حجم image کم شود.
-cmds = ["npm run build", "npm prune --omit=dev", "rm -rf /tmp/node-compile-cache /root/.npm/_cacache node_modules/.cache"]
+# node_modules/.cache را پاک نکنید: nixpacks آن را به‌صورت cache mount وصل می‌کند
+# (پاک کردنش خطای "Device or resource busy" می‌دهد) و به هر حال وارد image نمی‌شود.
+cmds = ["npm run build", "npm prune --omit=dev", "rm -rf /tmp/node-compile-cache /root/.npm/_cacache"]
 
 [start]
 # Nitro node-server output: dist/server/index.mjs serves SSR + dist/client assets.
