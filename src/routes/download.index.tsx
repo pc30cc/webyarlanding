@@ -128,7 +128,7 @@ function DownloadPage() {
         <SectionHeading eyebrow="برنامه‌ها" title="نسخه مخصوص دستگاه خود را انتخاب کنید" />
         <div className="grid gap-5 md:grid-cols-3">
           {apps.map((a, i) => {
-            const m = PLATFORM_META[a.platform];
+            const m = PLATFORM_META[a.platform] ?? PLATFORM_META.ios;
             return (
               <ScrollReveal key={a.id} delay={i * 0.08}>
                 <Link to="/download/$slug" params={{ slug: a.slug }} className="group block h-full">

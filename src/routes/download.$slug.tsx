@@ -48,7 +48,7 @@ function AppNotFound() {
 
 function AppPage() {
   const { settings, app, others } = Route.useLoaderData();
-  const m = PLATFORM_META[app.platform];
+  const m = PLATFORM_META[app.platform] ?? PLATFORM_META.ios;
   const customShots = app.screenshots.filter(Boolean);
   const jsonLd = [
     {
