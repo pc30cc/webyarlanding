@@ -450,7 +450,7 @@ export function WindowsScreen() {
 
 /** پیش‌نمایش اصلی یک پلتفرم (برای کارت‌ها و لندینگ) */
 export function PlatformPreview({ platform, className }: { platform: AppPlatform; className?: string | undefined }) {
-  if (platform === "windows") {
+  if (platform === "windows" || platform === "mac") {
     return (
       <DesktopFrame className={className}>
         <WindowsScreen />

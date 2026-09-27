@@ -33,6 +33,7 @@ export const PLATFORM_META: Record<
   ios: { label: "آیفون و آیپد", store: "App Store", storeTop: "دریافت از", Icon: AppleIcon },
   android: { label: "اندروید", store: "Google Play", storeTop: "دریافت از", Icon: GooglePlayIcon },
   windows: { label: "ویندوز", store: "Windows", storeTop: "دانلود برای", Icon: WindowsIcon },
+  mac: { label: "مک", store: "macOS", storeTop: "دانلود برای", Icon: AppleIcon },
 };
 
 /** دکمه استور (App Store / Google Play / Windows) — کلیک از مسیر /go عبور می‌کند تا شمرده شود */
@@ -73,12 +74,13 @@ export function StoreBadge({
 const TILE_STYLE: Record<AppPlatform, { bg: string; fg: string; glow: string }> = {
   ios: { bg: "linear-gradient(145deg,#4a4a4f 0%,#1c1c1f 55%,#050506 100%)", fg: "#ffffff", glow: "rgba(180,180,200,.45)" },
   android: { bg: "linear-gradient(145deg,#7cf5b6 0%,#34d17f 50%,#12a05a 100%)", fg: "#063a20", glow: "rgba(61,220,132,.55)" },
+  mac: { bg: "linear-gradient(145deg,#e9e9ee 0%,#b8b8c2 50%,#7d7d88 100%)", fg: "#1c1c1f", glow: "rgba(200,200,215,.5)" },
   windows: { bg: "linear-gradient(145deg,#4cc2ff 0%,#0a84ff 50%,#0050a8 100%)", fg: "#ffffff", glow: "rgba(10,132,255,.55)" },
 };
 
 export function PlatformTile({ platform, className, iconClassName, glow }: { platform: AppPlatform; className?: string; iconClassName?: string; glow?: boolean }) {
   const t = TILE_STYLE[platform];
-  const Icon = platform === "ios" ? AppleIcon : platform === "android" ? AndroidIcon : WindowsIcon;
+  const Icon = platform === "ios" || platform === "mac" ? AppleIcon : platform === "android" ? AndroidIcon : WindowsIcon;
   return (
     <span
       className={`relative grid shrink-0 place-items-center overflow-hidden ${className ?? ""}`}

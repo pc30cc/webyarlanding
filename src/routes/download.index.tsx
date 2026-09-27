@@ -92,7 +92,7 @@ function DownloadPage() {
             transition={{ delay: 0.3 }}
             className="mt-8 flex flex-wrap justify-center gap-3"
           >
-            {(["ios", "android", "windows"] as const).map((p) => {
+            {(["ios", "android", "mac", "windows"] as const).map((p) => {
               const a = byPlatform(p);
               return a ? <StoreBadge key={p} platform={p} slug={a.slug} available={!!a.downloadUrl} /> : null;
             })}
