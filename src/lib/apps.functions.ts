@@ -1,7 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 
-export type AppPlatform = "ios" | "android" | "windows";
+export type AppPlatform = "ios" | "android" | "windows" | "mac";
 
 export interface AppDto {
   id: string;
@@ -31,7 +31,7 @@ export interface AppStats {
 const appSchema = z.object({
   id: z.string().optional(),
   slug: z.string().optional().default(""),
-  platform: z.enum(["ios", "android", "windows"]),
+  platform: z.enum(["ios", "android", "windows", "mac"]),
   name: z.string().min(1, "نام الزامی است"),
   subtitle: z.string().optional().default(""),
   iconUrl: z.string().optional().default(""),

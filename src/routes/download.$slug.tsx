@@ -121,10 +121,10 @@ function AppPage() {
                   src={src}
                   alt={`${app.name}، تصویر ${i + 1}`}
                   loading="lazy"
-                  className={`shrink-0 snap-start rounded-3xl border border-border object-cover ${app.platform === "windows" ? "h-[340px] sm:h-[420px]" : "h-[480px] sm:h-[540px]"}`}
+                  className={`shrink-0 snap-start rounded-3xl border border-border object-cover ${(app.platform === "windows" || app.platform === "mac") ? "h-[340px] sm:h-[420px]" : "h-[480px] sm:h-[540px]"}`}
                 />
               ))
-            : app.platform === "windows"
+            : (app.platform === "windows" || app.platform === "mac")
               ? [0, 1].map((i) => (
                   <div key={i} className="w-[88vw] max-w-[760px] shrink-0 snap-start">
                     <DesktopFrame>

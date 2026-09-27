@@ -1,0 +1,3 @@
+INSERT INTO public.apps (id, slug, platform, name, subtitle, short_desc, description, features_json, version, size, min_os, sort_order, icon_url, enabled)
+VALUES ('a1000000-0000-4000-8000-000000000004','webyar-mac','mac','وب‌یار برای مک','میز کار اپراتور روی macOS','اپ دسکتاپ مک برای پاسخ به چت، تماس و ایمیل مشتریان با اعلان‌های سیستمی.','نسخه مک وب‌یار صندوق گفتگوی یکپارچه، تماس صوتی و تصویری، صندوق ایمیل و گفتگوی تیمی را با رابط راست‌چین روی macOS در اختیار اپراتورها می‌گذارد.','["صندوق گفتگوی یکپارچه","تماس صوتی و تصویری","اعلان‌های macOS","صندوق ایمیل","گفتگوی تیمی با همکاران"]','1.1.1','','macOS 12 به بالا',4,'/apps/ios.png',1)
+ON CONFLICT (id) DO NOTHING;

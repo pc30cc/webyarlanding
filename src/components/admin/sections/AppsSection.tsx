@@ -17,7 +17,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 
-const PLATFORM_LABEL = { ios: "آیفون (iOS)", android: "اندروید", windows: "ویندوز" } as const;
+const PLATFORM_LABEL = { ios: "آیفون (iOS)", android: "اندروید", windows: "ویندوز", mac: "مک (macOS)" } as const;
 
 const empty: AppInput = {
   slug: "",
@@ -202,6 +202,7 @@ export default function AppsSection() {
                 <option value="ios">آیفون (iOS)</option>
                 <option value="android">اندروید</option>
                 <option value="windows">ویندوز</option>
+                <option value="mac">مک (macOS)</option>
               </select>
             </div>
             <div className="space-y-1.5 md:col-span-2">
