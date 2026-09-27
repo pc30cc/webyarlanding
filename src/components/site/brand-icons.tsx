@@ -48,7 +48,7 @@ export function StoreBadge({
   available: boolean;
   className?: string | undefined;
 }) {
-  const m = PLATFORM_META[platform];
+  const m = PLATFORM_META[platform] ?? PLATFORM_META.ios;
   const inner = (
     <>
       <m.Icon className="h-7 w-7 shrink-0" />
@@ -79,7 +79,7 @@ const TILE_STYLE: Record<AppPlatform, { bg: string; fg: string; glow: string }> 
 };
 
 export function PlatformTile({ platform, className, iconClassName, glow }: { platform: AppPlatform; className?: string; iconClassName?: string; glow?: boolean }) {
-  const t = TILE_STYLE[platform];
+  const t = TILE_STYLE[platform] ?? TILE_STYLE.ios;
   const Icon = platform === "ios" || platform === "mac" ? AppleIcon : platform === "android" ? AndroidIcon : WindowsIcon;
   return (
     <span
