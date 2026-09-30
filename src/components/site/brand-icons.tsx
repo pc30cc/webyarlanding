@@ -1,4 +1,5 @@
 import { siApple, siGoogleplay, siAndroid } from "simple-icons";
+import { Link } from "@tanstack/react-router";
 import type { AppPlatform } from "@/lib/apps.functions";
 
 function SiIcon({ path, className }: { path: string; className?: string | undefined }) {
@@ -42,11 +43,13 @@ export function StoreBadge({
   slug,
   available,
   className,
+  toDetails,
 }: {
   platform: AppPlatform;
   slug: string;
   available: boolean;
   className?: string | undefined;
+  toDetails?: boolean;
 }) {
   const m = PLATFORM_META[platform] ?? PLATFORM_META.ios;
   const inner = (
@@ -60,6 +63,13 @@ export function StoreBadge({
   );
   const base =
     "inline-flex min-h-[52px] items-center gap-3 rounded-2xl border border-border bg-foreground px-5 py-2 text-background transition-transform";
+  if (toDetails) {
+    return (
+      <Link to="/download/$slug" params={{ slug }} className={`${base} hover:-translate-y-0.5 ${className ?? ""}`}>
+        {inner}
+      </Link>
+    );
+  }
   if (!available) {
     return <span className={`${base} cursor-default opacity-60 ${className ?? ""}`}>{inner}</span>;
   }

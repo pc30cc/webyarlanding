@@ -934,7 +934,7 @@ function AppsShowcase({ apps }: { apps: import("@/lib/apps.functions").AppDto[] 
         <div className="mt-14 flex flex-wrap justify-center gap-3 md:mt-28">
           {(["ios", "android", "mac", "windows"] as const).map((p) => {
             const a = find(p);
-            return a ? <StoreBadge key={p} platform={p} slug={a.slug} available={!!a.downloadUrl} /> : null;
+            return a ? <StoreBadge key={p} platform={p} slug={a.slug} available={!!a.downloadUrl} toDetails /> : null;
           })}
         </div>
         <div className="mt-5 text-center">
