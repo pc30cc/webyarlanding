@@ -1,3 +1,4 @@
+import { useSiteTranslation } from "@/components/site/SiteLanguage";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 type Props = {
@@ -15,7 +16,16 @@ type Props = {
  * - بیرون از دید متوقف می‌شود تا CPU/باتری مصرف نشود
  * - با «کاهش حرکت» سیستم فقط تصویر پوستر نمایش داده می‌شود
  */
-export function LoopVideo({ src, poster, title, className, width, height }: Props) {
+export function LoopVideo({
+  src,
+  poster,
+  title,
+  className,
+  width,
+  height,
+}: Props) {
+  const translateText = useSiteTranslation();
+
   const ref = useRef<HTMLVideoElement>(null);
   const [shouldLoad, setShouldLoad] = useState(false);
   const preferredSrc = src.replace(/\.mp4(?:\?.*)?$/i, ".webm");
@@ -65,7 +75,10 @@ export function LoopVideo({ src, poster, title, className, width, height }: Prop
     window.addEventListener("pageshow", resume);
     document.addEventListener("visibilitychange", resumeWhenVisible);
     document.addEventListener("pointerdown", resume, { once: true });
-    document.addEventListener("touchstart", resume, { once: true, passive: true });
+    document.addEventListener("touchstart", resume, {
+      once: true,
+      passive: true,
+    });
     return () => {
       window.removeEventListener("pageshow", resume);
       document.removeEventListener("visibilitychange", resumeWhenVisible);
@@ -78,8 +91,8 @@ export function LoopVideo({ src, poster, title, className, width, height }: Prop
     <video
       ref={ref}
       poster={poster}
-      title={title}
-      aria-label={title}
+      title={translateText(title)}
+      aria-label={translateText(title)}
       width={width}
       height={height}
       autoPlay

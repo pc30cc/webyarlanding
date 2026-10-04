@@ -1,3 +1,8 @@
+import { localizeStructuredData } from "@/lib/site-i18n";
+import {
+  useSiteLocale,
+  useSiteTranslation,
+} from "@/components/site/SiteLanguage";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { z } from "zod";
@@ -5,7 +10,11 @@ import { motion } from "framer-motion";
 import { Calendar, ChevronLeft, ChevronRight, Search } from "lucide-react";
 import { fetchSettings } from "@/lib/settings.functions";
 import { getPublicSeoPage } from "@/lib/seo.functions";
-import { buildPageMeta, buildBreadcrumbJsonLd, safeJsonLdHtml } from "@/lib/seo-meta";
+import {
+  buildPageMeta,
+  buildBreadcrumbJsonLd,
+  safeJsonLdHtml,
+} from "@/lib/seo-meta";
 import { listPublishedPostsPage, listCategories } from "@/lib/blog.functions";
 import { SiteLayout } from "@/components/site/SiteLayout";
 
@@ -18,8 +27,13 @@ const blogSearchSchema = z.object({
 });
 
 export const Route = createFileRoute("/blog/")({
-  validateSearch: (search: Record<string, unknown>) => blogSearchSchema.parse(search),
-  loaderDeps: ({ search }) => ({ page: search.page, category: search.category, q: search.q }),
+  validateSearch: (search: Record<string, unknown>) =>
+    blogSearchSchema.parse(search),
+  loaderDeps: ({ search }) => ({
+    page: search.page,
+    category: search.category,
+    q: search.q,
+  }),
   loader: async ({ deps }) => {
     const [settings, page, categories, seoOverride] = await Promise.all([
       fetchSettings(),
@@ -29,7 +43,14 @@ export const Route = createFileRoute("/blog/")({
       listCategories(),
       getPublicSeoPage({ data: { path: "/blog" } }),
     ]);
-    return { settings, page, categories, seoOverride, category: deps.category, q: deps.q };
+    return {
+      settings,
+      page,
+      categories,
+      seoOverride,
+      category: deps.category,
+      q: deps.q,
+    };
   },
   head: ({ loaderData }) => {
     if (!loaderData) return {};
@@ -45,7 +66,8 @@ export const Route = createFileRoute("/blog/")({
       settings,
       path,
       override: seoOverride,
-      fallbackTitle: page.page > 1 ? `بلاگ، صفحه ${page.page} | وب‌یار` : "بلاگ | وب‌یار",
+      fallbackTitle:
+        page.page > 1 ? `بلاگ، صفحه ${page.page} | وب‌یار` : "بلاگ | وب‌یار",
       fallbackDescription:
         "آخرین مقالات و اخبار وب‌یار درباره چت زنده، CRM، هوش مصنوعی و بازاریابی.",
       defaultRobots: q ? "noindex,follow" : "index,follow",
@@ -55,6 +77,9 @@ export const Route = createFileRoute("/blog/")({
 });
 
 function BlogIndexPage() {
+  const translateText = useSiteTranslation();
+  const locale = useSiteLocale();
+
   const { settings, page, categories } = Route.useLoaderData();
   const search = Route.useSearch();
   const navigate = useNavigate({ from: Route.fullPath });
@@ -69,7 +94,11 @@ function BlogIndexPage() {
     if (searchInput === current) return;
     const timeout = setTimeout(() => {
       navigate({
-        search: (prev) => ({ ...prev, q: searchInput.trim() || undefined, page: 1 }),
+        search: (prev) => ({
+          ...prev,
+          q: searchInput.trim() || undefined,
+          page: 1,
+        }),
         replace: true,
       });
     }, 400);
@@ -99,15 +128,24 @@ function BlogIndexPage() {
 
   return (
     <SiteLayout settings={settings}>
-      <script type="application/ld+json" dangerouslySetInnerHTML={safeJsonLdHtml(jsonLd)} />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={safeJsonLdHtml(
+          localizeStructuredData(settings, jsonLd),
+        )}
+      />
       <div className="container-page max-w-5xl py-16 sm:py-24">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           className="mb-10"
         >
-          <h1 className="mb-4 text-3xl font-extrabold text-foreground sm:text-5xl">بلاگ</h1>
-          <p className="text-base text-muted-foreground">آخرین مقالات و اخبار</p>
+          <h1 className="mb-4 text-3xl font-extrabold text-foreground sm:text-5xl">
+            {translateText("بلاگ")}
+          </h1>
+          <p className="text-base text-muted-foreground">
+            {translateText("آخرین مقالات و اخبار")}
+          </p>
         </motion.div>
 
         <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -117,7 +155,7 @@ function BlogIndexPage() {
               search={(prev) => ({ ...prev, category: undefined, page: 1 })}
               className={`rounded-full px-4 py-1.5 text-xs font-medium transition-colors ${!search.category ? "bg-brand text-primary-foreground" : "bg-secondary text-muted-foreground hover:bg-secondary/70"}`}
             >
-              همه
+              {translateText("همه")}
             </Link>
             {categories.map((c) => (
               <Link
@@ -126,7 +164,7 @@ function BlogIndexPage() {
                 search={(prev) => ({ ...prev, category: c.slug, page: 1 })}
                 className={`rounded-full px-4 py-1.5 text-xs font-medium transition-colors ${search.category === c.slug ? "bg-brand text-primary-foreground" : "bg-secondary text-muted-foreground hover:bg-secondary/70"}`}
               >
-                {c.name}
+                {translateText(c.name)}
               </Link>
             ))}
           </div>
@@ -135,14 +173,16 @@ function BlogIndexPage() {
             <input
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
-              placeholder="جست‌وجو در مقالات..."
+              placeholder={translateText("جست‌وجو در مقالات...")}
               className="w-full rounded-lg border border-border bg-card py-2 ps-9 pe-3 text-sm text-foreground outline-none focus:border-primary/50"
             />
           </div>
         </div>
 
         {posts.length === 0 ? (
-          <div className="py-16 text-center text-muted-foreground">مقاله‌ای موجود نیست</div>
+          <div className="py-16 text-center text-muted-foreground">
+            {translateText("مقاله‌ای موجود نیست")}
+          </div>
         ) : (
           <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
             {posts.map((post, i) => (
@@ -160,7 +200,7 @@ function BlogIndexPage() {
                   {post.coverImage ? (
                     <img
                       src={post.coverImage}
-                      alt={post.title}
+                      alt={translateText(post.title)}
                       width={1000}
                       height={192}
                       loading={i < 3 ? "eager" : "lazy"}
@@ -170,35 +210,38 @@ function BlogIndexPage() {
                   ) : (
                     <div className="flex h-full w-full items-center justify-center">
                       <span className="rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-brand">
-                        {post.categoryName || "عمومی"}
+                        {translateText(post.categoryName || "عمومی")}
                       </span>
                     </div>
                   )}
                 </div>
                 <div className="p-5">
                   <h2 className="mb-2 line-clamp-2 text-base font-bold text-foreground transition-colors group-hover:text-brand">
-                    {post.title}
+                    {translateText(post.title)}
                   </h2>
                   {post.excerpt && (
                     <p className="mb-4 line-clamp-2 text-xs leading-relaxed text-muted-foreground">
-                      {post.excerpt}
+                      {translateText(post.excerpt)}
                     </p>
                   )}
                   <div className="mb-3 flex items-center gap-3 text-[11px] text-muted-foreground">
                     {post.publishedAt && (
                       <span className="flex items-center gap-1">
                         <Calendar className="h-3 w-3" />
-                        {new Date(post.publishedAt).toLocaleDateString("fa-IR")}
+                        {translateText(
+                          new Date(post.publishedAt).toLocaleDateString(locale),
+                        )}
                       </span>
                     )}
                   </div>
                   <Link
                     to="/blog/$slug"
                     params={{ slug: post.slug }}
-                    aria-label={`ادامه مطلب: ${post.title}`}
+                    aria-label={translateText(`ادامه مطلب: ${post.title}`)}
                     className="inline-flex items-center gap-1 text-xs font-medium text-brand hover:underline"
                   >
-                    ادامه مطلب <ChevronLeft className="h-3.5 w-3.5" />
+                    {translateText("ادامه مطلب ")}
+                    <ChevronLeft className="h-3.5 w-3.5" />
                   </Link>
                 </div>
               </motion.article>
@@ -208,20 +251,26 @@ function BlogIndexPage() {
 
         {totalPages > 1 && (
           <nav
-            aria-label="صفحه‌بندی بلاگ"
+            aria-label={translateText("صفحه‌بندی بلاگ")}
             className="mt-12 flex flex-wrap items-center justify-center gap-2"
           >
             <Link
               to="/blog"
-              search={(prev) => ({ ...prev, page: Math.max(1, currentPage - 1) })}
+              search={(prev) => ({
+                ...prev,
+                page: Math.max(1, currentPage - 1),
+              })}
               aria-disabled={currentPage <= 1}
-              aria-label="صفحه قبل"
+              aria-label={translateText("صفحه قبل")}
               className={`inline-flex h-9 w-9 items-center justify-center rounded-lg border border-border text-foreground transition-colors ${currentPage <= 1 ? "pointer-events-none opacity-40" : "hover:bg-secondary"}`}
             >
               <ChevronRight className="h-4 w-4" />
             </Link>
             {Array.from({ length: totalPages }, (_, i) => i + 1)
-              .filter((n) => n === 1 || n === totalPages || Math.abs(n - currentPage) <= 1)
+              .filter(
+                (n) =>
+                  n === 1 || n === totalPages || Math.abs(n - currentPage) <= 1,
+              )
               .map((n, idx, arr) => (
                 <span key={n} className="flex items-center gap-2">
                   {idx > 0 && arr[idx - 1] !== n - 1 && (
@@ -231,18 +280,21 @@ function BlogIndexPage() {
                     to="/blog"
                     search={(prev) => ({ ...prev, page: n })}
                     aria-current={n === currentPage ? "page" : undefined}
-                    aria-label={`رفتن به صفحه ${n}`}
+                    aria-label={translateText(`رفتن به صفحه ${n}`)}
                     className={`inline-flex h-9 w-9 items-center justify-center rounded-lg text-sm font-medium transition-colors ${n === currentPage ? "bg-brand text-primary-foreground" : "border border-border text-foreground hover:bg-secondary"}`}
                   >
-                    {n.toLocaleString("fa-IR")}
+                    {translateText(n.toLocaleString(locale))}
                   </Link>
                 </span>
               ))}
             <Link
               to="/blog"
-              search={(prev) => ({ ...prev, page: Math.min(totalPages, currentPage + 1) })}
+              search={(prev) => ({
+                ...prev,
+                page: Math.min(totalPages, currentPage + 1),
+              })}
               aria-disabled={currentPage >= totalPages}
-              aria-label="صفحه بعد"
+              aria-label={translateText("صفحه بعد")}
               className={`inline-flex h-9 w-9 items-center justify-center rounded-lg border border-border text-foreground transition-colors ${currentPage >= totalPages ? "pointer-events-none opacity-40" : "hover:bg-secondary"}`}
             >
               <ChevronLeft className="h-4 w-4" />

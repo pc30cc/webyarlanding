@@ -3,6 +3,8 @@ export interface PublicPlan {
   slug: string;
   name: string;
   description: string;
+  nameEn?: string | undefined;
+  descriptionEn?: string | undefined;
   isFree: boolean;
   /** قیمت ماهانه به تومان — null یعنی قیمت اعلام نشده (تماس بگیرید) */
   monthly: number | null;

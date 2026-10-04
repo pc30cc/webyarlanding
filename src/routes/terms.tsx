@@ -1,10 +1,15 @@
+import { localizeStructuredData } from "@/lib/site-i18n";
 import { createFileRoute } from "@tanstack/react-router";
 import { motion } from "framer-motion";
 import { fetchSettings } from "@/lib/settings.functions";
 import { getPublicSeoPage } from "@/lib/seo.functions";
-import { buildPageMeta, buildBreadcrumbJsonLd, safeJsonLdHtml } from "@/lib/seo-meta";
+import {
+  buildPageMeta,
+  buildBreadcrumbJsonLd,
+  safeJsonLdHtml,
+} from "@/lib/seo-meta";
 import { SiteLayout } from "@/components/site/SiteLayout";
-import { getBrandNameEn } from "@/lib/settings";
+import { getBrandNameEn, isEnglishChrome } from "@/lib/settings";
 
 export const Route = createFileRoute("/terms")({
   loader: async () => {
@@ -16,12 +21,14 @@ export const Route = createFileRoute("/terms")({
   },
   head: ({ loaderData }) => {
     if (!loaderData) return {};
-    const english = loaderData.settings.brand.legalEnglishChrome !== false;
+    const english = isEnglishChrome(loaderData.settings, "/terms");
     return buildPageMeta({
       settings: loaderData.settings,
       path: "/terms",
       override: loaderData.seoOverride,
-      fallbackTitle: english ? "Terms of Use | Webyar" : "قوانین و شرایط استفاده | وب‌یار",
+      fallbackTitle: english
+        ? "Terms of Use | Webyar"
+        : "قوانین و شرایط استفاده | وب‌یار",
       fallbackDescription: english
         ? "The terms and conditions that govern your use of the Webyar website, mobile apps and services, including subscriptions, acceptable use and liability."
         : "شرایط و قوانین استفاده از وب‌سایت، اپلیکیشن‌ها و سرویس‌های وب‌یار، شامل اشتراک‌ها، استفاده مجاز و مسئولیت‌ها.",
@@ -89,7 +96,7 @@ function sectionsEn(brand: string, email: string) {
     {
       title: "9. Service Availability",
       body: [
-        "We work to keep the Services available and reliable, but they are provided on an \"as is\" and \"as available\" basis, without warranties of any kind to the extent permitted by law. Planned maintenance is announced in advance where practical.",
+        'We work to keep the Services available and reliable, but they are provided on an "as is" and "as available" basis, without warranties of any kind to the extent permitted by law. Planned maintenance is announced in advance where practical.',
       ],
     },
     {
@@ -215,7 +222,7 @@ function sectionsFa(brand: string, email: string) {
 
 function TermsPage() {
   const { settings } = Route.useLoaderData();
-  const english = settings.brand.legalEnglishChrome !== false;
+  const english = isEnglishChrome(settings, "/terms");
   const base = (settings.brand.siteUrl || "").replace(/\/$/, "");
   const brandEn = getBrandNameEn(settings);
   const brand = english ? brandEn : settings.brand.name || brandEn;
@@ -230,18 +237,29 @@ function TermsPage() {
     },
     buildBreadcrumbJsonLd(settings, [
       { name: english ? "Home" : "خانه", path: "/" },
-      { name: english ? "Terms of Use" : "قوانین و شرایط استفاده", path: "/terms" },
+      {
+        name: english ? "Terms of Use" : "قوانین و شرایط استفاده",
+        path: "/terms",
+      },
     ]),
   ];
   const items = english ? sectionsEn(brand, email) : sectionsFa(brand, email);
   return (
     <SiteLayout settings={settings}>
-      <script type="application/ld+json" dangerouslySetInnerHTML={safeJsonLdHtml(jsonLd)} />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={safeJsonLdHtml(
+          localizeStructuredData(settings, jsonLd),
+        )}
+      />
       <div
         dir={english ? "ltr" : "rtl"}
         className={`container-page max-w-3xl py-16 sm:py-24 ${english ? "text-left" : "text-right"}`}
       >
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+        >
           <h1 className="mb-2 text-3xl font-extrabold text-foreground sm:text-4xl">
             {english ? "Terms of Use" : "قوانین و شرایط استفاده"}
           </h1>
@@ -259,10 +277,15 @@ function TermsPage() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: Math.min(i, 8) * 0.04 }}
             >
-              <h2 className="mb-3 text-lg font-bold text-foreground">{s.title}</h2>
+              <h2 className="mb-3 text-lg font-bold text-foreground">
+                {s.title}
+              </h2>
               <div className="space-y-2">
                 {s.body.map((p) => (
-                  <p key={p} className="text-sm leading-7 text-muted-foreground">
+                  <p
+                    key={p}
+                    className="text-sm leading-7 text-muted-foreground"
+                  >
                     {p}
                   </p>
                 ))}

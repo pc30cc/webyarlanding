@@ -1,3 +1,5 @@
+import { localizeStructuredData } from "@/lib/site-i18n";
+import { useSiteTranslation } from "@/components/site/SiteLanguage";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { motion } from "framer-motion";
 import { Check, ChevronLeft } from "lucide-react";
@@ -12,7 +14,11 @@ import {
 } from "@/lib/seo-meta";
 import { getIcon } from "@/lib/icon-registry";
 import { SiteLayout } from "@/components/site/SiteLayout";
-import { ScrollReveal, StaggerChildren, childVariant } from "@/components/site/animations";
+import {
+  ScrollReveal,
+  StaggerChildren,
+  childVariant,
+} from "@/components/site/animations";
 
 export const Route = createFileRoute("/solutions/")({
   loader: async () => {
@@ -47,14 +53,31 @@ const TINTS = [
 // این فیلتر با videoCall.enabled=false یا aiMarketing.enabled=false هر آیتمی که به همان موضوع
 // اشاره دارد را از این لیست پنهان می‌کند (برای حذف کامل، بهتر است در همان پنل هم از حالت انتشار
 // خارج شود).
-const CALL_KEYWORDS = ["تماس تصویری", "تماس ویدیویی", "ویدیویی", "تماس صوتی", "مرکز تماس"];
+const CALL_KEYWORDS = [
+  "تماس تصویری",
+  "تماس ویدیویی",
+  "ویدیویی",
+  "تماس صوتی",
+  "مرکز تماس",
+];
 const AI_KEYWORDS = ["هوش مصنوعی", "دستیار هوشمند", "ایجنت"];
-function mentionsAny(item: { title: string; shortDesc: string }, keywords: string[]): boolean {
-  return keywords.some((k) => item.title.includes(k) || item.shortDesc.includes(k));
+function mentionsAny(
+  item: { title: string; shortDesc: string },
+  keywords: string[],
+): boolean {
+  return keywords.some(
+    (k) => item.title.includes(k) || item.shortDesc.includes(k),
+  );
 }
 
 function SolutionsPage() {
-  const { settings, seoOverride, categories: allCategories } = Route.useLoaderData();
+  const translateText = useSiteTranslation();
+
+  const {
+    settings,
+    seoOverride,
+    categories: allCategories,
+  } = Route.useLoaderData();
   const callEnabled = settings.videoCall.enabled;
   const aiEnabled = settings.aiMarketing.enabled;
   const categories = allCategories
@@ -95,7 +118,12 @@ function SolutionsPage() {
 
   return (
     <SiteLayout settings={settings}>
-      <script type="application/ld+json" dangerouslySetInnerHTML={safeJsonLdHtml(jsonLd)} />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={safeJsonLdHtml(
+          localizeStructuredData(settings, jsonLd),
+        )}
+      />
 
       <section className="relative -mt-16 overflow-hidden pt-32 pb-12 sm:-mt-[4.75rem] sm:pt-[10.75rem] sm:pb-16">
         <div
@@ -117,13 +145,19 @@ function SolutionsPage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4 }}
           >
-            <div className="mb-3 text-sm font-bold text-primary">راه‌کارها</div>
+            <div className="mb-3 text-sm font-bold text-primary">
+              {translateText("راه‌کارها")}
+            </div>
             <h1 className="mb-6 text-3xl font-extrabold leading-[1.25] text-foreground sm:text-5xl">
-              راه‌حلی مخصوص <span className="text-brand">کسب‌وکار شما</span>
+              {translateText("راه‌حلی مخصوص ")}
+              <span className="text-brand">
+                {translateText("کسب‌وکار شما")}
+              </span>
             </h1>
             <p className="mx-auto max-w-2xl text-base leading-[1.9] text-muted-foreground sm:text-lg">
-              وب‌یار برای هر صنعت به شکل متفاوتی به کار می‌آید. راه‌کار اختصاصی حوزه فعالیت خودتان
-              را ببینید.
+              {translateText(
+                "وب‌یار برای هر صنعت به شکل متفاوتی به کار می‌آید. راه‌کار اختصاصی حوزه فعالیت خودتان را ببینید.",
+              )}
             </p>
           </motion.div>
         </div>
@@ -134,7 +168,7 @@ function SolutionsPage() {
           <div key={category.id}>
             <ScrollReveal className="mb-6">
               <h2 className="text-xl font-extrabold text-foreground sm:text-2xl">
-                {category.title}
+                {translateText(category.title)}
               </h2>
             </ScrollReveal>
             <StaggerChildren className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
@@ -153,9 +187,11 @@ function SolutionsPage() {
                       >
                         <Icon className={`h-7 w-7 ${tint.text}`} />
                       </div>
-                      <h3 className="mb-2 text-lg font-bold text-foreground">{s.title}</h3>
+                      <h3 className="mb-2 text-lg font-bold text-foreground">
+                        {translateText(s.title)}
+                      </h3>
                       <p className="mb-5 text-sm leading-relaxed text-muted-foreground">
-                        {s.shortDesc}
+                        {translateText(s.shortDesc)}
                       </p>
                       <ul className="mt-auto space-y-2">
                         {s.bullets.slice(0, 3).map((b) => (
@@ -164,12 +200,13 @@ function SolutionsPage() {
                             className="flex items-start gap-2 text-sm text-muted-foreground"
                           >
                             <Check className="mt-0.5 h-4 w-4 shrink-0 text-success" />
-                            <span>{b}</span>
+                            <span>{translateText(b)}</span>
                           </li>
                         ))}
                       </ul>
                       <span className="mt-5 inline-flex items-center gap-1 text-sm font-semibold text-primary">
-                        بیشتر بدانید <ChevronLeft className="h-3.5 w-3.5" />
+                        {translateText("بیشتر بدانید ")}
+                        <ChevronLeft className="h-3.5 w-3.5" />
                       </span>
                     </Link>
                   </motion.div>
@@ -183,24 +220,26 @@ function SolutionsPage() {
       <div className="bg-secondary/30 px-4 py-16 text-center sm:px-8 sm:py-24">
         <ScrollReveal className="mx-auto max-w-2xl">
           <h2 className="mb-4 text-2xl font-extrabold text-foreground sm:text-4xl">
-            صنعت خودتان را پیدا نکردید؟
+            {translateText("صنعت خودتان را پیدا نکردید؟")}
           </h2>
           <p className="mb-10 text-base leading-relaxed text-muted-foreground sm:text-lg">
-            وب‌یار برای هر کسب‌وکاری که نیاز به ارتباط زنده با مشتری دارد قابل تنظیم است. با ما تماس
-            بگیرید.
+            {translateText(
+              "وب‌یار برای هر کسب‌وکاری که نیاز به ارتباط زنده با مشتری دارد قابل تنظیم است. با ما تماس بگیرید.",
+            )}
           </p>
           <div className="flex flex-wrap items-center justify-center gap-4">
             <Link
               to="/contact"
               className="inline-flex items-center gap-2 rounded-xl bg-brand px-10 py-4 text-base font-bold text-primary-foreground shadow-lg shadow-primary/30"
             >
-              مشاوره رایگان <ChevronLeft className="h-4 w-4" />
+              {translateText("مشاوره رایگان ")}
+              <ChevronLeft className="h-4 w-4" />
             </Link>
             <Link
               to="/products"
               className="inline-flex items-center rounded-xl border border-border px-10 py-4 text-base font-semibold text-foreground transition-colors hover:bg-secondary"
             >
-              مشاهده محصولات
+              {translateText("مشاهده محصولات")}
             </Link>
           </div>
         </ScrollReveal>

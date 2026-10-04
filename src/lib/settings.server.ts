@@ -12,7 +12,9 @@ export async function loadSettings(): Promise<SiteSettings> {
       .select("setting_value")
       .eq("setting_key", SITE_KEY)
       .maybeSingle();
-    return mergeSettings(parseJson<Partial<SiteSettings>>(data?.setting_value, {}));
+    return mergeSettings(
+      parseJson<Partial<SiteSettings>>(data?.setting_value, {}),
+    );
   } catch (error) {
     // دیتابیس در دسترس نیست — صفحه عمومی با تنظیمات پیش‌فرض رندر می‌شود
     console.error("loadSettings failed, using defaults:", error);
@@ -21,7 +23,12 @@ export async function loadSettings(): Promise<SiteSettings> {
 }
 
 export async function saveSettings(next: SiteSettings): Promise<void> {
-  const { data } = await db.from("settings").select("id").eq("setting_key", SITE_KEY).maybeSingle();
+  const { data, error: readError } = await db
+    .from("settings")
+    .select("id")
+    .eq("setting_key", SITE_KEY)
+    .maybeSingle();
+  if (readError) throw readError;
   const payload = {
     setting_key: SITE_KEY,
     setting_value: JSON.stringify(next),
@@ -29,14 +36,23 @@ export async function saveSettings(next: SiteSettings): Promise<void> {
     updated_at: nowIso(),
   };
   if (data) {
-    await db.from("settings").update(payload).eq("id", data.id);
+    const { error } = await db
+      .from("settings")
+      .update(payload)
+      .eq("id", data.id);
+    if (error) throw error;
   } else {
-    await db.from("settings").insert({ id: newId(), ...payload });
+    const { error } = await db
+      .from("settings")
+      .insert({ id: newId(), ...payload });
+    if (error) throw error;
   }
 }
 
 /** تنظیمات محرمانه (اتصال FTP/رسانه و مانند آن) — هرگز به کلاینت ارسال نمی‌شود */
-export async function loadPrivateSettings<T extends object>(fallback: T): Promise<T> {
+export async function loadPrivateSettings<T extends object>(
+  fallback: T,
+): Promise<T> {
   const { data } = await db
     .from("settings")
     .select("setting_value")
@@ -100,7 +116,9 @@ export async function loadMediaKeys(): Promise<MediaApiKeys> {
   return { ...MEDIA_KEYS_DEFAULTS, ...stored };
 }
 
-export async function saveMediaKeys(partial: Partial<MediaApiKeys>): Promise<void> {
+export async function saveMediaKeys(
+  partial: Partial<MediaApiKeys>,
+): Promise<void> {
   const stored = await loadPrivateSettings<Partial<MediaApiKeys>>({});
   await savePrivateSettings({ ...stored, ...partial });
 }
@@ -112,14 +130,19 @@ export interface TelegramApiKeys {
   telegramWebhookSecret: string;
 }
 
-const TELEGRAM_KEYS_DEFAULTS: TelegramApiKeys = { telegramBotToken: "", telegramWebhookSecret: "" };
+const TELEGRAM_KEYS_DEFAULTS: TelegramApiKeys = {
+  telegramBotToken: "",
+  telegramWebhookSecret: "",
+};
 
 export async function loadTelegramKeys(): Promise<TelegramApiKeys> {
   const stored = await loadPrivateSettings<Partial<TelegramApiKeys>>({});
   return { ...TELEGRAM_KEYS_DEFAULTS, ...stored };
 }
 
-export async function saveTelegramKeys(partial: Partial<TelegramApiKeys>): Promise<void> {
+export async function saveTelegramKeys(
+  partial: Partial<TelegramApiKeys>,
+): Promise<void> {
   const stored = await loadPrivateSettings<Partial<TelegramApiKeys>>({});
   await savePrivateSettings({ ...stored, ...partial });
 }
@@ -160,7 +183,9 @@ export async function loadDestinationDb(): Promise<DestinationDbSettings> {
   return { ...DESTINATION_DB_DEFAULTS, ...stored };
 }
 
-export async function saveDestinationDb(partial: Partial<DestinationDbSettings>): Promise<void> {
+export async function saveDestinationDb(
+  partial: Partial<DestinationDbSettings>,
+): Promise<void> {
   const stored = await loadPrivateSettings<Partial<DestinationDbSettings>>({});
   await savePrivateSettings({ ...stored, ...partial });
 }

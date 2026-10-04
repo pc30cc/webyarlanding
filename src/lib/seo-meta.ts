@@ -1,3 +1,4 @@
+import { translatorForSettings, getSiteLanguage } from "./site-i18n";
 // ابزار مشترک برای ادغام تنظیمات عمومی سئو با override اختصاصی هر صفحه (seo_pages)
 // در loader/head صفحات مارکتینگ. خالص و بدون فراخوانی دیتابیس.
 import type { SiteSettings } from "./settings";
@@ -15,11 +16,17 @@ export function looksLikeRobotsTxt(value: string | null | undefined): boolean {
 
 /** آیا مقدار ذخیره‌شده شبیه مقدار متای robots (index,follow و…) است؟ */
 export function looksLikeMetaRobots(value: string | null | undefined): boolean {
-  return !!value && META_ROBOTS_PATTERN.test(value) && !ROBOTS_TXT_PATTERN.test(value);
+  return (
+    !!value &&
+    META_ROBOTS_PATTERN.test(value) &&
+    !ROBOTS_TXT_PATTERN.test(value)
+  );
 }
 
 /** پارس امن schemaJson اختصاصی صفحه؛ در صورت نامعتبر بودن null برمی‌گرداند. */
-export function parseSchemaJson(raw: string | null | undefined): unknown | null {
+export function parseSchemaJson(
+  raw: string | null | undefined,
+): unknown | null {
   if (!raw) return null;
   try {
     return JSON.parse(raw);
@@ -96,17 +103,25 @@ export function buildPageMeta(opts: {
   } = opts;
   const base = (settings.brand.siteUrl || "").replace(/\/$/, "");
 
-  const title = override?.title || fallbackTitle;
-  const description = override?.description || fallbackDescription || settings.seo.metaDescription;
+  const translate = translatorForSettings(settings);
+  const title = translate(override?.title || fallbackTitle);
+  const description = translate(
+    override?.description ||
+      fallbackDescription ||
+      settings.seo.metaDescription,
+  );
   const ogImage =
     override?.ogImage ||
     fallbackOgImage ||
     settings.seo.ogImage ||
     (base ? `${base}/og-image.png` : "/og-image.png");
-  const canonical = override?.canonicalUrl || (base ? `${base}${path}` : undefined);
+  const canonical =
+    override?.canonicalUrl || (base ? `${base}${path}` : undefined);
   const robots =
     override?.robots ||
-    (looksLikeMetaRobots(settings.seo.robots) ? settings.seo.robots : defaultRobots);
+    (looksLikeMetaRobots(settings.seo.robots)
+      ? settings.seo.robots
+      : defaultRobots);
 
   return {
     meta: [
@@ -121,7 +136,15 @@ export function buildPageMeta(opts: {
       { name: "twitter:description", content: description },
       { name: "twitter:image", content: ogImage },
       ...(canonical ? [{ property: "og:url", content: canonical }] : []),
-      ...extraMeta,
+      {
+        property: "og:locale",
+        content: getSiteLanguage(settings) === "en" ? "en_US" : "fa_IR",
+      },
+      ...extraMeta.map((entry) =>
+        /article:(tag|author)/.test(entry.property || "")
+          ? { ...entry, content: translate(entry.content) }
+          : entry,
+      ),
     ],
     links: canonical ? [{ rel: "canonical", href: canonical }] : [],
   };
@@ -139,7 +162,7 @@ export function buildBreadcrumbJsonLd(
     itemListElement: items.map((item, i) => ({
       "@type": "ListItem",
       position: i + 1,
-      name: item.name,
+      name: translatorForSettings(settings)(item.name),
       item: item.path ? (base ? `${base}${item.path}` : undefined) : undefined,
     })),
   };

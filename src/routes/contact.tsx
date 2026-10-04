@@ -1,3 +1,5 @@
+import { localizeStructuredData } from "@/lib/site-i18n";
+import { useSiteTranslation } from "@/components/site/SiteLanguage";
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -7,7 +9,11 @@ import { Phone, MapPin, Send, ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
 import { fetchSettings } from "@/lib/settings.functions";
 import { getPublicSeoPage } from "@/lib/seo.functions";
-import { buildPageMeta, buildBreadcrumbJsonLd, safeJsonLdHtml } from "@/lib/seo-meta";
+import {
+  buildPageMeta,
+  buildBreadcrumbJsonLd,
+  safeJsonLdHtml,
+} from "@/lib/seo-meta";
 import { submitContactMessage } from "@/lib/contact.functions";
 import { getCaptchaChallenge } from "@/lib/captcha.functions";
 import { SiteLayout } from "@/components/site/SiteLayout";
@@ -31,16 +37,25 @@ export const Route = createFileRoute("/contact")({
       path: "/contact",
       override: loaderData.seoOverride,
       fallbackTitle: "تماس با ما | وب‌یار",
-      fallbackDescription: "سوالی دارید؟ ما آماده پاسخ‌گویی هستیم. با تیم وب‌یار در ارتباط باشید.",
+      fallbackDescription:
+        "سوالی دارید؟ ما آماده پاسخ‌گویی هستیم. با تیم وب‌یار در ارتباط باشید.",
     });
   },
   component: ContactPage,
 });
 
 function ContactPage() {
+  const translateText = useSiteTranslation();
+
   const { settings } = Route.useLoaderData();
   const [sending, setSending] = useState(false);
-  const [form, setForm] = useState({ name: "", email: "", phone: "", subject: "", message: "" });
+  const [form, setForm] = useState({
+    name: "",
+    email: "",
+    phone: "",
+    subject: "",
+    message: "",
+  });
   const [captchaAnswer, setCaptchaAnswer] = useState("");
 
   const captchaFn = useServerFn(getCaptchaChallenge);
@@ -64,23 +79,23 @@ function ContactPage() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (form.name.trim().length < 2) {
-      toast.error("نام باید حداقل ۲ کاراکتر باشد");
+      toast.error(translateText("نام باید حداقل ۲ کاراکتر باشد"));
       return;
     }
     if (!/^\S+@\S+\.\S+$/.test(form.email)) {
-      toast.error("ایمیل معتبر نیست");
+      toast.error(translateText("ایمیل معتبر نیست"));
       return;
     }
     if (form.subject.trim().length < 2) {
-      toast.error("موضوع الزامی است");
+      toast.error(translateText("موضوع الزامی است"));
       return;
     }
     if (form.message.trim().length < 5) {
-      toast.error("پیام باید حداقل ۵ کاراکتر باشد");
+      toast.error(translateText("پیام باید حداقل ۵ کاراکتر باشد"));
       return;
     }
     if (!captcha || !captchaAnswer.trim()) {
-      toast.error("لطفاً پاسخ کد امنیتی را وارد کنید");
+      toast.error(translateText("لطفاً پاسخ کد امنیتی را وارد کنید"));
       return;
     }
 
@@ -89,12 +104,16 @@ function ContactPage() {
       await submitContactMessage({
         data: { ...form, captchaToken: captcha.token, captchaAnswer },
       });
-      toast.success("پیام شما با موفقیت ارسال شد.");
+      toast.success(translateText("پیام شما با موفقیت ارسال شد."));
       setForm({ name: "", email: "", phone: "", subject: "", message: "" });
       refreshCaptcha();
     } catch (error) {
       toast.error(
-        error instanceof Error ? error.message : "خطا در ارسال پیام. لطفاً دوباره تلاش کنید.",
+        translateText(
+          error instanceof Error
+            ? error.message
+            : "خطا در ارسال پیام. لطفاً دوباره تلاش کنید.",
+        ),
       );
       refreshCaptcha();
     } finally {
@@ -127,15 +146,24 @@ function ContactPage() {
 
   return (
     <SiteLayout settings={settings}>
-      <script type="application/ld+json" dangerouslySetInnerHTML={safeJsonLdHtml(jsonLd)} />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={safeJsonLdHtml(
+          localizeStructuredData(settings, jsonLd),
+        )}
+      />
       <div className="container-page max-w-5xl py-16 sm:py-24">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           className="mb-12"
         >
-          <h1 className="mb-4 text-3xl font-extrabold text-foreground sm:text-5xl">تماس با ما</h1>
-          <p className="text-base text-muted-foreground">سوالی دارید؟ ما آماده پاسخ‌گویی هستیم</p>
+          <h1 className="mb-4 text-3xl font-extrabold text-foreground sm:text-5xl">
+            {translateText("تماس با ما")}
+          </h1>
+          <p className="text-base text-muted-foreground">
+            {translateText("سوالی دارید؟ ما آماده پاسخ‌گویی هستیم")}
+          </p>
         </motion.div>
 
         <div className="grid grid-cols-1 gap-8 md:grid-cols-5">
@@ -146,7 +174,9 @@ function ContactPage() {
             >
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div>
-                  <Label className="text-xs">نام و نام خانوادگی</Label>
+                  <Label className="text-xs">
+                    {translateText("نام و نام خانوادگی")}
+                  </Label>
                   <Input
                     className="mt-1"
                     value={form.name}
@@ -155,51 +185,57 @@ function ContactPage() {
                   />
                 </div>
                 <div>
-                  <Label className="text-xs">ایمیل</Label>
+                  <Label className="text-xs">{translateText("ایمیل")}</Label>
                   <Input
                     type="email"
                     className="mt-1"
                     value={form.email}
-                    onChange={(e) => setForm({ ...form, email: e.target.value })}
+                    onChange={(e) =>
+                      setForm({ ...form, email: e.target.value })
+                    }
                     required
                   />
                 </div>
               </div>
               <div>
-                <Label className="text-xs">موضوع</Label>
+                <Label className="text-xs">{translateText("موضوع")}</Label>
                 <Input
                   className="mt-1"
                   value={form.subject}
-                  onChange={(e) => setForm({ ...form, subject: e.target.value })}
+                  onChange={(e) =>
+                    setForm({ ...form, subject: e.target.value })
+                  }
                   required
                 />
               </div>
               <div>
-                <Label className="text-xs">پیام</Label>
+                <Label className="text-xs">{translateText("پیام")}</Label>
                 <Textarea
                   className="mt-1"
                   rows={5}
                   value={form.message}
-                  onChange={(e) => setForm({ ...form, message: e.target.value })}
+                  onChange={(e) =>
+                    setForm({ ...form, message: e.target.value })
+                  }
                   required
                 />
               </div>
               <div>
                 <Label className="flex items-center gap-1.5 text-xs">
                   <ShieldCheck className="h-3.5 w-3.5" />
-                  کد امنیتی: حاصل جمع زیر چند می‌شود؟
+                  {translateText("کد امنیتی: حاصل جمع زیر چند می‌شود؟")}
                 </Label>
                 <div className="mt-1 flex items-center gap-3">
                   <div
                     dir="ltr"
                     className="flex h-11 min-w-20 items-center justify-center rounded-md border border-border bg-muted px-4 text-lg font-bold tracking-wider text-foreground"
                   >
-                    {captcha ? captcha.question : "…"}
+                    {translateText(captcha ? captcha.question : "…")}
                   </div>
                   <Input
                     dir="ltr"
                     inputMode="numeric"
-                    placeholder="پاسخ"
+                    placeholder={translateText("پاسخ")}
                     className="max-w-32"
                     value={captchaAnswer}
                     onChange={(e) => setCaptchaAnswer(e.target.value)}
@@ -209,7 +245,7 @@ function ContactPage() {
               </div>
               <Button type="submit" disabled={sending} className="h-11 w-full">
                 <Send className="me-2 h-4 w-4" />
-                {sending ? "در حال ارسال..." : "ارسال پیام"}
+                {translateText(sending ? "در حال ارسال..." : "ارسال پیام")}
               </Button>
             </form>
           </div>
@@ -224,8 +260,12 @@ function ContactPage() {
               >
                 <c.icon className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
                 <div>
-                  <div className="text-sm font-semibold text-foreground">{c.label}</div>
-                  <div className="mt-1 text-xs text-muted-foreground">{c.value}</div>
+                  <div className="text-sm font-semibold text-foreground">
+                    {translateText(c.label)}
+                  </div>
+                  <div className="mt-1 text-xs text-muted-foreground">
+                    {translateText(c.value)}
+                  </div>
                 </div>
               </motion.div>
             ))}

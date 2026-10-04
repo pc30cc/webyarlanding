@@ -24,7 +24,8 @@
   font-display: swap;
   font-weight: 400;
   src: url("/fonts/IRANSansWeb.woff2") format("woff2");
-  unicode-range: U+0600-06FF, U+200C-200D, U+2010-2011, U+FB50-FDFF, U+FE70-FEFF;
+  unicode-range:
+    U+0600-06FF, U+200C-200D, U+2010-2011, U+FB50-FDFF, U+FE70-FEFF;
 }
 
 @font-face {
@@ -33,7 +34,8 @@
   font-display: swap;
   font-weight: 500;
   src: url("/fonts/IRANSansWeb-Medium.woff2") format("woff2");
-  unicode-range: U+0600-06FF, U+200C-200D, U+2010-2011, U+FB50-FDFF, U+FE70-FEFF;
+  unicode-range:
+    U+0600-06FF, U+200C-200D, U+2010-2011, U+FB50-FDFF, U+FE70-FEFF;
 }
 
 @font-face {
@@ -42,7 +44,8 @@
   font-display: swap;
   font-weight: 600 900;
   src: url("/fonts/IRANSansWeb-Bold.woff2") format("woff2");
-  unicode-range: U+0600-06FF, U+200C-200D, U+2010-2011, U+FB50-FDFF, U+FE70-FEFF;
+  unicode-range:
+    U+0600-06FF, U+200C-200D, U+2010-2011, U+FB50-FDFF, U+FE70-FEFF;
 }
 
 @font-face {
@@ -51,7 +54,9 @@
   font-display: swap;
   font-weight: 100 900;
   src: url("/fonts/Inter-Medium.woff2") format("woff2");
-  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+  unicode-range:
+    U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC,
+    U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
 }
 
 @theme inline {
@@ -162,8 +167,16 @@
   --sidebar-border: oklch(0.92 0.01 285);
   --sidebar-ring: oklch(0.606 0.216 292);
 
-  --gradient-brand: linear-gradient(135deg, oklch(0.606 0.216 292), oklch(0.62 0.196 262));
-  --gradient-soft: linear-gradient(160deg, oklch(0.97 0.03 292), oklch(0.975 0.025 262));
+  --gradient-brand: linear-gradient(
+    135deg,
+    oklch(0.606 0.216 292),
+    oklch(0.62 0.196 262)
+  );
+  --gradient-soft: linear-gradient(
+    160deg,
+    oklch(0.97 0.03 292),
+    oklch(0.975 0.025 262)
+  );
   --shadow-card: 0 8px 30px -12px oklch(0.4 0.12 285 / 0.18);
   --shadow-glow: 0 18px 45px -18px oklch(0.606 0.216 292 / 0.45);
 }
@@ -213,8 +226,16 @@
   --sidebar-border: oklch(1 0 0 / 12%);
   --sidebar-ring: oklch(0.68 0.19 292);
 
-  --gradient-brand: linear-gradient(135deg, oklch(0.62 0.2 292), oklch(0.6 0.18 262));
-  --gradient-soft: linear-gradient(160deg, oklch(0.25 0.04 292), oklch(0.24 0.035 262));
+  --gradient-brand: linear-gradient(
+    135deg,
+    oklch(0.62 0.2 292),
+    oklch(0.6 0.18 262)
+  );
+  --gradient-soft: linear-gradient(
+    160deg,
+    oklch(0.25 0.04 292),
+    oklch(0.24 0.035 262)
+  );
   --shadow-card: 0 8px 30px -12px oklch(0.08 0.02 285 / 0.6);
   --shadow-glow: 0 18px 45px -18px oklch(0.62 0.2 292 / 0.5);
 }
@@ -336,9 +357,19 @@
   --border: oklch(1 0 0 / 9%);
   --input: oklch(1 0 0 / 13%);
   --ring: oklch(0.8 0.15 172);
-  --gradient-brand: linear-gradient(120deg, oklch(0.82 0.15 172), oklch(0.72 0.17 230) 45%, oklch(0.7 0.2 295));
-  --gradient-soft: linear-gradient(160deg, oklch(0.2 0.04 190), oklch(0.19 0.04 290));
-  --shadow-card: 0 1px 0 0 oklch(1 0 0 / 6%) inset, 0 20px 50px -24px oklch(0 0 0 / 0.7);
+  --gradient-brand: linear-gradient(
+    120deg,
+    oklch(0.82 0.15 172),
+    oklch(0.72 0.17 230) 45%,
+    oklch(0.7 0.2 295)
+  );
+  --gradient-soft: linear-gradient(
+    160deg,
+    oklch(0.2 0.04 190),
+    oklch(0.19 0.04 290)
+  );
+  --shadow-card:
+    0 1px 0 0 oklch(1 0 0 / 6%) inset, 0 20px 50px -24px oklch(0 0 0 / 0.7);
   --shadow-glow: 0 20px 60px -20px oklch(0.8 0.15 172 / 0.45);
   background-color: var(--background);
   color: var(--foreground);
@@ -376,14 +407,38 @@ body:has(.site-theme) {
   --border: oklch(0.22 0.04 265 / 10%);
   --input: oklch(0.22 0.04 265 / 14%);
   --ring: oklch(0.56 0.13 180);
-  --gradient-brand: linear-gradient(120deg, oklch(0.6 0.14 178), oklch(0.56 0.18 245) 45%, oklch(0.58 0.23 300) 80%, oklch(0.68 0.19 35));
-  --gradient-soft: linear-gradient(160deg, oklch(0.95 0.04 180), oklch(0.95 0.04 300));
-  --shadow-card: 0 1px 2px oklch(0.22 0.04 265 / 6%), 0 24px 50px -28px oklch(0.3 0.08 270 / 0.35);
+  --gradient-brand: linear-gradient(
+    120deg,
+    oklch(0.6 0.14 178),
+    oklch(0.56 0.18 245) 45%,
+    oklch(0.58 0.23 300) 80%,
+    oklch(0.68 0.19 35)
+  );
+  --gradient-soft: linear-gradient(
+    160deg,
+    oklch(0.95 0.04 180),
+    oklch(0.95 0.04 300)
+  );
+  --shadow-card:
+    0 1px 2px oklch(0.22 0.04 265 / 6%),
+    0 24px 50px -28px oklch(0.3 0.08 270 / 0.35);
   --shadow-glow: 0 18px 44px -16px oklch(0.56 0.18 250 / 0.5);
   background-image:
-    radial-gradient(60rem 30rem at 100% -5%, oklch(0.9 0.08 185 / 0.55), transparent 60%),
-    radial-gradient(50rem 28rem at -10% 30%, oklch(0.9 0.08 300 / 0.45), transparent 60%),
-    radial-gradient(40rem 24rem at 60% 110%, oklch(0.92 0.07 40 / 0.4), transparent 60%);
+    radial-gradient(
+      60rem 30rem at 100% -5%,
+      oklch(0.9 0.08 185 / 0.55),
+      transparent 60%
+    ),
+    radial-gradient(
+      50rem 28rem at -10% 30%,
+      oklch(0.9 0.08 300 / 0.45),
+      transparent 60%
+    ),
+    radial-gradient(
+      40rem 24rem at 60% 110%,
+      oklch(0.92 0.07 40 / 0.4),
+      transparent 60%
+    );
 }
 html:has(.site-light),
 body:has(.site-light) {
@@ -395,7 +450,10 @@ body:has(.site-light) {
     linear-gradient(to bottom, oklch(0.25 0.05 265 / 6%) 1px, transparent 1px);
 }
 .site-light .bg-dots {
-  background-image: radial-gradient(oklch(0.25 0.05 265 / 14%) 1px, transparent 1px);
+  background-image: radial-gradient(
+    oklch(0.25 0.05 265 / 14%) 1px,
+    transparent 1px
+  );
 }
 .site-light .glass {
   background-color: color-mix(in oklab, var(--card) 75%, transparent);
@@ -432,7 +490,12 @@ body {
 }
 
 @utility text-shine {
-  background-image: linear-gradient(110deg, var(--foreground) 35%, var(--primary) 50%, var(--foreground) 65%);
+  background-image: linear-gradient(
+    110deg,
+    var(--foreground) 35%,
+    var(--primary) 50%,
+    var(--foreground) 65%
+  );
   background-size: 250% 100%;
   background-clip: text;
   color: transparent;
@@ -453,29 +516,58 @@ body {
 }
 
 @keyframes shine {
-  from { background-position: 100% 0; }
-  to { background-position: -150% 0; }
+  from {
+    background-position: 100% 0;
+  }
+  to {
+    background-position: -150% 0;
+  }
 }
 @keyframes marquee-rtl {
-  from { transform: translateX(0); }
-  to { transform: translateX(50%); }
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(50%);
+  }
 }
 @keyframes spin-slow {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 @keyframes aurora {
-  0%, 100% { transform: translate(0, 0) scale(1); }
-  33% { transform: translate(6%, -8%) scale(1.12); }
-  66% { transform: translate(-6%, 6%) scale(0.95); }
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+  33% {
+    transform: translate(6%, -8%) scale(1.12);
+  }
+  66% {
+    transform: translate(-6%, 6%) scale(0.95);
+  }
 }
 @keyframes ping-soft {
-  0% { transform: scale(1); opacity: 0.6; }
-  100% { transform: scale(2.4); opacity: 0; }
+  0% {
+    transform: scale(1);
+    opacity: 0.6;
+  }
+  100% {
+    transform: scale(2.4);
+    opacity: 0;
+  }
 }
 
-.animate-marquee { animation: marquee-rtl var(--marquee-duration, 40s) linear infinite; }
-.animate-aurora { animation: aurora 18s ease-in-out infinite; }
-.animate-ping-soft { animation: ping-soft 2.2s cubic-bezier(0, 0, 0.2, 1) infinite; }
+.animate-marquee {
+  animation: marquee-rtl var(--marquee-duration, 40s) linear infinite;
+}
+.animate-aurora {
+  animation: aurora 18s ease-in-out infinite;
+}
+.animate-ping-soft {
+  animation: ping-soft 2.2s cubic-bezier(0, 0, 0.2, 1) infinite;
+}
 
 /* حاشیه نورانی چرخان (Border Beam) */
 .beam-border {
@@ -489,8 +581,16 @@ body {
   z-index: -1;
   border-radius: inherit;
   padding: 1px;
-  background: conic-gradient(from var(--beam-angle, 0deg), transparent 0 70%, var(--primary) 80%, var(--accent) 90%, transparent 100%);
-  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  background: conic-gradient(
+    from var(--beam-angle, 0deg),
+    transparent 0 70%,
+    var(--primary) 80%,
+    var(--accent) 90%,
+    transparent 100%
+  );
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
   -webkit-mask-composite: xor;
   mask-composite: exclude;
   animation: beam-rotate 6s linear infinite;
@@ -501,7 +601,9 @@ body {
   inherits: false;
 }
 @keyframes beam-rotate {
-  to { --beam-angle: 360deg; }
+  to {
+    --beam-angle: 360deg;
+  }
 }
 
 /* دکمه درخشان (Shimmer) */
@@ -516,13 +618,23 @@ body {
   content: "";
   position: absolute;
   inset: 0;
-  background: linear-gradient(110deg, transparent 30%, oklch(1 0 0 / 45%) 50%, transparent 70%);
+  background: linear-gradient(
+    110deg,
+    transparent 30%,
+    oklch(1 0 0 / 45%) 50%,
+    transparent 70%
+  );
   transform: translateX(-120%);
   animation: shimmer-sweep 3.2s ease-in-out infinite;
 }
 @keyframes shimmer-sweep {
-  0%, 60% { transform: translateX(120%); }
-  100% { transform: translateX(-120%); }
+  0%,
+  60% {
+    transform: translateX(120%);
+  }
+  100% {
+    transform: translateX(-120%);
+  }
 }
 
 /* کارت با نورافکن دنبال‌کننده ماوس */
@@ -537,15 +649,36 @@ body {
   border-radius: inherit;
   opacity: 0;
   transition: opacity 0.3s;
-  background: radial-gradient(420px circle at var(--mx, 50%) var(--my, 50%), oklch(0.8 0.15 172 / 0.12), transparent 45%);
+  background: radial-gradient(
+    420px circle at var(--mx, 50%) var(--my, 50%),
+    oklch(0.8 0.15 172 / 0.12),
+    transparent 45%
+  );
 }
-.spotlight:hover::after { opacity: 1; }
+.spotlight:hover::after {
+  opacity: 1;
+}
 
-.no-scrollbar::-webkit-scrollbar { display: none; }
-.no-scrollbar { scrollbar-width: none; }
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  scrollbar-width: none;
+}
 
 @media (prefers-reduced-motion: reduce) {
-  .animate-marquee, .animate-aurora, .animate-ping-soft, .btn-shimmer::after, .beam-border::before, .text-shine {
+  .animate-marquee,
+  .animate-aurora,
+  .animate-ping-soft,
+  .btn-shimmer::after,
+  .beam-border::before,
+  .text-shine {
     animation: none !important;
   }
+}
+
+/* Directional navigation icons follow the selected public site language. */
+.site-theme[dir="ltr"] .lucide-chevron-left,
+.site-theme[dir="ltr"] .lucide-arrow-right {
+  transform: scaleX(-1);
 }

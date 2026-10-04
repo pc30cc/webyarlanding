@@ -1,9 +1,18 @@
+import { localizeStructuredData } from "@/lib/site-i18n";
+import {
+  useSiteLocale,
+  useSiteTranslation,
+} from "@/components/site/SiteLanguage";
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { motion } from "framer-motion";
 import ReactMarkdown from "react-markdown";
 import { ArrowRight, Calendar, User, Tag as TagIcon } from "lucide-react";
 import { fetchSettings } from "@/lib/settings.functions";
-import { buildPageMeta, buildBreadcrumbJsonLd, safeJsonLdHtml } from "@/lib/seo-meta";
+import {
+  buildPageMeta,
+  buildBreadcrumbJsonLd,
+  safeJsonLdHtml,
+} from "@/lib/seo-meta";
 import { getPublishedPost, listPublishedPosts } from "@/lib/blog.functions";
 import { SiteLayout } from "@/components/site/SiteLayout";
 
@@ -15,7 +24,9 @@ export const Route = createFileRoute("/blog/$slug")({
     ]);
     if (!post) throw notFound();
     const related = (
-      await listPublishedPosts({ data: { categorySlug: post.categorySlug ?? undefined, limit: 4 } })
+      await listPublishedPosts({
+        data: { categorySlug: post.categorySlug ?? undefined, limit: 4 },
+      })
     )
       .filter((p) => p.slug !== post.slug)
       .slice(0, 3);
@@ -35,29 +46,20 @@ export const Route = createFileRoute("/blog/$slug")({
       ...(post.coverImage ? { fallbackOgImage: post.coverImage } : {}),
       ogType: "article",
       extraMeta: [
-        { property: "article:published_time", content: post.publishedAt || post.createdAt },
+        {
+          property: "article:published_time",
+          content: post.publishedAt || post.createdAt,
+        },
         { property: "article:modified_time", content: post.updatedAt },
-        ...(post.author ? [{ property: "article:author", content: post.author }] : []),
+        ...(post.author
+          ? [{ property: "article:author", content: post.author }]
+          : []),
         ...post.tags.map((tag) => ({ property: "article:tag", content: tag })),
       ],
     });
   },
-  notFoundComponent: () => (
-    <div className="container-page flex min-h-[50vh] flex-col items-center justify-center gap-4 py-24 text-center">
-      <h1 className="text-2xl font-extrabold text-foreground">مقاله یافت نشد</h1>
-      <Link to="/blog" className="text-sm text-brand hover:underline">
-        بازگشت به بلاگ
-      </Link>
-    </div>
-  ),
-  errorComponent: () => (
-    <div className="container-page flex min-h-[50vh] flex-col items-center justify-center gap-4 py-24 text-center">
-      <h1 className="text-2xl font-extrabold text-foreground">خطایی رخ داد</h1>
-      <Link to="/blog" className="text-sm text-brand hover:underline">
-        بازگشت به بلاگ
-      </Link>
-    </div>
-  ),
+  notFoundComponent: BlogNotFound,
+  errorComponent: BlogError,
   component: BlogPostPage,
 });
 
@@ -71,6 +73,9 @@ function tagSlug(input: string): string {
 }
 
 function BlogPostPage() {
+  const translateText = useSiteTranslation();
+  const locale = useSiteLocale();
+
   const { settings, post, related } = Route.useLoaderData();
 
   const base = (settings.brand.siteUrl || "").replace(/\/$/, "");
@@ -104,31 +109,41 @@ function BlogPostPage() {
 
   return (
     <SiteLayout settings={settings}>
-      <script type="application/ld+json" dangerouslySetInnerHTML={safeJsonLdHtml(jsonLd)} />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={safeJsonLdHtml(
+          localizeStructuredData(settings, jsonLd),
+        )}
+      />
       <div className="container-page max-w-3xl py-16 sm:py-24">
         <Link
           to="/blog"
           className="mb-8 inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-brand"
         >
           <ArrowRight className="h-4 w-4" />
-          بازگشت به بلاگ
+          {translateText("بازگشت به بلاگ")}
         </Link>
 
-        <motion.article initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
+        <motion.article
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+        >
           <h1 className="mb-4 mt-4 text-2xl font-extrabold leading-tight text-foreground sm:text-4xl">
-            {post.title}
+            {translateText(post.title)}
           </h1>
           <div className="mb-6 flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
             {post.author && (
               <span className="flex items-center gap-1.5">
                 <User className="h-4 w-4" />
-                {post.author}
+                {translateText(post.author)}
               </span>
             )}
             {post.publishedAt && (
               <span className="flex items-center gap-1.5">
                 <Calendar className="h-4 w-4" />
-                {new Date(post.publishedAt).toLocaleDateString("fa-IR")}
+                {translateText(
+                  new Date(post.publishedAt).toLocaleDateString(locale),
+                )}
               </span>
             )}
           </div>
@@ -136,7 +151,7 @@ function BlogPostPage() {
             <div className="mb-8 overflow-hidden rounded-xl border border-border">
               <img
                 src={post.coverImage}
-                alt={post.title}
+                alt={translateText(post.title)}
                 width={1000}
                 height={400}
                 loading="eager"
@@ -147,13 +162,13 @@ function BlogPostPage() {
           )}
           {post.excerpt && (
             <p className="mb-8 border-s-4 border-primary/30 ps-4 text-base leading-relaxed text-muted-foreground">
-              {post.excerpt}
+              {translateText(post.excerpt)}
             </p>
           )}
 
           <div className="prose prose-sm max-w-none prose-headings:text-foreground prose-p:text-muted-foreground prose-a:text-brand sm:prose-base dark:prose-invert">
             <ReactMarkdown components={{ h1: (props) => <h2 {...props} /> }}>
-              {post.content}
+              {translateText(post.content)}
             </ReactMarkdown>
           </div>
 
@@ -161,7 +176,7 @@ function BlogPostPage() {
             <footer className="mt-10 border-t border-border pt-6">
               <div className="mb-3 flex items-center gap-2 text-sm font-medium text-foreground">
                 <TagIcon className="h-4 w-4 text-primary" />
-                برچسب‌ها
+                {translateText("برچسب‌ها")}
               </div>
               <ul className="flex flex-wrap gap-2">
                 {post.tags.map((tag) => (
@@ -171,7 +186,7 @@ function BlogPostPage() {
                       params={{ slug: tagSlug(tag) }}
                       className="inline-flex items-center rounded-full bg-primary/10 px-3 py-1 text-xs text-brand transition-colors hover:bg-primary/20"
                     >
-                      #{tag}
+                      #{translateText(tag)}
                     </Link>
                   </li>
                 ))}
@@ -182,7 +197,9 @@ function BlogPostPage() {
 
         {related.length > 0 && (
           <div className="mt-16 border-t border-border pt-10">
-            <h2 className="mb-6 text-lg font-bold text-foreground">مقالات مرتبط</h2>
+            <h2 className="mb-6 text-lg font-bold text-foreground">
+              {translateText("مقالات مرتبط")}
+            </h2>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
               {related.map((r) => (
                 <Link
@@ -191,7 +208,9 @@ function BlogPostPage() {
                   params={{ slug: r.slug }}
                   className="rounded-xl border border-border bg-card p-4 shadow-card transition-colors hover:border-primary/30"
                 >
-                  <div className="line-clamp-2 text-sm font-bold text-foreground">{r.title}</div>
+                  <div className="line-clamp-2 text-sm font-bold text-foreground">
+                    {translateText(r.title)}
+                  </div>
                 </Link>
               ))}
             </div>
@@ -199,5 +218,25 @@ function BlogPostPage() {
         )}
       </div>
     </SiteLayout>
+  );
+}
+
+function BlogNotFound() {
+  const translateText = useSiteTranslation();
+  return <BlogFallback title={translateText("مقاله یافت نشد")} />;
+}
+function BlogError() {
+  const translateText = useSiteTranslation();
+  return <BlogFallback title={translateText("خطایی رخ داد")} />;
+}
+function BlogFallback({ title }: { title: string }) {
+  const translateText = useSiteTranslation();
+  return (
+    <div className="container-page flex min-h-[50vh] flex-col items-center justify-center gap-4 py-24 text-center">
+      <h1 className="text-2xl font-extrabold text-foreground">{title}</h1>
+      <Link to="/blog" className="text-sm text-brand hover:underline">
+        {translateText("بازگشت به بلاگ")}
+      </Link>
+    </div>
   );
 }

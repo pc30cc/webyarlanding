@@ -1,3 +1,5 @@
+import { localizeStructuredData } from "@/lib/site-i18n";
+import { useSiteTranslation } from "@/components/site/SiteLanguage";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { motion } from "framer-motion";
 import { Check, ChevronLeft } from "lucide-react";
@@ -13,7 +15,11 @@ import {
 } from "@/lib/seo-meta";
 import { getIcon } from "@/lib/icon-registry";
 import { SiteLayout } from "@/components/site/SiteLayout";
-import { ScrollReveal, StaggerChildren, childVariant } from "@/components/site/animations";
+import {
+  ScrollReveal,
+  StaggerChildren,
+  childVariant,
+} from "@/components/site/animations";
 
 export const Route = createFileRoute("/products/")({
   loader: async () => {
@@ -58,14 +64,31 @@ const TINTS = [
 // تضمین می‌کند که وقتی videoCall.enabled یا aiMarketing.enabled خاموش است، هیچ آیتم کاتالوگی که
 // عنوان/توضیحش به همان موضوع اشاره دارد در این لیست نمایش داده نشود (برای حذف کامل، بهتر است در
 // همان پنل هم از حالت انتشار خارج شود).
-const CALL_KEYWORDS = ["تماس تصویری", "تماس ویدیویی", "ویدیویی", "تماس صوتی", "مرکز تماس"];
+const CALL_KEYWORDS = [
+  "تماس تصویری",
+  "تماس ویدیویی",
+  "ویدیویی",
+  "تماس صوتی",
+  "مرکز تماس",
+];
 const AI_KEYWORDS = ["هوش مصنوعی", "دستیار هوشمند", "ایجنت"];
-function mentionsAny(item: { title: string; shortDesc: string }, keywords: string[]): boolean {
-  return keywords.some((k) => item.title.includes(k) || item.shortDesc.includes(k));
+function mentionsAny(
+  item: { title: string; shortDesc: string },
+  keywords: string[],
+): boolean {
+  return keywords.some(
+    (k) => item.title.includes(k) || item.shortDesc.includes(k),
+  );
 }
 
 function ProductsPage() {
-  const { settings, seoOverride, categories: allCategories } = Route.useLoaderData();
+  const translateText = useSiteTranslation();
+
+  const {
+    settings,
+    seoOverride,
+    categories: allCategories,
+  } = Route.useLoaderData();
   const callEnabled = settings.videoCall.enabled;
   const aiEnabled = settings.aiMarketing.enabled;
   const categories = allCategories
@@ -106,7 +129,12 @@ function ProductsPage() {
 
   return (
     <SiteLayout settings={settings}>
-      <script type="application/ld+json" dangerouslySetInnerHTML={safeJsonLdHtml(jsonLd)} />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={safeJsonLdHtml(
+          localizeStructuredData(settings, jsonLd),
+        )}
+      />
 
       <section className="relative -mt-16 overflow-hidden pt-32 pb-12 sm:-mt-[4.75rem] sm:pt-[10.75rem] sm:pb-16">
         <div
@@ -128,19 +156,29 @@ function ProductsPage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4 }}
           >
-            <div className="mb-3 text-sm font-bold text-primary">محصولات</div>
+            <div className="mb-3 text-sm font-bold text-primary">
+              {translateText("محصولات")}
+            </div>
             <h1 className="mb-6 text-3xl font-extrabold leading-[1.25] text-foreground sm:text-5xl">
-              هر چیزی که برای <span className="text-brand">ارتباط با مشتری</span> نیاز دارید
+              {translateText("هر چیزی که برای ")}
+              <span className="text-brand">
+                {translateText("ارتباط با مشتری")}
+              </span>{" "}
+              {translateText(" نیاز دارید")}
             </h1>
             <p className="mx-auto max-w-2xl text-base leading-[1.9] text-muted-foreground sm:text-lg">
-              {joinFa(
-                "چت زنده",
-                callEnabled && "تماس ویدیویی",
-                aiEnabled && "هوش مصنوعی",
-                "CRM",
-                "اتوماسیون",
+              {translateText(
+                joinFa(
+                  "چت زنده",
+                  callEnabled && "تماس ویدیویی",
+                  aiEnabled && "هوش مصنوعی",
+                  "CRM",
+                  "اتوماسیون",
+                ),
               )}{" "}
-              ، همه در یک پلتفرم یکپارچه، با نصب در کمتر از ۵ دقیقه و بدون نیاز به تیم فنی.
+              {translateText(
+                "، همه در یک پلتفرم یکپارچه، با نصب در کمتر از ۵ دقیقه و بدون نیاز به تیم فنی.",
+              )}
             </p>
           </motion.div>
         </div>
@@ -151,7 +189,7 @@ function ProductsPage() {
           <div key={category.id}>
             <ScrollReveal className="mb-6">
               <h2 className="text-xl font-extrabold text-foreground sm:text-2xl">
-                {category.title}
+                {translateText(category.title)}
               </h2>
             </ScrollReveal>
             <StaggerChildren className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
@@ -170,9 +208,11 @@ function ProductsPage() {
                       >
                         <Icon className={`h-7 w-7 ${tint.text}`} />
                       </div>
-                      <h3 className="mb-2 text-lg font-bold text-foreground">{p.title}</h3>
+                      <h3 className="mb-2 text-lg font-bold text-foreground">
+                        {translateText(p.title)}
+                      </h3>
                       <p className="mb-5 text-sm leading-relaxed text-muted-foreground">
-                        {p.shortDesc}
+                        {translateText(p.shortDesc)}
                       </p>
                       <ul className="mt-auto space-y-2">
                         {p.bullets.slice(0, 3).map((b) => (
@@ -181,12 +221,13 @@ function ProductsPage() {
                             className="flex items-start gap-2 text-sm text-muted-foreground"
                           >
                             <Check className="mt-0.5 h-4 w-4 shrink-0 text-success" />
-                            <span>{b}</span>
+                            <span>{translateText(b)}</span>
                           </li>
                         ))}
                       </ul>
                       <span className="mt-5 inline-flex items-center gap-1 text-sm font-semibold text-primary">
-                        بیشتر بدانید <ChevronLeft className="h-3.5 w-3.5" />
+                        {translateText("بیشتر بدانید ")}
+                        <ChevronLeft className="h-3.5 w-3.5" />
                       </span>
                     </Link>
                   </motion.div>
@@ -200,24 +241,26 @@ function ProductsPage() {
       <div className="bg-secondary/30 px-4 py-16 text-center sm:px-8 sm:py-24">
         <ScrollReveal className="mx-auto max-w-2xl">
           <h2 className="mb-4 text-2xl font-extrabold text-foreground sm:text-4xl">
-            راه‌کار مناسب کسب‌وکار خودتان را پیدا کنید
+            {translateText("راه‌کار مناسب کسب‌وکار خودتان را پیدا کنید")}
           </h2>
           <p className="mb-10 text-base leading-relaxed text-muted-foreground sm:text-lg">
-            محصولات وب‌یار برای صنایع مختلف، از فروشگاه اینترنتی تا آموزش آنلاین، به‌صورت اختصاصی
-            چیده می‌شوند.
+            {translateText(
+              "محصولات وب‌یار برای صنایع مختلف، از فروشگاه اینترنتی تا آموزش آنلاین، به‌صورت اختصاصی چیده می‌شوند.",
+            )}
           </p>
           <div className="flex flex-wrap items-center justify-center gap-4">
             <Link
               to="/solutions"
               className="inline-flex items-center gap-2 rounded-xl bg-brand px-10 py-4 text-base font-bold text-primary-foreground shadow-lg shadow-primary/30"
             >
-              مشاهده راه‌کارها <ChevronLeft className="h-4 w-4" />
+              {translateText("مشاهده راه‌کارها ")}
+              <ChevronLeft className="h-4 w-4" />
             </Link>
             <Link
               to="/pricing"
               className="inline-flex items-center rounded-xl border border-border px-10 py-4 text-base font-semibold text-foreground transition-colors hover:bg-secondary"
             >
-              مشاهده قیمت‌ها
+              {translateText("مشاهده قیمت‌ها")}
             </Link>
           </div>
         </ScrollReveal>

@@ -1,3 +1,4 @@
+import { useSiteTranslation } from "@/components/site/SiteLanguage";
 import { useRef, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { AnimatePresence, motion } from "framer-motion";
@@ -22,6 +23,8 @@ export function MegaMenu({
   categories: CatalogCategoryDto[];
   viewAllLabel: string;
 }) {
+  const translateText = useSiteTranslation();
+
   const [open, setOpen] = useState(false);
   const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -40,7 +43,7 @@ export function MegaMenu({
         to={basePath}
         className="flex items-center gap-1 transition-colors hover:text-foreground"
       >
-        {label}
+        {translateText(label)}
       </Link>
     );
   }
@@ -53,8 +56,10 @@ export function MegaMenu({
         className={`flex items-center gap-1 transition-colors hover:text-foreground ${open ? "text-foreground" : ""}`}
         aria-expanded={open}
       >
-        {label}
-        <ChevronDown className={`h-3.5 w-3.5 transition-transform ${open ? "rotate-180" : ""}`} />
+        {translateText(label)}
+        <ChevronDown
+          className={`h-3.5 w-3.5 transition-transform ${open ? "rotate-180" : ""}`}
+        />
       </button>
 
       <AnimatePresence>
@@ -73,7 +78,7 @@ export function MegaMenu({
                 {categories.map((category) => (
                   <div key={category.id}>
                     <h3 className="mb-3 text-xs font-bold text-muted-foreground">
-                      {category.title}
+                      {translateText(category.title)}
                     </h3>
                     <ul className="space-y-1">
                       {category.items.map((item, i) => {
@@ -94,10 +99,10 @@ export function MegaMenu({
                               </span>
                               <span>
                                 <span className="block text-sm font-semibold text-foreground">
-                                  {item.title}
+                                  {translateText(item.title)}
                                 </span>
                                 <span className="block text-xs leading-relaxed text-muted-foreground">
-                                  {item.shortDesc}
+                                  {translateText(item.shortDesc)}
                                 </span>
                               </span>
                             </Link>
@@ -114,7 +119,8 @@ export function MegaMenu({
                   onClick={() => setOpen(false)}
                   className="inline-flex items-center gap-1.5 text-sm font-semibold text-primary hover:underline"
                 >
-                  {viewAllLabel} <ChevronLeft className="h-3.5 w-3.5" />
+                  {translateText(viewAllLabel)}{" "}
+                  <ChevronLeft className="h-3.5 w-3.5" />
                 </Link>
               </div>
             </div>
