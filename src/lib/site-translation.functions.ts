@@ -43,27 +43,3 @@ export const adminTranslateSiteMessages = createServerFn({ method: "POST" })
     }
     return translations.data;
   });
-
-/** Read every published article, without copying drafts into public settings. */
-export const adminListTranslationPosts = createServerFn({
-  method: "GET",
-}).handler(async (): Promise<Array<Record<string, string | null>>> => {
-  const { requireAdmin } = await import("./auth.server");
-  await requireAdmin();
-  const { db } = await import("./db.server");
-  const posts: Array<Record<string, string | null>> = [];
-  const pageSize = 500;
-  for (let offset = 0; ; offset += pageSize) {
-    const { data, error } = await db
-      .from("blog_posts")
-      .select(
-        "id,title,excerpt,content,author,seoTitle:seo_title,seoDescription:seo_description",
-      )
-      .eq("status", "published")
-      .order("id")
-      .range(offset, offset + pageSize - 1);
-    if (error) throw error;
-    posts.push(...(data ?? []));
-    if (!data || data.length < pageSize) return posts;
-  }
-});

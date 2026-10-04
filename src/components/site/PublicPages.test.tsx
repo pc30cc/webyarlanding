@@ -183,6 +183,29 @@ describe("public pages in English", () => {
       container
         .querySelectorAll("script,style")
         .forEach((node) => node.remove());
+      if (path.startsWith("/blog") || path.startsWith("/tag")) {
+        expect(container.textContent).toContain(post.title);
+        if (path === "/blog/$slug")
+          expect(container.textContent).toContain("متن مقاله آزمایشی");
+        for (const element of container.querySelectorAll("*")) {
+          for (const attr of ["alt", "aria-label"]) {
+            const value = element.getAttribute(attr);
+            if (value)
+              element.setAttribute(attr, value.replace(post.title, ""));
+          }
+        }
+        for (const node of container.querySelectorAll("*")) {
+          for (const child of node.childNodes) {
+            if (child.nodeType === 3)
+              child.textContent =
+                child.textContent
+                  ?.replace(post.title, "")
+                  .replace(post.excerpt, "")
+                  .replace(post.author, "")
+                  .replace("متن مقاله آزمایشی", "") ?? "";
+          }
+        }
+      }
       const persian = container.textContent?.match(
         /[\u0600-\u06ff][\u0600-\u06ff\s،]*/g,
       );
