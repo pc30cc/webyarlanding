@@ -2,16 +2,12 @@ import { useMemo, useState, useRef, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import {
-  adminTranslateSiteMessages,
-  adminListTranslationPosts,
-} from "@/lib/site-translation.functions";
+import { adminTranslateSiteMessages } from "@/lib/site-translation.functions";
 import {
   buildTranslationBatches,
   containsPersianProse,
 } from "@/lib/site-translation-batches";
 import { Languages, Loader2, Search } from "lucide-react";
-import { listCategories, listTags } from "@/lib/blog.functions";
 import {
   adminListCatalogItems,
   adminListCatalogCategories,
@@ -100,9 +96,6 @@ export function LanguageSection({
     [],
   );
   const translateBatch = useServerFn(adminTranslateSiteMessages);
-  const posts = useServerFn(adminListTranslationPosts);
-  const categories = useServerFn(listCategories);
-  const tags = useServerFn(listTags);
   const items = useServerFn(adminListCatalogItems);
   const catalogCategories = useServerFn(adminListCatalogCategories);
   const apps = useServerFn(adminListApps);
@@ -112,11 +105,10 @@ export function LanguageSection({
     staleTime: 5 * 60_000,
     queryFn: async () =>
       Promise.all([
-        posts(),
-        categories(),
-        tags(),
         apps(),
-        seo(),
+        seo().then((pages) =>
+          pages.filter((page) => !/^\/(blog|tag)(\/|$)/.test(page.path)),
+        ),
         items({ data: { type: "product" } }),
         items({ data: { type: "solution" } }),
         catalogCategories({ data: { type: "product" } }),
@@ -143,9 +135,6 @@ export function LanguageSection({
       settings.seo.keywords,
       settings.seo.author,
     ].forEach((text) => text && originals.add(text));
-    Object.keys(settings.localization.english).forEach((text) =>
-      originals.add(text),
-    );
     if (showBuiltIn)
       Object.keys(messages).forEach((text) => originals.add(text));
     return Array.from(
@@ -298,12 +287,12 @@ export function LanguageSection({
       <div className="border-t border-border pt-5">
         <h3 className="font-semibold">ترجمه محتوای قابل‌ویرایش</h3>
         <p className="mt-2 text-sm text-muted-foreground">
-          متن‌های صفحات سایت ترجمه شده‌اند. برای مقاله‌ها، محصولات، راه‌کارها و
-          متن‌های اختصاصی خودتان می‌توانید ترجمه‌ها را در این بخش بازبینی یا
-          ویرایش کنید و «ذخیره تنظیمات» را بزنید. ترجمه خودکار فقط هنگام انتخاب
-          انگلیسی اجرا می‌شود؛ نمایش صفحات از ترجمه ذخیره‌شده استفاده می‌کند.
-          متن فارسی حفظ می‌شود. اگر متن اصلی را تغییر دادید، ترجمه جدید را هم
-          ثبت کنید.
+          متن‌های صفحات سایت ترجمه شده‌اند. برای محصولات، راه‌کارها و متن‌های
+          اختصاصی خودتان می‌توانید ترجمه‌ها را در این بخش بازبینی یا ویرایش کنید
+          و «ذخیره تنظیمات» را بزنید. ترجمه خودکار فقط هنگام انتخاب انگلیسی اجرا
+          می‌شود؛ نمایش صفحات از ترجمه ذخیره‌شده استفاده می‌کند. وبلاگ از ترجمه
+          مستثناست و مقاله‌ها به زبان اصلی نمایش داده می‌شوند. متن فارسی حفظ
+          می‌شود. اگر متن اصلی را تغییر دادید، ترجمه جدید را هم ثبت کنید.
         </p>
         {content.isLoading && (
           <p className="mt-3 text-sm">در حال خواندن محتوای سایت…</p>

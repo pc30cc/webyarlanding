@@ -21,7 +21,6 @@ vi.mock("@tanstack/react-query", () => ({
 vi.mock("@tanstack/react-start", () => ({ useServerFn: (fn: unknown) => fn }));
 vi.mock("@/lib/site-translation.functions", () => ({
   adminTranslateSiteMessages: mocks.translate,
-  adminListTranslationPosts: vi.fn(),
 }));
 vi.mock("@/lib/blog.functions", () => ({
   adminListPosts: vi.fn(),
@@ -46,6 +45,7 @@ beforeEach(() => {
 function mount(language: "fa" | "en" = "fa") {
   const settings = structuredClone(DEFAULT_SETTINGS);
   settings.localization.language = language;
+  settings.localization.english["متن قدیمی وبلاگ"] = "Old blog content";
   const onSwitch = vi.fn();
   render(
     <LanguageSection
@@ -80,18 +80,16 @@ describe("one-click site language", () => {
     expect(mocks.translate).not.toHaveBeenCalled();
   });
   it("waits for complete custom content translation before saving English", async () => {
-    const source = "این متن اختصاصی مقاله تست است";
+    const source = "این متن اختصاصی محصول تست است";
     mocks.content = [[{ content: source }]];
-    mocks.translate.mockResolvedValue([
-      "This is the custom test article content",
-    ]);
+    mocks.translate.mockResolvedValue(["This is the custom product content"]);
     const onSwitch = mount();
     fireEvent.click(screen.getByRole("button", { name: "English — انگلیسی" }));
     await waitFor(() =>
       expect(onSwitch).toHaveBeenCalledWith(
         "en",
         expect.objectContaining({
-          [normalizeMessage(source)]: "This is the custom test article content",
+          [normalizeMessage(source)]: "This is the custom product content",
         }),
       ),
     );

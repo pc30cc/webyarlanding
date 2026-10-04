@@ -1,4 +1,3 @@
-import { localizeStructuredData } from "@/lib/site-i18n";
 import {
   useSiteLocale,
   useSiteTranslation,
@@ -91,9 +90,7 @@ function TagPage() {
     <SiteLayout settings={settings}>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={safeJsonLdHtml(
-          localizeStructuredData(settings, jsonLd),
-        )}
+        dangerouslySetInnerHTML={safeJsonLdHtml(jsonLd)}
       />
       <div className="container-page max-w-5xl py-16 sm:py-24">
         <Link
@@ -114,7 +111,7 @@ function TagPage() {
             {translateText("برچسب")}
           </div>
           <h1 className="mb-3 text-3xl font-extrabold text-foreground sm:text-5xl">
-            {translateText(slug)}
+            {slug}
           </h1>
           <p className="mt-2 text-xs text-muted-foreground">
             {translateText(posts.length)} {translateText(" مقاله یافت شد")}
@@ -134,25 +131,25 @@ function TagPage() {
                 {post.coverImage ? (
                   <img
                     src={post.coverImage}
-                    alt={translateText(post.title)}
+                    alt={post.title}
                     loading="lazy"
                     className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
                   />
                 ) : (
                   <div className="flex h-full w-full items-center justify-center">
                     <span className="rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-brand">
-                      {translateText(post.categoryName || "عمومی")}
+                      {post.categoryName || translateText("عمومی")}
                     </span>
                   </div>
                 )}
               </div>
               <div className="p-5">
                 <h2 className="mb-2 line-clamp-2 text-base font-bold text-foreground transition-colors group-hover:text-brand">
-                  {translateText(post.title)}
+                  {post.title}
                 </h2>
                 {post.excerpt && (
                   <p className="mb-4 line-clamp-2 text-xs leading-relaxed text-muted-foreground">
-                    {translateText(post.excerpt)}
+                    {post.excerpt}
                   </p>
                 )}
                 <div className="mb-3 flex items-center gap-3 text-[11px] text-muted-foreground">

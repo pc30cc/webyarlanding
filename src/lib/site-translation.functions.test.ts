@@ -4,17 +4,9 @@ import { buildTranslationBatches } from "./site-translation-batches";
 const mocks = vi.hoisted(() => ({
   requireAdmin: vi.fn(),
   aiJson: vi.fn(),
-  range: vi.fn(),
 }));
 vi.mock("./auth.server", () => ({ requireAdmin: mocks.requireAdmin }));
 vi.mock("./ai.server", () => ({ aiJson: mocks.aiJson }));
-vi.mock("./db.server", () => ({
-  db: {
-    from: () => ({
-      select: () => ({ eq: () => ({ order: () => ({ range: mocks.range }) }) }),
-    }),
-  },
-}));
 vi.mock("@tanstack/react-start", () => ({
   createServerFn: () => ({
     handler: (handle: () => unknown) => handle,
@@ -27,10 +19,7 @@ vi.mock("@tanstack/react-start", () => ({
   }),
 }));
 
-import {
-  adminTranslateSiteMessages,
-  adminListTranslationPosts,
-} from "./site-translation.functions";
+import { adminTranslateSiteMessages } from "./site-translation.functions";
 
 describe("admin-only content translation", () => {
   beforeEach(() => {
@@ -89,37 +78,5 @@ describe("translation batches", () => {
         batch.map((chunk) => chunk.text).join("").length,
       ).toBeLessThanOrEqual(12_000);
     }
-  });
-});
-
-describe("published article translation inventory", () => {
-  it("reads beyond the first 500 articles without omitting content", async () => {
-    mocks.requireAdmin.mockResolvedValue(undefined);
-    mocks.range.mockReset();
-    mocks.range.mockResolvedValueOnce({
-      data: Array.from({ length: 500 }, (_, i) => ({
-        id: String(i),
-        title: "Title",
-      })),
-      error: null,
-    });
-    mocks.range.mockResolvedValueOnce({
-      data: [{ id: "500", title: "Last article" }],
-      error: null,
-    });
-    expect(await adminListTranslationPosts()).toHaveLength(501);
-    expect(mocks.range).toHaveBeenNthCalledWith(1, 0, 499);
-    expect(mocks.range).toHaveBeenNthCalledWith(2, 500, 999);
-  });
-  it("reports inventory failures rather than activating English with missing articles", async () => {
-    mocks.requireAdmin.mockResolvedValue(undefined);
-    mocks.range.mockReset();
-    mocks.range.mockResolvedValue({
-      data: null,
-      error: new Error("Inventory unavailable"),
-    });
-    await expect(adminListTranslationPosts()).rejects.toThrow(
-      "Inventory unavailable",
-    );
   });
 });

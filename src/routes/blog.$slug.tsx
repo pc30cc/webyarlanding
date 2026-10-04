@@ -1,4 +1,3 @@
-import { localizeStructuredData } from "@/lib/site-i18n";
 import {
   useSiteLocale,
   useSiteTranslation,
@@ -38,7 +37,10 @@ export const Route = createFileRoute("/blog/$slug")({
     const title = post.seoTitle || `${post.title} | وب‌یار`;
     const desc = post.seoDescription || post.excerpt || post.title;
     return buildPageMeta({
-      settings,
+      settings: {
+        ...settings,
+        localization: { ...settings.localization, language: "fa" },
+      },
       path: `/blog/${params.slug}`,
       override: null, // یک ردیف seo_pages سراسری برای این مسیر معنا ندارد؛ عنوان/توضیحات/تصویر پست همیشه اولویت دارند
       fallbackTitle: title,
@@ -100,20 +102,24 @@ function BlogPostPage() {
       datePublished: post.publishedAt || post.createdAt,
       dateModified: post.updatedAt,
     },
-    buildBreadcrumbJsonLd(settings, [
-      { name: "خانه", path: "/" },
-      { name: "بلاگ", path: "/blog" },
-      { name: post.title, path: `/blog/${post.slug}` },
-    ]),
+    buildBreadcrumbJsonLd(
+      {
+        ...settings,
+        localization: { ...settings.localization, language: "fa" },
+      },
+      [
+        { name: "خانه", path: "/" },
+        { name: "بلاگ", path: "/blog" },
+        { name: post.title, path: `/blog/${post.slug}` },
+      ],
+    ),
   ];
 
   return (
     <SiteLayout settings={settings}>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={safeJsonLdHtml(
-          localizeStructuredData(settings, jsonLd),
-        )}
+        dangerouslySetInnerHTML={safeJsonLdHtml(jsonLd)}
       />
       <div className="container-page max-w-3xl py-16 sm:py-24">
         <Link
@@ -129,13 +135,13 @@ function BlogPostPage() {
           animate={{ opacity: 1, y: 0 }}
         >
           <h1 className="mb-4 mt-4 text-2xl font-extrabold leading-tight text-foreground sm:text-4xl">
-            {translateText(post.title)}
+            {post.title}
           </h1>
           <div className="mb-6 flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
             {post.author && (
               <span className="flex items-center gap-1.5">
                 <User className="h-4 w-4" />
-                {translateText(post.author)}
+                {post.author}
               </span>
             )}
             {post.publishedAt && (
@@ -151,7 +157,7 @@ function BlogPostPage() {
             <div className="mb-8 overflow-hidden rounded-xl border border-border">
               <img
                 src={post.coverImage}
-                alt={translateText(post.title)}
+                alt={post.title}
                 width={1000}
                 height={400}
                 loading="eager"
@@ -162,13 +168,16 @@ function BlogPostPage() {
           )}
           {post.excerpt && (
             <p className="mb-8 border-s-4 border-primary/30 ps-4 text-base leading-relaxed text-muted-foreground">
-              {translateText(post.excerpt)}
+              {post.excerpt}
             </p>
           )}
 
-          <div className="prose prose-sm max-w-none prose-headings:text-foreground prose-p:text-muted-foreground prose-a:text-brand sm:prose-base dark:prose-invert">
+          <div
+            dir="auto"
+            className="prose prose-sm max-w-none prose-headings:text-foreground prose-p:text-muted-foreground prose-a:text-brand sm:prose-base dark:prose-invert"
+          >
             <ReactMarkdown components={{ h1: (props) => <h2 {...props} /> }}>
-              {translateText(post.content)}
+              {post.content}
             </ReactMarkdown>
           </div>
 
@@ -186,7 +195,7 @@ function BlogPostPage() {
                       params={{ slug: tagSlug(tag) }}
                       className="inline-flex items-center rounded-full bg-primary/10 px-3 py-1 text-xs text-brand transition-colors hover:bg-primary/20"
                     >
-                      #{translateText(tag)}
+                      #{tag}
                     </Link>
                   </li>
                 ))}
@@ -209,7 +218,7 @@ function BlogPostPage() {
                   className="rounded-xl border border-border bg-card p-4 shadow-card transition-colors hover:border-primary/30"
                 >
                   <div className="line-clamp-2 text-sm font-bold text-foreground">
-                    {translateText(r.title)}
+                    {r.title}
                   </div>
                 </Link>
               ))}

@@ -1,4 +1,3 @@
-import { localizeStructuredData } from "@/lib/site-i18n";
 import {
   useSiteLocale,
   useSiteTranslation,
@@ -130,9 +129,7 @@ function BlogIndexPage() {
     <SiteLayout settings={settings}>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={safeJsonLdHtml(
-          localizeStructuredData(settings, jsonLd),
-        )}
+        dangerouslySetInnerHTML={safeJsonLdHtml(jsonLd)}
       />
       <div className="container-page max-w-5xl py-16 sm:py-24">
         <motion.div
@@ -164,7 +161,7 @@ function BlogIndexPage() {
                 search={(prev) => ({ ...prev, category: c.slug, page: 1 })}
                 className={`rounded-full px-4 py-1.5 text-xs font-medium transition-colors ${search.category === c.slug ? "bg-brand text-primary-foreground" : "bg-secondary text-muted-foreground hover:bg-secondary/70"}`}
               >
-                {translateText(c.name)}
+                {c.name}
               </Link>
             ))}
           </div>
@@ -200,7 +197,7 @@ function BlogIndexPage() {
                   {post.coverImage ? (
                     <img
                       src={post.coverImage}
-                      alt={translateText(post.title)}
+                      alt={post.title}
                       width={1000}
                       height={192}
                       loading={i < 3 ? "eager" : "lazy"}
@@ -210,18 +207,18 @@ function BlogIndexPage() {
                   ) : (
                     <div className="flex h-full w-full items-center justify-center">
                       <span className="rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-brand">
-                        {translateText(post.categoryName || "عمومی")}
+                        {post.categoryName || translateText("عمومی")}
                       </span>
                     </div>
                   )}
                 </div>
                 <div className="p-5">
                   <h2 className="mb-2 line-clamp-2 text-base font-bold text-foreground transition-colors group-hover:text-brand">
-                    {translateText(post.title)}
+                    {post.title}
                   </h2>
                   {post.excerpt && (
                     <p className="mb-4 line-clamp-2 text-xs leading-relaxed text-muted-foreground">
-                      {translateText(post.excerpt)}
+                      {post.excerpt}
                     </p>
                   )}
                   <div className="mb-3 flex items-center gap-3 text-[11px] text-muted-foreground">
@@ -237,7 +234,7 @@ function BlogIndexPage() {
                   <Link
                     to="/blog/$slug"
                     params={{ slug: post.slug }}
-                    aria-label={translateText(`ادامه مطلب: ${post.title}`)}
+                    aria-label={`${translateText("ادامه مطلب")}: ${post.title}`}
                     className="inline-flex items-center gap-1 text-xs font-medium text-brand hover:underline"
                   >
                     {translateText("ادامه مطلب ")}
