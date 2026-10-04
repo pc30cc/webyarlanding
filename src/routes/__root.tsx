@@ -239,20 +239,32 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         links: [
           // پیش‌بارگذاری فونت خودمیزبان‌شده (public/fonts) تا قبل از رندر اول دانلود شود
           // و فلش فونت پیش‌فرض مرورگر (FOUT) به حداقل برسد.
-          {
-            rel: "preload",
-            href: "/fonts/IRANSansWeb.woff2",
-            as: "font",
-            type: "font/woff2",
-            crossOrigin: "anonymous",
-          },
-          {
-            rel: "preload",
-            href: "/fonts/IRANSansWeb-Bold.woff2",
-            as: "font",
-            type: "font/woff2",
-            crossOrigin: "anonymous",
-          },
+          ...(settings?.localization?.language === "en"
+            ? [
+                {
+                  rel: "preload",
+                  href: "/fonts/Inter-Latin-Variable.woff2",
+                  as: "font",
+                  type: "font/woff2",
+                  crossOrigin: "anonymous" as const,
+                },
+              ]
+            : [
+                {
+                  rel: "preload",
+                  href: "/fonts/IRANSansWeb.woff2",
+                  as: "font",
+                  type: "font/woff2",
+                  crossOrigin: "anonymous" as const,
+                },
+                {
+                  rel: "preload",
+                  href: "/fonts/IRANSansWeb-Bold.woff2",
+                  as: "font",
+                  type: "font/woff2",
+                  crossOrigin: "anonymous" as const,
+                },
+              ]),
           {
             rel: "stylesheet",
             href: appCss,
