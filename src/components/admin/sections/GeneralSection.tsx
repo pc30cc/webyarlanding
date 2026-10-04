@@ -1,11 +1,16 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useRouter } from "@tanstack/react-router";
+import { LanguageSection } from "./LanguageSection";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import { Loader2, KeyRound, Trash2, Send, Bot } from "lucide-react";
 import { fetchSettings, updateSettings } from "@/lib/settings.functions";
 import { adminGetAiKeysStatus, adminSaveAiKeys } from "@/lib/ai.functions";
-import { adminGetMediaKeysStatus, adminSaveMediaKeys } from "@/lib/media.functions";
+import {
+  adminGetMediaKeysStatus,
+  adminSaveMediaKeys,
+} from "@/lib/media.functions";
 import {
   adminGetTelegramKeysStatus,
   adminSaveTelegramBotToken,
@@ -30,11 +35,17 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 
 export default function GeneralSection() {
+  const router = useRouter();
   const fetchFn = useServerFn(fetchSettings);
   const updateFn = useServerFn(updateSettings);
   const queryClient = useQueryClient();
-  const { data, isLoading } = useQuery({ queryKey: ["settings"], queryFn: () => fetchFn() });
+  const { data, isLoading } = useQuery({
+    queryKey: ["settings"],
+    queryFn: () => fetchFn(),
+  });
   const [form, setForm] = useState<SiteSettings>(DEFAULT_SETTINGS);
+  const formRef = useRef(form);
+  formRef.current = form;
 
   useEffect(() => {
     if (data) setForm(data);
@@ -45,8 +56,19 @@ export default function GeneralSection() {
     onSuccess: () => {
       toast.success("تنظیمات ذخیره شد");
       queryClient.invalidateQueries({ queryKey: ["settings"] });
+      router.invalidate();
     },
-    onError: () => toast.error("خطا در ذخیره تنظیمات"),
+    onError: () => {
+      if (data)
+        setForm((current) => ({
+          ...current,
+          localization: {
+            ...current.localization,
+            language: data.localization.language,
+          },
+        }));
+      toast.error("خطا در ذخیره تنظیمات");
+    },
   });
 
   if (isLoading) {
@@ -64,7 +86,8 @@ export default function GeneralSection() {
       <div>
         <h1 className="text-2xl font-bold text-foreground">تنظیمات عمومی</h1>
         <p className="text-sm text-muted-foreground">
-          برند، شبکه‌های اجتماعی، هوش مصنوعی، ذخیره‌سازی رسانه و اسکریپت‌های سایت
+          برند، شبکه‌های اجتماعی، هوش مصنوعی، ذخیره‌سازی رسانه و اسکریپت‌های
+          سایت
         </p>
       </div>
 
@@ -77,6 +100,7 @@ export default function GeneralSection() {
       >
         <Tabs defaultValue="brand">
           <TabsList className="h-auto flex-wrap">
+            <TabsTrigger value="language">زبان سایت</TabsTrigger>
             <TabsTrigger value="brand">برند</TabsTrigger>
             <TabsTrigger value="auth">ورود و ثبت‌نام</TabsTrigger>
             <TabsTrigger value="social">شبکه‌های اجتماعی</TabsTrigger>
@@ -86,15 +110,42 @@ export default function GeneralSection() {
             <TabsTrigger value="analytics">تحلیل و اسکریپت‌ها</TabsTrigger>
           </TabsList>
 
+          <TabsContent value="language" className="mt-6">
+            <LanguageSection
+              settings={form}
+              pending={mutation.isPending}
+              onChange={(localization) =>
+                setForm((f) => ({ ...f, localization }))
+              }
+              onSwitch={(language, english) => {
+                const current = formRef.current;
+                const next = {
+                  ...current,
+                  localization: {
+                    ...current.localization,
+                    language,
+                    english: english ?? current.localization.english,
+                  },
+                };
+                setForm(next);
+                mutation.mutate(next);
+              }}
+            />
+          </TabsContent>
           <TabsContent value="brand" className="mt-6">
             <section className="rounded-xl border border-border bg-card p-4 shadow-sm">
-              <h2 className="mb-4 text-base font-semibold text-foreground">برند</h2>
+              <h2 className="mb-4 text-base font-semibold text-foreground">
+                برند
+              </h2>
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <Field label="نام برند">
                   <Input
                     value={form.brand.name}
                     onChange={(e) =>
-                      setForm((f) => ({ ...f, brand: { ...f.brand, name: e.target.value } }))
+                      setForm((f) => ({
+                        ...f,
+                        brand: { ...f.brand, name: e.target.value },
+                      }))
                     }
                   />
                 </Field>
@@ -104,22 +155,31 @@ export default function GeneralSection() {
                     placeholder="Webyar"
                     value={form.brand.nameEn ?? ""}
                     onChange={(e) =>
-                      setForm((f) => ({ ...f, brand: { ...f.brand, nameEn: e.target.value } }))
+                      setForm((f) => ({
+                        ...f,
+                        brand: { ...f.brand, nameEn: e.target.value },
+                      }))
                     }
                   />
                 </Field>
                 <div className="flex items-center justify-between gap-4 rounded-lg border border-border p-3">
                   <div>
-                    <p className="text-sm font-medium">صفحات حقوقی کاملاً انگلیسی</p>
+                    <p className="text-sm font-medium">
+                      صفحات حقوقی کاملاً انگلیسی
+                    </p>
                     <p className="text-xs text-muted-foreground">
-                      با روشن بودن، در صفحات Privacy، Terms و Support منوی بالا، دکمه‌های ورود و
-                      فوتر هم انگلیسی می‌شوند. با خاموش کردن، همه‌چیز فارسی می‌شود.
+                      با روشن بودن، در صفحات Privacy، Terms و Support منوی بالا،
+                      دکمه‌های ورود و فوتر هم انگلیسی می‌شوند. با خاموش کردن،
+                      همه‌چیز فارسی می‌شود.
                     </p>
                   </div>
                   <Switch
                     checked={form.brand.legalEnglishChrome !== false}
                     onCheckedChange={(v) =>
-                      setForm((f) => ({ ...f, brand: { ...f.brand, legalEnglishChrome: v } }))
+                      setForm((f) => ({
+                        ...f,
+                        brand: { ...f.brand, legalEnglishChrome: v },
+                      }))
                     }
                   />
                 </div>
@@ -127,13 +187,17 @@ export default function GeneralSection() {
                   <div>
                     <p className="text-sm font-medium">حالت روز سایت</p>
                     <p className="text-xs text-muted-foreground">
-                      با روشن بودن، ظاهر سایت اصلی روشن (روز) می‌شود؛ با خاموش کردن به حالت شب برمی‌گردد.
+                      با روشن بودن، ظاهر سایت اصلی روشن (روز) می‌شود؛ با خاموش
+                      کردن به حالت شب برمی‌گردد.
                     </p>
                   </div>
                   <Switch
                     checked={form.brand.siteTheme === "light"}
                     onCheckedChange={(v) =>
-                      setForm((f) => ({ ...f, brand: { ...f.brand, siteTheme: v ? "light" : "dark" } }))
+                      setForm((f) => ({
+                        ...f,
+                        brand: { ...f.brand, siteTheme: v ? "light" : "dark" },
+                      }))
                     }
                   />
                 </div>
@@ -141,7 +205,10 @@ export default function GeneralSection() {
                   <Input
                     value={form.brand.tagline}
                     onChange={(e) =>
-                      setForm((f) => ({ ...f, brand: { ...f.brand, tagline: e.target.value } }))
+                      setForm((f) => ({
+                        ...f,
+                        brand: { ...f.brand, tagline: e.target.value },
+                      }))
                     }
                   />
                 </Field>
@@ -150,7 +217,10 @@ export default function GeneralSection() {
                     dir="ltr"
                     value={form.brand.logoUrl}
                     onChange={(e) =>
-                      setForm((f) => ({ ...f, brand: { ...f.brand, logoUrl: e.target.value } }))
+                      setForm((f) => ({
+                        ...f,
+                        brand: { ...f.brand, logoUrl: e.target.value },
+                      }))
                     }
                   />
                 </Field>
@@ -171,7 +241,10 @@ export default function GeneralSection() {
                     dir="ltr"
                     value={form.brand.siteUrl}
                     onChange={(e) =>
-                      setForm((f) => ({ ...f, brand: { ...f.brand, siteUrl: e.target.value } }))
+                      setForm((f) => ({
+                        ...f,
+                        brand: { ...f.brand, siteUrl: e.target.value },
+                      }))
                     }
                   />
                 </Field>
@@ -180,7 +253,10 @@ export default function GeneralSection() {
                     dir="ltr"
                     value={form.brand.phone}
                     onChange={(e) =>
-                      setForm((f) => ({ ...f, brand: { ...f.brand, phone: e.target.value } }))
+                      setForm((f) => ({
+                        ...f,
+                        brand: { ...f.brand, phone: e.target.value },
+                      }))
                     }
                   />
                 </Field>
@@ -189,7 +265,10 @@ export default function GeneralSection() {
                     dir="ltr"
                     value={form.brand.email}
                     onChange={(e) =>
-                      setForm((f) => ({ ...f, brand: { ...f.brand, email: e.target.value } }))
+                      setForm((f) => ({
+                        ...f,
+                        brand: { ...f.brand, email: e.target.value },
+                      }))
                     }
                   />
                 </Field>
@@ -197,7 +276,10 @@ export default function GeneralSection() {
                   <Input
                     value={form.brand.address}
                     onChange={(e) =>
-                      setForm((f) => ({ ...f, brand: { ...f.brand, address: e.target.value } }))
+                      setForm((f) => ({
+                        ...f,
+                        brand: { ...f.brand, address: e.target.value },
+                      }))
                     }
                   />
                 </Field>
@@ -205,18 +287,29 @@ export default function GeneralSection() {
                   <Select
                     value={form.brand.timezone}
                     onValueChange={(v) =>
-                      setForm((f) => ({ ...f, brand: { ...f.brand, timezone: v } }))
+                      setForm((f) => ({
+                        ...f,
+                        brand: { ...f.brand, timezone: v },
+                      }))
                     }
                   >
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="Europe/Istanbul">استانبول (UTC+3)</SelectItem>
-                      <SelectItem value="Asia/Tehran">تهران (UTC+3:30)</SelectItem>
+                      <SelectItem value="Europe/Istanbul">
+                        استانبول (UTC+3)
+                      </SelectItem>
+                      <SelectItem value="Asia/Tehran">
+                        تهران (UTC+3:30)
+                      </SelectItem>
                       <SelectItem value="Asia/Dubai">دبی (UTC+4)</SelectItem>
-                      <SelectItem value="Europe/London">لندن (UTC+0/+1)</SelectItem>
-                      <SelectItem value="Europe/Berlin">برلین (UTC+1/+2)</SelectItem>
+                      <SelectItem value="Europe/London">
+                        لندن (UTC+0/+1)
+                      </SelectItem>
+                      <SelectItem value="Europe/Berlin">
+                        برلین (UTC+1/+2)
+                      </SelectItem>
                       <SelectItem value="UTC">UTC</SelectItem>
                     </SelectContent>
                   </Select>
@@ -237,42 +330,58 @@ export default function GeneralSection() {
 
             <section className="mt-4 rounded-xl border border-border bg-card p-4 shadow-sm">
               <div className="mb-1 flex items-center justify-between">
-                <h2 className="text-base font-semibold text-foreground">تماس تصویری و صوتی</h2>
+                <h2 className="text-base font-semibold text-foreground">
+                  تماس تصویری و صوتی
+                </h2>
                 <div className="flex items-center gap-2">
-                  <Label className="cursor-pointer text-xs">نمایش در سایت</Label>
+                  <Label className="cursor-pointer text-xs">
+                    نمایش در سایت
+                  </Label>
                   <Switch
                     checked={form.videoCall.enabled}
                     onCheckedChange={(v) =>
-                      setForm((f) => ({ ...f, videoCall: { ...f.videoCall, enabled: v } }))
+                      setForm((f) => ({
+                        ...f,
+                        videoCall: { ...f.videoCall, enabled: v },
+                      }))
                     }
                   />
                 </div>
               </div>
               <p className="text-xs text-muted-foreground">
-                وقتی خاموش باشد، همه‌ی بخش‌ها، امکانات پلن‌ها، ردیف‌های جدول مقایسه، Endpoint
-                مستندات API و متن‌های سئوی مربوط به تماس تصویری/صوتی در کل سایت (صفحه اصلی،
-                قیمت‌گذاری، محصولات، درباره ما، مستندات API) پنهان می‌شوند — بدون حذف کد، تا هر وقت
-                مجوز لازم را گرفتید دوباره روشنش کنید.
+                وقتی خاموش باشد، همه‌ی بخش‌ها، امکانات پلن‌ها، ردیف‌های جدول
+                مقایسه، Endpoint مستندات API و متن‌های سئوی مربوط به تماس
+                تصویری/صوتی در کل سایت (صفحه اصلی، قیمت‌گذاری، محصولات، درباره
+                ما، مستندات API) پنهان می‌شوند — بدون حذف کد، تا هر وقت مجوز
+                لازم را گرفتید دوباره روشنش کنید.
               </p>
             </section>
 
             <section className="mt-4 rounded-xl border border-border bg-card p-4 shadow-sm">
               <div className="mb-1 flex items-center justify-between">
-                <h2 className="text-base font-semibold text-foreground">هوش مصنوعی</h2>
+                <h2 className="text-base font-semibold text-foreground">
+                  هوش مصنوعی
+                </h2>
                 <div className="flex items-center gap-2">
-                  <Label className="cursor-pointer text-xs">نمایش در سایت</Label>
+                  <Label className="cursor-pointer text-xs">
+                    نمایش در سایت
+                  </Label>
                   <Switch
                     checked={form.aiMarketing.enabled}
                     onCheckedChange={(v) =>
-                      setForm((f) => ({ ...f, aiMarketing: { ...f.aiMarketing, enabled: v } }))
+                      setForm((f) => ({
+                        ...f,
+                        aiMarketing: { ...f.aiMarketing, enabled: v },
+                      }))
                     }
                   />
                 </div>
               </div>
               <p className="text-xs text-muted-foreground">
-                وقتی خاموش باشد، همه‌ی کارت‌های ویژگی، بخش‌های پنل، امکانات پلن‌ها، ردیف‌های جدول
-                مقایسه و متن‌های سئوی مربوط به هوش مصنوعی/ایجنت هوشمند در کل سایت (صفحه اصلی،
-                قیمت‌گذاری، محصولات، راه‌کارها، درباره ما) پنهان می‌شوند — بدون حذف کد، تا هر وقت
+                وقتی خاموش باشد، همه‌ی کارت‌های ویژگی، بخش‌های پنل، امکانات
+                پلن‌ها، ردیف‌های جدول مقایسه و متن‌های سئوی مربوط به هوش
+                مصنوعی/ایجنت هوشمند در کل سایت (صفحه اصلی، قیمت‌گذاری، محصولات،
+                راه‌کارها، درباره ما) پنهان می‌شوند — بدون حذف کد، تا هر وقت
                 خواستید دوباره روشنش کنید.
               </p>
             </section>
@@ -281,21 +390,28 @@ export default function GeneralSection() {
           <TabsContent value="auth" className="mt-6">
             <section className="rounded-xl border border-border bg-card p-4 shadow-sm">
               <div className="mb-4 flex items-center justify-between">
-                <h2 className="text-base font-semibold text-foreground">دکمه‌های ورود و ثبت‌نام</h2>
+                <h2 className="text-base font-semibold text-foreground">
+                  دکمه‌های ورود و ثبت‌نام
+                </h2>
                 <div className="flex items-center gap-2">
-                  <Label className="cursor-pointer text-xs">نمایش در سایت</Label>
+                  <Label className="cursor-pointer text-xs">
+                    نمایش در سایت
+                  </Label>
                   <Switch
                     checked={form.auth.enabled}
                     onCheckedChange={(v) =>
-                      setForm((f) => ({ ...f, auth: { ...f.auth, enabled: v } }))
+                      setForm((f) => ({
+                        ...f,
+                        auth: { ...f.auth, enabled: v },
+                      }))
                     }
                   />
                 </div>
               </div>
               <p className="mb-4 text-xs text-muted-foreground">
-                آدرس اپلیکیشن/پنل کاربری خودتان را وارد کنید — دکمه‌های «ورود» و «شروع رایگان» در
-                هدر سایت و صفحات محصولات و قیمت‌گذاری به همین آدرس لینک می‌شوند. اگر خالی بماند، آن
-                دکمه نمایش داده نمی‌شود.
+                آدرس اپلیکیشن/پنل کاربری خودتان را وارد کنید — دکمه‌های «ورود» و
+                «شروع رایگان» در هدر سایت و صفحات محصولات و قیمت‌گذاری به همین
+                آدرس لینک می‌شوند. اگر خالی بماند، آن دکمه نمایش داده نمی‌شود.
               </p>
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <Field label="آدرس صفحه ورود">
@@ -304,7 +420,10 @@ export default function GeneralSection() {
                     placeholder="https://app.example.com/login"
                     value={form.auth.loginUrl}
                     onChange={(e) =>
-                      setForm((f) => ({ ...f, auth: { ...f.auth, loginUrl: e.target.value } }))
+                      setForm((f) => ({
+                        ...f,
+                        auth: { ...f.auth, loginUrl: e.target.value },
+                      }))
                     }
                   />
                 </Field>
@@ -312,7 +431,10 @@ export default function GeneralSection() {
                   <Input
                     value={form.auth.loginLabel}
                     onChange={(e) =>
-                      setForm((f) => ({ ...f, auth: { ...f.auth, loginLabel: e.target.value } }))
+                      setForm((f) => ({
+                        ...f,
+                        auth: { ...f.auth, loginLabel: e.target.value },
+                      }))
                     }
                   />
                 </Field>
@@ -322,7 +444,10 @@ export default function GeneralSection() {
                     placeholder="https://app.example.com/signup"
                     value={form.auth.signupUrl}
                     onChange={(e) =>
-                      setForm((f) => ({ ...f, auth: { ...f.auth, signupUrl: e.target.value } }))
+                      setForm((f) => ({
+                        ...f,
+                        auth: { ...f.auth, signupUrl: e.target.value },
+                      }))
                     }
                   />
                 </Field>
@@ -330,7 +455,10 @@ export default function GeneralSection() {
                   <Input
                     value={form.auth.signupLabel}
                     onChange={(e) =>
-                      setForm((f) => ({ ...f, auth: { ...f.auth, signupLabel: e.target.value } }))
+                      setForm((f) => ({
+                        ...f,
+                        auth: { ...f.auth, signupLabel: e.target.value },
+                      }))
                     }
                   />
                 </Field>
@@ -342,11 +470,12 @@ export default function GeneralSection() {
                 تشخیص ورود کاربر (اختیاری)
               </h2>
               <p className="mb-4 text-xs text-muted-foreground">
-                اگر پر شود، سایت هنگام بارگذاری با یک درخواست اعتبارسنجی‌شده وضعیت لاگین کاربر را از
-                اپلیکیشن‌تان می‌پرسد؛ اگر لاگین باشد، به‌جای دکمه‌های ورود/ثبت‌نام، «خوش‌آمدید» +
-                دکمه پنل + دکمه خروج نمایش داده می‌شود. این نیازمند یک API روی همان دامنه‌ی اپلیکیشن
-                است که کوکی نشست را با CORS مناسب برگرداند — اگر پیاده‌سازی نشده یا خالی بماند، سایت
-                مثل قبل رفتار می‌کند.
+                اگر پر شود، سایت هنگام بارگذاری با یک درخواست اعتبارسنجی‌شده
+                وضعیت لاگین کاربر را از اپلیکیشن‌تان می‌پرسد؛ اگر لاگین باشد،
+                به‌جای دکمه‌های ورود/ثبت‌نام، «خوش‌آمدید» + دکمه پنل + دکمه خروج
+                نمایش داده می‌شود. این نیازمند یک API روی همان دامنه‌ی اپلیکیشن
+                است که کوکی نشست را با CORS مناسب برگرداند — اگر پیاده‌سازی نشده
+                یا خالی بماند، سایت مثل قبل رفتار می‌کند.
               </p>
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <Field label="آدرس بررسی نشست (Session Check API)" full>
@@ -368,7 +497,10 @@ export default function GeneralSection() {
                     placeholder="https://app.example.com/api/logout"
                     value={form.auth.logoutUrl}
                     onChange={(e) =>
-                      setForm((f) => ({ ...f, auth: { ...f.auth, logoutUrl: e.target.value } }))
+                      setForm((f) => ({
+                        ...f,
+                        auth: { ...f.auth, logoutUrl: e.target.value },
+                      }))
                     }
                   />
                 </Field>
@@ -376,7 +508,10 @@ export default function GeneralSection() {
                   <Input
                     value={form.auth.logoutLabel}
                     onChange={(e) =>
-                      setForm((f) => ({ ...f, auth: { ...f.auth, logoutLabel: e.target.value } }))
+                      setForm((f) => ({
+                        ...f,
+                        auth: { ...f.auth, logoutLabel: e.target.value },
+                      }))
                     }
                   />
                 </Field>
@@ -386,7 +521,10 @@ export default function GeneralSection() {
                     placeholder="https://app.example.com/dashboard"
                     value={form.auth.panelUrl}
                     onChange={(e) =>
-                      setForm((f) => ({ ...f, auth: { ...f.auth, panelUrl: e.target.value } }))
+                      setForm((f) => ({
+                        ...f,
+                        auth: { ...f.auth, panelUrl: e.target.value },
+                      }))
                     }
                   />
                 </Field>
@@ -394,7 +532,10 @@ export default function GeneralSection() {
                   <Input
                     value={form.auth.panelLabel}
                     onChange={(e) =>
-                      setForm((f) => ({ ...f, auth: { ...f.auth, panelLabel: e.target.value } }))
+                      setForm((f) => ({
+                        ...f,
+                        auth: { ...f.auth, panelLabel: e.target.value },
+                      }))
                     }
                   />
                 </Field>
@@ -406,14 +547,17 @@ export default function GeneralSection() {
                 <div className="flex flex-col gap-0.5">
                   <Label>همگام‌سازی پلن‌ها با اپلیکیشن</Label>
                   <span className="text-xs text-muted-foreground">
-                    پلن‌های صفحه قیمت‌گذاری مستقیماً از اپلیکیشن خوانده می‌شوند؛ هر تغییری آنجا
-                    بدهید، اینجا هم اعمال می‌شود.
+                    پلن‌های صفحه قیمت‌گذاری مستقیماً از اپلیکیشن خوانده می‌شوند؛
+                    هر تغییری آنجا بدهید، اینجا هم اعمال می‌شود.
                   </span>
                 </div>
                 <Switch
                   checked={form.plans.enabled}
                   onCheckedChange={(v) =>
-                    setForm((f) => ({ ...f, plans: { ...f.plans, enabled: v } }))
+                    setForm((f) => ({
+                      ...f,
+                      plans: { ...f.plans, enabled: v },
+                    }))
                   }
                 />
               </div>
@@ -421,13 +565,17 @@ export default function GeneralSection() {
                 <div className="flex flex-col gap-0.5">
                   <Label>نمایش قیمت سالانه</Label>
                   <span className="text-xs text-muted-foreground">
-                    خاموش یعنی فقط قیمت ماهانه در صفحه قیمت‌گذاری نمایش داده می‌شود.
+                    خاموش یعنی فقط قیمت ماهانه در صفحه قیمت‌گذاری نمایش داده
+                    می‌شود.
                   </span>
                 </div>
                 <Switch
                   checked={form.plans.showYearly === true}
                   onCheckedChange={(v) =>
-                    setForm((f) => ({ ...f, plans: { ...f.plans, showYearly: v } }))
+                    setForm((f) => ({
+                      ...f,
+                      plans: { ...f.plans, showYearly: v },
+                    }))
                   }
                 />
               </div>
@@ -437,7 +585,10 @@ export default function GeneralSection() {
                   placeholder="https://api.webyar.ai/api/plans"
                   value={form.plans.apiUrl}
                   onChange={(e) =>
-                    setForm((f) => ({ ...f, plans: { ...f.plans, apiUrl: e.target.value } }))
+                    setForm((f) => ({
+                      ...f,
+                      plans: { ...f.plans, apiUrl: e.target.value },
+                    }))
                   }
                 />
               </Field>
@@ -446,19 +597,26 @@ export default function GeneralSection() {
 
           <TabsContent value="social" className="mt-6">
             <section className="rounded-xl border border-border bg-card p-4 shadow-sm">
-              <h2 className="mb-4 text-base font-semibold text-foreground">شبکه‌های اجتماعی</h2>
+              <h2 className="mb-4 text-base font-semibold text-foreground">
+                شبکه‌های اجتماعی
+              </h2>
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                {(Object.keys(form.social) as (keyof typeof form.social)[]).map((key) => (
-                  <Field key={key} label={socialLabels[key] ?? key}>
-                    <Input
-                      dir="ltr"
-                      value={form.social[key] ?? ""}
-                      onChange={(e) =>
-                        setForm((f) => ({ ...f, social: { ...f.social, [key]: e.target.value } }))
-                      }
-                    />
-                  </Field>
-                ))}
+                {(Object.keys(form.social) as (keyof typeof form.social)[]).map(
+                  (key) => (
+                    <Field key={key} label={socialLabels[key] ?? key}>
+                      <Input
+                        dir="ltr"
+                        value={form.social[key] ?? ""}
+                        onChange={(e) =>
+                          setForm((f) => ({
+                            ...f,
+                            social: { ...f.social, [key]: e.target.value },
+                          }))
+                        }
+                      />
+                    </Field>
+                  ),
+                )}
               </div>
             </section>
           </TabsContent>
@@ -466,12 +624,16 @@ export default function GeneralSection() {
           <TabsContent value="ai" className="mt-6 flex flex-col gap-6">
             <section className="rounded-xl border border-border bg-card p-4 shadow-sm">
               <div className="mb-4 flex items-center justify-between">
-                <h2 className="text-base font-semibold text-foreground">هوش مصنوعی</h2>
+                <h2 className="text-base font-semibold text-foreground">
+                  هوش مصنوعی
+                </h2>
                 <div className="flex items-center gap-2">
                   <Label className="cursor-pointer text-xs">فعال</Label>
                   <Switch
                     checked={form.ai.enabled}
-                    onCheckedChange={(v) => setForm((f) => ({ ...f, ai: { ...f.ai, enabled: v } }))}
+                    onCheckedChange={(v) =>
+                      setForm((f) => ({ ...f, ai: { ...f.ai, enabled: v } }))
+                    }
                   />
                 </div>
               </div>
@@ -483,7 +645,10 @@ export default function GeneralSection() {
                       onValueChange={(v) =>
                         setForm((f) => ({
                           ...f,
-                          ai: { ...f.ai, textProvider: v as "openai" | "gemini" },
+                          ai: {
+                            ...f.ai,
+                            textProvider: v as "openai" | "gemini",
+                          },
                         }))
                       }
                     >
@@ -502,7 +667,10 @@ export default function GeneralSection() {
                       onValueChange={(v) =>
                         setForm((f) => ({
                           ...f,
-                          ai: { ...f.ai, imageProvider: v as "openai" | "gemini" },
+                          ai: {
+                            ...f.ai,
+                            imageProvider: v as "openai" | "gemini",
+                          },
                         }))
                       }
                     >
@@ -518,8 +686,9 @@ export default function GeneralSection() {
                 </div>
 
                 <p className="text-xs text-muted-foreground">
-                  تنظیمات دو سرویس کاملاً از هم جدا هستند و هر دو نگه داشته می‌شوند؛ تولید متن و
-                  تولید تصویر می‌توانند از دو سرویس متفاوت استفاده کنند.
+                  تنظیمات دو سرویس کاملاً از هم جدا هستند و هر دو نگه داشته
+                  می‌شوند؛ تولید متن و تولید تصویر می‌توانند از دو سرویس متفاوت
+                  استفاده کنند.
                 </p>
 
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -527,7 +696,9 @@ export default function GeneralSection() {
                     className={`flex flex-col gap-3 rounded-lg border p-3 ${form.ai.textProvider === "openai" || form.ai.imageProvider === "openai" ? "border-primary/40 bg-primary/5" : "border-border"}`}
                   >
                     <div className="flex items-center justify-between">
-                      <h3 className="text-sm font-semibold text-foreground">OpenAI</h3>
+                      <h3 className="text-sm font-semibold text-foreground">
+                        OpenAI
+                      </h3>
                       <div className="flex gap-1">
                         {form.ai.textProvider === "openai" && (
                           <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-medium text-primary">
@@ -549,7 +720,13 @@ export default function GeneralSection() {
                         onChange={(e) =>
                           setForm((f) => ({
                             ...f,
-                            ai: { ...f.ai, openai: { ...f.ai.openai, textModel: e.target.value } },
+                            ai: {
+                              ...f.ai,
+                              openai: {
+                                ...f.ai.openai,
+                                textModel: e.target.value,
+                              },
+                            },
                           }))
                         }
                       />
@@ -564,7 +741,10 @@ export default function GeneralSection() {
                             ...f,
                             ai: {
                               ...f.ai,
-                              openai: { ...f.ai.openai, imageModel: e.target.value },
+                              openai: {
+                                ...f.ai.openai,
+                                imageModel: e.target.value,
+                              },
                             },
                           }))
                         }
@@ -576,7 +756,9 @@ export default function GeneralSection() {
                     className={`flex flex-col gap-3 rounded-lg border p-3 ${form.ai.textProvider === "gemini" || form.ai.imageProvider === "gemini" ? "border-primary/40 bg-primary/5" : "border-border"}`}
                   >
                     <div className="flex items-center justify-between">
-                      <h3 className="text-sm font-semibold text-foreground">Google Gemini</h3>
+                      <h3 className="text-sm font-semibold text-foreground">
+                        Google Gemini
+                      </h3>
                       <div className="flex gap-1">
                         {form.ai.textProvider === "gemini" && (
                           <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-medium text-primary">
@@ -598,7 +780,13 @@ export default function GeneralSection() {
                         onChange={(e) =>
                           setForm((f) => ({
                             ...f,
-                            ai: { ...f.ai, gemini: { ...f.ai.gemini, textModel: e.target.value } },
+                            ai: {
+                              ...f.ai,
+                              gemini: {
+                                ...f.ai.gemini,
+                                textModel: e.target.value,
+                              },
+                            },
                           }))
                         }
                       />
@@ -613,7 +801,10 @@ export default function GeneralSection() {
                             ...f,
                             ai: {
                               ...f.ai,
-                              gemini: { ...f.ai.gemini, imageModel: e.target.value },
+                              gemini: {
+                                ...f.ai.gemini,
+                                imageModel: e.target.value,
+                              },
                             },
                           }))
                         }
@@ -634,7 +825,10 @@ export default function GeneralSection() {
                       onChange={(e) =>
                         setForm((f) => ({
                           ...f,
-                          ai: { ...f.ai, temperature: Number(e.target.value) || 0 },
+                          ai: {
+                            ...f.ai,
+                            temperature: Number(e.target.value) || 0,
+                          },
                         }))
                       }
                     />
@@ -644,14 +838,18 @@ export default function GeneralSection() {
                       rows={2}
                       value={form.ai.systemPrompt}
                       onChange={(e) =>
-                        setForm((f) => ({ ...f, ai: { ...f.ai, systemPrompt: e.target.value } }))
+                        setForm((f) => ({
+                          ...f,
+                          ai: { ...f.ai, systemPrompt: e.target.value },
+                        }))
                       }
                     />
                   </Field>
                 </div>
               </div>
               <p className="mt-3 text-xs text-muted-foreground">
-                کلید API این سرویس‌ها را در بخش «کلیدهای API هوش مصنوعی» زیر همین کارت وارد کنید.
+                کلید API این سرویس‌ها را در بخش «کلیدهای API هوش مصنوعی» زیر
+                همین کارت وارد کنید.
               </p>
             </section>
 
@@ -660,10 +858,13 @@ export default function GeneralSection() {
 
           <TabsContent value="media" className="mt-6 flex flex-col gap-6">
             <section className="rounded-xl border border-border bg-card p-4 shadow-sm">
-              <h2 className="mb-4 text-base font-semibold text-foreground">ذخیره‌سازی رسانه</h2>
+              <h2 className="mb-4 text-base font-semibold text-foreground">
+                ذخیره‌سازی رسانه
+              </h2>
               <p className="mb-4 text-xs text-muted-foreground">
-                تصاویری که با هوش مصنوعی تولید می‌شوند (کاور مقالات) در دیتابیس ذخیره نمی‌شوند و
-                باید به یک محل ذخیره‌سازی خارجی آپلود شوند. یکی از دو سرویس زیر را وصل کنید.
+                تصاویری که با هوش مصنوعی تولید می‌شوند (کاور مقالات) در دیتابیس
+                ذخیره نمی‌شوند و باید به یک محل ذخیره‌سازی خارجی آپلود شوند. یکی
+                از دو سرویس زیر را وصل کنید.
               </p>
               <Field label="محل ذخیره‌سازی فعال">
                 <Select
@@ -671,7 +872,10 @@ export default function GeneralSection() {
                   onValueChange={(v) =>
                     setForm((f) => ({
                       ...f,
-                      media: { ...f.media, provider: v as "none" | "bunny" | "arvan" },
+                      media: {
+                        ...f.media,
+                        provider: v as "none" | "bunny" | "arvan",
+                      },
                     }))
                   }
                 >
@@ -680,8 +884,12 @@ export default function GeneralSection() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="none">هیچ‌کدام (متصل نیست)</SelectItem>
-                    <SelectItem value="bunny">بانی سی‌دی‌ان (Bunny CDN)</SelectItem>
-                    <SelectItem value="arvan">ابر آروان (ArvanCloud)</SelectItem>
+                    <SelectItem value="bunny">
+                      بانی سی‌دی‌ان (Bunny CDN)
+                    </SelectItem>
+                    <SelectItem value="arvan">
+                      ابر آروان (ArvanCloud)
+                    </SelectItem>
                   </SelectContent>
                 </Select>
               </Field>
@@ -691,7 +899,9 @@ export default function GeneralSection() {
                   className={`flex flex-col gap-3 rounded-lg border p-3 ${form.media.provider === "bunny" ? "border-primary/40 bg-primary/5" : "border-border"}`}
                 >
                   <div className="flex items-center justify-between">
-                    <h3 className="text-sm font-semibold text-foreground">Bunny CDN</h3>
+                    <h3 className="text-sm font-semibold text-foreground">
+                      Bunny CDN
+                    </h3>
                     {form.media.provider === "bunny" && (
                       <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-medium text-primary">
                         فعال
@@ -708,7 +918,10 @@ export default function GeneralSection() {
                           ...f,
                           media: {
                             ...f.media,
-                            bunny: { ...f.media.bunny, storageZone: e.target.value },
+                            bunny: {
+                              ...f.media.bunny,
+                              storageZone: e.target.value,
+                            },
                           },
                         }))
                       }
@@ -740,7 +953,10 @@ export default function GeneralSection() {
                           ...f,
                           media: {
                             ...f.media,
-                            bunny: { ...f.media.bunny, pullZoneUrl: e.target.value },
+                            bunny: {
+                              ...f.media.bunny,
+                              pullZoneUrl: e.target.value,
+                            },
                           },
                         }))
                       }
@@ -787,7 +1003,10 @@ export default function GeneralSection() {
                           ...f,
                           media: {
                             ...f.media,
-                            arvan: { ...f.media.arvan, endpoint: e.target.value },
+                            arvan: {
+                              ...f.media.arvan,
+                              endpoint: e.target.value,
+                            },
                           },
                         }))
                       }
@@ -819,7 +1038,10 @@ export default function GeneralSection() {
                           ...f,
                           media: {
                             ...f.media,
-                            arvan: { ...f.media.arvan, publicUrl: e.target.value },
+                            arvan: {
+                              ...f.media.arvan,
+                              publicUrl: e.target.value,
+                            },
                           },
                         }))
                       }
@@ -828,8 +1050,8 @@ export default function GeneralSection() {
                 </div>
               </div>
               <p className="mt-3 text-xs text-muted-foreground">
-                کلید دسترسی این سرویس‌ها را در بخش «کلیدهای اتصال ذخیره‌سازی» زیر همین کارت وارد
-                کنید.
+                کلید دسترسی این سرویس‌ها را در بخش «کلیدهای اتصال ذخیره‌سازی»
+                زیر همین کارت وارد کنید.
               </p>
             </section>
 
@@ -839,21 +1061,27 @@ export default function GeneralSection() {
           <TabsContent value="telegram" className="mt-6 flex flex-col gap-6">
             <section className="rounded-xl border border-border bg-card p-4 shadow-sm">
               <div className="mb-4 flex items-center justify-between">
-                <h2 className="text-base font-semibold text-foreground">ربات مدیریتی تلگرام</h2>
+                <h2 className="text-base font-semibold text-foreground">
+                  ربات مدیریتی تلگرام
+                </h2>
                 <div className="flex items-center gap-2">
                   <Label className="cursor-pointer text-xs">فعال</Label>
                   <Switch
                     checked={form.telegram.enabled}
                     onCheckedChange={(v) =>
-                      setForm((f) => ({ ...f, telegram: { ...f.telegram, enabled: v } }))
+                      setForm((f) => ({
+                        ...f,
+                        telegram: { ...f.telegram, enabled: v },
+                      }))
                     }
                   />
                 </div>
               </div>
               <p className="mb-4 text-xs text-muted-foreground">
-                این ربات از طریق پیام‌رسان تلگرام آمار بازدید، وضعیت مقالات و پیام‌های تماس را نشان
-                می‌دهد، امکان تولید مقاله جدید با یک دکمه را فراهم می‌کند و می‌تواند مقالات تازه
-                منتشرشده را در کانال تلگرام شما پست کند.
+                این ربات از طریق پیام‌رسان تلگرام آمار بازدید، وضعیت مقالات و
+                پیام‌های تماس را نشان می‌دهد، امکان تولید مقاله جدید با یک دکمه
+                را فراهم می‌کند و می‌تواند مقالات تازه منتشرشده را در کانال
+                تلگرام شما پست کند.
               </p>
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <Field label="شناسه کانال تلگرام (برای پست خودکار مقالات)">
@@ -877,15 +1105,19 @@ export default function GeneralSection() {
                     onChange={(e) =>
                       setForm((f) => ({
                         ...f,
-                        telegram: { ...f.telegram, adminChatIds: e.target.value },
+                        telegram: {
+                          ...f.telegram,
+                          adminChatIds: e.target.value,
+                        },
                       }))
                     }
                   />
                 </Field>
               </div>
               <p className="mt-2 text-xs text-muted-foreground">
-                برای پیدا کردن شناسه چت خودتان، یک پیام به ربات بفرستید؛ اگر شناسه شما هنوز اضافه
-                نشده باشد، ربات همان شناسه را برایتان پیام می‌دهد.
+                برای پیدا کردن شناسه چت خودتان، یک پیام به ربات بفرستید؛ اگر
+                شناسه شما هنوز اضافه نشده باشد، ربات همان شناسه را برایتان پیام
+                می‌دهد.
               </p>
 
               {form.telegram.lastChannelPostError && (
@@ -899,8 +1131,8 @@ export default function GeneralSection() {
                     {form.telegram.lastChannelPostError}
                   </p>
                   <p className="mt-2 text-muted-foreground">
-                    معمولاً یعنی ربات هنوز به‌عنوان ادمین با دسترسی ارسال پیام به کانال بالا اضافه
-                    نشده است.
+                    معمولاً یعنی ربات هنوز به‌عنوان ادمین با دسترسی ارسال پیام
+                    به کانال بالا اضافه نشده است.
                   </p>
                 </div>
               )}
@@ -917,7 +1149,10 @@ export default function GeneralSection() {
                 <Switch
                   checked={form.telegram.notifyOnVisit}
                   onCheckedChange={(v) =>
-                    setForm((f) => ({ ...f, telegram: { ...f.telegram, notifyOnVisit: v } }))
+                    setForm((f) => ({
+                      ...f,
+                      telegram: { ...f.telegram, notifyOnVisit: v },
+                    }))
                   }
                 />
               </div>
@@ -928,13 +1163,17 @@ export default function GeneralSection() {
                     پست خودکار مقاله جدید در کانال
                   </p>
                   <p className="text-xs text-muted-foreground">
-                    وقتی مقاله‌ای (دستی یا خودکار) منتشر می‌شود، در کانال بالا پست می‌شود
+                    وقتی مقاله‌ای (دستی یا خودکار) منتشر می‌شود، در کانال بالا
+                    پست می‌شود
                   </p>
                 </div>
                 <Switch
                   checked={form.telegram.notifyOnPublish}
                   onCheckedChange={(v) =>
-                    setForm((f) => ({ ...f, telegram: { ...f.telegram, notifyOnPublish: v } }))
+                    setForm((f) => ({
+                      ...f,
+                      telegram: { ...f.telegram, notifyOnPublish: v },
+                    }))
                   }
                 />
               </div>
@@ -945,7 +1184,9 @@ export default function GeneralSection() {
 
           <TabsContent value="analytics" className="mt-6">
             <section className="rounded-xl border border-border bg-card p-4 shadow-sm">
-              <h2 className="mb-4 text-base font-semibold text-foreground">تحلیل و اسکریپت‌ها</h2>
+              <h2 className="mb-4 text-base font-semibold text-foreground">
+                تحلیل و اسکریپت‌ها
+              </h2>
               <div className="grid grid-cols-1 gap-4">
                 <Field label="شناسه گوگل آنالیتیکس">
                   <Input
@@ -954,7 +1195,10 @@ export default function GeneralSection() {
                     onChange={(e) =>
                       setForm((f) => ({
                         ...f,
-                        analytics: { ...f.analytics, googleAnalyticsId: e.target.value },
+                        analytics: {
+                          ...f.analytics,
+                          googleAnalyticsId: e.target.value,
+                        },
                       }))
                     }
                   />
@@ -967,7 +1211,10 @@ export default function GeneralSection() {
                     onChange={(e) =>
                       setForm((f) => ({
                         ...f,
-                        analytics: { ...f.analytics, headScripts: e.target.value },
+                        analytics: {
+                          ...f.analytics,
+                          headScripts: e.target.value,
+                        },
                       }))
                     }
                   />
@@ -980,7 +1227,10 @@ export default function GeneralSection() {
                     onChange={(e) =>
                       setForm((f) => ({
                         ...f,
-                        analytics: { ...f.analytics, bodyScripts: e.target.value },
+                        analytics: {
+                          ...f.analytics,
+                          bodyScripts: e.target.value,
+                        },
                       }))
                     }
                   />
@@ -989,7 +1239,9 @@ export default function GeneralSection() {
             </section>
 
             <section className="mt-6 rounded-xl border border-border bg-card p-4 shadow-sm">
-              <h2 className="mb-4 text-base font-semibold text-foreground">نماد اعتماد (اینماد)</h2>
+              <h2 className="mb-4 text-base font-semibold text-foreground">
+                نماد اعتماد (اینماد)
+              </h2>
               <div className="grid grid-cols-1 gap-4">
                 <div className="flex items-center justify-between">
                   <div className="flex flex-col gap-0.5">
@@ -1001,7 +1253,10 @@ export default function GeneralSection() {
                   <Switch
                     checked={form.trustBadge.enabled}
                     onCheckedChange={(v) =>
-                      setForm((f) => ({ ...f, trustBadge: { ...f.trustBadge, enabled: v } }))
+                      setForm((f) => ({
+                        ...f,
+                        trustBadge: { ...f.trustBadge, enabled: v },
+                      }))
                     }
                   />
                 </div>
@@ -1011,14 +1266,16 @@ export default function GeneralSection() {
                     rows={5}
                     value={form.trustBadge.html}
                     onChange={(e) =>
-                      setForm((f) => ({ ...f, trustBadge: { ...f.trustBadge, html: e.target.value } }))
+                      setForm((f) => ({
+                        ...f,
+                        trustBadge: { ...f.trustBadge, html: e.target.value },
+                      }))
                     }
                   />
                 </Field>
               </div>
             </section>
           </TabsContent>
-
         </Tabs>
 
         <div>
@@ -1036,7 +1293,10 @@ function AiKeysSection() {
   const statusFn = useServerFn(adminGetAiKeysStatus);
   const saveFn = useServerFn(adminSaveAiKeys);
   const qc = useQueryClient();
-  const { data, isLoading } = useQuery({ queryKey: ["ai-keys-status"], queryFn: () => statusFn() });
+  const { data, isLoading } = useQuery({
+    queryKey: ["ai-keys-status"],
+    queryFn: () => statusFn(),
+  });
   const [openaiApiKey, setOpenaiApiKey] = useState("");
   const [geminiApiKey, setGeminiApiKey] = useState("");
 
@@ -1060,12 +1320,14 @@ function AiKeysSection() {
     <section className="rounded-xl border border-border bg-card p-4 shadow-sm">
       <div className="mb-4 flex items-center gap-2">
         <KeyRound className="h-4 w-4 text-primary" />
-        <h2 className="text-base font-semibold text-foreground">کلیدهای API هوش مصنوعی</h2>
+        <h2 className="text-base font-semibold text-foreground">
+          کلیدهای API هوش مصنوعی
+        </h2>
       </div>
       <p className="mb-4 text-xs text-muted-foreground">
-        این کلیدها مستقیماً و فقط سمت سرور استفاده می‌شوند و هرگز به مرورگر ارسال نمی‌شوند. برای
-        تولید مقاله و تصویر بلاگ با هوش مصنوعی، حداقل کلید سرویسی که در بالا انتخاب کرده‌اید را وارد
-        کنید.
+        این کلیدها مستقیماً و فقط سمت سرور استفاده می‌شوند و هرگز به مرورگر
+        ارسال نمی‌شوند. برای تولید مقاله و تصویر بلاگ با هوش مصنوعی، حداقل کلید
+        سرویسی که در بالا انتخاب کرده‌اید را وارد کنید.
       </p>
       {isLoading ? (
         <Skeleton className="h-24 w-full" />
@@ -1084,7 +1346,11 @@ function AiKeysSection() {
               <Input
                 dir="ltr"
                 type="password"
-                placeholder={data?.openaiKeySet ? "برای تغییر، کلید جدید وارد کنید" : "sk-..."}
+                placeholder={
+                  data?.openaiKeySet
+                    ? "برای تغییر، کلید جدید وارد کنید"
+                    : "sk-..."
+                }
                 value={openaiApiKey}
                 onChange={(e) => setOpenaiApiKey(e.target.value)}
               />
@@ -1109,7 +1375,9 @@ function AiKeysSection() {
               onClick={() => saveMutation.mutate({ openaiApiKey })}
               className="w-fit gap-1.5"
             >
-              {saveMutation.isPending && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+              {saveMutation.isPending && (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              )}
               ذخیره کلید اوپن‌ای‌آی
             </Button>
           </div>
@@ -1127,7 +1395,11 @@ function AiKeysSection() {
               <Input
                 dir="ltr"
                 type="password"
-                placeholder={data?.geminiKeySet ? "برای تغییر، کلید جدید وارد کنید" : "AIza..."}
+                placeholder={
+                  data?.geminiKeySet
+                    ? "برای تغییر، کلید جدید وارد کنید"
+                    : "AIza..."
+                }
                 value={geminiApiKey}
                 onChange={(e) => setGeminiApiKey(e.target.value)}
               />
@@ -1152,7 +1424,9 @@ function AiKeysSection() {
               onClick={() => saveMutation.mutate({ geminiApiKey })}
               className="w-fit gap-1.5"
             >
-              {saveMutation.isPending && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+              {saveMutation.isPending && (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              )}
               ذخیره کلید جمینای
             </Button>
           </div>
@@ -1196,10 +1470,13 @@ function MediaKeysSection() {
     <section className="rounded-xl border border-border bg-card p-4 shadow-sm">
       <div className="mb-4 flex items-center gap-2">
         <KeyRound className="h-4 w-4 text-primary" />
-        <h2 className="text-base font-semibold text-foreground">کلیدهای اتصال ذخیره‌سازی</h2>
+        <h2 className="text-base font-semibold text-foreground">
+          کلیدهای اتصال ذخیره‌سازی
+        </h2>
       </div>
       <p className="mb-4 text-xs text-muted-foreground">
-        این کلیدها مستقیماً و فقط سمت سرور استفاده می‌شوند و هرگز به مرورگر ارسال نمی‌شوند.
+        این کلیدها مستقیماً و فقط سمت سرور استفاده می‌شوند و هرگز به مرورگر
+        ارسال نمی‌شوند.
       </p>
       {isLoading ? (
         <Skeleton className="h-24 w-full" />
@@ -1218,7 +1495,11 @@ function MediaKeysSection() {
               <Input
                 dir="ltr"
                 type="password"
-                placeholder={data?.bunnyKeySet ? "برای تغییر، کلید جدید وارد کنید" : "Access Key"}
+                placeholder={
+                  data?.bunnyKeySet
+                    ? "برای تغییر، کلید جدید وارد کنید"
+                    : "Access Key"
+                }
                 value={bunnyAccessKey}
                 onChange={(e) => setBunnyAccessKey(e.target.value)}
               />
@@ -1243,7 +1524,9 @@ function MediaKeysSection() {
               onClick={() => saveMutation.mutate({ bunnyAccessKey })}
               className="w-fit gap-1.5"
             >
-              {saveMutation.isPending && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+              {saveMutation.isPending && (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              )}
               ذخیره کلید بانی
             </Button>
           </div>
@@ -1300,12 +1583,17 @@ function MediaKeysSection() {
               size="sm"
               variant="outline"
               disabled={
-                (!arvanAccessKey.trim() && !arvanSecretKey.trim()) || saveMutation.isPending
+                (!arvanAccessKey.trim() && !arvanSecretKey.trim()) ||
+                saveMutation.isPending
               }
-              onClick={() => saveMutation.mutate({ arvanAccessKey, arvanSecretKey })}
+              onClick={() =>
+                saveMutation.mutate({ arvanAccessKey, arvanSecretKey })
+              }
               className="w-fit gap-1.5"
             >
-              {saveMutation.isPending && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+              {saveMutation.isPending && (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              )}
               ذخیره کلیدهای آروان
             </Button>
           </div>
@@ -1361,11 +1649,14 @@ function TelegramKeysSection() {
     <section className="rounded-xl border border-border bg-card p-4 shadow-sm">
       <div className="mb-4 flex items-center gap-2">
         <Bot className="h-4 w-4 text-primary" />
-        <h2 className="text-base font-semibold text-foreground">اتصال ربات تلگرام</h2>
+        <h2 className="text-base font-semibold text-foreground">
+          اتصال ربات تلگرام
+        </h2>
       </div>
       <p className="mb-4 text-xs text-muted-foreground">
-        ابتدا با @BotFather یک ربات بسازید و توکن آن را اینجا وارد کنید، سپس روی «اتصال ربات» بزنید
-        تا وبهوک ثبت شود. توکن مستقیماً و فقط سمت سرور استفاده می‌شود.
+        ابتدا با @BotFather یک ربات بسازید و توکن آن را اینجا وارد کنید، سپس روی
+        «اتصال ربات» بزنید تا وبهوک ثبت شود. توکن مستقیماً و فقط سمت سرور
+        استفاده می‌شود.
       </p>
       {isLoading ? (
         <Skeleton className="h-24 w-full" />
@@ -1385,7 +1676,9 @@ function TelegramKeysSection() {
                 dir="ltr"
                 type="password"
                 placeholder={
-                  data?.botTokenSet ? "برای تغییر، توکن جدید وارد کنید" : "123456:ABC-..."
+                  data?.botTokenSet
+                    ? "برای تغییر، توکن جدید وارد کنید"
+                    : "123456:ABC-..."
                 }
                 value={botToken}
                 onChange={(e) => setBotToken(e.target.value)}
@@ -1412,7 +1705,9 @@ function TelegramKeysSection() {
                 onClick={() => saveMutation.mutate({ botToken })}
                 className="w-fit gap-1.5"
               >
-                {saveMutation.isPending && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+                {saveMutation.isPending && (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                )}
                 ذخیره توکن
               </Button>
               <Button

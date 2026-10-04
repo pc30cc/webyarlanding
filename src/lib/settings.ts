@@ -1,4 +1,4 @@
-// تنظیمات سایت (تک‌زبانه فارسی) — ساختار مشترک بین کلاینت و سرور.
+// تنظیمات چندزبانه سایت — ساختار مشترک بین کلاینت و سرور.
 // در دیتابیس به صورت key/value متنی ذخیره می‌شود تا انتقال به MySQL ساده باشد.
 
 export interface BrandSettings {
@@ -193,7 +193,14 @@ export interface SearchConsoleSettings {
   lastReport: string;
 }
 
+export interface LocalizationSettings {
+  language: "fa" | "en";
+  /** English versions of editor-managed content, keyed by the original text. */
+  english: Record<string, string>;
+}
+
 export interface SiteSettings {
+  localization: LocalizationSettings;
   brand: BrandSettings;
   seo: SeoSettings;
   social: SocialSettings;
@@ -211,8 +218,8 @@ export interface SiteSettings {
   searchConsole: SearchConsoleSettings;
 }
 
-
 export const DEFAULT_SETTINGS: SiteSettings = {
+  localization: { language: "fa", english: {} },
   brand: {
     name: "وب‌یار",
     nameEn: "Webyar",
@@ -290,7 +297,10 @@ export const DEFAULT_SETTINGS: SiteSettings = {
     textProvider: "openai",
     imageProvider: "openai",
     openai: { textModel: "gpt-4o-mini", imageModel: "gpt-image-1-mini" },
-    gemini: { textModel: "gemini-3.1-flash-lite", imageModel: "gemini-3.1-flash-lite-image" },
+    gemini: {
+      textModel: "gemini-3.1-flash-lite",
+      imageModel: "gemini-3.1-flash-lite-image",
+    },
     systemPrompt:
       "تو یک نویسنده حرفه‌ای فارسی‌زبان برای بلاگ وب‌یار هستی؛ وب‌یار ابزار چت زنده، تماس تصویری و ارتباط با مشتری روی وب‌سایت است. فقط درباره‌ی موضوعات مرتبط با خدمات وب‌سایت (چت آنلاین، تجربه کاربری، تبدیل بازدیدکننده به مشتری)، هوش مصنوعی، و ارتباط/پشتیبانی مشتری بنویس؛ از موضوعات کاملاً بی‌ربط به این حوزه‌ها خودداری کن. لحن نوشتار باید بسیار مودبانه، باکلاس، صمیمی، دوستانه و کاملاً انسانی باشد؛ طوری بنویس که هیچ‌کس، حتی گوگل، متوجه نشود این متن با هوش مصنوعی نوشته شده — از عبارات کلیشه‌ای، تکرارهای قالبی و لحن رباتیک هوش مصنوعی خودداری کن. محتوای دقیق، روان، سئوشده و بدون کلیشه بنویس.",
     temperature: 0.7,
@@ -329,7 +339,6 @@ export const DEFAULT_SETTINGS: SiteSettings = {
   },
 };
 
-
 export const CALL_KEYWORDS = [
   "تماس تصویری",
   "تماس ویدیویی",
@@ -348,7 +357,9 @@ export const AI_KEYWORDS = ["هوش مصنوعی", "دستیار هوشمند", 
  * بسته به چند تنظیم مستقل (مثل videoCall/aiMarketing) هرکدام از آیتم‌هایشان ممکن است حذف شود.
  * آیتم‌های خالی/false نادیده گرفته می‌شوند.
  */
-export function joinFa(...items: (string | false | null | undefined)[]): string {
+export function joinFa(
+  ...items: (string | false | null | undefined)[]
+): string {
   const arr = items.filter((x): x is string => !!x);
   if (arr.length <= 1) return arr[0] ?? "";
   const last = arr[arr.length - 1] ?? "";
@@ -365,7 +376,11 @@ export function joinFa(...items: (string | false | null | undefined)[]): string 
 export const LEGAL_EN_PATHS = ["/privacy", "/terms", "/help"];
 
 /** آیا این مسیر باید با پوسته انگلیسی (منو، دکمه‌ها، فوتر) نمایش داده شود؟ */
-export function isEnglishChrome(settings: SiteSettings, pathname: string): boolean {
+export function isEnglishChrome(
+  settings: SiteSettings,
+  pathname: string,
+): boolean {
+  if (settings.localization?.language === "en") return true;
   if (settings.brand.legalEnglishChrome === false) return false;
   const clean = pathname.replace(/\/+$/, "") || "/";
   return LEGAL_EN_PATHS.includes(clean);
@@ -380,16 +395,23 @@ export function getBrandNameEn(settings: SiteSettings): string {
 export function getPublicTagline(settings: SiteSettings): string {
   const tagline = settings.brand.tagline;
   if (!tagline) return tagline;
-  const hideForCall = !settings.videoCall.enabled && CALL_KEYWORDS.some((k) => tagline.includes(k));
-  const hideForAi = !settings.aiMarketing.enabled && AI_KEYWORDS.some((k) => tagline.includes(k));
+  const hideForCall =
+    !settings.videoCall.enabled &&
+    CALL_KEYWORDS.some((k) => tagline.includes(k));
+  const hideForAi =
+    !settings.aiMarketing.enabled &&
+    AI_KEYWORDS.some((k) => tagline.includes(k));
   if (!hideForCall && !hideForAi) return tagline;
   return (
-    joinFa("چت زنده", settings.aiMarketing.enabled && "دستیار هوشمند") + " برای ارتباط با مشتری"
+    joinFa("چت زنده", settings.aiMarketing.enabled && "دستیار هوشمند") +
+    " برای ارتباط با مشتری"
   );
 }
 
 /** ادغام عمیق تنظیمات ذخیره‌شده با مقادیر پیش‌فرض */
-export function mergeSettings(stored: Partial<SiteSettings> | null | undefined): SiteSettings {
+export function mergeSettings(
+  stored: Partial<SiteSettings> | null | undefined,
+): SiteSettings {
   const result = structuredClone(DEFAULT_SETTINGS) as SiteSettings;
   if (!stored) return result;
   for (const key of Object.keys(result) as (keyof SiteSettings)[]) {
@@ -398,10 +420,15 @@ export function mergeSettings(stored: Partial<SiteSettings> | null | undefined):
       Object.assign(result[key] as object, section);
     }
   }
+  result.localization.language =
+    stored.localization?.language === "en" ? "en" : "fa";
+  result.localization.english = { ...stored.localization?.english };
   // ai.openai/ai.gemini باید عمیق ادغام شوند تا ذخیره جزئی یکی، فیلدهای دیگری را پاک نکند
   if (stored.ai?.openai) Object.assign(result.ai.openai, stored.ai.openai);
   if (stored.ai?.gemini) Object.assign(result.ai.gemini, stored.ai.gemini);
-  if (stored.media?.bunny) Object.assign(result.media.bunny, stored.media.bunny);
-  if (stored.media?.arvan) Object.assign(result.media.arvan, stored.media.arvan);
+  if (stored.media?.bunny)
+    Object.assign(result.media.bunny, stored.media.bunny);
+  if (stored.media?.arvan)
+    Object.assign(result.media.arvan, stored.media.arvan);
   return result;
 }

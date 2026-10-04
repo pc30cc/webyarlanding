@@ -1,6 +1,11 @@
+import { useSiteTranslation } from "@/components/site/SiteLanguage";
 import { Link, useRouterState } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { getBrandNameEn, getPublicTagline, type SiteSettings } from "@/lib/settings";
+import {
+  getBrandNameEn,
+  getPublicTagline,
+  type SiteSettings,
+} from "@/lib/settings";
 
 /** نماد اعتماد بعد از بارگذاری بقیه صفحه تزریق می‌شود تا تصویر کند اینماد
  *  جلوی بارگذاری ابزارک‌ها و رویداد load صفحه را نگیرد. کد اینماد بدون تغییر می‌ماند. */
@@ -11,10 +16,10 @@ function TrustBadge({ html }: { html: string }) {
     return () => window.clearTimeout(timer);
   }, []);
   if (!ready) return <div className="enamad-badge min-h-[96px]" aria-hidden />;
-  return <div className="enamad-badge" dangerouslySetInnerHTML={{ __html: html }} />;
+  return (
+    <div className="enamad-badge" dangerouslySetInnerHTML={{ __html: html }} />
+  );
 }
-
-
 
 const FA = {
   tagline: "پلتفرم جامع مدیریت ارتباط با مشتری برای کسب‌وکارهای ایرانی",
@@ -59,16 +64,17 @@ export function SiteFooter({
   settings: SiteSettings;
   english?: boolean;
 }) {
+  const translateText = useSiteTranslation();
+
   const t = english ? EN : FA;
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const isHome = (pathname.replace(/\/+$/, "") || "/") === "/";
-  const showTrustBadge = isHome && settings.trustBadge?.enabled && !!settings.trustBadge?.html;
+  const showTrustBadge =
+    isHome && settings.trustBadge?.enabled && !!settings.trustBadge?.html;
   const brandName = english ? getBrandNameEn(settings) : settings.brand.name;
   const copyright = english
     ? `© ${new Date().getFullYear()} ${getBrandNameEn(settings)}. All rights reserved`
     : settings.brand.copyright || "© ۱۴۰۵ وب‌یار. تمامی حقوق محفوظ است";
-
-
 
   return (
     <footer className="border-t border-border bg-card/30">
@@ -80,79 +86,123 @@ export function SiteFooter({
             <Link to="/" className="flex items-center gap-2">
               <img
                 src={settings.brand.logoUrl || "/webyar-logo.png"}
-                alt={brandName || "وب‌یار"}
+                alt={translateText(brandName || "وب‌یار")}
                 width={32}
                 height={32}
                 className="h-8 w-8 rounded-lg object-cover"
               />
-              <span className="text-base font-bold text-foreground">{brandName}</span>
+              <span className="text-base font-bold text-foreground">
+                {translateText(brandName)}
+              </span>
             </Link>
             <p className="text-sm leading-relaxed text-muted-foreground">
-              {english ? t.tagline : getPublicTagline(settings) || t.tagline}
+              {translateText(
+                english ? t.tagline : getPublicTagline(settings) || t.tagline,
+              )}
             </p>
           </div>
           <div>
-            <h3 className="mb-3 text-sm font-semibold text-foreground">{t.product}</h3>
+            <h3 className="mb-3 text-sm font-semibold text-foreground">
+              {translateText(t.product)}
+            </h3>
             <nav className="space-y-2 text-sm text-muted-foreground">
-              <Link to="/products" className="block transition-colors hover:text-foreground">
-                {t.products}
+              <Link
+                to="/products"
+                className="block transition-colors hover:text-foreground"
+              >
+                {translateText(t.products)}
               </Link>
-              <Link to="/solutions" className="block transition-colors hover:text-foreground">
-                {t.solutions}
+              <Link
+                to="/solutions"
+                className="block transition-colors hover:text-foreground"
+              >
+                {translateText(t.solutions)}
               </Link>
-              <Link to="/pricing" className="block transition-colors hover:text-foreground">
-                {t.pricing}
+              <Link
+                to="/pricing"
+                className="block transition-colors hover:text-foreground"
+              >
+                {translateText(t.pricing)}
               </Link>
-              <Link to="/download" className="block transition-colors hover:text-foreground">
-                {t.apiDocs}
+              <Link
+                to="/download"
+                className="block transition-colors hover:text-foreground"
+              >
+                {translateText(t.apiDocs)}
               </Link>
             </nav>
           </div>
           <div>
-            <h3 className="mb-3 text-sm font-semibold text-foreground">{t.company}</h3>
+            <h3 className="mb-3 text-sm font-semibold text-foreground">
+              {translateText(t.company)}
+            </h3>
             <nav className="space-y-2 text-sm text-muted-foreground">
-              <Link to="/about" className="block transition-colors hover:text-foreground">
-                {t.about}
+              <Link
+                to="/about"
+                className="block transition-colors hover:text-foreground"
+              >
+                {translateText(t.about)}
               </Link>
-              <Link to="/blog" className="block transition-colors hover:text-foreground">
-                {t.blog}
+              <Link
+                to="/blog"
+                className="block transition-colors hover:text-foreground"
+              >
+                {translateText(t.blog)}
               </Link>
-              <Link to="/contact" className="block transition-colors hover:text-foreground">
-                {t.contact}
+              <Link
+                to="/contact"
+                className="block transition-colors hover:text-foreground"
+              >
+                {translateText(t.contact)}
               </Link>
-              <Link to="/help" className="block transition-colors hover:text-foreground">
-                {english ? t.support : "Support"}
+              <Link
+                to="/help"
+                className="block transition-colors hover:text-foreground"
+              >
+                {translateText(english ? t.support : "Support")}
               </Link>
             </nav>
           </div>
           <div>
-            <h3 className="mb-3 text-sm font-semibold text-foreground">{t.legal}</h3>
+            <h3 className="mb-3 text-sm font-semibold text-foreground">
+              {translateText(t.legal)}
+            </h3>
             <nav className="space-y-2 text-sm text-muted-foreground">
-              <Link to="/terms" className="block transition-colors hover:text-foreground">
-                {t.terms}
+              <Link
+                to="/terms"
+                className="block transition-colors hover:text-foreground"
+              >
+                {translateText(t.terms)}
               </Link>
-              <Link to="/privacy" className="block transition-colors hover:text-foreground">
-                {t.privacy}
+              <Link
+                to="/privacy"
+                className="block transition-colors hover:text-foreground"
+              >
+                {translateText(t.privacy)}
               </Link>
-              <Link to="/sla" className="block transition-colors hover:text-foreground">
-                {t.sla}
+              <Link
+                to="/sla"
+                className="block transition-colors hover:text-foreground"
+              >
+                {translateText(t.sla)}
               </Link>
             </nav>
           </div>
           {showTrustBadge && (
             <div>
-              <h3 className="mb-3 text-sm font-semibold text-foreground">نماد اعتماد</h3>
+              <h3 className="mb-3 text-sm font-semibold text-foreground">
+                {translateText("نماد اعتماد")}
+              </h3>
               <TrustBadge html={settings.trustBadge.html} />
             </div>
           )}
         </div>
 
-
         <div className="border-t border-border pt-6 text-center">
-          <p className="text-sm text-muted-foreground">{copyright}</p>
+          <p className="text-sm text-muted-foreground">
+            {translateText(copyright)}
+          </p>
         </div>
-
-
       </div>
     </footer>
   );

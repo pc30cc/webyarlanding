@@ -1,9 +1,14 @@
+import { localizeStructuredData } from "@/lib/site-i18n";
 import type { ReactNode } from "react";
 import { SiteHeader } from "./SiteHeader";
 import { SiteFooter } from "./SiteFooter";
 import { ChatWidget } from "./ChatWidget";
 import { CallCenterWidget } from "./CallCenterWidget";
-import { getPublicTagline, isEnglishChrome, type SiteSettings } from "@/lib/settings";
+import {
+  getPublicTagline,
+  isEnglishChrome,
+  type SiteSettings,
+} from "@/lib/settings";
 import { useRouterState } from "@tanstack/react-router";
 import { safeJsonLdHtml } from "@/lib/seo-meta";
 
@@ -60,7 +65,8 @@ export function SiteLayout({
   const english = isEnglishChrome(settings, pathname);
   return (
     <div
-      {...(english ? { dir: "ltr" as const, lang: "en" } : {})}
+      dir={english ? "ltr" : "rtl"}
+      lang={english ? "en" : "fa"}
       className={`site-theme ${settings.brand.siteTheme === "light" ? "site-light" : ""} relative flex min-h-dvh flex-col overflow-x-clip bg-background text-foreground antialiased`}
     >
       {/* گرادیان‌های ملایم برند در گوشه‌های صفحه — پس‌زمینه یکدست در تمام صفحات، حتی در نمایش خیلی عریض */}
@@ -72,7 +78,12 @@ export function SiteLayout({
         aria-hidden
         className="pointer-events-none absolute -bottom-24 -end-24 -z-10 h-72 w-72 rounded-full bg-primary/15 blur-3xl"
       />
-      <script type="application/ld+json" dangerouslySetInnerHTML={safeJsonLdHtml(siteJsonLd)} />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={safeJsonLdHtml(
+          localizeStructuredData(settings, siteJsonLd),
+        )}
+      />
       <SiteHeader settings={settings} english={english} />
       <main className="flex-1">{children}</main>
       <SiteFooter settings={settings} english={english} />

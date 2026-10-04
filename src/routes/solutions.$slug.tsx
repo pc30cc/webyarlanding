@@ -1,3 +1,5 @@
+import { localizeStructuredData } from "@/lib/site-i18n";
+import { useSiteTranslation } from "@/components/site/SiteLanguage";
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { motion } from "framer-motion";
 import ReactMarkdown from "react-markdown";
@@ -33,7 +35,9 @@ export const Route = createFileRoute("/solutions/$slug")({
   },
   notFoundComponent: () => (
     <div className="container-page flex min-h-[50vh] flex-col items-center justify-center gap-4 py-24 text-center">
-      <h1 className="text-2xl font-extrabold text-foreground">راه‌کار یافت نشد</h1>
+      <h1 className="text-2xl font-extrabold text-foreground">
+        راه‌کار یافت نشد
+      </h1>
       <Link to="/solutions" className="text-sm text-brand hover:underline">
         بازگشت به راه‌کارها
       </Link>
@@ -43,6 +47,8 @@ export const Route = createFileRoute("/solutions/$slug")({
 });
 
 function SolutionDetailPage() {
+  const translateText = useSiteTranslation();
+
   const { settings, item, categoryTitle, related } = Route.useLoaderData();
   const Icon = getIcon(item.icon);
   const base = (settings.brand.siteUrl || "").replace(/\/$/, "");
@@ -55,13 +61,22 @@ function SolutionDetailPage() {
       name: item.title,
       description: item.shortDesc || item.description,
       url,
-      provider: { "@type": "Organization", name: settings.brand.name, url: base || undefined },
+      provider: {
+        "@type": "Organization",
+        name: settings.brand.name,
+        url: base || undefined,
+      },
     },
     {
       "@context": "https://schema.org",
       "@type": "BreadcrumbList",
       itemListElement: [
-        { "@type": "ListItem", position: 1, name: "خانه", item: base || undefined },
+        {
+          "@type": "ListItem",
+          position: 1,
+          name: "خانه",
+          item: base || undefined,
+        },
         {
           "@type": "ListItem",
           position: 2,
@@ -75,7 +90,12 @@ function SolutionDetailPage() {
 
   return (
     <SiteLayout settings={settings}>
-      <script type="application/ld+json" dangerouslySetInnerHTML={safeJsonLdHtml(jsonLd)} />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={safeJsonLdHtml(
+          localizeStructuredData(settings, jsonLd),
+        )}
+      />
 
       <section className="relative -mt-16 overflow-hidden pt-28 pb-16 sm:-mt-[4.75rem] sm:pt-[8.75rem] sm:pb-24">
         <div
@@ -89,18 +109,21 @@ function SolutionDetailPage() {
 
         <div className="container-page relative z-10 max-w-3xl">
           <nav
-            aria-label="مسیر"
+            aria-label={translateText("مسیر")}
             className="mb-8 flex items-center gap-1.5 text-sm text-muted-foreground"
           >
             <Link to="/" className="transition-colors hover:text-foreground">
-              خانه
+              {translateText("خانه")}
             </Link>
             <ChevronLeft className="h-3.5 w-3.5" />
-            <Link to="/solutions" className="transition-colors hover:text-foreground">
-              راه‌کارها
+            <Link
+              to="/solutions"
+              className="transition-colors hover:text-foreground"
+            >
+              {translateText("راه‌کارها")}
             </Link>
             <ChevronLeft className="h-3.5 w-3.5" />
-            <span className="text-foreground">{item.title}</span>
+            <span className="text-foreground">{translateText(item.title)}</span>
           </nav>
 
           <motion.div
@@ -112,13 +135,15 @@ function SolutionDetailPage() {
               <Icon className="h-8 w-8 text-primary" />
             </div>
             {categoryTitle && (
-              <div className="mb-3 text-sm font-bold text-primary">{categoryTitle}</div>
+              <div className="mb-3 text-sm font-bold text-primary">
+                {translateText(categoryTitle)}
+              </div>
             )}
             <h1 className="mb-6 text-3xl font-extrabold leading-[1.25] text-foreground sm:text-5xl">
-              {item.title}
+              {translateText(item.title)}
             </h1>
             <p className="max-w-2xl text-base leading-[1.9] text-muted-foreground sm:text-lg">
-              {item.shortDesc || item.description}
+              {translateText(item.shortDesc || item.description)}
             </p>
           </motion.div>
         </div>
@@ -128,13 +153,14 @@ function SolutionDetailPage() {
         <div className="max-w-3xl">
           {item.description && (
             <ScrollReveal className="prose prose-sm mb-14 max-w-none prose-headings:text-foreground prose-p:leading-[1.9] prose-p:text-muted-foreground prose-a:text-brand prose-strong:text-foreground sm:prose-base dark:prose-invert">
-              <ReactMarkdown>{item.description}</ReactMarkdown>
+              <ReactMarkdown>{translateText(item.description)}</ReactMarkdown>
             </ScrollReveal>
           )}
 
           <ScrollReveal>
             <h2 className="mb-6 text-xl font-extrabold text-foreground sm:text-2xl">
-              وب‌یار برای {item.title} چه می‌کند
+              {translateText("وب‌یار برای ")}
+              {translateText(item.title)} {translateText(" چه می‌کند")}
             </h2>
             <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               {item.bullets.map((b) => (
@@ -143,7 +169,9 @@ function SolutionDetailPage() {
                   className="flex items-start gap-3 rounded-xl border border-border bg-card p-4 shadow-card"
                 >
                   <Check className="mt-0.5 h-5 w-5 shrink-0 text-success" />
-                  <span className="text-sm leading-relaxed text-foreground">{b}</span>
+                  <span className="text-sm leading-relaxed text-foreground">
+                    {translateText(b)}
+                  </span>
                 </li>
               ))}
             </ul>
@@ -154,20 +182,23 @@ function SolutionDetailPage() {
               to="/contact"
               className="inline-flex items-center gap-2 rounded-xl bg-brand px-8 py-4 text-base font-bold text-primary-foreground shadow-lg shadow-primary/30"
             >
-              مشاوره رایگان <ChevronLeft className="h-4 w-4" />
+              {translateText("مشاوره رایگان ")}
+              <ChevronLeft className="h-4 w-4" />
             </Link>
             <Link
               to="/products"
               className="inline-flex items-center rounded-xl border border-border px-8 py-4 text-base font-semibold text-foreground transition-colors hover:bg-secondary"
             >
-              مشاهده محصولات
+              {translateText("مشاهده محصولات")}
             </Link>
           </ScrollReveal>
         </div>
 
         {related.length > 0 && (
           <div className="mt-16 max-w-4xl border-t border-border pt-10">
-            <h2 className="mb-6 text-lg font-bold text-foreground">سایر راه‌کارهای این دسته</h2>
+            <h2 className="mb-6 text-lg font-bold text-foreground">
+              {translateText("سایر راه‌کارهای این دسته")}
+            </h2>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
               {related.map((r) => {
                 const RelIcon = getIcon(r.icon);
@@ -179,8 +210,12 @@ function SolutionDetailPage() {
                     className="rounded-xl border border-border bg-card p-4 shadow-card transition-colors hover:border-primary/30"
                   >
                     <RelIcon className="mb-2 h-5 w-5 text-primary" />
-                    <div className="mb-1 text-sm font-bold text-foreground">{r.title}</div>
-                    <div className="line-clamp-2 text-xs text-muted-foreground">{r.shortDesc}</div>
+                    <div className="mb-1 text-sm font-bold text-foreground">
+                      {translateText(r.title)}
+                    </div>
+                    <div className="line-clamp-2 text-xs text-muted-foreground">
+                      {translateText(r.shortDesc)}
+                    </div>
                   </Link>
                 );
               })}
@@ -193,7 +228,7 @@ function SolutionDetailPage() {
           className="mt-12 inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-brand"
         >
           <ArrowRight className="h-4 w-4" />
-          بازگشت به همه راه‌کارها
+          {translateText("بازگشت به همه راه‌کارها")}
         </Link>
       </div>
     </SiteLayout>

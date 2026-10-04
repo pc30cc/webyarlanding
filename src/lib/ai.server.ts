@@ -22,15 +22,22 @@ interface ChatMessage {
 interface AiConfig {
   ai: AiSettings;
   keys: AiApiKeys;
+  language: "fa" | "en";
 }
 
 async function getAiConfig(): Promise<AiConfig> {
   const [settings, keys] = await Promise.all([loadSettings(), loadAiKeys()]);
-  return { ai: settings.ai, keys };
+  return {
+    ai: settings.ai,
+    keys,
+    language: settings.localization?.language === "en" ? "en" : "fa",
+  };
 }
 
 function withStyle(instruction: string, systemPrompt: string): string {
-  return systemPrompt ? `${instruction}\n\nسبک و لحن نوشتار: ${systemPrompt}` : instruction;
+  return systemPrompt
+    ? `${instruction}\n\nسبک و لحن نوشتار: ${systemPrompt}`
+    : instruction;
 }
 
 /**
@@ -93,10 +100,19 @@ function pickBy<T>(list: T[], seed?: number): T {
  * پرامپت ساخت تصویر کاور — عکس‌گونه و واقعی، با صحنه/نور/زاویه‌ی متغیر.
  * `variantSeed` باعث می‌شود کاورهای پشت‌سرهم (تولید خودکار) روی ترکیب‌های متفاوت بچرخند.
  */
-export function buildCoverImagePrompt(title: string, variantSeed?: number): string {
+export function buildCoverImagePrompt(
+  title: string,
+  variantSeed?: number,
+): string {
   const scene = pickBy(COVER_SCENES, variantSeed);
-  const mood = pickBy(COVER_MOODS, typeof variantSeed === "number" ? variantSeed * 3 + 1 : undefined);
-  const shot = pickBy(COVER_SHOTS, typeof variantSeed === "number" ? variantSeed * 5 + 2 : undefined);
+  const mood = pickBy(
+    COVER_MOODS,
+    typeof variantSeed === "number" ? variantSeed * 3 + 1 : undefined,
+  );
+  const shot = pickBy(
+    COVER_SHOTS,
+    typeof variantSeed === "number" ? variantSeed * 5 + 2 : undefined,
+  );
   return (
     `یک عکس باکیفیت و کاملاً واقع‌گرایانه به‌عنوان کاور مقاله‌ای با موضوع «${title}» بساز؛ این صحنه را به‌کار ببر: ${scene}. ` +
     `حال‌وهوای نور و رنگ تصویر: ${mood}. زاویه و قاب‌بندی دوربین: ${shot}. این ترکیب باید کاملاً متفاوت از کاورهای قبلی به نظر برسد. ` +
@@ -121,7 +137,10 @@ async function chatOpenAi(
   }
   const res = await fetch("https://api.openai.com/v1/chat/completions", {
     method: "POST",
-    headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
+    headers: {
+      Authorization: `Bearer ${key}`,
+      "Content-Type": "application/json",
+    },
     body: JSON.stringify({
       model: config.ai.openai?.textModel || "gpt-4o-mini",
       messages,
@@ -138,11 +157,17 @@ async function chatOpenAi(
     );
   }
   if (res.status === 401 || res.status === 403) {
-    throw new AiGatewayError("UNKNOWN", "کلید API اوپن‌ای‌آی نامعتبر است یا دسترسی کافی ندارد.");
+    throw new AiGatewayError(
+      "UNKNOWN",
+      "کلید API اوپن‌ای‌آی نامعتبر است یا دسترسی کافی ندارد.",
+    );
   }
   if (!res.ok) {
     const text = await res.text().catch(() => "");
-    throw new AiGatewayError("UNKNOWN", `خطای اوپن‌ای‌آی: ${res.status} ${text.slice(0, 200)}`);
+    throw new AiGatewayError(
+      "UNKNOWN",
+      `خطای اوپن‌ای‌آی: ${res.status} ${text.slice(0, 200)}`,
+    );
   }
   const data = await res.json();
   return data?.choices?.[0]?.message?.content ?? "";
@@ -177,11 +202,16 @@ async function chatGemini(
       ...(jsonMode ? { responseMimeType: "application/json" } : {}),
     },
   };
-  if (systemMsg) body["systemInstruction"] = { parts: [{ text: systemMsg.content }] };
+  if (systemMsg)
+    body["systemInstruction"] = { parts: [{ text: systemMsg.content }] };
 
   const res = await fetch(
     `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(key)}`,
-    { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) },
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    },
   );
 
   if (res.status === 429) {
@@ -191,17 +221,26 @@ async function chatGemini(
     );
   }
   if (res.status === 400 || res.status === 403) {
-    throw new AiGatewayError("UNKNOWN", "کلید API جمینای نامعتبر است یا دسترسی کافی ندارد.");
+    throw new AiGatewayError(
+      "UNKNOWN",
+      "کلید API جمینای نامعتبر است یا دسترسی کافی ندارد.",
+    );
   }
   if (!res.ok) {
     const text = await res.text().catch(() => "");
-    throw new AiGatewayError("UNKNOWN", `خطای جمینای: ${res.status} ${text.slice(0, 200)}`);
+    throw new AiGatewayError(
+      "UNKNOWN",
+      `خطای جمینای: ${res.status} ${text.slice(0, 200)}`,
+    );
   }
   const data = await res.json();
   return data?.candidates?.[0]?.content?.parts?.[0]?.text ?? "";
 }
 
-async function chat(messages: ChatMessage[], jsonMode = false): Promise<string> {
+async function chat(
+  messages: ChatMessage[],
+  jsonMode = false,
+): Promise<string> {
   const config = await getAiConfig();
   return config.ai.textProvider === "gemini"
     ? chatGemini(messages, jsonMode, config)
@@ -245,24 +284,33 @@ export async function generatePostContent(input: {
   const tone = input.tone || "حرفه‌ای و روان";
   const config = await getAiConfig();
 
+  const english = config.language === "en";
   const raw = await chat(
     [
       {
         role: "system",
-        content: withStyle(
-          "شما یک نویسنده‌ی ارشد فارسی‌زبان و متخصص سئو هستید. همیشه فقط یک JSON معتبر با ساختار خواسته‌شده برمی‌گردانید، بدون هیچ توضیح اضافه.",
-          config.ai.systemPrompt,
-        ),
+        content:
+          withStyle(
+            english
+              ? "You are a senior English-language writer and SEO specialist. Return only valid JSON in the requested structure."
+              : "شما یک نویسنده‌ی ارشد فارسی‌زبان و متخصص سئو هستید. همیشه فقط یک JSON معتبر با ساختار خواسته‌شده برمی‌گردانید، بدون هیچ توضیح اضافه.",
+            config.ai.systemPrompt,
+          ) +
+          (english
+            ? "\nAll article fields must be in English, regardless of the language of the topic or style guidance."
+            : ""),
       },
       {
         role: "user",
-        content:
-          `درباره موضوع «${input.topic}» یک مقاله فارسی با لحن ${tone} و طول ${lengthHint} بنویس. ` +
-          `خروجی را دقیقاً به شکل JSON با کلیدهای زیر بده:\n` +
-          `{"title": "عنوان جذاب — فقط از حروف و کلمات فارسی تشکیل شود، هیچ نشانه یا کاراکتر خاصی مثل : ؟ ! - _ « » ( ) در آن نباشد", ` +
-          `"excerpt": "خلاصه یک تا دو جمله‌ای", "content": "متن کامل مقاله با فرمت markdown شامل تیترهای H2/H3", ` +
-          `"tags": ["برچسب۱","برچسب۲","برچسب۳"], "seoTitle": "عنوان سئو حداکثر ۶۰ کاراکتر", "seoDescription": "توضیح متا حداکثر ۱۶۰ کاراکتر", ` +
-          `"focusKeyword": "مهم‌ترین کلمه یا عبارت کلیدی هدف این مقاله (۲ تا ۴ کلمه)"}`,
+        content: english
+          ? `Write an English article about "${input.topic}". Tone: ${tone}. Length: ${lengthHint}. Return JSON: ` +
+            '{"title":"An appealing title using English words, without special punctuation","excerpt":"One or two sentences","content":"The full article in Markdown with H2/H3 headings","tags":["tag1","tag2","tag3"],"seoTitle":"At most 60 characters","seoDescription":"At most 160 characters","focusKeyword":"The main target keyword, 2 to 4 words"}'
+          : `درباره موضوع «${input.topic}» یک مقاله فارسی با لحن ${tone} و طول ${lengthHint} بنویس. ` +
+            `خروجی را دقیقاً به شکل JSON با کلیدهای زیر بده:\n` +
+            `{"title": "عنوان جذاب — فقط از حروف و کلمات فارسی تشکیل شود، هیچ نشانه یا کاراکتر خاصی مثل : ؟ ! - _ « » ( ) در آن نباشد", ` +
+            `"excerpt": "خلاصه یک تا دو جمله‌ای", "content": "متن کامل مقاله با فرمت markdown شامل تیترهای H2/H3", ` +
+            `"tags": ["برچسب۱","برچسب۲","برچسب۳"], "seoTitle": "عنوان سئو حداکثر ۶۰ کاراکتر", "seoDescription": "توضیح متا حداکثر ۱۶۰ کاراکتر", ` +
+            `"focusKeyword": "مهم‌ترین کلمه یا عبارت کلیدی هدف این مقاله (۲ تا ۴ کلمه)"}`,
       },
     ],
     true,
@@ -288,7 +336,11 @@ export async function generateBlogPost(input: {
   author?: string | undefined;
   withImage?: boolean | undefined;
 }): Promise<
-  GeneratedPost & { postId?: string; coverImage?: string; imageError?: string | undefined }
+  GeneratedPost & {
+    postId?: string;
+    coverImage?: string;
+    imageError?: string | undefined;
+  }
 > {
   const generated = await generatePostContent(input);
   if (!input.saveAsDraft) return generated;
@@ -303,7 +355,8 @@ export async function generateBlogPost(input: {
       });
       coverImage = image.url;
     } catch (e) {
-      imageError = e instanceof Error ? e.message : "خطای ناشناخته در تولید تصویر";
+      imageError =
+        e instanceof Error ? e.message : "خطای ناشناخته در تولید تصویر";
       console.error("generateBlogPost: cover image generation failed:", e);
     }
   }
@@ -325,7 +378,10 @@ export async function generateBlogPost(input: {
   return { ...generated, postId, coverImage, imageError };
 }
 
-export async function improveText(input: { text: string; instruction: string }): Promise<string> {
+export async function improveText(input: {
+  text: string;
+  instruction: string;
+}): Promise<string> {
   const config = await getAiConfig();
   return await chat([
     {
@@ -343,7 +399,11 @@ export async function improveText(input: { text: string; instruction: string }):
 }
 
 /** فراخوانی عمومی هوش مصنوعی با خروجی JSON — برای ماژول‌های دیگر سرور (مثل بررسی سئو) */
-export async function aiJson<T>(system: string, user: string, fallback: T): Promise<T> {
+export async function aiJson<T>(
+  system: string,
+  user: string,
+  fallback: T,
+): Promise<T> {
   const raw = await chat(
     [
       { role: "system", content: system },
@@ -360,7 +420,10 @@ export interface SeoMeta {
   focusKeyword: string;
 }
 
-export async function generateSeoMeta(input: { title: string; content: string }): Promise<SeoMeta> {
+export async function generateSeoMeta(input: {
+  title: string;
+  content: string;
+}): Promise<SeoMeta> {
   const raw = await chat(
     [
       {
@@ -376,10 +439,17 @@ export async function generateSeoMeta(input: { title: string; content: string })
     ],
     true,
   );
-  return extractJson<SeoMeta>(raw, { seoTitle: input.title, seoDescription: "", focusKeyword: "" });
+  return extractJson<SeoMeta>(raw, {
+    seoTitle: input.title,
+    seoDescription: "",
+    focusKeyword: "",
+  });
 }
 
-async function generateImageOpenAi(prompt: string, config: AiConfig): Promise<string> {
+async function generateImageOpenAi(
+  prompt: string,
+  config: AiConfig,
+): Promise<string> {
   const key = config.keys.aiOpenaiApiKey;
   if (!key) {
     throw new AiGatewayError(
@@ -393,7 +463,10 @@ async function generateImageOpenAi(prompt: string, config: AiConfig): Promise<st
   const isLegacyDalle = model.startsWith("dall-e");
   const res = await fetch("https://api.openai.com/v1/images/generations", {
     method: "POST",
-    headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
+    headers: {
+      Authorization: `Bearer ${key}`,
+      "Content-Type": "application/json",
+    },
     body: JSON.stringify({
       model,
       prompt,
@@ -404,13 +477,22 @@ async function generateImageOpenAi(prompt: string, config: AiConfig): Promise<st
   });
 
   if (res.status === 429)
-    throw new AiGatewayError("RATE_LIMIT", "محدودیت تعداد درخواست تصویرسازی — کمی صبر کنید.");
+    throw new AiGatewayError(
+      "RATE_LIMIT",
+      "محدودیت تعداد درخواست تصویرسازی — کمی صبر کنید.",
+    );
   if (res.status === 401 || res.status === 403) {
-    throw new AiGatewayError("UNKNOWN", "کلید API اوپن‌ای‌آی نامعتبر است یا دسترسی کافی ندارد.");
+    throw new AiGatewayError(
+      "UNKNOWN",
+      "کلید API اوپن‌ای‌آی نامعتبر است یا دسترسی کافی ندارد.",
+    );
   }
   if (!res.ok) {
     const text = await res.text().catch(() => "");
-    throw new AiGatewayError("UNKNOWN", `خطای تصویرسازی: ${res.status} ${text.slice(0, 200)}`);
+    throw new AiGatewayError(
+      "UNKNOWN",
+      `خطای تصویرسازی: ${res.status} ${text.slice(0, 200)}`,
+    );
   }
   const data = await res.json();
   const b64: string | undefined = data?.data?.[0]?.b64_json;
@@ -418,7 +500,10 @@ async function generateImageOpenAi(prompt: string, config: AiConfig): Promise<st
   return `data:image/png;base64,${b64}`;
 }
 
-async function generateImageGemini(prompt: string, config: AiConfig): Promise<string> {
+async function generateImageGemini(
+  prompt: string,
+  config: AiConfig,
+): Promise<string> {
   const key = config.keys.aiGeminiApiKey;
   if (!key) {
     throw new AiGatewayError(
@@ -440,19 +525,29 @@ async function generateImageGemini(prompt: string, config: AiConfig): Promise<st
   );
 
   if (res.status === 429)
-    throw new AiGatewayError("RATE_LIMIT", "محدودیت تعداد درخواست تصویرسازی — کمی صبر کنید.");
+    throw new AiGatewayError(
+      "RATE_LIMIT",
+      "محدودیت تعداد درخواست تصویرسازی — کمی صبر کنید.",
+    );
   if (res.status === 400 || res.status === 403) {
-    throw new AiGatewayError("UNKNOWN", "کلید API جمینای نامعتبر است یا دسترسی کافی ندارد.");
+    throw new AiGatewayError(
+      "UNKNOWN",
+      "کلید API جمینای نامعتبر است یا دسترسی کافی ندارد.",
+    );
   }
   if (!res.ok) {
     const text = await res.text().catch(() => "");
-    throw new AiGatewayError("UNKNOWN", `خطای تصویرسازی: ${res.status} ${text.slice(0, 200)}`);
+    throw new AiGatewayError(
+      "UNKNOWN",
+      `خطای تصویرسازی: ${res.status} ${text.slice(0, 200)}`,
+    );
   }
   const data = await res.json();
   const parts: { inlineData?: { mimeType: string; data: string } }[] =
     data?.candidates?.[0]?.content?.parts ?? [];
   const imagePart = parts.find((p) => p.inlineData);
-  if (!imagePart?.inlineData) throw new AiGatewayError("UNKNOWN", "پاسخ تصویرسازی نامعتبر بود.");
+  if (!imagePart?.inlineData)
+    throw new AiGatewayError("UNKNOWN", "پاسخ تصویرسازی نامعتبر بود.");
   return `data:${imagePart.inlineData.mimeType || "image/png"};base64,${imagePart.inlineData.data}`;
 }
 
@@ -474,7 +569,8 @@ export async function generateImage(input: {
   try {
     uploaded = await uploadImageDataUrl(dataUrl, filename);
   } catch (e) {
-    if (e instanceof StorageError) throw new AiGatewayError("UNKNOWN", e.message);
+    if (e instanceof StorageError)
+      throw new AiGatewayError("UNKNOWN", e.message);
     throw e;
   }
   const { url, path, mimeType, sizeBytes } = uploaded;
@@ -491,7 +587,10 @@ export async function generateImage(input: {
     updated_at: nowIso(),
   });
   if (error) {
-    throw new AiGatewayError("UNKNOWN", `ذخیره‌سازی تصویر در دیتابیس ناموفق بود: ${error.message}`);
+    throw new AiGatewayError(
+      "UNKNOWN",
+      `ذخیره‌سازی تصویر در دیتابیس ناموفق بود: ${error.message}`,
+    );
   }
 
   return { id, url };

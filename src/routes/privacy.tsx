@@ -1,10 +1,15 @@
+import { localizeStructuredData } from "@/lib/site-i18n";
 import { createFileRoute } from "@tanstack/react-router";
 import { motion } from "framer-motion";
 import { fetchSettings } from "@/lib/settings.functions";
 import { getPublicSeoPage } from "@/lib/seo.functions";
-import { buildPageMeta, buildBreadcrumbJsonLd, safeJsonLdHtml } from "@/lib/seo-meta";
+import {
+  buildPageMeta,
+  buildBreadcrumbJsonLd,
+  safeJsonLdHtml,
+} from "@/lib/seo-meta";
 import { SiteLayout } from "@/components/site/SiteLayout";
-import { getBrandNameEn } from "@/lib/settings";
+import { getBrandNameEn, isEnglishChrome } from "@/lib/settings";
 
 export const Route = createFileRoute("/privacy")({
   loader: async () => {
@@ -16,12 +21,14 @@ export const Route = createFileRoute("/privacy")({
   },
   head: ({ loaderData }) => {
     if (!loaderData) return {};
-    const english = loaderData.settings.brand.legalEnglishChrome !== false;
+    const english = isEnglishChrome(loaderData.settings, "/privacy");
     return buildPageMeta({
       settings: loaderData.settings,
       path: "/privacy",
       override: loaderData.seoOverride,
-      fallbackTitle: english ? "Privacy Policy | Webyar" : "سیاست حریم خصوصی | وب‌یار",
+      fallbackTitle: english
+        ? "Privacy Policy | Webyar"
+        : "سیاست حریم خصوصی | وب‌یار",
       fallbackDescription: english
         ? "How Webyar collects, uses, stores, protects and deletes personal data, and how you can exercise your privacy rights."
         : "وب‌یار چگونه اطلاعات شخصی را جمع‌آوری، استفاده، ذخیره، محافظت و حذف می‌کند و چطور می‌توانید حقوق حریم خصوصی خود را اعمال کنید.",
@@ -225,7 +232,7 @@ function sectionsFa(brand: string, email: string, address: string) {
 
 function PrivacyPage() {
   const { settings } = Route.useLoaderData();
-  const english = settings.brand.legalEnglishChrome !== false;
+  const english = isEnglishChrome(settings, "/privacy");
   const base = (settings.brand.siteUrl || "").replace(/\/$/, "");
   const brandEn = getBrandNameEn(settings);
   const brand = english ? brandEn : settings.brand.name || brandEn;
@@ -240,7 +247,10 @@ function PrivacyPage() {
     },
     buildBreadcrumbJsonLd(settings, [
       { name: english ? "Home" : "خانه", path: "/" },
-      { name: english ? "Privacy Policy" : "سیاست حریم خصوصی", path: "/privacy" },
+      {
+        name: english ? "Privacy Policy" : "سیاست حریم خصوصی",
+        path: "/privacy",
+      },
     ]),
   ];
   const items = english
@@ -248,12 +258,20 @@ function PrivacyPage() {
     : sectionsFa(brand, email, settings.brand.address || "");
   return (
     <SiteLayout settings={settings}>
-      <script type="application/ld+json" dangerouslySetInnerHTML={safeJsonLdHtml(jsonLd)} />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={safeJsonLdHtml(
+          localizeStructuredData(settings, jsonLd),
+        )}
+      />
       <div
         dir={english ? "ltr" : "rtl"}
         className={`container-page max-w-3xl py-16 sm:py-24 ${english ? "text-left" : "text-right"}`}
       >
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+        >
           <h1 className="mb-2 text-3xl font-extrabold text-foreground sm:text-4xl">
             {english ? "Privacy Policy" : "سیاست حریم خصوصی"}
           </h1>
@@ -271,10 +289,15 @@ function PrivacyPage() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: Math.min(i, 8) * 0.04 }}
             >
-              <h2 className="mb-3 text-lg font-bold text-foreground">{s.title}</h2>
+              <h2 className="mb-3 text-lg font-bold text-foreground">
+                {s.title}
+              </h2>
               <div className="space-y-2">
                 {s.body.map((p) => (
-                  <p key={p} className="text-sm leading-7 text-muted-foreground">
+                  <p
+                    key={p}
+                    className="text-sm leading-7 text-muted-foreground"
+                  >
                     {p}
                   </p>
                 ))}

@@ -1,9 +1,15 @@
+import { localizeStructuredData } from "@/lib/site-i18n";
+import { useSiteTranslation } from "@/components/site/SiteLanguage";
 import { createFileRoute } from "@tanstack/react-router";
 import { motion } from "framer-motion";
 import { CheckCircle2, Clock, Shield, Zap } from "lucide-react";
 import { fetchSettings } from "@/lib/settings.functions";
 import { getPublicSeoPage } from "@/lib/seo.functions";
-import { buildPageMeta, buildBreadcrumbJsonLd, safeJsonLdHtml } from "@/lib/seo-meta";
+import {
+  buildPageMeta,
+  buildBreadcrumbJsonLd,
+  safeJsonLdHtml,
+} from "@/lib/seo-meta";
 import { SiteLayout } from "@/components/site/SiteLayout";
 
 export const Route = createFileRoute("/sla")({
@@ -29,7 +35,12 @@ export const Route = createFileRoute("/sla")({
 });
 
 const slaItems = [
-  { icon: Zap, title: "آپ‌تایم تضمینی", value: "۹۹.۹٪", desc: "دسترسی به پلتفرم در ۹۹.۹٪ از زمان" },
+  {
+    icon: Zap,
+    title: "آپ‌تایم تضمینی",
+    value: "۹۹.۹٪",
+    desc: "دسترسی به پلتفرم در ۹۹.۹٪ از زمان",
+  },
   {
     icon: Clock,
     title: "پاسخ‌دهی پشتیبانی",
@@ -57,6 +68,8 @@ const compensationTable = [
 ];
 
 function SLAPage() {
+  const translateText = useSiteTranslation();
+
   const { settings } = Route.useLoaderData();
   const base = (settings.brand.siteUrl || "").replace(/\/$/, "");
   const jsonLd = [
@@ -65,7 +78,11 @@ function SLAPage() {
       "@type": "WebPage",
       name: "توافقنامه سطح خدمات (SLA)",
       url: base ? `${base}/sla` : undefined,
-      isPartOf: { "@type": "WebSite", name: settings.brand.name, url: base || undefined },
+      isPartOf: {
+        "@type": "WebSite",
+        name: settings.brand.name,
+        url: base || undefined,
+      },
     },
     buildBreadcrumbJsonLd(settings, [
       { name: "خانه", path: "/" },
@@ -74,14 +91,24 @@ function SLAPage() {
   ];
   return (
     <SiteLayout settings={settings}>
-      <script type="application/ld+json" dangerouslySetInnerHTML={safeJsonLdHtml(jsonLd)} />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={safeJsonLdHtml(
+          localizeStructuredData(settings, jsonLd),
+        )}
+      />
       <div className="container-page max-w-4xl py-16 sm:py-24">
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+        >
           <h1 className="mb-2 text-3xl font-extrabold text-foreground sm:text-4xl">
-            توافقنامه سطح خدمات (SLA)
+            {translateText("توافقنامه سطح خدمات (SLA)")}
           </h1>
           <p className="mb-12 text-sm text-muted-foreground">
-            تعهدات {settings.brand.name} برای ارائه خدمات با کیفیت و قابل اتکا
+            {translateText("تعهدات ")}
+            {translateText(settings.brand.name)}{" "}
+            {translateText(" برای ارائه خدمات با کیفیت و قابل اتکا")}
           </p>
         </motion.div>
 
@@ -95,9 +122,15 @@ function SLAPage() {
               className="rounded-xl border border-border bg-card p-6 shadow-card"
             >
               <item.icon className="mb-3 h-6 w-6 text-primary" />
-              <div className="mb-1 text-2xl font-extrabold text-foreground">{item.value}</div>
-              <div className="mb-2 text-sm font-semibold text-foreground">{item.title}</div>
-              <p className="text-xs leading-relaxed text-muted-foreground">{item.desc}</p>
+              <div className="mb-1 text-2xl font-extrabold text-foreground">
+                {translateText(item.value)}
+              </div>
+              <div className="mb-2 text-sm font-semibold text-foreground">
+                {translateText(item.title)}
+              </div>
+              <p className="text-xs leading-relaxed text-muted-foreground">
+                {translateText(item.desc)}
+              </p>
             </motion.div>
           ))}
         </div>
@@ -107,24 +140,33 @@ function SLAPage() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.4 }}
         >
-          <h2 className="mb-4 text-xl font-bold text-foreground">جدول جبران خسارت</h2>
+          <h2 className="mb-4 text-xl font-bold text-foreground">
+            {translateText("جدول جبران خسارت")}
+          </h2>
           <div className="overflow-hidden rounded-xl border border-border bg-card">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-border bg-secondary/30">
                   <th className="px-5 py-3 text-start text-xs font-semibold text-foreground">
-                    آپ‌تایم
+                    {translateText("آپ‌تایم")}
                   </th>
                   <th className="px-5 py-3 text-start text-xs font-semibold text-foreground">
-                    اعتبار جبرانی
+                    {translateText("اعتبار جبرانی")}
                   </th>
                 </tr>
               </thead>
               <tbody>
                 {compensationTable.map((row) => (
-                  <tr key={row.uptime} className="border-b border-border/50 last:border-0">
-                    <td className="px-5 py-3 text-muted-foreground">{row.uptime}</td>
-                    <td className="px-5 py-3 font-medium text-brand">{row.credit}</td>
+                  <tr
+                    key={row.uptime}
+                    className="border-b border-border/50 last:border-0"
+                  >
+                    <td className="px-5 py-3 text-muted-foreground">
+                      {translateText(row.uptime)}
+                    </td>
+                    <td className="px-5 py-3 font-medium text-brand">
+                      {translateText(row.credit)}
+                    </td>
                   </tr>
                 ))}
               </tbody>

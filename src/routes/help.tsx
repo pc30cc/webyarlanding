@@ -1,11 +1,16 @@
+import { localizeStructuredData } from "@/lib/site-i18n";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { motion } from "framer-motion";
 import { Mail, LifeBuoy, Clock, Trash2 } from "lucide-react";
 import { fetchSettings } from "@/lib/settings.functions";
 import { getPublicSeoPage } from "@/lib/seo.functions";
-import { buildPageMeta, buildBreadcrumbJsonLd, safeJsonLdHtml } from "@/lib/seo-meta";
+import {
+  buildPageMeta,
+  buildBreadcrumbJsonLd,
+  safeJsonLdHtml,
+} from "@/lib/seo-meta";
 import { SiteLayout } from "@/components/site/SiteLayout";
-import { getBrandNameEn } from "@/lib/settings";
+import { getBrandNameEn, isEnglishChrome } from "@/lib/settings";
 
 export const Route = createFileRoute("/help")({
   loader: async () => {
@@ -17,12 +22,14 @@ export const Route = createFileRoute("/help")({
   },
   head: ({ loaderData }) => {
     if (!loaderData) return {};
-    const english = loaderData.settings.brand.legalEnglishChrome !== false;
+    const english = isEnglishChrome(loaderData.settings, "/help");
     return buildPageMeta({
       settings: loaderData.settings,
       path: "/help",
       override: loaderData.seoOverride,
-      fallbackTitle: english ? "Support & Help Center | Webyar" : "پشتیبانی و راهنما | وب‌یار",
+      fallbackTitle: english
+        ? "Support & Help Center | Webyar"
+        : "پشتیبانی و راهنما | وب‌یار",
       fallbackDescription: english
         ? "Get help with Webyar: contact support by email, report a problem, request account deletion and read answers to common questions."
         : "راهنمای وب‌یار: تماس با پشتیبانی از طریق ایمیل، گزارش مشکل، درخواست حذف حساب و پاسخ پرسش‌های پرتکرار.",
@@ -38,7 +45,7 @@ const FAQS_EN = [
   },
   {
     q: "I forgot my password. What should I do?",
-    a: "Use the \"Forgot password\" link on the sign-in screen. A reset link is sent to your registered email address and stays valid for 60 minutes.",
+    a: 'Use the "Forgot password" link on the sign-in screen. A reset link is sent to your registered email address and stays valid for 60 minutes.',
   },
   {
     q: "How do I manage or cancel my subscription?",
@@ -46,7 +53,7 @@ const FAQS_EN = [
   },
   {
     q: "How do I delete my account and data?",
-    a: "Email our support address from the address linked to your account with the subject \"Account Deletion Request\". We verify the request and permanently delete your account and personal data within 30 days.",
+    a: 'Email our support address from the address linked to your account with the subject "Account Deletion Request". We verify the request and permanently delete your account and personal data within 30 days.',
   },
   {
     q: "Is my data secure?",
@@ -54,7 +61,7 @@ const FAQS_EN = [
   },
   {
     q: "How do I report a bug or abuse?",
-    a: "Email support with the subject \"Bug report\" or \"Abuse report\", including your account email, device and app version, the steps to reproduce, and screenshots if available.",
+    a: 'Email support with the subject "Bug report" or "Abuse report", including your account email, device and app version, the steps to reproduce, and screenshots if available.',
   },
 ];
 
@@ -87,7 +94,7 @@ const FAQS_FA = [
 
 function HelpPage() {
   const { settings } = Route.useLoaderData();
-  const english = settings.brand.legalEnglishChrome !== false;
+  const english = isEnglishChrome(settings, "/help");
   const base = (settings.brand.siteUrl || "").replace(/\/$/, "");
   const brandEn = getBrandNameEn(settings);
   const brand = english ? brandEn : settings.brand.name || brandEn;
@@ -133,12 +140,20 @@ function HelpPage() {
 
   return (
     <SiteLayout settings={settings}>
-      <script type="application/ld+json" dangerouslySetInnerHTML={safeJsonLdHtml(jsonLd)} />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={safeJsonLdHtml(
+          localizeStructuredData(settings, jsonLd),
+        )}
+      />
       <div
         dir={english ? "ltr" : "rtl"}
         className={`container-page max-w-3xl py-16 sm:py-24 ${english ? "text-left" : "text-right"}`}
       >
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+        >
           <h1 className="mb-3 text-3xl font-extrabold text-foreground sm:text-4xl">
             {english ? "Support & Help Center" : "پشتیبانی و مرکز راهنما"}
           </h1>
@@ -206,7 +221,8 @@ function HelpPage() {
                   >
                     {email}
                   </a>{" "}
-                  with the subject “Account Deletion Request”. Data is erased within 30 days.
+                  with the subject “Account Deletion Request”. Data is erased
+                  within 30 days.
                 </>
               ) : (
                 <>
@@ -229,10 +245,16 @@ function HelpPage() {
               {english ? "Policies" : "قوانین و سیاست‌ها"}
             </div>
             <p className="mt-1 space-x-3 text-sm text-muted-foreground">
-              <Link to="/privacy" className="text-primary underline underline-offset-4">
+              <Link
+                to="/privacy"
+                className="text-primary underline underline-offset-4"
+              >
                 {english ? "Privacy Policy" : "سیاست حریم خصوصی"}
               </Link>
-              <Link to="/terms" className="text-primary underline underline-offset-4">
+              <Link
+                to="/terms"
+                className="text-primary underline underline-offset-4"
+              >
                 {english ? "Terms of Use" : "قوانین استفاده"}
               </Link>
             </p>
@@ -251,7 +273,9 @@ function HelpPage() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: Math.min(i, 6) * 0.04 }}
               >
-                <h3 className="mb-2 text-sm font-semibold text-foreground">{f.q}</h3>
+                <h3 className="mb-2 text-sm font-semibold text-foreground">
+                  {f.q}
+                </h3>
                 <p className="text-sm leading-7 text-muted-foreground">{f.a}</p>
               </motion.div>
             ))}
@@ -262,11 +286,14 @@ function HelpPage() {
           {english ? (
             <>
               Still stuck? Write to{" "}
-              <a href={`mailto:${email}`} className="text-primary underline underline-offset-4">
+              <a
+                href={`mailto:${email}`}
+                className="text-primary underline underline-offset-4"
+              >
                 {email}
               </a>{" "}
-              and include your account email, device model, operating system version and app version
-              so we can help faster.
+              and include your account email, device model, operating system
+              version and app version so we can help faster.
             </>
           ) : (
             <>
@@ -278,8 +305,8 @@ function HelpPage() {
               >
                 {email}
               </a>{" "}
-              بنویسید و ایمیل حساب، مدل دستگاه، نسخه سیستم‌عامل و نسخه برنامه را ذکر کنید تا سریع‌تر
-              کمک کنیم.
+              بنویسید و ایمیل حساب، مدل دستگاه، نسخه سیستم‌عامل و نسخه برنامه را
+              ذکر کنید تا سریع‌تر کمک کنیم.
             </>
           )}
         </p>

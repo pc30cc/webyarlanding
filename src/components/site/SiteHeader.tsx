@@ -1,3 +1,4 @@
+import { useSiteTranslation } from "@/components/site/SiteLanguage";
 import { useState } from "react";
 import { Link, getRouteApi, useRouterState } from "@tanstack/react-router";
 import { motion, AnimatePresence } from "framer-motion";
@@ -27,6 +28,8 @@ export function SiteHeader({
   settings: SiteSettings;
   english?: boolean;
 }) {
+  const translateText = useSiteTranslation();
+
   const [open, setOpen] = useState(false);
   const [mobileExpanded, setMobileExpanded] = useState<string | null>(null);
   const pathname = useRouterState({ select: (s) => s.location.pathname });
@@ -61,16 +64,36 @@ export function SiteHeader({
 
   const NAV_LINKS: NavLink[] = english
     ? [
-        { type: "mega", to: "/products", label: "Products", categories: productCatalog },
-        { type: "mega", to: "/solutions", label: "Solutions", categories: solutionCatalog },
+        {
+          type: "mega",
+          to: "/products",
+          label: "Products",
+          categories: productCatalog,
+        },
+        {
+          type: "mega",
+          to: "/solutions",
+          label: "Solutions",
+          categories: solutionCatalog,
+        },
         { type: "link", to: "/pricing", label: "Pricing" },
         { type: "link", to: "/", hash: "features", label: "Features" },
         { type: "link", to: "/blog", label: "Blog" },
         { type: "link", to: "/download", label: "Download" },
       ]
     : [
-        { type: "mega", to: "/products", label: "محصولات", categories: productCatalog },
-        { type: "mega", to: "/solutions", label: "راه‌کارها", categories: solutionCatalog },
+        {
+          type: "mega",
+          to: "/products",
+          label: "محصولات",
+          categories: productCatalog,
+        },
+        {
+          type: "mega",
+          to: "/solutions",
+          label: "راه‌کارها",
+          categories: solutionCatalog,
+        },
         { type: "link", to: "/pricing", label: "قیمت‌گذاری" },
         { type: "link", to: "/", hash: "features", label: "امکانات" },
         { type: "link", to: "/blog", label: "بلاگ" },
@@ -88,12 +111,14 @@ export function SiteHeader({
         <Link to="/" className="flex items-center gap-3">
           <img
             src={settings.brand.logoUrl || "/webyar-logo.png"}
-            alt={brandName || "وب‌یار"}
+            alt={translateText(brandName || "وب‌یار")}
             width={36}
             height={36}
             className="h-9 w-9 rounded-lg object-cover"
           />
-          <span className="text-lg font-bold text-foreground">{brandName}</span>
+          <span className="text-lg font-bold text-foreground">
+            {translateText(brandName)}
+          </span>
         </Link>
 
         <nav className="hidden items-center gap-7 text-sm font-medium text-muted-foreground md:flex">
@@ -102,11 +127,13 @@ export function SiteHeader({
               return (
                 <MegaMenu
                   key={link.label}
-                  label={link.label}
+                  label={translateText(link.label)}
                   basePath={link.to}
                   categories={link.categories}
                   viewAllLabel={
-                    link.to === "/products" ? label.viewAllProducts : label.viewAllSolutions
+                    link.to === "/products"
+                      ? label.viewAllProducts
+                      : label.viewAllSolutions
                   }
                 />
               );
@@ -119,7 +146,7 @@ export function SiteHeader({
                 {...(link.hash ? { hash: link.hash } : {})}
                 className={`transition-colors hover:text-foreground ${isActive ? "text-foreground" : ""}`}
               >
-                {link.label}
+                {translateText(link.label)}
               </Link>
             );
           })}
@@ -128,11 +155,13 @@ export function SiteHeader({
         <div className="flex items-center gap-2">
           {auth.enabled && isLoggedIn && (
             <div className="hidden sm:flex items-center gap-3">
-              <span className="text-sm text-muted-foreground">{welcomeText}</span>
+              <span className="text-sm text-muted-foreground">
+                {translateText(welcomeText)}
+              </span>
               {auth.panelUrl && (
                 <a href={auth.panelUrl}>
                   <Button className="h-10 px-5 text-sm font-medium shadow-sm shadow-primary/20">
-                    {label.panel}
+                    {translateText(label.panel)}
                   </Button>
                 </a>
               )}
@@ -142,7 +171,7 @@ export function SiteHeader({
                 className="h-10 px-4 text-sm font-medium"
                 onClick={handleLogout}
               >
-                {label.logout}
+                {translateText(label.logout)}
               </Button>
             </div>
           )}
@@ -150,15 +179,18 @@ export function SiteHeader({
             <div className="hidden sm:flex items-center gap-2">
               {auth.loginUrl && (
                 <a href={auth.loginUrl}>
-                  <Button variant="ghost" className="h-10 px-4 text-sm font-medium">
-                    {label.login}
+                  <Button
+                    variant="ghost"
+                    className="h-10 px-4 text-sm font-medium"
+                  >
+                    {translateText(label.login)}
                   </Button>
                 </a>
               )}
               {auth.signupUrl && (
                 <a href={auth.signupUrl}>
                   <Button className="h-10 px-5 text-sm font-medium btn-shimmer">
-                    {label.signup}
+                    {translateText(label.signup)}
                   </Button>
                 </a>
               )}
@@ -168,7 +200,7 @@ export function SiteHeader({
             type="button"
             onClick={() => setOpen((v) => !v)}
             className="flex h-11 w-11 items-center justify-center rounded-xl text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground md:hidden"
-            aria-label={label.menu}
+            aria-label={translateText(label.menu)}
           >
             {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
           </button>
@@ -191,11 +223,13 @@ export function SiteHeader({
                     <div key={link.label} className="rounded-lg">
                       <button
                         type="button"
-                        onClick={() => setMobileExpanded(expanded ? null : link.label)}
+                        onClick={() =>
+                          setMobileExpanded(expanded ? null : link.label)
+                        }
                         className="flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-sm text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
                         aria-expanded={expanded}
                       >
-                        {link.label}
+                        {translateText(link.label)}
                         <ChevronDown
                           className={`h-4 w-4 transition-transform ${expanded ? "rotate-180" : ""}`}
                         />
@@ -212,7 +246,7 @@ export function SiteHeader({
                               {link.categories.map((category) => (
                                 <div key={category.id}>
                                   <div className="mb-1 px-3 text-[11px] font-bold text-muted-foreground">
-                                    {category.title}
+                                    {translateText(category.title)}
                                   </div>
                                   {category.items.map((item) => {
                                     const Icon = getIcon(item.icon);
@@ -228,7 +262,7 @@ export function SiteHeader({
                                         className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
                                       >
                                         <Icon className="h-4 w-4 shrink-0 text-primary" />
-                                        {item.title}
+                                        {translateText(item.title)}
                                       </Link>
                                     );
                                   })}
@@ -242,7 +276,8 @@ export function SiteHeader({
                                 }}
                                 className="block px-3 py-1.5 text-sm font-semibold text-primary"
                               >
-                                {label.viewAll} {link.label}
+                                {translateText(label.viewAll)}{" "}
+                                {translateText(link.label)}
                               </Link>
                             </div>
                           </motion.div>
@@ -259,16 +294,20 @@ export function SiteHeader({
                     onClick={() => setOpen(false)}
                     className="block rounded-lg px-3 py-2.5 text-sm text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
                   >
-                    {link.label}
+                    {translateText(link.label)}
                   </Link>
                 );
               })}
               {auth.enabled && isLoggedIn && (
                 <div className="mt-3 space-y-2 border-t border-border pt-3">
-                  <p className="px-1 text-sm text-muted-foreground">{welcomeText}</p>
+                  <p className="px-1 text-sm text-muted-foreground">
+                    {translateText(welcomeText)}
+                  </p>
                   {auth.panelUrl && (
                     <a href={auth.panelUrl} className="block">
-                      <Button className="h-10 w-full">{label.panel}</Button>
+                      <Button className="h-10 w-full">
+                        {translateText(label.panel)}
+                      </Button>
                     </a>
                   )}
                   <Button
@@ -277,7 +316,7 @@ export function SiteHeader({
                     className="h-10 w-full"
                     onClick={handleLogout}
                   >
-                    {label.logout}
+                    {translateText(label.logout)}
                   </Button>
                 </div>
               )}
@@ -285,13 +324,15 @@ export function SiteHeader({
                 <div className="mt-3 space-y-2 border-t border-border pt-3">
                   {auth.signupUrl && (
                     <a href={auth.signupUrl} className="block">
-                      <Button className="h-10 w-full">{label.signup}</Button>
+                      <Button className="h-10 w-full">
+                        {translateText(label.signup)}
+                      </Button>
                     </a>
                   )}
                   {auth.loginUrl && (
                     <a href={auth.loginUrl} className="block">
                       <Button variant="outline" className="h-10 w-full">
-                        {label.login}
+                        {translateText(label.login)}
                       </Button>
                     </a>
                   )}
