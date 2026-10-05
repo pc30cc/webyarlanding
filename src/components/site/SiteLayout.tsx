@@ -1,5 +1,6 @@
 import { localizeStructuredData } from "@/lib/site-i18n";
 import type { ReactNode } from "react";
+import { AdsMeasurementConsent } from "../AdsMeasurementConsent";
 import { SiteHeader } from "./SiteHeader";
 import { SiteFooter } from "./SiteFooter";
 import { ChatWidget } from "./ChatWidget";
@@ -84,6 +85,7 @@ export function SiteLayout({
           localizeStructuredData(settings, siteJsonLd),
         )}
       />
+      <AdsMeasurementConsent english={english} />
       <SiteHeader settings={settings} english={english} />
       <main className="flex-1">{children}</main>
       <SiteFooter settings={settings} english={english} />
