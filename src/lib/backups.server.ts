@@ -26,6 +26,8 @@ export interface BackupSchedule {
   retentionDays: number;
   /** حداقل تعداد نسخه‌ای که همیشه نگه داشته می‌شود، حتی اگر قدیمی باشد */
   keepMin: number;
+  /** فایل بک‌آپ روزانه برای مدیران ربات تلگرام هم فرستاده شود */
+  sendToTelegram: boolean;
 }
 
 export const DEFAULT_SCHEDULE: BackupSchedule = {
@@ -33,6 +35,7 @@ export const DEFAULT_SCHEDULE: BackupSchedule = {
   hourTehran: 3,
   retentionDays: 14,
   keepMin: 3,
+  sendToTelegram: false,
 };
 
 export interface BackupRun {
@@ -60,6 +63,7 @@ function clampSchedule(value: Partial<BackupSchedule>): BackupSchedule {
     hourTehran: Math.min(23, Math.max(0, Math.floor(Number(s.hourTehran) || 0))),
     retentionDays: Math.min(365, Math.max(0, Math.floor(Number(s.retentionDays) || 0))),
     keepMin: Math.min(100, Math.max(1, Math.floor(Number(s.keepMin) || 1))),
+    sendToTelegram: !!s.sendToTelegram,
   };
 }
 
@@ -239,8 +243,12 @@ export async function runBackup(trigger: "manual" | "daily"): Promise<BackupRun>
       finished_at: nowIso(),
     };
     await runsTable().update(patch).eq("id", id);
-    if (trigger === "daily")
+    if (trigger === "daily") {
       await pruneOldBackups().catch((e) => console.error("[backup] prune", e));
+      await sendDailyBackupToTelegram(archive.bytes, filename, archive.rowCount).catch((e) =>
+        console.error("[backup] telegram", e),
+      );
+    }
     return { id, trigger_source: trigger, error: null, started_at: startedAt, ...patch };
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
@@ -251,6 +259,18 @@ export async function runBackup(trigger: "manual" | "daily"): Promise<BackupRun>
   } finally {
     inProgress = false;
   }
+}
+
+/** اگر در تنظیمات روشن باشد، فایل بک‌آپ روزانه را برای مدیران ربات تلگرام می‌فرستد */
+async function sendDailyBackupToTelegram(
+  bytes: ArrayBuffer,
+  filename: string,
+  rowCount: number,
+): Promise<void> {
+  const schedule = await loadBackupSchedule();
+  if (!schedule.sendToTelegram) return;
+  const { sendBackupFileToAdmins } = await import("./telegram.server");
+  await sendBackupFileToAdmins(bytes, filename, `💾 بک‌آپ روزانه دیتابیس\n${rowCount} رکورد`);
 }
 
 export async function listBackupRuns(limit = 60): Promise<BackupRun[]> {
