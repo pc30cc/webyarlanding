@@ -24,6 +24,7 @@ const scheduleSchema = z.object({
   hourTehran: z.number().int().min(0).max(23),
   retentionDays: z.number().int().min(0).max(365),
   keepMin: z.number().int().min(1).max(100),
+  sendToTelegram: z.boolean(),
 });
 
 export const saveBackupScheduleFn = createServerFn({ method: "POST" })

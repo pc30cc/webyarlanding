@@ -83,7 +83,7 @@ export async function getTelegramWebhookInfo(botToken: string): Promise<{
   return await tgCall(botToken, "getWebhookInfo");
 }
 
-function buildMainMenu(settings: SiteSettings): InlineButton[][] {
+function buildMainMenu(settings: SiteSettings, backupToTelegram: boolean): InlineButton[][] {
   const t = settings.telegram;
   return [
     [{ text: "📊 آمار بازدید سایت", callback_data: "stats" }],
@@ -104,6 +104,12 @@ function buildMainMenu(settings: SiteSettings): InlineButton[][] {
         callback_data: "toggle_notify_publish",
       },
     ],
+    [
+      {
+        text: `💾 ارسال بک‌آپ روزانه در ربات: ${backupToTelegram ? "روشن ✅" : "خاموش ⛔"}`,
+        callback_data: "toggle_backup_telegram",
+      },
+    ],
   ];
 }
 
@@ -112,10 +118,12 @@ async function sendMainMenu(
   settings: SiteSettings,
   botToken: string,
 ): Promise<void> {
+  const { loadBackupSchedule } = await import("./backups.server");
+  const schedule = await loadBackupSchedule();
   await tgCall(botToken, "sendMessage", {
     chat_id: chatId,
     text: "🤖 منوی مدیریت وب‌یار — یکی از گزینه‌ها را انتخاب کنید:",
-    reply_markup: { inline_keyboard: buildMainMenu(settings) },
+    reply_markup: { inline_keyboard: buildMainMenu(settings, schedule.sendToTelegram) },
   });
 }
 
@@ -293,6 +301,61 @@ export async function sendTelegramToAdmins(text: string): Promise<void> {
   }
 }
 
+/** حداکثر حجم فایلی که Bot API اجازه ارسال می‌دهد */
+const TELEGRAM_MAX_FILE_BYTES = 50 * 1024 * 1024;
+
+/** ارسال فایل بک‌آپ (sendDocument، multipart) برای همه مدیران مجاز ربات */
+export async function sendBackupFileToAdmins(
+  bytes: ArrayBuffer,
+  filename: string,
+  caption: string,
+): Promise<void> {
+  const [settings, keys] = await Promise.all([loadSettings(), loadTelegramKeys()]);
+  if (!settings.telegram.enabled || !keys.telegramBotToken) return;
+  const ids = adminChatIdList(settings.telegram.adminChatIds);
+  if (ids.length === 0) return;
+
+  if (bytes.byteLength > TELEGRAM_MAX_FILE_BYTES) {
+    const mb = (bytes.byteLength / 1024 / 1024).toFixed(1);
+    await sendTelegramToAdmins(
+      `${caption}\n\n⚠️ حجم فایل (${mb} مگابایت) بیشتر از سقف ۵۰ مگابایتی تلگرام است؛ فایل فقط روی فضای ذخیره‌سازی نگه داشته شد و از پنل مدیریت قابل دانلود است.`,
+    );
+    return;
+  }
+
+  for (const chatId of ids) {
+    try {
+      const form = new FormData();
+      form.append("chat_id", chatId);
+      form.append("caption", caption);
+      form.append("document", new Blob([bytes], { type: "application/gzip" }), filename);
+      const res = await fetch(`${TELEGRAM_API}/bot${keys.telegramBotToken}/sendDocument`, {
+        method: "POST",
+        body: form,
+      });
+      const data = (await res.json()) as { ok: boolean; description?: string };
+      if (!data.ok) throw new Error(data.description ?? String(res.status));
+    } catch (e) {
+      console.error("sendBackupFileToAdmins failed for", chatId, e);
+    }
+  }
+}
+
+async function toggleBackupToTelegram(chatId: number, botToken: string): Promise<void> {
+  const { loadBackupSchedule, saveBackupSchedule } = await import("./backups.server");
+  const schedule = await loadBackupSchedule();
+  const next = await saveBackupSchedule({
+    ...schedule,
+    sendToTelegram: !schedule.sendToTelegram,
+  });
+  if (next.sendToTelegram && !next.dailyEnabled) {
+    await tgCall(botToken, "sendMessage", {
+      chat_id: chatId,
+      text: "⚠️ ارسال در ربات روشن شد، اما بک‌آپ خودکار روزانه در پنل مدیریت (بخش بک‌آپ) خاموش است؛ تا آن را روشن نکنید فایلی ارسال نمی‌شود.",
+    });
+  }
+}
+
 async function toggleTelegramFlag(
   field: "notifyOnVisit" | "notifyOnPublish",
 ): Promise<SiteSettings> {
@@ -381,6 +444,11 @@ async function handleCallback(
     case "toggle_notify_publish": {
       const next = await toggleTelegramFlag("notifyOnPublish");
       await sendMainMenu(chatId, next, botToken);
+      break;
+    }
+    case "toggle_backup_telegram": {
+      await toggleBackupToTelegram(chatId, botToken);
+      await sendMainMenu(chatId, settings, botToken);
       break;
     }
     default:

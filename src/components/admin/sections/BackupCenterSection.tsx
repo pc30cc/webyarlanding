@@ -85,6 +85,7 @@ export default function BackupCenterSection() {
     hourTehran: 3,
     retentionDays: 14,
     keepMin: 3,
+    sendToTelegram: false,
   });
   useEffect(() => {
     if (data?.schedule) setSchedule(data.schedule);
@@ -294,6 +295,19 @@ export default function BackupCenterSection() {
               onChange={(e) => setSchedule((s) => ({ ...s, keepMin: Number(e.target.value) || 1 }))}
             />
           </div>
+        </div>
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex flex-col gap-0.5">
+            <span className="text-sm text-foreground">ارسال فایل بک‌آپ روزانه در ربات تلگرام</span>
+            <span className="text-xs text-muted-foreground">
+              فایل برای مدیران ربات (شناسه‌های چت در تنظیمات تلگرام) فرستاده می‌شود؛ از منوی خود ربات
+              هم قابل روشن/خاموش کردن است. سقف حجم تلگرام ۵۰ مگابایت است.
+            </span>
+          </div>
+          <Switch
+            checked={schedule.sendToTelegram}
+            onCheckedChange={(v) => setSchedule((s) => ({ ...s, sendToTelegram: v }))}
+          />
         </div>
         <p className="text-xs text-muted-foreground">
           زمان‌بند داخلی سرور هر ۵ دقیقه بررسی می‌کند؛ اگر سرور سر ساعت خاموش بوده، همان روز بعد از
