@@ -15,6 +15,7 @@ import { Route as AdminRouteImport } from './routes/admin'
 import { Route as AdminLoginRouteImport } from './routes/admin-login'
 import { Route as ApiDocsRouteImport } from './routes/api-docs'
 import { Route as ContactRouteImport } from './routes/contact'
+import { Route as HealthzRouteImport } from './routes/healthz'
 import { Route as HelpRouteImport } from './routes/help'
 import { Route as PricingRouteImport } from './routes/pricing'
 import { Route as PrivacyRouteImport } from './routes/privacy'
@@ -83,6 +84,11 @@ const ApiDocsRoute = ApiDocsRouteImport.update({
 const ContactRoute = ContactRouteImport.update({
   id: '/contact',
   path: '/contact',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const HealthzRoute = HealthzRouteImport.update({
+  id: '/healthz',
+  path: '/healthz',
   getParentRoute: () => rootRouteImport,
 } as any)
 const HelpRoute = HelpRouteImport.update({
@@ -289,6 +295,7 @@ export interface FileRoutesByFullPath {
   '/admin-login': typeof AdminLoginRoute
   '/api-docs': typeof ApiDocsRoute
   '/contact': typeof ContactRoute
+  '/healthz': typeof HealthzRoute
   '/help': typeof HelpRoute
   '/pricing': typeof PricingRoute
   '/privacy': typeof PrivacyRoute
@@ -335,6 +342,7 @@ export interface FileRoutesByTo {
   '/admin-login': typeof AdminLoginRoute
   '/api-docs': typeof ApiDocsRoute
   '/contact': typeof ContactRoute
+  '/healthz': typeof HealthzRoute
   '/help': typeof HelpRoute
   '/pricing': typeof PricingRoute
   '/privacy': typeof PrivacyRoute
@@ -383,6 +391,7 @@ export interface FileRoutesById {
   '/admin-login': typeof AdminLoginRoute
   '/api-docs': typeof ApiDocsRoute
   '/contact': typeof ContactRoute
+  '/healthz': typeof HealthzRoute
   '/help': typeof HelpRoute
   '/pricing': typeof PricingRoute
   '/privacy': typeof PrivacyRoute
@@ -432,6 +441,7 @@ export interface FileRouteTypes {
     | '/admin-login'
     | '/api-docs'
     | '/contact'
+    | '/healthz'
     | '/help'
     | '/pricing'
     | '/privacy'
@@ -478,6 +488,7 @@ export interface FileRouteTypes {
     | '/admin-login'
     | '/api-docs'
     | '/contact'
+    | '/healthz'
     | '/help'
     | '/pricing'
     | '/privacy'
@@ -525,6 +536,7 @@ export interface FileRouteTypes {
     | '/admin-login'
     | '/api-docs'
     | '/contact'
+    | '/healthz'
     | '/help'
     | '/pricing'
     | '/privacy'
@@ -573,6 +585,7 @@ export interface RootRouteChildren {
   AdminLoginRoute: typeof AdminLoginRoute
   ApiDocsRoute: typeof ApiDocsRoute
   ContactRoute: typeof ContactRoute
+  HealthzRoute: typeof HealthzRoute
   HelpRoute: typeof HelpRoute
   PricingRoute: typeof PricingRoute
   PrivacyRoute: typeof PrivacyRoute
@@ -638,6 +651,13 @@ declare module '@tanstack/react-router' {
       path: '/contact'
       fullPath: '/contact'
       preLoaderRoute: typeof ContactRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/healthz': {
+      id: '/healthz'
+      path: '/healthz'
+      fullPath: '/healthz'
+      preLoaderRoute: typeof HealthzRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/help': {
@@ -967,6 +987,7 @@ const rootRouteChildren: RootRouteChildren = {
   AdminLoginRoute: AdminLoginRoute,
   ApiDocsRoute: ApiDocsRoute,
   ContactRoute: ContactRoute,
+  HealthzRoute: HealthzRoute,
   HelpRoute: HelpRoute,
   PricingRoute: PricingRoute,
   PrivacyRoute: PrivacyRoute,
