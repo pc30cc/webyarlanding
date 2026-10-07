@@ -36,6 +36,7 @@ import {
   AlertDialogCancel,
 } from "@/components/ui/alert-dialog";
 import DbTransferSection from "./DbTransferSection";
+import BackupCenterSection from "./BackupCenterSection";
 
 function downloadFile(filename: string, content: string, mime: string) {
   const blob = new Blob([content], { type: mime });
@@ -114,6 +115,8 @@ export default function BackupSection() {
           دانلود نسخه‌پشتیبان کامل دیتابیس یا بازیابی از فایل
         </p>
       </div>
+
+      <BackupCenterSection />
 
       <div className="flex flex-col gap-3 rounded-xl border border-border bg-card p-4 shadow-sm">
         <div className="flex items-center gap-2">

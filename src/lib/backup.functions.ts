@@ -312,6 +312,26 @@ export const TABLES: TableDef[] = [
       { name: "created_at", type: "TIMESTAMP" },
     ],
   },
+  {
+    name: "site_visits",
+    pk: "id",
+    columns: [
+      { name: "id", type: "VARCHAR", length: 36 },
+      { name: "session_id", type: "VARCHAR", length: 64 },
+      { name: "path", type: "VARCHAR", length: 500 },
+      { name: "created_at", type: "TIMESTAMP" },
+    ],
+  },
+  {
+    name: "scheduler_runs",
+    pk: "job",
+    columns: [
+      { name: "job", type: "VARCHAR", length: 60 },
+      { name: "last_run_at", type: "TIMESTAMP" },
+      { name: "last_status", type: "VARCHAR", length: 20 },
+      { name: "last_note", type: "TEXT" },
+    ],
+  },
 ];
 
 function columnSql(col: ColumnDef): string {
@@ -342,7 +362,7 @@ function sqlLiteral(value: unknown): string {
 /** کلاینت Supabase عمومی — هم دیتابیس خودِ سایت (db) و هم دیتابیس مقصد از همین شکل هستند */
 type SupabaseLike = { from: (table: string) => any };
 
-async function buildTableExport(
+export async function buildTableExport(
   table: TableDef,
   client?: SupabaseLike,
 ): Promise<Record<string, unknown>[]> {
@@ -442,7 +462,7 @@ const importSchema = z.object({
 });
 
 /** منطق مشترک بازیابی — چه از فایل آپلودشده بیاید چه از یک دیتابیس مقصد */
-async function performImport(
+export async function performImport(
   data: Record<string, unknown[]>,
 ): Promise<{ ok: true; totalInserted: number }> {
   const { db } = await import("./db.server");
@@ -460,8 +480,14 @@ async function performImport(
   for (const table of TABLES) {
     const rows = data[table.name];
     if (!rows || rows.length === 0) continue;
-    const { error } = await db.from(table.name as any).insert(rows as any);
-    if (!error) totalInserted += rows.length;
+    // درج دسته‌ای: جدول‌های بزرگ (مثل site_visits) در یک درخواست از سقف پارامترهای
+    // PostgreSQL (۶۵۵۳۵) یا حجم درخواست PostgREST عبور می‌کنند.
+    for (let i = 0; i < rows.length; i += 500) {
+      const chunk = rows.slice(i, i + 500);
+      const { error } = await db.from(table.name as any).insert(chunk as any);
+      if (error) console.error(`[restore] ${table.name}: ${error.message}`);
+      else totalInserted += chunk.length;
+    }
   }
 
   return { ok: true, totalInserted };
