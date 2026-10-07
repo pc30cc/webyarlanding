@@ -1,7 +1,8 @@
 // نسخه‌پشتیبان‌گیری دستی و روزانه از دیتابیس و نگه‌داری آن روی فضای ذخیره‌سازی/سی‌دی‌ان
 // متصل‌شده در تنظیمات (بانی سی‌دی‌ان یا ابر آروان). فقط سمت سرور.
 //
-// فرمت فایل: JSON فشرده‌شده با gzip (webyar-backup v1) — شامل همه جدول‌های TABLES، قابل
+// فرمت فایل: روی PostgreSQL سلف‌هاست یک dump واقعی pg_dump (.sql.gz، ساختار + داده، قابل
+// بازیابی با psql)؛ روی Supabase فرمت قبلی JSON فشرده (webyar-backup v1) — شامل همه جدول‌های TABLES، قابل
 // بازیابی مستقیم از همین پنل یا از فایل دانلودشده (بخش «بازیابی از فایل JSON» بعد از unzip).
 // تاریخچه هر اجرا در جدول backup_runs ثبت می‌شود؛ نسخه‌های قدیمی‌تر از مدت نگه‌داری
 // (پیش‌فرض ۱۴ روز) بعد از هر بک‌آپ روزانه از فضای ذخیره‌سازی و دیتابیس پاک می‌شوند.
@@ -158,11 +159,49 @@ export async function buildBackupArchive(): Promise<{
 
 /* ───────────── اجرای بک‌آپ ───────────── */
 
-function backupFilename(): string {
+function backupFilename(ext: "sql.gz" | "json.gz"): string {
   const stamp = new Date().toISOString().slice(0, 19).replace(/[:T]/g, "-");
   // پسوند تصادفی: آدرس فایل روی سی‌دی‌ان قابل حدس زدن نباشد
   const rand = crypto.randomUUID().replace(/-/g, "").slice(0, 16);
-  return `webyar-db-${stamp}-${rand}.json.gz`;
+  return `webyar-db-${stamp}-${rand}.${ext}`;
+}
+
+export type BackupFormat = "sql" | "json";
+
+/** روی Postgres سلف‌هاست با pg_dump واقعی؛ روی Supabase (یا نبود pg_dump) فرمت JSON قبلی */
+export async function activeBackupFormat(): Promise<BackupFormat> {
+  if (databaseBackend() !== "postgres") return "json";
+  const { hasPgTools } = await import("./pgdump.server");
+  return (await hasPgTools()) ? "sql" : "json";
+}
+
+export function formatOfFilename(filename: string | null): BackupFormat {
+  return filename?.endsWith(".sql.gz") ? "sql" : "json";
+}
+
+/** dump واقعی pg_dump + شمارش ردیف‌ها برای نمایش در تاریخچه */
+async function buildSqlDumpArchive(): Promise<{
+  bytes: ArrayBuffer;
+  rowCount: number;
+  tableCount: number;
+  checksum: string;
+}> {
+  const { dumpDatabase } = await import("./pgdump.server");
+  const { pgQuery } = await import("./pg-db.server");
+  const gz = await dumpDatabase();
+  const bytes = gz.buffer.slice(gz.byteOffset, gz.byteOffset + gz.byteLength) as ArrayBuffer;
+  const tables = await pgQuery<{ name: string }>(
+    `select c.relname as name from pg_class c join pg_namespace n on n.oid = c.relnamespace
+      where n.nspname = 'public' and c.relkind = 'r' and c.relname <> 'backup_runs'`,
+  );
+  let rowCount = 0;
+  for (const { name } of tables) {
+    const r = await pgQuery<{ c: number }>(
+      `select count(*)::int as c from public."${name.replace(/"/g, '""')}"`,
+    );
+    rowCount += r[0]?.c ?? 0;
+  }
+  return { bytes, rowCount, tableCount: tables.length, checksum: await sha256Hex(bytes) };
 }
 
 let inProgress = false;
@@ -180,8 +219,9 @@ export async function runBackup(trigger: "manual" | "daily"): Promise<BackupRun>
   });
 
   try {
-    const archive = await buildBackupArchive();
-    const filename = backupFilename();
+    const format = await activeBackupFormat();
+    const archive = format === "sql" ? await buildSqlDumpArchive() : await buildBackupArchive();
+    const filename = backupFilename(format === "sql" ? "sql.gz" : "json.gz");
     const stored = await uploadPrivateFile(
       archive.bytes,
       "application/gzip",
@@ -253,7 +293,15 @@ export async function parseBackupArchive(bytes: ArrayBuffer): Promise<BackupFile
 }
 
 export async function restoreBackupRun(id: string): Promise<{ totalInserted: number }> {
-  const { bytes } = await fetchBackupBytes(id);
+  const { run, bytes } = await fetchBackupBytes(id);
+  if (formatOfFilename(run.filename) === "sql") {
+    if (databaseBackend() !== "postgres") {
+      throw new Error("فایل dump فقط روی PostgreSQL سلف‌هاست قابل بازیابی است");
+    }
+    const { restoreDump } = await import("./pgdump.server");
+    await restoreDump(bytes);
+    return { totalInserted: run.row_count };
+  }
   const file = await parseBackupArchive(bytes);
   const res = await performImport(file.data as Record<string, unknown[]>);
   return { totalInserted: res.totalInserted };
@@ -295,6 +343,7 @@ export async function backupOverview() {
   return {
     backend: databaseBackend(),
     storageProvider: provider === "bunny" || provider === "arvan" ? provider : null,
+    format: await activeBackupFormat(),
     schedule,
   };
 }
