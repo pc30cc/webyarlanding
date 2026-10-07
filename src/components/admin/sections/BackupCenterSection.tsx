@@ -175,15 +175,37 @@ export default function BackupCenterSection() {
             <span className="rounded-full bg-muted px-2 py-0.5 text-muted-foreground">
               مقصد: {data.storageProvider ? PROVIDER_LABEL[data.storageProvider] : "متصل نیست"}
             </span>
+            <span className="rounded-full bg-muted px-2 py-0.5 text-muted-foreground">
+              فرمت: {data.format === "sql" ? "SQL dump (pg_dump)" : "JSON"}
+            </span>
           </div>
         )}
       </div>
 
       <p className="text-sm text-muted-foreground">
-        از کل دیتابیس یک فایل فشرده (JSON.gz) ساخته و به‌صورت خصوصی روی همان فضای ذخیره‌سازی که در
-        تنظیمات رسانه وصل کرده‌اید آپلود می‌شود. نام فایل‌ها تصادفی و غیرقابل‌حدس است و دانلود فقط
-        از همین پنل و با کلید سمت سرور انجام می‌شود.
+        {data?.format === "sql" ? (
+          <>
+            از کل دیتابیس با <code dir="ltr">pg_dump</code> یک فایل dump استاندارد PostgreSQL (
+            <code dir="ltr">.sql.gz</code> — ساختار جدول‌ها، ایندکس‌ها و همه داده‌ها) ساخته و
+            به‌صورت خصوصی روی همان فضای ذخیره‌سازی که در تنظیمات رسانه وصل کرده‌اید آپلود می‌شود.
+          </>
+        ) : (
+          <>
+            از کل دیتابیس یک فایل فشرده (JSON.gz) ساخته و به‌صورت خصوصی روی همان فضای ذخیره‌سازی که
+            در تنظیمات رسانه وصل کرده‌اید آپلود می‌شود.
+          </>
+        )}{" "}
+        نام فایل‌ها تصادفی و غیرقابل‌حدس است و دانلود فقط از همین پنل و با کلید سمت سرور انجام
+        می‌شود.
       </p>
+      {data?.format === "sql" && (
+        <p className="text-xs text-muted-foreground">
+          بازیابی دستی بیرون از پنل:{" "}
+          <code dir="ltr" className="rounded bg-muted px-1">
+            gunzip -c file.sql.gz | psql "$DATABASE_URL" -v ON_ERROR_STOP=1 --single-transaction
+          </code>
+        </p>
+      )}
 
       {error && (
         <p className="text-sm text-destructive">
@@ -322,8 +344,9 @@ export default function BackupCenterSection() {
                   </div>
                   {run.status === "success" ? (
                     <p className="text-xs text-muted-foreground">
-                      {run.row_count} رکورد از {run.table_count} جدول · {formatSize(run.size_bytes)}{" "}
-                      · {run.provider ? (PROVIDER_LABEL[run.provider] ?? run.provider) : ""}
+                      {run.filename?.endsWith(".sql.gz") ? "SQL dump" : "JSON"} · {run.row_count}{" "}
+                      رکورد از {run.table_count} جدول · {formatSize(run.size_bytes)} ·{" "}
+                      {run.provider ? (PROVIDER_LABEL[run.provider] ?? run.provider) : ""}
                     </p>
                   ) : run.error ? (
                     <p className="break-all text-xs text-destructive">{run.error}</p>
