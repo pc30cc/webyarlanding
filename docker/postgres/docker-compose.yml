@@ -1,0 +1,54 @@
+# کانتینر اختصاصی PostgreSQL برای WEBYAR روی Coolify.
+# در Coolify: New Resource → Docker Compose (Empty) → محتوای این فایل را بگذارید،
+# متغیر POSTGRES_PASSWORD را در Environment Variables تعریف کنید و Deploy بزنید.
+# (روش جایگزین ساده‌تر: New Resource → Database → PostgreSQL 17 خود Coolify — README را ببینید.)
+services:
+  webyar-db:
+    image: postgres:17-alpine
+    container_name: webyar-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-webyar}
+      POSTGRES_USER: ${POSTGRES_USER:-webyar}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
+      POSTGRES_INITDB_ARGS: "--encoding=UTF8 --locale=C.UTF-8"
+      TZ: UTC
+      PGTZ: UTC
+    command:
+      - postgres
+      - -c
+      - shared_buffers=256MB
+      - -c
+      - effective_cache_size=768MB
+      - -c
+      - work_mem=8MB
+      - -c
+      - maintenance_work_mem=64MB
+      - -c
+      - max_connections=100
+      - -c
+      - timezone=UTC
+      - -c
+      - log_min_duration_statement=1000
+    volumes:
+      - webyar-db-data:/var/lib/postgresql/data
+      # اسکیمای db/schema.sql را خود اپ هنگام بالا آمدن (idempotent) اجرا می‌کند؛
+      # داده‌ها با scripts/db/migrate-from-supabase.mjs منتقل می‌شوند.
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    # پورت عمداً بیرونی نشده؛ اپ از شبکه داخلی Coolify با نام webyar-db وصل می‌شود.
+    # برای دسترسی موقت از بیرون (مثلاً اجرای مایگریشن از لپ‌تاپ) این را باز کنید:
+    # ports:
+    #   - "127.0.0.1:5432:5432"
+    networks:
+      - coolify
+
+volumes:
+  webyar-db-data:
+
+networks:
+  coolify:
+    external: true

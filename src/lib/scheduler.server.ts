@@ -74,6 +74,37 @@ async function tickSeoReview(now: number): Promise<void> {
   );
 }
 
+/**
+ * بک‌آپ روزانه: اگر زمان امروزِ تعیین‌شده (به وقت تهران) گذشته باشد و از آن لحظه هنوز
+ * بک‌آپ روزانه‌ای ثبت نشده باشد، اجرا می‌شود — پس اگر سرور سر ساعت خاموش بوده، بعد از
+ * بالا آمدن همان روز جبران می‌شود و هرگز دوبار در یک روز اجرا نمی‌شود.
+ */
+async function tickDailyBackup(now: number): Promise<void> {
+  const { loadBackupSchedule, runBackup, tehranHourToUtcMinutes } = await import(
+    "./backups.server"
+  );
+  const schedule = await loadBackupSchedule();
+  if (!schedule.dailyEnabled) return;
+
+  const targetMinutes = tehranHourToUtcMinutes(schedule.hourTehran);
+  const dayStart = new Date(now);
+  dayStart.setUTCHours(0, 0, 0, 0);
+  let due = dayStart.getTime() + targetMinutes * 60_000;
+  if (due > now) due -= 24 * 60 * 60 * 1000;
+
+  const last = await getLastRun("daily_backup");
+  if (last >= due) return;
+
+  try {
+    const run = await runBackup("daily");
+    await markRun("daily_backup", "ok", `${run.row_count} رکورد — ${run.filename ?? ""}`);
+  } catch (error) {
+    // زمان را ثبت می‌کنیم تا در هر تیک دوباره تلاش نشود؛ خطا در تاریخچه بک‌آپ‌ها پیداست
+    await markRun("daily_backup", "failed", error instanceof Error ? error.message : String(error));
+    throw error;
+  }
+}
+
 async function tick(): Promise<void> {
   if (running) return;
   running = true;
@@ -87,6 +118,11 @@ async function tick(): Promise<void> {
     await tickSeoReview(now);
   } catch (error) {
     console.error("[scheduler] seo review failed:", error);
+  }
+  try {
+    await tickDailyBackup(now);
+  } catch (error) {
+    console.error("[scheduler] daily backup failed:", error);
   }
   running = false;
 }

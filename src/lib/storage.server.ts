@@ -101,9 +101,9 @@ function toHex(buf: ArrayBuffer): string {
   return [...new Uint8Array(buf)].map((b) => b.toString(16).padStart(2, "0")).join("");
 }
 
-/** امضای درخواست PUT/DELETE با AWS Signature v4 برای ذخیره‌سازی سازگار با S3 (ابر آروان) */
+/** امضای درخواست GET/PUT/DELETE با AWS Signature v4 برای ذخیره‌سازی سازگار با S3 (ابر آروان) */
 async function signArvanRequest(
-  method: "PUT" | "DELETE",
+  method: "GET" | "PUT" | "DELETE",
   endpoint: string,
   bucket: string,
   key: string,
@@ -442,4 +442,134 @@ export async function recompressStoredImage(assetId: string): Promise<Recompress
     newSizeBytes: bytes.byteLength,
     newUrl: uploaded.url,
   };
+}
+
+/* ───────────── فایل‌های خصوصی (نسخه‌های پشتیبان دیتابیس) ─────────────
+ * روی همان فضای ذخیره‌سازی متصل‌شده در تنظیمات عمومی → ذخیره‌سازی رسانه آپلود می‌شوند،
+ * اما بدون ACL عمومی (آروان) و با نام تصادفی غیرقابل‌حدس؛ دانلود فقط از طریق API ذخیره‌سازی
+ * با کلید دسترسی سمت سرور انجام می‌شود، نه از آدرس عمومی سی‌دی‌ان.
+ */
+
+export interface StoredPrivateFile {
+  provider: "bunny" | "arvan";
+  path: string;
+  sizeBytes: number;
+}
+
+export async function uploadPrivateFile(
+  bytes: ArrayBuffer,
+  mime: string,
+  path: string,
+): Promise<StoredPrivateFile> {
+  const [settings, keys] = await Promise.all([loadSettings(), loadMediaKeys()]);
+  const media = settings.media;
+
+  if (media.provider === "bunny") {
+    const { storageZone, region } = media.bunny;
+    if (!storageZone || !keys.mediaBunnyAccessKey) {
+      throw new StorageError(
+        "تنظیمات بانی سی‌دی‌ان کامل نیست — Storage Zone و کلید دسترسی را در تنظیمات عمومی وارد کنید.",
+      );
+    }
+    const host = region ? `${region}.storage.bunnycdn.com` : "storage.bunnycdn.com";
+    const res = await fetch(`https://${host}/${storageZone}/${path}`, {
+      method: "PUT",
+      headers: {
+        AccessKey: keys.mediaBunnyAccessKey,
+        "Content-Type": mime,
+        "Cache-Control": "private, no-store",
+      },
+      body: bytes,
+    });
+    if (!res.ok) {
+      const text = await res.text().catch(() => "");
+      throw new StorageError(`آپلود به بانی سی‌دی‌ان ناموفق بود: ${res.status} ${text.slice(0, 200)}`);
+    }
+    return { provider: "bunny", path, sizeBytes: bytes.byteLength };
+  }
+
+  if (media.provider === "arvan") {
+    const { bucket, endpoint, region } = media.arvan;
+    if (!bucket || !endpoint || !keys.mediaArvanAccessKey || !keys.mediaArvanSecretKey) {
+      throw new StorageError(
+        "تنظیمات ابر آروان کامل نیست — باکت، آدرس endpoint و کلیدهای دسترسی را در تنظیمات عمومی وارد کنید.",
+      );
+    }
+    const { url, headers } = await signArvanRequest(
+      "PUT",
+      endpoint,
+      bucket,
+      path,
+      region || "ir-thr-at1",
+      keys.mediaArvanAccessKey,
+      keys.mediaArvanSecretKey,
+    );
+    const res = await fetch(url, {
+      method: "PUT",
+      // بدون x-amz-acl → فایل خصوصی می‌ماند
+      headers: { ...headers, "Content-Type": mime, "Cache-Control": "private, no-store" },
+      body: bytes,
+    });
+    if (!res.ok) {
+      const text = await res.text().catch(() => "");
+      throw new StorageError(`آپلود به ابر آروان ناموفق بود: ${res.status} ${text.slice(0, 200)}`);
+    }
+    return { provider: "arvan", path, sizeBytes: bytes.byteLength };
+  }
+
+  throw new StorageError(
+    "هیچ فضای ذخیره‌سازی متصل نیست — در تنظیمات عمومی → ذخیره‌سازی رسانه، بانی سی‌دی‌ان یا ابر آروان را وصل کنید.",
+  );
+}
+
+/** دانلود یک فایل خصوصی از فضای ذخیره‌سازی (با کلید سمت سرور) */
+export async function downloadStoredFile(
+  provider: string,
+  path: string,
+): Promise<ArrayBuffer> {
+  const [settings, keys] = await Promise.all([loadSettings(), loadMediaKeys()]);
+  const media = settings.media;
+  let res: Response;
+
+  if (provider === "bunny") {
+    const { storageZone, region } = media.bunny;
+    if (!storageZone || !keys.mediaBunnyAccessKey) {
+      throw new StorageError("کلید دسترسی بانی سی‌دی‌ان در تنظیمات وجود ندارد.");
+    }
+    const host = region ? `${region}.storage.bunnycdn.com` : "storage.bunnycdn.com";
+    res = await fetch(`https://${host}/${storageZone}/${path}`, {
+      headers: { AccessKey: keys.mediaBunnyAccessKey },
+    });
+  } else if (provider === "arvan") {
+    const { bucket, endpoint, region } = media.arvan;
+    if (!bucket || !endpoint || !keys.mediaArvanAccessKey || !keys.mediaArvanSecretKey) {
+      throw new StorageError("کلیدهای دسترسی ابر آروان در تنظیمات وجود ندارد.");
+    }
+    const { url, headers } = await signArvanRequest(
+      "GET",
+      endpoint,
+      bucket,
+      path,
+      region || "ir-thr-at1",
+      keys.mediaArvanAccessKey,
+      keys.mediaArvanSecretKey,
+    );
+    res = await fetch(url, { headers });
+  } else {
+    throw new StorageError(`فضای ذخیره‌سازی ناشناخته: ${provider}`);
+  }
+
+  if (!res.ok) {
+    const text = await res.text().catch(() => "");
+    throw new StorageError(`دریافت فایل ناموفق بود: ${res.status} ${text.slice(0, 200)}`);
+  }
+  return res.arrayBuffer();
+}
+
+/** حذف یک فایل خصوصی از همان فضای ذخیره‌سازی‌ای که رویش آپلود شده بود */
+export async function deleteStoredFile(provider: string, path: string): Promise<void> {
+  if (!path) return;
+  const [settings, keys] = await Promise.all([loadSettings(), loadMediaKeys()]);
+  if (provider === "bunny") return deleteFromBunny(path, settings.media, keys);
+  if (provider === "arvan") return deleteFromArvan(path, settings.media, keys);
 }

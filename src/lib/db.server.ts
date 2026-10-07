@@ -1,8 +1,21 @@
 // لایه دسترسی دیتابیس — فقط سمت سرور.
-// همه جدول‌ها RLS دارند و هیچ policy عمومی ندارند؛ تنها راه دسترسی همین کلاینت سرویس است.
+// دو حالت دارد:
+//   ۱) DATABASE_URL تنظیم شده باشد → اتصال مستقیم به PostgreSQL سلف‌هاست (کانتینر Coolify)
+//   ۲) در غیر این صورت → Supabase (همه جدول‌ها RLS دارند و تنها راه دسترسی کلاینت سرویس است)
+// هر دو حالت دقیقاً یک API دارند، پس بقیه کد نیازی به تغییر ندارد.
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { createPgDb, getDatabaseUrl } from "./pg-db.server";
 
-export const db = supabaseAdmin;
+export type DatabaseBackend = "postgres" | "supabase";
+
+export function databaseBackend(): DatabaseBackend {
+  return getDatabaseUrl() ? "postgres" : "supabase";
+}
+
+export const db: typeof supabaseAdmin =
+  databaseBackend() === "postgres"
+    ? (createPgDb() as unknown as typeof supabaseAdmin)
+    : supabaseAdmin;
 
 /** شناسه یکتای ۳۶ کاراکتری (سازگار با varchar(36) در MySQL) */
 export function newId(): string {
