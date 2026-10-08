@@ -1,4 +1,5 @@
 import type { RespokTemplateModule } from "../types";
+import { AboutPage } from "./pages/About";
 import { BlogIndexPage } from "./pages/BlogIndex";
 import { BlogPostPage } from "./pages/BlogPost";
 import { ContactPage } from "./pages/Contact";
@@ -7,14 +8,15 @@ import { HomePage } from "./pages/Home";
 import { PrivacyPage, TermsPage } from "./pages/Legal";
 import { NotFoundPage } from "./pages/NotFound";
 import { PlaceholderPage } from "./pages/Placeholder";
+import { PricingPage } from "./pages/Pricing";
 import { SlaPage } from "./pages/Sla";
 import { TagPage } from "./pages/Tag";
 
 export const pages: RespokTemplateModule["pages"] = {
   home: HomePage,
-  about: () => <PlaceholderPage name="About" />,
+  about: AboutPage,
   contact: ContactPage,
-  pricing: () => <PlaceholderPage name="Pricing" />,
+  pricing: PricingPage,
   privacy: PrivacyPage,
   terms: TermsPage,
   sla: SlaPage,

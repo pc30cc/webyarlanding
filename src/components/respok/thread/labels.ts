@@ -1,4 +1,5 @@
 import { useRespok } from "../shared/context";
+import { isAllowedText } from "../shared/gating";
 
 /** The Persian brand as an author is the English brand on this site. */
 export function useAuthorName() {
@@ -22,4 +23,26 @@ export function useEnglishText() {
     const value = text ? t(text).trim() : "";
     return value && !PERSIAN.test(value) ? value : fallback;
   };
+}
+
+/**
+ * Catalog / app bullet lists: hides call or AI items when those switches are off and
+ * drops strings that have no English translation yet.
+ */
+export function useGatedList() {
+  const { t, callEnabled, aiEnabled } = useRespok();
+  const en = useEnglishText();
+  return (items: readonly string[], limit?: number): string[] => {
+    const list = items
+      .filter((item) => isAllowedText({ callEnabled, aiEnabled }, item, t(item)))
+      .map((item) => en(item))
+      .filter(Boolean);
+    return limit === undefined ? list : list.slice(0, limit);
+  };
+}
+
+/** "real-estate" → "Real estate" */
+export function humanizeSlug(slug: string): string {
+  const text = slug.replace(/[-_]+/g, " ").trim();
+  return text.charAt(0).toUpperCase() + text.slice(1);
 }

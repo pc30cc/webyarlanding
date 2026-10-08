@@ -45,7 +45,6 @@ export const OPEN_COPY = {
     category: "Category",
   },
   notFound: { status: "Status · away" },
-  placeholder: "This section is coming together.",
   /** Labels inside illustrations of the product UI (no claims: those come from ../content). */
   mock: {
     hero: (brand: string) => `The ${brand} chat panel, open in the corner of a website`,

@@ -58,7 +58,9 @@ export function CatalogItemPage({
 
   const title = t(item.title);
   const shortDesc = t(item.shortDesc);
-  const description = item.description ? t(item.description) : "";
+  // An untranslated (Persian) body is left out rather than shown on the English site.
+  const translated = item.description ? t(item.description) : "";
+  const description = /[\u0600-\u06ff]/.test(translated) ? "" : translated;
   const lead = shortDesc || plainLead(description);
   const category = categoryTitle ? t(categoryTitle) : "";
   const bullets = item.bullets

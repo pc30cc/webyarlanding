@@ -64,11 +64,32 @@ function priceOf(plan: PublicPlan, period: BillingPeriod, currency: "USD" | "Tom
   };
 }
 
+function staticPrice(plan: (typeof STATIC_PLANS)[number], period: BillingPeriod): RespokPrice {
+  if (plan.usd === null) return { kind: "contact", amount: "Let's talk", unit: "", note: "" };
+  if (plan.usd.monthly === 0) return { kind: "free", amount: "Free", unit: "", note: "" };
+  const total = period === "yearly" ? plan.usd.yearly : plan.usd.monthly;
+  return {
+    kind: "amount",
+    amount: usd.format(period === "yearly" ? total / 12 : total),
+    unit: "/ month",
+    note: period === "yearly" ? `Billed ${usd.format(total)} yearly` : "",
+  };
+}
+
 function yearlySaving(remote: PublicPlan[] | null): string {
-  if (!remote) return "Save 20%";
+  if (!remote) {
+    const savings = STATIC_PLANS.filter((p) => p.usd && p.usd.monthly > 0).map(
+      (p) =>
+        1 -
+        (p.usd as { yearly: number; monthly: number }).yearly /
+          ((p.usd as { monthly: number }).monthly * 12),
+    );
+    const best = Math.round(Math.max(0, ...savings) * 100);
+    return best > 0 ? `Save up to ${best}%` : "";
+  }
   const savings = remote
-    .filter((p) => p.monthly && p.yearly)
-    .map((p) => 1 - (p.yearly as number) / ((p.monthly as number) * 12));
+    .filter((p) => p.usdMonthly && p.usdYearly)
+    .map((p) => 1 - (p.usdYearly as number) / ((p.usdMonthly as number) * 12));
   const best = Math.round(Math.max(0, ...savings) * 100);
   return best > 0 ? `Save up to ${best}%` : "";
 }
@@ -89,13 +110,11 @@ export function usePricingModel(data: PricingPageData) {
   const keep = (...texts: string[]) => isAllowedText(flags, ...texts);
 
   const remote = data.remotePlans?.plans ?? null;
-  // Dollars only when the app really bills these plans in USD; today in-app checkout
-  // charges rials (Toman), so the app's Toman prices are shown otherwise.
+  // The English site shows US dollars whenever the app provides USD prices for every
+  // paid plan (Super Admin → Plans); otherwise it falls back to the app's Toman prices.
   const paid = (remote ?? []).filter((p) => !p.isFree && (p.monthly || p.usdMonthly));
   const currency: "USD" | "Toman" =
-    paid.length > 0 && paid.every((p) => p.defaultCurrency === "USD" && !!p.usdMonthly)
-      ? "USD"
-      : "Toman";
+    paid.length === 0 || paid.every((p) => !!p.usdMonthly) ? "USD" : "Toman";
 
   const base: Omit<RespokPlan, "cta">[] = remote
     ? remote.map((plan) => ({
@@ -116,19 +135,7 @@ export function usePricingModel(data: PricingPageData) {
         name: plan.name,
         description: plan.description,
         popular: plan.popular,
-        price:
-          plan.toman === null
-            ? { kind: "contact", amount: "Let's talk", unit: "", note: "" }
-            : plan.toman === 0
-              ? { kind: "free", amount: "Free", unit: "", note: "" }
-              : {
-                  kind: "amount",
-                  amount: plain.format(
-                    activePeriod === "yearly" ? Math.round(plan.toman * 0.8) : plan.toman,
-                  ),
-                  unit: "Toman / month",
-                  note: activePeriod === "yearly" ? "Billed yearly" : "",
-                },
+        price: staticPrice(plan, activePeriod),
         limits: plan.limits.filter((limit) => keep(limit.label)),
         features: plan.features
           .filter((feature) => !feature.needs || flags[`${feature.needs}Enabled`])

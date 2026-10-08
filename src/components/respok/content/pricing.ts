@@ -10,19 +10,19 @@ export interface StaticPlan {
   name: string;
   description: string;
   popular: boolean;
-  /** Monthly price in Toman; 0 = free; null = contact sales. */
-  toman: number | null;
+  /** US-dollar prices (the app's seed plans); null = contact sales. */
+  usd: { monthly: number; yearly: number } | null;
   limits: { label: string; value: string }[];
   features: { text: string; needs?: FeatureNeed }[];
 }
 
 export const STATIC_PLANS: StaticPlan[] = [
   {
-    slug: "starter",
-    name: "Starter",
+    slug: "free",
+    name: "Free",
     description: "To get started and try the product",
     popular: false,
-    toman: 0,
+    usd: { monthly: 0, yearly: 0 },
     limits: [
       { label: "Operators", value: "1" },
       { label: "Monthly conversations", value: "50" },
@@ -36,11 +36,11 @@ export const STATIC_PLANS: StaticPlan[] = [
     ],
   },
   {
-    slug: "professional",
-    name: "Professional",
+    slug: "pro",
+    name: "Pro",
     description: "For growing teams",
     popular: true,
-    toman: 490000,
+    usd: { monthly: 29, yearly: 290 },
     limits: [
       { label: "Operators", value: "5" },
       { label: "Monthly conversations", value: "Unlimited" },
@@ -61,14 +61,14 @@ export const STATIC_PLANS: StaticPlan[] = [
     name: "Enterprise",
     description: "For large businesses",
     popular: false,
-    toman: null,
+    usd: { monthly: 99, yearly: 990 },
     limits: [
       { label: "Operators", value: "Unlimited" },
       { label: "Monthly conversations", value: "Unlimited" },
       { label: "Domains", value: "Unlimited" },
     ],
     features: [
-      { text: "Everything in Professional" },
+      { text: "Everything in Pro" },
       { text: "Call center with queue, callbacks and recording", needs: "call" },
       { text: "AI drafts for operators", needs: "ai" },
       { text: "SEO tools and Brand Radar" },
@@ -81,7 +81,7 @@ export const STATIC_COMPARISON: {
   columns: string[];
   rows: { label: string; values: (string | boolean)[]; needs?: FeatureNeed }[];
 } = {
-  columns: ["Starter", "Professional", "Enterprise"],
+  columns: ["Free", "Pro", "Enterprise"],
   rows: [
     { label: "Operators", values: ["1", "5", "Unlimited"] },
     { label: "Monthly conversations", values: ["50", "Unlimited", "Unlimited"] },

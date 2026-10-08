@@ -72,6 +72,7 @@ export const THREAD_COPY = {
     plansLabel: "Plans",
     limitsLabel: "Limits",
     featureCount: (n: number) => `${n} more`,
+    compareQuestion: "How do the plans compare?",
   },
   catalog: {
     jump: "Jump to a category",

@@ -987,7 +987,7 @@ function FinalCta({ c, tone }: { c: HomeContent; tone: Tone }) {
             />
             <h2
               id={headingId}
-              className="mx-auto mt-14 max-w-[22ch] text-[28px] leading-[1.12] font-bold tracking-[-0.02em] text-balance sm:mt-16 sm:text-[36px]"
+              className="mx-auto mt-14 max-w-[30ch] text-[28px] leading-[1.12] font-bold tracking-[-0.02em] text-balance sm:mt-16 sm:text-[36px]"
             >
               {c.finalCta.title}
             </h2>
