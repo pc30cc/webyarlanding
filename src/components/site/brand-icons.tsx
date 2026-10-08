@@ -58,7 +58,7 @@ export const PLATFORM_META: Record<
   }
 > = {
   ios: {
-    label: "آیفون و آیپد",
+    label: "آیفون",
     store: "App Store",
     storeTop: "دریافت از",
     Icon: AppleIcon,

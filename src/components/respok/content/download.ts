@@ -31,7 +31,7 @@ export function getDownloadContent(
     perks: [
       { icon: Bell, title: "Instant notifications", body: call ? "New messages and calls reach your phone and desktop right away." : "New messages reach your phone and desktop right away." },
       { icon: Zap, title: "Fast and native", body: "Native apps built with SwiftUI on Apple devices, Jetpack Compose on Android and WinUI on Windows." },
-      { icon: Lock, title: "Secure", body: "See and sign out your active sessions, and delete your account from inside the app." },
+      { icon: Lock, title: "Secure", body: "Encrypted sessions, a list of your signed-in devices, and account deletion from the iPhone app." },
       { icon: RefreshCw, title: "Synced everywhere", body: "Start a conversation on your phone and finish it on your desktop." },
     ] satisfies FeatureCopy[],
     app: {

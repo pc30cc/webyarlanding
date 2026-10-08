@@ -5,7 +5,7 @@ export const PLATFORM_EN: Record<
   { label: string; store: string; action: string; soon: string }
 > = {
   ios: {
-    label: "iPhone & iPad",
+    label: "iPhone",
     store: "App Store",
     action: "Download on the",
     soon: "Coming soon to the",

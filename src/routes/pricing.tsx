@@ -43,7 +43,7 @@ export const Route = createFileRoute("/pricing")({
       override: loaderData.seoOverride,
       fallbackTitle: "امکانات و قیمت | وب‌یار",
       fallbackDescription:
-        "پلن مناسب کسب‌وکار خود را از میان پلن‌های شروع، رشد، حرفه‌ای و سازمانی وب‌یار انتخاب کنید.",
+        "پلن مناسب کسب‌وکار خود را از میان پلن‌های وب‌یار انتخاب کنید.",
     });
   },
   component: PricingPage,
@@ -101,12 +101,11 @@ function getPlans(period: "monthly" | "yearly"): DisplayPlan[] {
       ],
       features: [
         "ابزارک چت سایت",
-        "تماس تصویری HD + اشتراک‌گذاری صفحه",
+        "تماس صوتی و تصویری HD",
         "دستیار هوش مصنوعی",
         "اتوماسیون و پایگاه دانش",
         "CRM کامل + برچسب‌گذاری",
         "اتصال به واتساپ و تلگرام",
-        "کمپین بازاریابی",
         "گزارش و تحلیل کامل",
       ],
     },
@@ -127,10 +126,7 @@ function getPlans(period: "monthly" | "yearly"): DisplayPlan[] {
         "همه امکانات پلن حرفه‌ای",
         "چند دامنه هم‌زمان",
         "مرکز تماس و صف تماس",
-        "API و Webhook کامل",
-        "ورود یکپارچه (SSO) و کنترل دسترسی RBAC ۱۸ سطحی",
-        "برچسب سفید",
-        "SLA و پشتیبانی اختصاصی",
+        "حذف برند وب‌یار از ابزارک",
       ],
     },
   ];
@@ -143,16 +139,11 @@ const staticComparison = {
     { label: "گفتگوی ماهانه", values: ["۵۰", "نامحدود", "نامحدود"] },
     { label: "تعداد دامنه", values: ["۱", "۳", "نامحدود"] },
     { label: "تماس تصویری HD", values: [false, true, true] },
-    { label: "اشتراک‌گذاری صفحه", values: [false, true, true] },
     { label: "دستیار هوش مصنوعی", values: [false, true, true] },
     { label: "CRM و مدیریت مشتریان", values: ["پایه", "کامل", "کامل"] },
     { label: "اتوماسیون و پایگاه دانش", values: [false, true, true] },
-    { label: "کمپین و بازاریابی", values: [false, true, true] },
     { label: "ارتباط چندکاناله (واتساپ، تلگرام)", values: [false, true, true] },
     { label: "گزارش و تحلیل", values: ["پایه", "کامل", "کامل"] },
-    { label: "API و Webhook", values: [false, false, true] },
-    { label: "کنترل دسترسی (RBAC / SSO)", values: [false, false, true] },
-    { label: "پشتیبانی اختصاصی", values: [false, false, true] },
   ] as { label: string; values: (string | boolean)[] }[],
 };
 
@@ -257,14 +248,14 @@ function pricingIntro(
         ? "From live chat and video calls to "
         : "From live chat to ") +
       (aiEnabled
-        ? "an AI assistant, CRM, automation, campaigns and reporting. "
-        : "CRM, automation, campaigns and reporting. ") +
+        ? "an AI assistant, CRM, automation and reporting. "
+        : "CRM, automation and reporting. ") +
       "Choose the right plan from Webyar’s complete feature set."
     );
   const start = callEnabled ? "از چت زنده و تماس تصویری تا" : "از چت زنده تا";
   const mid = aiEnabled
-    ? " دستیار هوش مصنوعی، CRM، اتوماسیون، کمپین و گزارش‌گیری"
-    : " CRM، اتوماسیون، کمپین و گزارش‌گیری";
+    ? " دستیار هوش مصنوعی، CRM، اتوماسیون و گزارش‌گیری"
+    : " CRM، اتوماسیون و گزارش‌گیری";
   return `${start}${mid}. پلن مناسب کسب‌وکار خود را از میان امکانات کامل وب‌یار انتخاب کنید.`;
 }
 

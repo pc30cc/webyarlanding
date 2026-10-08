@@ -99,6 +99,7 @@ export const NOT_OFFERED_FEATURE_KEYS: ReadonlySet<string> = new Set([
 
 /** کلیدهایی که اگر در پلن مشخص نشده باشند، در اپ به‌طور پیش‌فرض فعال‌اند */
 export const DEFAULT_ON_FEATURE_KEYS: ReadonlySet<string> = new Set([
+  "chat",
   "chat_widget",
   "knowledge_base",
   "contacts",

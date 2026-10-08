@@ -198,15 +198,15 @@ export function termsSectionsEn(brand: string, email: string) {
 export const HELP_FAQS_EN = [
   {
     q: "How do I create an account?",
-    a: "Open the app or the website, choose Sign up, enter your email address and a password, then confirm your email. You can start on the free plan and upgrade later.",
+    a: "Open the website, choose Sign up, enter your email address and a password, then confirm your email. Then sign in to the apps with the same account. You can start on the free plan and upgrade later.",
   },
   {
     q: "I forgot my password. What should I do?",
-    a: 'Use the "Forgot password" link on the sign-in screen. A reset link is sent to your registered email address and stays valid for 60 minutes.',
+    a: 'Use the "Forgot password" link on the sign-in screen. A reset link is sent to your registered email address and stays valid for 24 hours.',
   },
   {
     q: "How do I manage or cancel my subscription?",
-    a: "Subscriptions purchased in the app are managed in your Apple App Store or Google Play account settings. Subscriptions purchased on our website can be cancelled from your account billing page. Cancellation takes effect at the end of the current billing period.",
+    a: "Manage your plan and invoices in the Billing section of your dashboard. Each period renews when its invoice is paid; if the next invoice isn't paid, your workspace returns to the free plan after the grace period. Switching to a lower plan takes effect at the end of the current period.",
   },
   {
     q: "How do I delete my account and data?",
