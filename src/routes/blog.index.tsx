@@ -1,3 +1,5 @@
+import { RespokPage } from "@/components/respok/RespokPage";
+import { getSiteLanguage } from "@/lib/site-i18n";
 import {
   useSiteLocale,
   useSiteTranslation,
@@ -75,7 +77,7 @@ export const Route = createFileRoute("/blog/")({
   component: BlogIndexPage,
 });
 
-function BlogIndexPage() {
+function PersianBlogIndexPage() {
   const translateText = useSiteTranslation();
   const locale = useSiteLocale();
 
@@ -301,4 +303,12 @@ function BlogIndexPage() {
       </div>
     </SiteLayout>
   );
+}
+
+/** English site: the active Respok template; Persian site: the page above. */
+function BlogIndexPage() {
+  const data = Route.useLoaderData();
+  if (getSiteLanguage(data.settings) === "en")
+    return <RespokPage page="blogIndex" data={data} />;
+  return <PersianBlogIndexPage />;
 }

@@ -1,3 +1,5 @@
+import { RespokPage } from "@/components/respok/RespokPage";
+import { getSiteLanguage } from "@/lib/site-i18n";
 import { localizeStructuredData } from "@/lib/site-i18n";
 import { useSiteTranslation } from "@/components/site/SiteLanguage";
 import { createFileRoute } from "@tanstack/react-router";
@@ -44,7 +46,7 @@ export const Route = createFileRoute("/contact")({
   component: ContactPage,
 });
 
-function ContactPage() {
+function PersianContactPage() {
   const translateText = useSiteTranslation();
 
   const { settings } = Route.useLoaderData();
@@ -274,4 +276,12 @@ function ContactPage() {
       </div>
     </SiteLayout>
   );
+}
+
+/** English site: the active Respok template; Persian site: the page above. */
+function ContactPage() {
+  const data = Route.useLoaderData();
+  if (getSiteLanguage(data.settings) === "en")
+    return <RespokPage page="contact" data={data} />;
+  return <PersianContactPage />;
 }

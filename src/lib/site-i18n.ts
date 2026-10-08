@@ -1,5 +1,5 @@
 import englishMessages from "./site-translations.en.json";
-import { getBrandNameEn, type SiteSettings } from "./settings";
+import { getEnglishBrandName, type SiteSettings } from "./settings";
 
 export type SiteLanguage = "fa" | "en";
 export const normalizeMessage = (text: string) =>
@@ -28,7 +28,13 @@ export function latinDigits(text: string): string {
 export function createSiteTranslator(
   language: SiteLanguage,
   overrides: Record<string, string> = {},
+  /** English brand that replaces the legacy "Webyar" name in translated text. */
+  brand?: string,
 ) {
+  const rebrand =
+    brand && brand !== "Webyar"
+      ? (text: string) => text.replace(/\bWebyar\b/g, brand)
+      : (text: string) => text;
   const dictionary = { ...messages, ...overrides };
   const templates = Object.entries(dictionary)
     .filter(([key]) => /\{\d+\}/.test(key))
@@ -82,7 +88,7 @@ export function createSiteTranslator(
         }
       }
     }
-    result = latinDigits(result ?? source);
+    result = rebrand(latinDigits(result ?? source));
     if (direct !== undefined || result !== latinDigits(source)) {
       result =
         (source.match(/^\s+/)?.[0] ?? "") +
@@ -100,10 +106,15 @@ export function createSiteTranslator(
 }
 
 export function translatorForSettings(settings: SiteSettings) {
-  return createSiteTranslator(getSiteLanguage(settings), {
-    [settings.brand.name]: getBrandNameEn(settings),
-    ...settings.localization?.english,
-  });
+  const brand = getEnglishBrandName(settings);
+  return createSiteTranslator(
+    getSiteLanguage(settings),
+    {
+      [settings.brand.name]: brand,
+      ...settings.localization?.english,
+    },
+    brand,
+  );
 }
 
 /** Translate schema text without changing identifiers, canonical URLs or dates. */

@@ -1,3 +1,5 @@
+import { RespokPage } from "@/components/respok/RespokPage";
+import { getSiteLanguage } from "@/lib/site-i18n";
 import { localizeStructuredData } from "@/lib/site-i18n";
 import { useSiteTranslation } from "@/components/site/SiteLanguage";
 import operatorAvatar from "@/assets/operator-avatar.jpg";
@@ -478,7 +480,7 @@ function OperatorAvatar({ className }: { className?: string }) {
   );
 }
 
-function IndexPage() {
+function PersianIndexPage() {
   const translateText = useSiteTranslation();
 
   const { settings, seoOverride, apps } = Route.useLoaderData();
@@ -1178,4 +1180,12 @@ function AppsShowcase({
       </div>
     </section>
   );
+}
+
+/** English site: the active Respok template; Persian site: the page above. */
+function IndexPage() {
+  const data = Route.useLoaderData();
+  if (getSiteLanguage(data.settings) === "en")
+    return <RespokPage page="home" data={data} />;
+  return <PersianIndexPage />;
 }

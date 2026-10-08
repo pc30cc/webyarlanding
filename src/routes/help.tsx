@@ -1,3 +1,6 @@
+import { HELP_FAQS_EN } from "@/lib/legal-en";
+import { RespokPage } from "@/components/respok/RespokPage";
+import { getSiteLanguage } from "@/lib/site-i18n";
 import { localizeStructuredData } from "@/lib/site-i18n";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { motion } from "framer-motion";
@@ -38,33 +41,6 @@ export const Route = createFileRoute("/help")({
   component: HelpPage,
 });
 
-const FAQS_EN = [
-  {
-    q: "How do I create an account?",
-    a: "Open the app or the website, choose Sign up, enter your email address and a password, then confirm your email. You can start on the free plan and upgrade later.",
-  },
-  {
-    q: "I forgot my password. What should I do?",
-    a: 'Use the "Forgot password" link on the sign-in screen. A reset link is sent to your registered email address and stays valid for 60 minutes.',
-  },
-  {
-    q: "How do I manage or cancel my subscription?",
-    a: "Subscriptions purchased in the app are managed in your Apple App Store or Google Play account settings. Subscriptions purchased on our website can be cancelled from your account billing page. Cancellation takes effect at the end of the current billing period.",
-  },
-  {
-    q: "How do I delete my account and data?",
-    a: 'Email our support address from the address linked to your account with the subject "Account Deletion Request". We verify the request and permanently delete your account and personal data within 30 days.',
-  },
-  {
-    q: "Is my data secure?",
-    a: "Data is transmitted over TLS, passwords are stored only as salted hashes, access is restricted by role, and backups are taken regularly. See our Privacy Policy for full details.",
-  },
-  {
-    q: "How do I report a bug or abuse?",
-    a: 'Email support with the subject "Bug report" or "Abuse report", including your account email, device and app version, the steps to reproduce, and screenshots if available.',
-  },
-];
-
 const FAQS_FA = [
   {
     q: "چطور حساب کاربری بسازم؟",
@@ -92,7 +68,7 @@ const FAQS_FA = [
   },
 ];
 
-function HelpPage() {
+function PersianHelpPage() {
   const { settings } = Route.useLoaderData();
   const english = isEnglishChrome(settings, "/help");
   const base = (settings.brand.siteUrl || "").replace(/\/$/, "");
@@ -100,7 +76,7 @@ function HelpPage() {
   const brand = english ? brandEn : settings.brand.name || brandEn;
   const email = settings.brand.email || "support@webyar.ai";
   const phone = settings.brand.phone;
-  const faqs = english ? FAQS_EN : FAQS_FA;
+  const faqs = english ? HELP_FAQS_EN : FAQS_FA;
 
   const jsonLd = [
     {
@@ -313,4 +289,12 @@ function HelpPage() {
       </div>
     </SiteLayout>
   );
+}
+
+/** English site: the active Respok template; Persian site: the page above. */
+function HelpPage() {
+  const data = Route.useLoaderData();
+  if (getSiteLanguage(data.settings) === "en")
+    return <RespokPage page="help" data={data} />;
+  return <PersianHelpPage />;
 }

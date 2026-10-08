@@ -27,6 +27,13 @@ function rialToToman(value: unknown): number | null {
   return Math.round(n / 10);
 }
 
+/** قیمت دلاری در اپلیکیشن به دلار کامل ذخیره می‌شود (price_monthly_usd) */
+function usdAmount(value: unknown): number | null {
+  const n = typeof value === "number" ? value : Number(value);
+  if (!Number.isFinite(n) || n <= 0) return null;
+  return Math.round(n * 100) / 100;
+}
+
 function limitText(value: unknown): string {
   const n = typeof value === "number" ? value : Number(value);
   if (!Number.isFinite(n)) return "—";
@@ -43,6 +50,7 @@ function normalize(
   const entitlements = remote.entitlements ?? {};
   const limits = remote.limits ?? {};
   const irr = remote.prices?.["IRR"] ?? {};
+  const usd = remote.prices?.["USD"] ?? {};
 
   const features = Object.keys(FEATURE_LABELS_FA)
     .filter((key) => entitlements[key] === true)
@@ -66,6 +74,8 @@ function normalize(
     isFree: remote.is_free === true,
     monthly: remote.is_free ? 0 : rialToToman(irr.monthly),
     yearly: remote.is_free ? 0 : rialToToman(irr.yearly),
+    usdMonthly: remote.is_free ? 0 : usdAmount(usd.monthly),
+    usdYearly: remote.is_free ? 0 : usdAmount(usd.yearly),
     features,
     limits: limitRows,
     // پلن میانی معمولاً پیشنهادی است

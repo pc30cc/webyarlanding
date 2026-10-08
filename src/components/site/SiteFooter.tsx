@@ -9,7 +9,7 @@ import {
 
 /** نماد اعتماد بعد از بارگذاری بقیه صفحه تزریق می‌شود تا تصویر کند اینماد
  *  جلوی بارگذاری ابزارک‌ها و رویداد load صفحه را نگیرد. کد اینماد بدون تغییر می‌ماند. */
-function TrustBadge({ html }: { html: string }) {
+export function TrustBadge({ html }: { html: string }) {
   const [ready, setReady] = useState(false);
   useEffect(() => {
     const timer = window.setTimeout(() => setReady(true), 3000);

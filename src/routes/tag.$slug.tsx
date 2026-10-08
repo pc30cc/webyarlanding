@@ -1,3 +1,6 @@
+import { RespokNotFoundSwitch } from "@/components/respok/RespokNotFound";
+import { RespokPage } from "@/components/respok/RespokPage";
+import { getSiteLanguage } from "@/lib/site-i18n";
 import {
   useSiteLocale,
   useSiteTranslation,
@@ -45,20 +48,11 @@ export const Route = createFileRoute("/tag/$slug")({
         loaderData.posts.length < 2 ? "noindex,follow" : "index,follow",
     });
   },
-  notFoundComponent: () => (
-    <div className="container-page flex min-h-[50vh] flex-col items-center justify-center gap-4 py-24 text-center">
-      <h1 className="text-2xl font-extrabold text-foreground">
-        برچسبی یافت نشد
-      </h1>
-      <Link to="/blog" className="text-sm text-brand hover:underline">
-        بازگشت به بلاگ
-      </Link>
-    </div>
-  ),
+  notFoundComponent: TagNotFound,
   component: TagPage,
 });
 
-function TagPage() {
+function PersianTagPage() {
   const translateText = useSiteTranslation();
   const locale = useSiteLocale();
 
@@ -176,5 +170,28 @@ function TagPage() {
         </div>
       </div>
     </SiteLayout>
+  );
+}
+
+/** English site: the active Respok template; Persian site: the page above. */
+function TagPage() {
+  const data = Route.useLoaderData();
+  if (getSiteLanguage(data.settings) === "en")
+    return <RespokPage page="tag" data={data} />;
+  return <PersianTagPage />;
+}
+
+function TagNotFound() {
+  return (
+    <RespokNotFoundSwitch kind="tag">
+      <div className="container-page flex min-h-[50vh] flex-col items-center justify-center gap-4 py-24 text-center">
+        <h1 className="text-2xl font-extrabold text-foreground">
+          برچسبی یافت نشد
+        </h1>
+        <Link to="/blog" className="text-sm text-brand hover:underline">
+          بازگشت به بلاگ
+        </Link>
+      </div>
+    </RespokNotFoundSwitch>
   );
 }

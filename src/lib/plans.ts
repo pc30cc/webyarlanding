@@ -10,6 +10,10 @@ export interface PublicPlan {
   monthly: number | null;
   /** قیمت سالانه به تومان (کل مبلغ سالانه) */
   yearly: number | null;
+  /** قیمت دلاری ماهانه (دلار کامل) برای سایت انگلیسی — فقط اگر API اپلیکیشن ارسال کند */
+  usdMonthly?: number | null | undefined;
+  /** قیمت دلاری سالانه (کل مبلغ سالانه، دلار کامل) */
+  usdYearly?: number | null | undefined;
   /** امکانات فعال پلن با برچسب فارسی */
   features: string[];
   /** محدودیت‌های کلیدی با برچسب فارسی */

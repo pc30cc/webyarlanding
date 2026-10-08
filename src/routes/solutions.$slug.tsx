@@ -1,3 +1,6 @@
+import { RespokNotFoundSwitch } from "@/components/respok/RespokNotFound";
+import { RespokPage } from "@/components/respok/RespokPage";
+import { getSiteLanguage } from "@/lib/site-i18n";
 import { localizeStructuredData } from "@/lib/site-i18n";
 import { useSiteTranslation } from "@/components/site/SiteLanguage";
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
@@ -33,20 +36,11 @@ export const Route = createFileRoute("/solutions/$slug")({
       fallbackDescription: item.shortDesc || item.description,
     });
   },
-  notFoundComponent: () => (
-    <div className="container-page flex min-h-[50vh] flex-col items-center justify-center gap-4 py-24 text-center">
-      <h1 className="text-2xl font-extrabold text-foreground">
-        راه‌کار یافت نشد
-      </h1>
-      <Link to="/solutions" className="text-sm text-brand hover:underline">
-        بازگشت به راه‌کارها
-      </Link>
-    </div>
-  ),
+  notFoundComponent: SolutionNotFound,
   component: SolutionDetailPage,
 });
 
-function SolutionDetailPage() {
+function PersianSolutionDetailPage() {
   const translateText = useSiteTranslation();
 
   const { settings, item, categoryTitle, related } = Route.useLoaderData();
@@ -232,5 +226,28 @@ function SolutionDetailPage() {
         </Link>
       </div>
     </SiteLayout>
+  );
+}
+
+/** English site: the active Respok template; Persian site: the page above. */
+function SolutionDetailPage() {
+  const data = Route.useLoaderData();
+  if (getSiteLanguage(data.settings) === "en")
+    return <RespokPage page="catalogItem" data={{ ...data, kind: "solution" }} />;
+  return <PersianSolutionDetailPage />;
+}
+
+function SolutionNotFound() {
+  return (
+    <RespokNotFoundSwitch kind="solution">
+      <div className="container-page flex min-h-[50vh] flex-col items-center justify-center gap-4 py-24 text-center">
+        <h1 className="text-2xl font-extrabold text-foreground">
+          راه‌کار یافت نشد
+        </h1>
+        <Link to="/solutions" className="text-sm text-brand hover:underline">
+          بازگشت به راه‌کارها
+        </Link>
+      </div>
+    </RespokNotFoundSwitch>
   );
 }

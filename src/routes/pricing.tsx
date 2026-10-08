@@ -1,3 +1,5 @@
+import { RespokPage } from "@/components/respok/RespokPage";
+import { getSiteLanguage } from "@/lib/site-i18n";
 import { localizeStructuredData } from "@/lib/site-i18n";
 import { useSiteTranslation } from "@/components/site/SiteLanguage";
 import { useState } from "react";
@@ -279,7 +281,7 @@ function ComparisonCell({ value }: { value: string | boolean }) {
   return <span>{translateText(value)}</span>;
 }
 
-function PricingPage() {
+function PersianPricingPage() {
   const translateText = useSiteTranslation();
 
   const { settings, remotePlans } = Route.useLoaderData();
@@ -605,4 +607,12 @@ function PricingPage() {
       </div>
     </SiteLayout>
   );
+}
+
+/** English site: the active Respok template; Persian site: the page above. */
+function PricingPage() {
+  const data = Route.useLoaderData();
+  if (getSiteLanguage(data.settings) === "en")
+    return <RespokPage page="pricing" data={data} />;
+  return <PersianPricingPage />;
 }

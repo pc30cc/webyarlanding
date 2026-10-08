@@ -1,3 +1,7 @@
+import { getEnglishBrandName } from "@/lib/settings";
+import { RespokNotFoundSwitch } from "@/components/respok/RespokNotFound";
+import { RespokPage } from "@/components/respok/RespokPage";
+import { getSiteLanguage } from "@/lib/site-i18n";
 import {
   useSiteLocale,
   useSiteTranslation,
@@ -34,7 +38,10 @@ export const Route = createFileRoute("/blog/$slug")({
   head: ({ loaderData, params }) => {
     if (!loaderData) return {};
     const { settings, post } = loaderData;
-    const title = post.seoTitle || `${post.title} | وب‌یار`;
+    // مقاله به زبان اصلی خودش نمایش داده می‌شود؛ فقط نام برند در سایت انگلیسی Respok است.
+    const title =
+      post.seoTitle ||
+      `${post.title} | ${getSiteLanguage(settings) === "en" ? getEnglishBrandName(settings) : "وب‌یار"}`;
     const desc = post.seoDescription || post.excerpt || post.title;
     return buildPageMeta({
       settings: {
@@ -60,7 +67,7 @@ export const Route = createFileRoute("/blog/$slug")({
       ],
     });
   },
-  notFoundComponent: BlogNotFound,
+  notFoundComponent: BlogNotFoundSwitch,
   errorComponent: BlogError,
   component: BlogPostPage,
 });
@@ -74,7 +81,7 @@ function tagSlug(input: string): string {
     .replace(/^-|-$/g, "");
 }
 
-function BlogPostPage() {
+function PersianBlogPostPage() {
   const translateText = useSiteTranslation();
   const locale = useSiteLocale();
 
@@ -247,5 +254,21 @@ function BlogFallback({ title }: { title: string }) {
         {translateText("بازگشت به بلاگ")}
       </Link>
     </div>
+  );
+}
+
+/** English site: the active Respok template; Persian site: the page above. */
+function BlogPostPage() {
+  const data = Route.useLoaderData();
+  if (getSiteLanguage(data.settings) === "en")
+    return <RespokPage page="blogPost" data={data} />;
+  return <PersianBlogPostPage />;
+}
+
+function BlogNotFoundSwitch() {
+  return (
+    <RespokNotFoundSwitch kind="post">
+      <BlogNotFound />
+    </RespokNotFoundSwitch>
   );
 }
