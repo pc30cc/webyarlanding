@@ -14,7 +14,12 @@ import {
 } from "@/lib/catalog.functions";
 import { adminListApps } from "@/lib/apps.functions";
 import { listSeoPages } from "@/lib/seo.functions";
-import type { LocalizationSettings, SiteSettings } from "@/lib/settings";
+import type {
+  EnglishTemplate,
+  LocalizationSettings,
+  SiteSettings,
+} from "@/lib/settings";
+import { EnglishTemplatePicker } from "./EnglishTemplatePicker";
 import {
   createSiteTranslator,
   normalizeMessage,
@@ -77,11 +82,14 @@ export function LanguageSection({
   pending,
   onChange,
   onSwitch,
+  onTemplate,
 }: {
   settings: SiteSettings;
   pending: boolean;
   onChange: (settings: LocalizationSettings) => void;
   onSwitch: (language: SiteLanguage, english?: Record<string, string>) => void;
+  /** Saves the English (Respok) template in one click. */
+  onTemplate?: (template: EnglishTemplate) => void;
 }) {
   const [search, setSearch] = useState("");
   const [showBuiltIn, setShowBuiltIn] = useState(false);
@@ -283,6 +291,13 @@ export function LanguageSection({
             لغو
           </Button>
         </div>
+      )}
+      {onTemplate && (
+        <EnglishTemplatePicker
+          settings={settings}
+          pending={pending || preparing}
+          onSelect={onTemplate}
+        />
       )}
       <div className="border-t border-border pt-5">
         <h3 className="font-semibold">ترجمه محتوای قابل‌ویرایش</h3>

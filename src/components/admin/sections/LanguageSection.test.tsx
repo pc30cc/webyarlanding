@@ -108,3 +108,30 @@ describe("one-click site language", () => {
     expect(onSwitch).not.toHaveBeenCalled();
   });
 });
+
+describe("English template picker", () => {
+  it("shows both Respok templates and saves the chosen one in one click", () => {
+    const settings = structuredClone(DEFAULT_SETTINGS);
+    settings.localization.language = "en";
+    const onTemplate = vi.fn();
+    render(
+      <LanguageSection
+        settings={settings}
+        pending={false}
+        onChange={vi.fn()}
+        onSwitch={vi.fn()}
+        onTemplate={onTemplate}
+      />,
+    );
+    const radios = screen.getAllByRole("radio");
+    expect(radios).toHaveLength(2);
+    const open = screen.getByRole("radio", { name: /Open/ });
+    const thread = screen.getByRole("radio", { name: /Thread/ });
+    expect(open.getAttribute("aria-checked")).toBe("true");
+    expect(thread.getAttribute("aria-checked")).toBe("false");
+    fireEvent.click(open);
+    expect(onTemplate).not.toHaveBeenCalled();
+    fireEvent.click(thread);
+    expect(onTemplate).toHaveBeenCalledWith("thread");
+  });
+});

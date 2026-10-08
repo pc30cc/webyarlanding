@@ -202,7 +202,7 @@ export interface LocalizationSettings {
   /** English versions of editor-managed content, keyed by the original text. */
   english: Record<string, string>;
   /** Design of the English site: "open" (bubble + dot) or "thread" (message pills). */
-  englishTemplate?: EnglishTemplate;
+  englishTemplate?: EnglishTemplate | undefined;
 }
 
 export interface SiteSettings {
