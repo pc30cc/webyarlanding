@@ -14,7 +14,7 @@ import { useRouterState } from "@tanstack/react-router";
 import { safeJsonLdHtml } from "@/lib/seo-meta";
 
 /** JSON-LD سازمانی + وب‌سایت، سراسری برای همه صفحات (سئو). */
-function buildSiteJsonLd(settings: SiteSettings): unknown[] {
+export function buildSiteJsonLd(settings: SiteSettings): unknown[] {
   let organization: unknown | null = null;
   if (settings.seo.jsonLdOrganization) {
     try {

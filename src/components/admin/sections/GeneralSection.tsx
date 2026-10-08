@@ -65,6 +65,7 @@ export default function GeneralSection() {
           localization: {
             ...current.localization,
             language: data.localization.language,
+            englishTemplate: data.localization.englishTemplate,
           },
         }));
       toast.error("خطا در ذخیره تنظیمات");
@@ -126,6 +127,15 @@ export default function GeneralSection() {
                     language,
                     english: english ?? current.localization.english,
                   },
+                };
+                setForm(next);
+                mutation.mutate(next);
+              }}
+              onTemplate={(englishTemplate) => {
+                const current = formRef.current;
+                const next = {
+                  ...current,
+                  localization: { ...current.localization, englishTemplate },
                 };
                 setForm(next);
                 mutation.mutate(next);

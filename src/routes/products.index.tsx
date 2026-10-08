@@ -1,3 +1,5 @@
+import { RespokPage } from "@/components/respok/RespokPage";
+import { getSiteLanguage } from "@/lib/site-i18n";
 import { localizeStructuredData } from "@/lib/site-i18n";
 import { useSiteTranslation } from "@/components/site/SiteLanguage";
 import { createFileRoute, Link } from "@tanstack/react-router";
@@ -44,10 +46,9 @@ export const Route = createFileRoute("/products/")({
         callEnabled && "تماس ویدیویی HD",
         aiEnabled && "دستیار هوش مصنوعی",
         "CRM",
-        "اتوماسیون و کمپین",
+        "اتوماسیون",
         "ارتباط چندکاناله",
         "گزارش‌های پیشرفته",
-        "API",
       )}، همه در یک پلتفرم.`,
     });
   },
@@ -81,7 +82,7 @@ function mentionsAny(
   );
 }
 
-function ProductsPage() {
+function PersianProductsPage() {
   const translateText = useSiteTranslation();
 
   const {
@@ -267,4 +268,12 @@ function ProductsPage() {
       </div>
     </SiteLayout>
   );
+}
+
+/** English site: the active Respok template; Persian site: the page above. */
+function ProductsPage() {
+  const data = Route.useLoaderData();
+  if (getSiteLanguage(data.settings) === "en")
+    return <RespokPage page="catalogIndex" data={{ ...data, kind: "product" }} />;
+  return <PersianProductsPage />;
 }

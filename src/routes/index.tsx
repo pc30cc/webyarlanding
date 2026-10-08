@@ -1,3 +1,5 @@
+import { RespokPage } from "@/components/respok/RespokPage";
+import { getSiteLanguage } from "@/lib/site-i18n";
 import { localizeStructuredData } from "@/lib/site-i18n";
 import { useSiteTranslation } from "@/components/site/SiteLanguage";
 import operatorAvatar from "@/assets/operator-avatar.jpg";
@@ -11,7 +13,6 @@ import {
   MicOff,
   PhoneOff,
   Video,
-  MonitorUp,
   Send,
   Clock,
   Users,
@@ -62,8 +63,6 @@ import { getPublicApps } from "@/lib/apps.functions";
 import {
   siWordpress,
   siWoocommerce,
-  siShopify,
-  siPrestashop,
   siTelegram,
   siWhatsapp,
   siInstagram,
@@ -119,12 +118,17 @@ export const Route = createFileRoute("/")({
       ...meta,
       scripts: [
         ...((meta as { scripts?: unknown[] }).scripts ?? []),
-        {
-          type: "application/ld+json",
-          children: safeJsonLdHtml(
-            localizeStructuredData(loaderData.settings, videoLd),
-          ).__html,
-        },
+        // ویدیوی تماس تصویری فقط وقتی تماس تصویری روشن است و در سایت فارسی
+        ...(callEnabled && getSiteLanguage(loaderData.settings) !== "en"
+          ? [
+              {
+                type: "application/ld+json",
+                children: safeJsonLdHtml(
+                  localizeStructuredData(loaderData.settings, videoLd),
+                ).__html,
+              },
+            ]
+          : []),
       ],
     } as typeof meta;
   },
@@ -169,8 +173,6 @@ const trustLogos: Channel[] = [
   },
   { name: "وردپرس", hex: "21759B", path: siWordpress.path },
   { name: "ووکامرس", hex: "96588A", path: siWoocommerce.path },
-  { name: "شاپیفای", hex: "7AB55C", path: siShopify.path },
-  { name: "پرستاشاپ", hex: "DF0067", path: siPrestashop.path },
 ];
 
 const chatFeatures = [
@@ -198,8 +200,8 @@ const videoFeatures = [
     desc: "مستقیم از پنجره چت، بدون لینک یا نرم‌افزار جدا.",
   },
   {
-    title: "اشتراک‌گذاری صفحه",
-    desc: "صفحه نمایش را برای راهنمایی بهتر مشتری به اشتراک بگذارید.",
+    title: "ضبط تماس",
+    desc: "تماس‌ها را با رضایت مشتری ضبط کنید و بعداً بازپخش یا دانلود کنید.",
   },
   {
     title: "بدون نصب برای مشتری",
@@ -212,22 +214,22 @@ const platformFeatures = [
   {
     icon: MessageSquare,
     title: "صندوق گفتگوی یکپارچه",
-    desc: "همه گفتگوهای ابزارک سایت، ایمیل و کانال‌های پیام‌رسان در یک صندوق مشترک؛ با پاسخ‌های آماده، گفتگوی تیمی و ارجاع به دپارتمان مناسب.",
+    desc: "گفتگوهای ابزارک سایت و کانال‌های پیام‌رسان در یک صندوق مشترک و ایمیل‌های جیمیل و یاهو در صندوق ایمیل همان پنل؛ با پاسخ‌های آماده، گفتگوی تیمی و ارجاع به دپارتمان مناسب.",
   },
   {
     icon: Phone,
     title: "مرکز تماس",
-    desc: "تماس صوتی و تصویری، صف زنده تماس، درخواست تماس مجدد، ضبط مکالمه و تنظیمات ساعت پاسخ‌گویی؛ همه در پنل مرکز تماس.",
+    desc: "تماس صوتی و تصویری، صف زنده تماس، درخواست تماس مجدد، ضبط مکالمه و انتقال تماس؛ همه در پنل مرکز تماس.",
   },
   {
     icon: Bot,
     title: "ایجنت هوش مصنوعی پیشرفته",
-    desc: "آموزش ایجنت با محتوای سایت و پایگاه دانش، محیط آزمایش (Playground)، سناریوهای تست، مسیریابی گفتگو، تریگرها و گزارش عملکرد پاسخ‌ها.",
+    desc: "آموزش ایجنت با محتوای سایت، فایل‌ها، پرسش و پاسخ و پایگاه دانش، محیط آزمایش (Playground)، تعیین رفتار و زمان تحویل گفتگو به اپراتور، و گزارش پرسش‌های بی‌پاسخ و موضوعات پرتکرار.",
   },
   {
     icon: Sparkles,
     title: "کمک هوش مصنوعی به اپراتور",
-    desc: "پیشنهاد پاسخ، خلاصه گفتگو و اصلاح لحن در لحظه برای اپراتور، همراه با تحلیل اینکه چقدر این پیشنهادها استفاده شده‌اند.",
+    desc: "پیش‌نویس پاسخ با یک کلیک و با لحن دلخواه، و راهنمایی خصوصی ایجنت برای پاسخ به مشتری؛ همراه با تحلیل اینکه چقدر این پیشنهادها استفاده شده‌اند.",
   },
   {
     icon: Users,
@@ -251,18 +253,18 @@ const platformFeatures = [
   },
   {
     icon: Mail,
-    title: "ایمیل و کمپین",
-    desc: "دریافت و پاسخ ایمیل در همان صندوق گفتگو و ارسال کمپین ایمیلی هدفمند برای بخش‌های مختلف مخاطبان.",
+    title: "صندوق ایمیل",
+    desc: "اتصال جیمیل یا یاهو، و خواندن و پاسخ به ایمیل‌ها در بخش صندوق ایمیل همان پنل.",
   },
   {
     icon: Plug,
     title: "افزونه‌ها و یکپارچه‌سازی",
-    desc: "نصب روی وردپرس، ووکامرس، شاپیفای و پرستاشاپ، اتصال کانال‌های پیام‌رسان و مدیریت دامنه‌های مجاز ابزارک.",
+    desc: "افزونه آماده برای ووکامرس، اوپن‌کارت و WHMCS، راهنمای نصب برای وردپرس، شاپیفای و پرستاشاپ، اتصال کانال‌های پیام‌رسان و مدیریت دامنه‌های مجاز ابزارک.",
   },
   {
     icon: BarChart3,
     title: "گزارش و تحلیل",
-    desc: "زمان پاسخ‌گویی، حجم گفتگو، فعالیت هر اپراتور و عملکرد تماس‌ها با نمودارهای شفاف و قابل خروجی‌گیری.",
+    desc: "حجم گفتگوها، فعالیت هر اپراتور و آمار بازدید وب‌سایت در نمودارهای شفاف.",
   },
   {
     icon: ShieldCheck,
@@ -345,8 +347,8 @@ const moduleGroups = [
     title: "هوش مصنوعی",
     items: [
       "آموزش ایجنت و منابع دانش",
-      "محیط آزمایش و سناریوهای تست",
-      "قوانین رفتاری، تریگر و مسیریابی",
+      "محیط آزمایش پاسخ‌ها (Playground)",
+      "رفتار، لحن و قوانین تحویل به اپراتور",
       "کمک هوشمند به اپراتور",
       "گزارش عملکرد و موضوعات پرتکرار",
     ],
@@ -377,7 +379,7 @@ const moduleGroups = [
     icon: Globe,
     title: "اتصال‌ها و حساب",
     items: [
-      "افزونه وردپرس، ووکامرس، شاپیفای و پرستاشاپ",
+      "افزونه ووکامرس، اوپن‌کارت و WHMCS",
       "کانال‌های پیام‌رسان",
       "مدیریت دامنه‌های مجاز",
       "کیف پول، صورتحساب و اعتبار هوش مصنوعی",
@@ -423,7 +425,7 @@ function getFaqs(callEnabled: boolean, aiEnabled: boolean) {
       : []),
     {
       q: "به چه کانال‌ها و سرویس‌هایی وصل می‌شود؟",
-      a: "افزونه‌های نصب برای وردپرس، ووکامرس، شاپیفای و پرستاشاپ موجود است و کانال‌های پیام‌رسان مانند تلگرام، واتساپ، اینستاگرام و اسلک در بخش یکپارچه‌سازی‌ها مدیریت می‌شوند؛ برخی از این اتصال‌ها در حال عرضه‌اند.",
+      a: "افزونه‌های آماده برای ووکامرس، اوپن‌کارت و WHMCS و راهنمای نصب برای وردپرس، شاپیفای و پرستاشاپ در پنل موجود است. تلگرام، واتس‌اپ، اینستاگرام و بله به صندوق گفتگو وصل می‌شوند و ایمیل‌های جیمیل و یاهو در صندوق ایمیل پنل مدیریت می‌شوند.",
     },
     {
       q: "ابزارهای سئو و آنالیز شامل چه چیزهایی است؟",
@@ -478,7 +480,7 @@ function OperatorAvatar({ className }: { className?: string }) {
   );
 }
 
-function IndexPage() {
+function PersianIndexPage() {
   const translateText = useSiteTranslation();
 
   const { settings, seoOverride, apps } = Route.useLoaderData();
@@ -517,7 +519,6 @@ function IndexPage() {
         "اتوماسیون",
         callEnabled && "چت تصویری",
         "سئو",
-        "کمپین",
       )}، همه در وب‌یار`,
       offers: [
         { "@type": "Offer", price: "0", priceCurrency: "IRR", name: "شروع" },
@@ -599,7 +600,7 @@ function IndexPage() {
                 href={settings.auth.signupUrl || "/contact"}
                 className="btn-shimmer inline-flex min-h-[52px] items-center gap-2 rounded-2xl px-8 py-4 text-base font-bold"
               >
-                {translateText("۷ روز رایگان از تمام امکانات استفاده کنید ")}
+                {translateText("رایگان شروع کنید")}
                 <ChevronLeft className="h-4 w-4" />
               </a>
               <Link
@@ -620,7 +621,7 @@ function IndexPage() {
             </div>
             <p className="mt-4 text-xs text-muted-foreground">
               {translateText(
-                "نصب با یک قطعه کد · افزونه آماده برای وردپرس، ووکامرس، شاپیفای و پرستاشاپ",
+                "نصب با یک قطعه کد · افزونه آماده برای ووکامرس، اوپن‌کارت و WHMCS",
               )}
             </p>
           </div>
@@ -713,7 +714,7 @@ function IndexPage() {
           </h2>
           <p className="mx-auto mt-4 max-w-2xl text-sm leading-[1.9] text-muted-foreground sm:text-base">
             {translateText(
-              "پیام‌های تلگرام، واتس‌اپ، اینستاگرام، بله، ایمیل‌های جیمیل و یاهو، تیکت‌های WHMCS و سفارش‌های فروشگاه ووکامرس و شاپیفای، همه یک‌جا کنار چت زنده‌ی سایت؛ بدون جابه‌جایی بین ده‌ها برنامه.",
+              "پیام‌های تلگرام، واتس‌اپ، اینستاگرام و بله، همه یک‌جا کنار چت زنده‌ی سایت؛ ایمیل‌های جیمیل و یاهو هم در بخش صندوق ایمیل همان پنل. بدون جابه‌جایی بین چند برنامه.",
             )}
           </p>
         </div>
@@ -886,9 +887,6 @@ function IndexPage() {
                 <div className="flex h-12 w-12 items-center justify-center rounded-full bg-destructive">
                   <PhoneOff className="h-5 w-5 text-destructive-foreground" />
                 </div>
-                <div className="flex h-11 w-11 items-center justify-center rounded-full bg-foreground/10">
-                  <MonitorUp className="h-5 w-5 text-foreground" />
-                </div>
               </div>
             </ScrollReveal>
           </div>
@@ -913,8 +911,7 @@ function IndexPage() {
                 aiEnabled && "هوش مصنوعی",
                 "CRM",
                 "اتوماسیون",
-                "کمپین",
-                "گزارش‌گیری",
+                        "گزارش‌گیری",
               ),
             )}{" "}
             {translateText(
@@ -1178,4 +1175,12 @@ function AppsShowcase({
       </div>
     </section>
   );
+}
+
+/** English site: the active Respok template; Persian site: the page above. */
+function IndexPage() {
+  const data = Route.useLoaderData();
+  if (getSiteLanguage(data.settings) === "en")
+    return <RespokPage page="home" data={data} />;
+  return <PersianIndexPage />;
 }

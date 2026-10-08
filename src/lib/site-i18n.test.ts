@@ -5,7 +5,13 @@ import {
   localizeStructuredData,
   translatorForSettings,
 } from "./site-i18n";
-import { DEFAULT_SETTINGS, isEnglishChrome, mergeSettings } from "./settings";
+import {
+  DEFAULT_SETTINGS,
+  getEnglishBrandName,
+  getEnglishTemplate,
+  isEnglishChrome,
+  mergeSettings,
+} from "./settings";
 import { buildPageMeta } from "./seo-meta";
 
 describe("site language", () => {
@@ -106,7 +112,8 @@ describe("site language", () => {
       fallbackDescription:
         "وب‌یار پلتفرم جامع مدیریت ارتباط با مشتری برای توانمندسازی کسب‌وکارهای ایرانی.",
     });
-    expect(meta.meta).toContainEqual({ title: "About us | Webyar" });
+    // The English site is published as Respok.
+    expect(meta.meta).toContainEqual({ title: "About us | Respok" });
     expect(meta.meta).toContainEqual({
       property: "og:locale",
       content: "en_US",
@@ -124,5 +131,38 @@ describe("site language", () => {
         source,
       ),
     ).toBe("A newly translated article");
+  });
+  it("names the English site Respok and keeps the Persian site's English pages", () => {
+    const english = structuredClone(DEFAULT_SETTINGS);
+    english.localization.language = "en";
+    expect(getEnglishBrandName(english)).toBe("Respok");
+    expect(translatorForSettings(english)("وب‌یار برای آیفون")).toBe(
+      "Respok for iPhone",
+    );
+    expect(translatorForSettings(english)("وب‌یار")).toBe("Respok");
+    english.brand.nameEn = "Acme Chat";
+    expect(translatorForSettings(english)("بلاگ | وب‌یار")).toBe(
+      "Blog | Acme Chat",
+    );
+    // Persian site: English legal pages keep the configured English name.
+    const persian = structuredClone(DEFAULT_SETTINGS);
+    expect(getEnglishBrandName(persian)).toBe("Webyar");
+    expect(translatorForSettings(persian)("وب‌یار")).toBe("وب‌یار");
+  });
+  it("stores only a valid English template and defaults to Open", () => {
+    expect(getEnglishTemplate(DEFAULT_SETTINGS)).toBe("open");
+    const thread = mergeSettings({
+      localization: { language: "en", english: {}, englishTemplate: "thread" },
+    });
+    expect(getEnglishTemplate(thread)).toBe("thread");
+    const invalid = mergeSettings({
+      localization: {
+        language: "en",
+        english: {},
+        englishTemplate: "neon" as never,
+      },
+    });
+    expect(getEnglishTemplate(invalid)).toBe("open");
+    expect(invalid.localization.englishTemplate).toBeUndefined();
   });
 });

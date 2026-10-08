@@ -1,3 +1,5 @@
+import { RespokPage } from "@/components/respok/RespokPage";
+import { getSiteLanguage } from "@/lib/site-i18n";
 import { localizeStructuredData } from "@/lib/site-i18n";
 import { useSiteTranslation } from "@/components/site/SiteLanguage";
 import { createFileRoute } from "@tanstack/react-router";
@@ -67,7 +69,7 @@ const compensationTable = [
   { uptime: "زیر ۹۹.۰٪", credit: "۵۰٪ اعتبار ماهانه" },
 ];
 
-function SLAPage() {
+function PersianSLAPage() {
   const translateText = useSiteTranslation();
 
   const { settings } = Route.useLoaderData();
@@ -176,4 +178,12 @@ function SLAPage() {
       </div>
     </SiteLayout>
   );
+}
+
+/** English site: the active Respok template; Persian site: the page above. */
+function SLAPage() {
+  const data = Route.useLoaderData();
+  if (getSiteLanguage(data.settings) === "en")
+    return <RespokPage page="sla" data={data} />;
+  return <PersianSLAPage />;
 }

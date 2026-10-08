@@ -1,3 +1,6 @@
+import { RespokNotFoundSwitch } from "@/components/respok/RespokNotFound";
+import { RespokPage } from "@/components/respok/RespokPage";
+import { getSiteLanguage } from "@/lib/site-i18n";
 import { localizeStructuredData } from "@/lib/site-i18n";
 import {
   useSiteTranslation,
@@ -34,14 +37,18 @@ export const Route = createFileRoute("/download/$slug")({
       getPublicApp({ data: { slug: params.slug } }),
       getPublicApps(),
     ]);
-    if (!app) throw notFound();
+    if (!app) throw notFound({ data: { language: getSiteLanguage(settings) } });
     return { settings, app, others: apps.filter((a) => a.id !== app.id) };
   },
-  head: ({ loaderData }) => {
+  head: ({ loaderData, match }) => {
     if (!loaderData) {
+      // notFound() carries the site language so the title matches the page.
+      const english =
+        (match.error as { data?: { language?: string } } | undefined)?.data
+          ?.language === "en";
       return {
         meta: [
-          { title: "برنامه پیدا نشد" },
+          { title: english ? "App not found" : "برنامه پیدا نشد" },
           { name: "robots", content: "noindex" },
         ],
       };
@@ -55,7 +62,7 @@ export const Route = createFileRoute("/download/$slug")({
       fallbackDescription: app.shortDesc,
     });
   },
-  notFoundComponent: AppNotFound,
+  notFoundComponent: AppNotFoundSwitch,
   errorComponent: AppNotFound,
   component: AppPage,
 });
@@ -79,7 +86,7 @@ function AppNotFound() {
   );
 }
 
-function AppPage() {
+function PersianAppPage() {
   const translateText = useSiteTranslation();
 
   const { settings, app, others } = Route.useLoaderData();
@@ -286,5 +293,21 @@ function AppPage() {
         </section>
       )}
     </SiteLayout>
+  );
+}
+
+/** English site: the active Respok template; Persian site: the page above. */
+function AppPage() {
+  const data = Route.useLoaderData();
+  if (getSiteLanguage(data.settings) === "en")
+    return <RespokPage page="downloadApp" data={data} />;
+  return <PersianAppPage />;
+}
+
+function AppNotFoundSwitch() {
+  return (
+    <RespokNotFoundSwitch kind="app">
+      <AppNotFound />
+    </RespokNotFoundSwitch>
   );
 }

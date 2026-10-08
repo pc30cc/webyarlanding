@@ -1,3 +1,6 @@
+import { HELP_FAQS_EN } from "@/lib/legal-en";
+import { RespokPage } from "@/components/respok/RespokPage";
+import { getSiteLanguage } from "@/lib/site-i18n";
 import { localizeStructuredData } from "@/lib/site-i18n";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { motion } from "framer-motion";
@@ -38,45 +41,18 @@ export const Route = createFileRoute("/help")({
   component: HelpPage,
 });
 
-const FAQS_EN = [
-  {
-    q: "How do I create an account?",
-    a: "Open the app or the website, choose Sign up, enter your email address and a password, then confirm your email. You can start on the free plan and upgrade later.",
-  },
-  {
-    q: "I forgot my password. What should I do?",
-    a: 'Use the "Forgot password" link on the sign-in screen. A reset link is sent to your registered email address and stays valid for 60 minutes.',
-  },
-  {
-    q: "How do I manage or cancel my subscription?",
-    a: "Subscriptions purchased in the app are managed in your Apple App Store or Google Play account settings. Subscriptions purchased on our website can be cancelled from your account billing page. Cancellation takes effect at the end of the current billing period.",
-  },
-  {
-    q: "How do I delete my account and data?",
-    a: 'Email our support address from the address linked to your account with the subject "Account Deletion Request". We verify the request and permanently delete your account and personal data within 30 days.',
-  },
-  {
-    q: "Is my data secure?",
-    a: "Data is transmitted over TLS, passwords are stored only as salted hashes, access is restricted by role, and backups are taken regularly. See our Privacy Policy for full details.",
-  },
-  {
-    q: "How do I report a bug or abuse?",
-    a: 'Email support with the subject "Bug report" or "Abuse report", including your account email, device and app version, the steps to reproduce, and screenshots if available.',
-  },
-];
-
 const FAQS_FA = [
   {
     q: "چطور حساب کاربری بسازم؟",
-    a: "اپلیکیشن یا وب‌سایت را باز کنید، گزینه ثبت‌نام را بزنید، ایمیل و رمز عبور وارد کنید و ایمیل خود را تأیید نمایید. می‌توانید با طرح رایگان شروع کنید و بعداً ارتقا دهید.",
+    a: "وب‌سایت را باز کنید، گزینه ثبت‌نام را بزنید، ایمیل و رمز عبور وارد کنید و ایمیل خود را تأیید نمایید؛ سپس با همان حساب وارد اپلیکیشن‌ها شوید. می‌توانید با طرح رایگان شروع کنید و بعداً ارتقا دهید.",
   },
   {
     q: "رمز عبورم را فراموش کرده‌ام، چه کنم؟",
-    a: "در صفحه ورود روی «فراموشی رمز عبور» بزنید. لینک بازیابی به ایمیل ثبت‌شده ارسال می‌شود و تا ۶۰ دقیقه معتبر است.",
+    a: "در صفحه ورود روی «فراموشی رمز عبور» بزنید. لینک بازیابی به ایمیل ثبت‌شده ارسال می‌شود و تا ۲۴ ساعت معتبر است.",
   },
   {
     q: "چطور اشتراکم را مدیریت یا لغو کنم؟",
-    a: "اشتراک‌هایی که داخل اپلیکیشن خریداری شده‌اند از تنظیمات حساب اپ‌استور یا گوگل‌پلی مدیریت می‌شوند. اشتراک‌های خریداری‌شده از وب‌سایت را می‌توانید از بخش صورتحساب حساب کاربری لغو کنید؛ لغو در پایان دوره جاری اعمال می‌شود.",
+    a: "پلن و صورتحساب‌ها را از بخش صورتحساب پنل مدیریت کنید. هر دوره با پرداخت صورتحساب همان دوره تمدید می‌شود؛ اگر صورتحساب دوره بعد پرداخت نشود، پس از مهلت پرداخت، حساب به پلن رایگان برمی‌گردد. انتخاب پلن پایین‌تر در پایان دوره جاری اعمال می‌شود.",
   },
   {
     q: "چطور حساب و اطلاعاتم را حذف کنم؟",
@@ -92,7 +68,7 @@ const FAQS_FA = [
   },
 ];
 
-function HelpPage() {
+function PersianHelpPage() {
   const { settings } = Route.useLoaderData();
   const english = isEnglishChrome(settings, "/help");
   const base = (settings.brand.siteUrl || "").replace(/\/$/, "");
@@ -100,7 +76,7 @@ function HelpPage() {
   const brand = english ? brandEn : settings.brand.name || brandEn;
   const email = settings.brand.email || "support@webyar.ai";
   const phone = settings.brand.phone;
-  const faqs = english ? FAQS_EN : FAQS_FA;
+  const faqs = english ? HELP_FAQS_EN : FAQS_FA;
 
   const jsonLd = [
     {
@@ -313,4 +289,12 @@ function HelpPage() {
       </div>
     </SiteLayout>
   );
+}
+
+/** English site: the active Respok template; Persian site: the page above. */
+function HelpPage() {
+  const data = Route.useLoaderData();
+  if (getSiteLanguage(data.settings) === "en")
+    return <RespokPage page="help" data={data} />;
+  return <PersianHelpPage />;
 }
