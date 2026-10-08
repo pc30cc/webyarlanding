@@ -5,12 +5,18 @@ import type { BlogPostPageData } from "../../types";
 import { RespokLogo } from "../../RespokLogo";
 import { useContent } from "../../content";
 import { getBlogContent } from "../../content/blog";
-import { formatPostDate, readingMinutes, tagSlug, textDir } from "../../shared/blog";
+import {
+  blogCategoryLabel,
+  formatPostDate,
+  readingMinutes,
+  tagSlug,
+  textDir,
+} from "../../shared/blog";
 import { useRespok } from "../../shared/context";
 import { JsonLd } from "../../shared/JsonLd";
 import { Markdown } from "../../shared/Markdown";
 import { CoverArt, PostGrid } from "../blog";
-import { useAuthorName, useCategoryLabel } from "../labels";
+import { useAuthorName } from "../labels";
 import { THREAD_COPY } from "../copy";
 import { SHAPE, chipClass, cx } from "../classes";
 import { Container, SectionHeader } from "../ui";
@@ -26,15 +32,19 @@ function initials(name: string): string {
 }
 
 export function BlogPostPage({ settings, post, related }: BlogPostPageData) {
-  const { brand, siteUrl } = useRespok();
+  const { brand, siteUrl, t } = useRespok();
   const copy = useContent(getBlogContent);
-  const categoryLabel = useCategoryLabel();
   const authorName = useAuthorName();
   const url = siteUrl ? `${siteUrl}/blog/${post.slug}` : undefined;
   const date = formatPostDate(post);
   const minutes = readingMinutes(post.content);
   const author = authorName(post.author);
-  const category = categoryLabel(post.categoryName, post.categorySlug, copy.general);
+  const category = blogCategoryLabel(
+    t,
+    post.categoryName ?? undefined,
+    post.categorySlug ?? undefined,
+    copy.general,
+  );
   const titleDir = textDir(post.title);
 
   const jsonLd = [

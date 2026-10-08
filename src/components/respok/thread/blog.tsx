@@ -4,9 +4,9 @@ import type { PostDto } from "@/lib/blog.functions";
 import { RESPOK_SYMBOL } from "../RespokLogo";
 import { getBlogContent } from "../content/blog";
 import { useContent } from "../content";
-import { formatPostDate, readingMinutes, textDir } from "../shared/blog";
+import { blogCategoryLabel, formatPostDate, readingMinutes, textDir } from "../shared/blog";
+import { useRespok } from "../shared/context";
 import { cx, SHAPE } from "./classes";
-import { useCategoryLabel } from "./labels";
 import { Reveal } from "../shared/Reveal";
 
 const THREAD = RESPOK_SYMBOL.thread;
@@ -75,11 +75,16 @@ function PostCard({
   index?: number;
 }) {
   const copy = useContent(getBlogContent);
-  const categoryLabel = useCategoryLabel();
+  const { t } = useRespok();
   const Heading = headingLevel;
   const date = formatPostDate(post);
   const minutes = readingMinutes(post.content);
-  const category = categoryLabel(post.categoryName, post.categorySlug, copy.general);
+  const category = blogCategoryLabel(
+    t,
+    post.categoryName ?? undefined,
+    post.categorySlug ?? undefined,
+    copy.general,
+  );
 
   return (
     <article

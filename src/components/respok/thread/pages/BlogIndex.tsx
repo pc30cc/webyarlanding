@@ -4,11 +4,10 @@ import { buildBreadcrumbJsonLd } from "@/lib/seo-meta";
 import type { BlogIndexPageData } from "../../types";
 import { useContent } from "../../content";
 import { getBlogContent } from "../../content/blog";
-import { pageList, useBlogSearch } from "../../shared/blog";
+import { blogCategoryLabel, pageList, useBlogSearch } from "../../shared/blog";
 import { useRespok } from "../../shared/context";
 import { JsonLd } from "../../shared/JsonLd";
 import { PostGrid } from "../blog";
-import { useCategoryLabel } from "../labels";
 import { THREAD_COPY } from "../copy";
 import { SHAPE, chipClass, cx } from "../classes";
 import { ActionLink, AnswerPill, Container, Exchange, PageOpener, QuestionPill } from "../ui";
@@ -17,9 +16,8 @@ const PAGE_BUTTON =
   "inline-flex size-11 items-center justify-center rounded-full text-[15px] font-semibold tabular-nums transition-colors duration-200";
 
 export function BlogIndexPage({ settings, page, categories, category, q }: BlogIndexPageData) {
-  const { brand, siteUrl } = useRespok();
+  const { brand, siteUrl, t } = useRespok();
   const copy = useContent(getBlogContent);
-  const categoryLabel = useCategoryLabel();
   const search = useBlogSearch(q);
   const posts = page.posts;
   const totalPages = Math.max(1, Math.ceil(page.total / Math.max(1, page.pageSize)));
@@ -73,7 +71,7 @@ export function BlogIndexPage({ settings, page, categories, category, q }: BlogI
                     aria-current={category === c.slug ? "page" : undefined}
                     className={chipClass(category === c.slug)}
                   >
-                    {categoryLabel(c.name, c.slug, copy.general)}
+                    {blogCategoryLabel(t, c.name, c.slug, copy.general)}
                   </Link>
                 </li>
               ))}
