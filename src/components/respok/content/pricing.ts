@@ -1,7 +1,7 @@
 /**
  * Built-in plans, shown only when the plans synced from the app are unavailable
- * (settings.plans disabled or the plans API unreachable). Same plans as the Persian
- * site's fallback.
+ * (settings.plans disabled or the plans API unreachable). Only features the app really
+ * has are listed (checked against the app's capability registry).
  */
 import type { FeatureNeed } from ".";
 
@@ -30,9 +30,9 @@ export const STATIC_PLANS: StaticPlan[] = [
     ],
     features: [
       { text: "Website chat widget" },
-      { text: "Contact management (basic CRM)" },
-      { text: "Basic reports" },
-      { text: "Email support" },
+      { text: "Shared inbox and saved replies" },
+      { text: "Contacts" },
+      { text: "Knowledge base" },
     ],
   },
   {
@@ -48,13 +48,12 @@ export const STATIC_PLANS: StaticPlan[] = [
     ],
     features: [
       { text: "Website chat widget" },
-      { text: "HD video calls and screen sharing", needs: "call" },
-      { text: "AI assistant", needs: "ai" },
-      { text: "Automation and knowledge base" },
-      { text: "Complete CRM with tags" },
-      { text: "WhatsApp and Telegram connection" },
-      { text: "Marketing campaigns" },
-      { text: "Complete reports and analytics" },
+      { text: "Voice and video calls", needs: "call" },
+      { text: "AI agent", needs: "ai" },
+      { text: "Proactive messages and automatic assignment" },
+      { text: "Contacts with CSV import and export" },
+      { text: "Telegram and WhatsApp in the inbox" },
+      { text: "Live visitors and website analytics" },
     ],
   },
   {
@@ -70,12 +69,10 @@ export const STATIC_PLANS: StaticPlan[] = [
     ],
     features: [
       { text: "Everything in Professional" },
-      { text: "Multiple domains at once" },
-      { text: "Call center and call queue", needs: "call" },
-      { text: "Full API and webhooks" },
-      { text: "Single sign-on (SSO) and role-based access" },
-      { text: "White label" },
-      { text: "SLA and dedicated support" },
+      { text: "Call center with queue, callbacks and recording", needs: "call" },
+      { text: "AI drafts for operators", needs: "ai" },
+      { text: "SEO tools and Brand Radar" },
+      { text: "Store connectors for WooCommerce, OpenCart and WHMCS" },
     ],
   },
 ];
@@ -89,17 +86,14 @@ export const STATIC_COMPARISON: {
     { label: "Operators", values: ["1", "5", "Unlimited"] },
     { label: "Monthly conversations", values: ["50", "Unlimited", "Unlimited"] },
     { label: "Domains", values: ["1", "3", "Unlimited"] },
-    { label: "HD video calls", values: [false, true, true], needs: "call" },
-    { label: "Screen sharing", values: [false, true, true], needs: "call" },
-    { label: "AI assistant", values: [false, true, true], needs: "ai" },
-    { label: "CRM and customer management", values: ["Basic", "Complete", "Complete"] },
-    { label: "Automation and knowledge base", values: [false, true, true] },
-    { label: "Campaigns and marketing", values: [false, true, true] },
-    { label: "Messaging channels (WhatsApp, Telegram)", values: [false, true, true] },
-    { label: "Reports and analytics", values: ["Basic", "Complete", "Complete"] },
-    { label: "API and webhooks", values: [false, false, true] },
-    { label: "Access control (RBAC / SSO)", values: [false, false, true] },
-    { label: "Dedicated support", values: [false, false, true] },
+    { label: "Voice and video calls", values: [false, true, true], needs: "call" },
+    { label: "Call center", values: [false, false, true], needs: "call" },
+    { label: "AI agent", values: [false, true, true], needs: "ai" },
+    { label: "Contacts", values: ["Basic", "With import and export", "With import and export"] },
+    { label: "Proactive messages", values: [false, true, true] },
+    { label: "Messaging channels (Telegram, WhatsApp)", values: [false, true, true] },
+    { label: "Live visitors and website analytics", values: [false, true, true] },
+    { label: "SEO tools", values: [false, false, true] },
   ],
 };
 
@@ -108,7 +102,7 @@ export function getPricingContent(brand: string, call: boolean, ai: boolean) {
     question: "How much does it cost?",
     eyebrow: "Pricing",
     title: "Features and pricing",
-    lede: `${call ? "From live chat and video calls" : "From live chat"} to ${ai ? "an AI assistant, " : ""}CRM, automation, campaigns and reporting. Pick the plan that fits from ${brand}'s complete feature set.`,
+    lede: `${call ? "From live chat and calls" : "From live chat"} to ${ai ? "an AI agent, " : ""}contacts, SEO and analytics. Pick the plan that fits from ${brand}'s feature set.`,
     monthly: "Monthly",
     yearly: "Yearly",
     popular: "Most popular",

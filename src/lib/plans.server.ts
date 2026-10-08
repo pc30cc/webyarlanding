@@ -2,7 +2,10 @@ import {
   COMPARISON_FEATURE_KEYS,
   COMPARISON_LIMIT_KEYS,
   FEATURE_LABELS_FA,
+  HIDDEN_LIMIT_KEYS,
   LIMIT_LABELS_FA,
+  NOT_OFFERED_FEATURE_KEYS,
+  planHasFeature,
   type PlansComparison,
   type PublicPlan,
 } from "./plans";
@@ -18,6 +21,7 @@ interface RemotePlan {
   is_free?: boolean;
   sort_order?: number;
   localized?: Record<string, { name?: string; description?: string }>;
+  default_currency?: string;
 }
 
 /** مبلغ ذخیره‌شده در اپلیکیشن ریال است؛ نمایش سایت تومان است */
@@ -27,11 +31,11 @@ function rialToToman(value: unknown): number | null {
   return Math.round(n / 10);
 }
 
-/** قیمت دلاری در اپلیکیشن به دلار کامل ذخیره می‌شود (price_monthly_usd) */
+/** قیمت‌های غیرریالی در اپلیکیشن به واحد خرد (سنت) ذخیره می‌شوند: 2900 یعنی ۲۹ دلار */
 function usdAmount(value: unknown): number | null {
   const n = typeof value === "number" ? value : Number(value);
   if (!Number.isFinite(n) || n <= 0) return null;
-  return Math.round(n * 100) / 100;
+  return Math.round(n) / 100;
 }
 
 function limitText(value: unknown): string {
@@ -53,11 +57,16 @@ function normalize(
   const usd = remote.prices?.["USD"] ?? {};
 
   const features = Object.keys(FEATURE_LABELS_FA)
-    .filter((key) => entitlements[key] === true)
+    .filter((key) => planHasFeature(entitlements, key))
     .map((key) => FEATURE_LABELS_FA[key] as string);
 
   const limitRows = Object.keys(LIMIT_LABELS_FA)
-    .filter((key) => limits[key] !== undefined && limits[key] !== null)
+    .filter(
+      (key) =>
+        !HIDDEN_LIMIT_KEYS.has(key) &&
+        limits[key] !== undefined &&
+        limits[key] !== null,
+    )
     .map((key) => ({
       label: LIMIT_LABELS_FA[key] as string,
       value: limitText(limits[key]),
@@ -76,6 +85,7 @@ function normalize(
     yearly: remote.is_free ? 0 : rialToToman(irr.yearly),
     usdMonthly: remote.is_free ? 0 : usdAmount(usd.monthly),
     usdYearly: remote.is_free ? 0 : usdAmount(usd.yearly),
+    defaultCurrency: remote.default_currency?.trim().toUpperCase() || undefined,
     features,
     limits: limitRows,
     // پلن میانی معمولاً پیشنهادی است
@@ -102,6 +112,7 @@ function buildComparison(
     Object.keys(LIMIT_LABELS_FA),
   );
   for (const key of limitKeys) {
+    if (HIDDEN_LIMIT_KEYS.has(key)) continue;
     if (
       !remotes.some(
         (r) => r.limits?.[key] !== undefined && r.limits?.[key] !== null,
@@ -119,10 +130,11 @@ function buildComparison(
     Object.keys(FEATURE_LABELS_FA),
   );
   for (const key of featureKeys) {
+    if (NOT_OFFERED_FEATURE_KEYS.has(key)) continue;
     if (!remotes.some((r) => r.entitlements?.[key] !== undefined)) continue;
     rows.push({
       label: FEATURE_LABELS_FA[key] as string,
-      values: remotes.map((r) => r.entitlements?.[key] === true),
+      values: remotes.map((r) => planHasFeature(r.entitlements ?? {}, key)),
     });
   }
   return { plans: plans.map((p) => p.name), rows };

@@ -7,7 +7,7 @@ export function getCatalogContent(kind: CatalogType, { callEnabled: call, aiEnab
       question: "What can I do with it?",
       eyebrow: "Products",
       title: ["Everything you need for", "customer communication"],
-      lede: `${joinEn(["Live chat", call && "video calls", ai && "AI", "CRM", "automation"])}, all in one platform. Install in under 5 minutes, without a technical team.`,
+      lede: `${joinEn(["Live chat", call && "voice and video calls", ai && "an AI agent", "contacts", "analytics"])}, all in one platform. Install in minutes, without a technical team.`,
       learnMore: "Learn more",
       empty: "Products will appear here soon.",
       band: {

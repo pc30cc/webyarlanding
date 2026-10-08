@@ -62,12 +62,7 @@ function priceOf(
   return {
     kind: "amount",
     amount: format(perMonth),
-    unit:
-      currency === "USD"
-        ? "/ month"
-        : period === "yearly"
-          ? "Toman / month"
-          : "Toman / month",
+    unit: currency === "USD" ? "/ month" : "Toman / month",
     note:
       period === "yearly"
         ? `Billed ${format(total)}${currency === "USD" ? "" : " Toman"} yearly`
@@ -100,9 +95,16 @@ export function usePricingModel(data: PricingPageData) {
   const keep = (...texts: string[]) => isAllowedText(flags, ...texts);
 
   const remote = data.remotePlans?.plans ?? null;
-  const paid = (remote ?? []).filter((p) => !p.isFree && p.monthly);
+  // Dollars only when the app really bills these plans in USD; today in-app checkout
+  // charges rials (Toman), so the app's Toman prices are shown otherwise.
+  const paid = (remote ?? []).filter(
+    (p) => !p.isFree && (p.monthly || p.usdMonthly),
+  );
   const currency: "USD" | "Toman" =
-    paid.length > 0 && paid.every((p) => !!p.usdMonthly) ? "USD" : "Toman";
+    paid.length > 0 &&
+    paid.every((p) => p.defaultCurrency === "USD" && !!p.usdMonthly)
+      ? "USD"
+      : "Toman";
 
   const base: Omit<RespokPlan, "cta">[] = remote
     ? remote.map((plan) => ({

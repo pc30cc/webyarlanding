@@ -10,10 +10,12 @@ export interface PublicPlan {
   monthly: number | null;
   /** قیمت سالانه به تومان (کل مبلغ سالانه) */
   yearly: number | null;
-  /** قیمت دلاری ماهانه (دلار کامل) برای سایت انگلیسی — فقط اگر API اپلیکیشن ارسال کند */
+  /** قیمت دلاری ماهانه برای سایت انگلیسی — فقط اگر API اپلیکیشن ارسال کند */
   usdMonthly?: number | null | undefined;
-  /** قیمت دلاری سالانه (کل مبلغ سالانه، دلار کامل) */
+  /** قیمت دلاری سالانه (کل مبلغ سالانه) */
   usdYearly?: number | null | undefined;
+  /** ارز پیش‌فرض پرداخت این پلن در اپلیکیشن (مثلاً IRR یا USD) */
+  defaultCurrency?: string | undefined;
   /** امکانات فعال پلن با برچسب فارسی */
   features: string[];
   /** محدودیت‌های کلیدی با برچسب فارسی */
@@ -67,7 +69,59 @@ export const FEATURE_LABELS_FA: Record<string, string> = {
   priority_support: "پشتیبانی اولویت‌دار",
   email_campaigns: "کمپین ایمیلی",
   inbox_team_chat: "گفتگوی تیمی",
+  email_inbox: "صندوق ایمیل",
+  web_analytics: "آنالیز وب‌سایت",
+  brand_radar: "رادار برند",
+  commerce: "اتصال فروشگاه (ووکامرس، اوپن‌کارت، WHMCS)",
 };
+
+/**
+ * کلیدهایی که در اپلیکیشن اصلی هیچ قابلیتی را فعال نمی‌کنند یا قابلیتشان اصلاً وجود ندارد
+ * (بررسی‌شده در capabilityRegistry اپ): حتی اگر در پلنی true باشند، در سایت نمایش داده نمی‌شوند
+ * تا فقط امکانات واقعی اپ تبلیغ شود.
+ */
+export const NOT_OFFERED_FEATURE_KEYS: ReadonlySet<string> = new Set([
+  "api_access",
+  "sso",
+  "audit_logs",
+  "white_label",
+  "custom_branding",
+  "priority_support",
+  "email_campaigns",
+  "automation",
+  "analytics",
+  "advanced_ai_agent",
+  "help_center",
+  "omnichannel",
+  "sms",
+  "email",
+]);
+
+/** کلیدهایی که اگر در پلن مشخص نشده باشند، در اپ به‌طور پیش‌فرض فعال‌اند */
+export const DEFAULT_ON_FEATURE_KEYS: ReadonlySet<string> = new Set([
+  "chat_widget",
+  "knowledge_base",
+  "contacts",
+  "visitor_tracking",
+  "seo",
+  "inbox_team_chat",
+]);
+
+/** محدودیت‌هایی که اپ اعمال نمی‌کند یا واحدشان برای بازدیدکننده گمراه‌کننده است */
+export const HIDDEN_LIMIT_KEYS: ReadonlySet<string> = new Set([
+  "data_retention_days",
+  "ai_credits_per_month",
+]);
+
+/** آیا پلن این قابلیت را واقعاً دارد؟ (کلید غایب = پیش‌فرض اپ) */
+export function planHasFeature(
+  entitlements: Record<string, unknown>,
+  key: string,
+): boolean {
+  if (NOT_OFFERED_FEATURE_KEYS.has(key)) return false;
+  const value = entitlements[key];
+  return value === true || (value === undefined && DEFAULT_ON_FEATURE_KEYS.has(key));
+}
 
 /** برچسب فارسی محدودیت‌ها (کلیدهای limits در اپلیکیشن) */
 export const LIMIT_LABELS_FA: Record<string, string> = {
@@ -95,8 +149,8 @@ export const COMPARISON_FEATURE_KEYS = [
   "chat_widget",
   "voice_video",
   "call_center",
-  "analytics",
   "ai_assistant",
-  "api_access",
-  "priority_support",
+  "visitor_tracking",
+  "knowledge_base",
+  "contact_import",
 ];
