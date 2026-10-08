@@ -9,11 +9,29 @@ import type { PostDto } from "@/lib/blog.functions";
 import { RespokLogo } from "../RespokLogo";
 import { getBlogContent } from "../content/blog";
 import { useContent } from "../content";
-import { formatPostDate, pageList, readingMinutes, textDir } from "../shared/blog";
-import { usePostCategory } from "./blog-data";
+import {
+  blogCategoryLabel,
+  formatPostDate,
+  pageList,
+  readingMinutes,
+  textDir,
+} from "../shared/blog";
+import { useRespok } from "../shared/context";
 import { OPEN_COPY } from "./copy";
 import { BUBBLE, BubbleGlyph, CornerDot, Dot, type BubbleSize } from "./ui";
 import { cx } from "./tokens";
+
+/** A post's category, in English (editor names may be Persian). */
+function usePostCategory(post: PostDto): string {
+  const { t } = useRespok();
+  const blog = useContent(getBlogContent);
+  return blogCategoryLabel(
+    t,
+    post.categoryName ?? undefined,
+    post.categorySlug ?? undefined,
+    blog.general,
+  );
+}
 
 /**
  * Mono uppercase label for Latin text. Persian/Arabic DB strings (categories) keep the

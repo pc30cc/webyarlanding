@@ -92,3 +92,40 @@ export function displayClass(size: "lg" | "md", dir?: "ltr" | "rtl"): string {
         : "leading-[1.04] tracking-[-0.03em]",
   );
 }
+
+/* ─── Grids that never leave holes ─────────────────────────────────────── */
+
+/**
+ * Splits n cards into rows of at most `perRow`, as evenly as possible (10 → 3·3·2·2),
+ * so a list shortened by the call/AI switches still fills every row.
+ */
+export function balancedRows(n: number, perRow: number): number[] {
+  if (n <= 0) return [];
+  const rows = Math.ceil(n / Math.max(1, perRow));
+  const base = Math.floor(n / rows);
+  const extra = n % rows;
+  return Array.from({ length: rows }, (_, i) => base + (i < extra ? 1 : 0));
+}
+
+const LG_SPAN: Record<number, string> = {
+  1: "lg:col-span-12",
+  2: "lg:col-span-6",
+  3: "lg:col-span-4",
+  4: "lg:col-span-3",
+};
+
+/**
+ * Column classes for a `grid sm:grid-cols-2 lg:grid-cols-12` list of n cards: rows of up
+ * to `perRow` cards on desktop, two per row on tablets (an odd last card spans both).
+ */
+export function balancedSpans(n: number, perRow = 3): string[] {
+  const spans: string[] = [];
+  for (const size of balancedRows(n, perRow)) {
+    for (let i = 0; i < size; i++) spans.push(LG_SPAN[size] ?? "lg:col-span-4");
+  }
+  return spans.map((span, index) =>
+    n % 2 === 1 && index === n - 1 ? `${span} sm:col-span-2` : span,
+  );
+}
+
+export const BALANCED_GRID = "grid gap-4 sm:grid-cols-2 sm:gap-5 lg:grid-cols-12 lg:gap-6";

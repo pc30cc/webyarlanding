@@ -9,3 +9,17 @@ export function useAuthorName() {
     return t(name);
   };
 }
+
+const PERSIAN = /[؀-ۿ]/;
+
+/**
+ * Database text through the site translation. When a string has no English
+ * translation yet, the fallback is shown instead of the Persian original.
+ */
+export function useEnglishText() {
+  const { t } = useRespok();
+  return (text: string | null | undefined, fallback = ""): string => {
+    const value = text ? t(text).trim() : "";
+    return value && !PERSIAN.test(value) ? value : fallback;
+  };
+}

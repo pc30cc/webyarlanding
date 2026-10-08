@@ -3,7 +3,7 @@ import { Search, X } from "lucide-react";
 import { buildBreadcrumbJsonLd } from "@/lib/seo-meta";
 import { useContent } from "../../content";
 import { getBlogContent } from "../../content/blog";
-import { textDir, useBlogSearch } from "../../shared/blog";
+import { blogCategoryLabel, textDir, useBlogSearch } from "../../shared/blog";
 import { useRespok } from "../../shared/context";
 import { JsonLd } from "../../shared/JsonLd";
 import type { BlogIndexPageData } from "../../types";
@@ -113,7 +113,7 @@ export function BlogIndexPage({ page, categories, category, q }: BlogIndexPageDa
               </li>
               {categories.map((c) => {
                 const active = category === c.slug;
-                const name = t(c.name);
+                const name = blogCategoryLabel(t, c.name, c.slug, copy.general);
                 return (
                   <li key={c.id}>
                     <Link

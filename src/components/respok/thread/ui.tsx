@@ -8,7 +8,7 @@
  */
 import { forwardRef, type ComponentPropsWithoutRef, type ElementType, type ReactNode } from "react";
 import { Link } from "@tanstack/react-router";
-import { ArrowRight, CheckCheck, type LucideIcon } from "lucide-react";
+import { ArrowRight, Check, CheckCheck, type LucideIcon } from "lucide-react";
 import { RESPOK_SYMBOL } from "../RespokLogo";
 import { SHAPE, TYPE, actionClass, cx, type ActionSize, type ActionVariant } from "./classes";
 import { Reveal } from "../shared/Reveal";
@@ -381,6 +381,8 @@ export function PageOpener({
   title,
   lede,
   meta,
+  before,
+  aside,
   children,
   className,
 }: {
@@ -390,22 +392,37 @@ export function PageOpener({
   title: ReactNode;
   lede?: ReactNode;
   meta?: ReactNode;
+  /** Above the conversation, e.g. a breadcrumb or a back link. */
+  before?: ReactNode;
+  /** Right column on desktop (replaces the decorative mark). */
+  aside?: ReactNode;
   children?: ReactNode;
   className?: string;
 }) {
+  const text = (
+    <div className={cx(!aside && "lg:max-w-[640px] xl:max-w-[760px]")}>
+      {before && <div className="mb-8 sm:mb-10">{before}</div>}
+      <Conversation question={question} />
+      <div className="mt-10 sm:mt-12">
+        {eyebrow && <Eyebrow className="mb-4">{eyebrow}</Eyebrow>}
+        <h1 className={cx(TYPE.display, "text-balance text-rpk-ink")}>{title}</h1>
+      </div>
+      {lede && <p className={cx(TYPE.lede, "mt-6 max-w-[42rem] text-pretty")}>{lede}</p>}
+      {meta && <div className="mt-6">{meta}</div>}
+    </div>
+  );
   return (
     <section className={cx("relative overflow-hidden bg-white", className)}>
-      <OpenerMark compact={!!children} />
+      {!aside && <OpenerMark compact={!!children} />}
       <Container className="relative pt-12 pb-16 sm:pt-16 sm:pb-20 lg:pt-20 lg:pb-24">
-        <div className="lg:max-w-[640px] xl:max-w-[760px]">
-          <Conversation question={question} />
-          <div className="mt-10 sm:mt-12">
-            {eyebrow && <Eyebrow className="mb-4">{eyebrow}</Eyebrow>}
-            <h1 className={cx(TYPE.display, "text-balance text-rpk-ink")}>{title}</h1>
+        {aside ? (
+          <div className="grid gap-12 lg:grid-cols-[minmax(0,1fr)_minmax(0,440px)] lg:items-center lg:gap-16">
+            {text}
+            <div className="min-w-0">{aside}</div>
           </div>
-          {lede && <p className={cx(TYPE.lede, "mt-6 max-w-[42rem] text-pretty")}>{lede}</p>}
-          {meta && <div className="mt-6">{meta}</div>}
-        </div>
+        ) : (
+          text
+        )}
         {children}
       </Container>
     </section>
@@ -531,37 +548,207 @@ export function Conversation({
   );
 }
 
-/** Section opener inside a page: optional question pill, mono eyebrow, title, lede. */
+/**
+ * Section opener inside a page: the visitor's question pill (with an optional mono
+ * label beside it, like a timestamp), a mono eyebrow, the title as the answer, a lede.
+ */
 export function SectionHeader({
   question,
+  meta,
   eyebrow,
   title,
   lede,
   id,
   className,
+  center = false,
+  tone = "light",
   as: Heading = "h2",
 }: {
   question?: string;
+  /** Mono label next to the question pill. */
+  meta?: ReactNode;
   eyebrow?: string;
   title: ReactNode;
   lede?: ReactNode;
   id?: string;
   className?: string;
+  center?: boolean;
+  /** "dark" on Ink bands. */
+  tone?: "light" | "dark";
   as?: "h2" | "h3";
 }) {
+  const dark = tone === "dark";
   return (
-    <div className={cx("max-w-3xl", className)}>
+    <div className={cx("max-w-3xl", center && "mx-auto text-center", className)}>
       {question && (
-        <Reveal effect="from-left" className="mb-6">
-          <QuestionPill size="md">{question}</QuestionPill>
+        <Reveal
+          effect="from-left"
+          className={cx(
+            "mb-6 flex flex-wrap items-center gap-x-3 gap-y-2",
+            center && "justify-center",
+          )}
+        >
+          <QuestionPill size="md" tone={dark ? "white" : "ink"}>
+            {question}
+          </QuestionPill>
+          {meta && (
+            <span
+              className={cx(
+                "font-rpk-mono text-[12px] tracking-[0.08em] uppercase sm:text-[13px]",
+                dark ? "text-white/60" : "text-rpk-slate",
+              )}
+            >
+              {meta}
+            </span>
+          )}
         </Reveal>
       )}
-      {eyebrow && <Eyebrow className="mb-3">{eyebrow}</Eyebrow>}
-      <Heading id={id} className={cx(TYPE.h2, "text-balance text-rpk-ink")}>
+      {eyebrow && (
+        <Eyebrow className="mb-3" tone={dark ? "light" : "slate"}>
+          {eyebrow}
+        </Eyebrow>
+      )}
+      <Heading
+        id={id}
+        className={cx(TYPE.h2, "text-balance", dark ? "text-white" : "text-rpk-ink")}
+      >
         {title}
       </Heading>
-      {lede && <p className={cx(TYPE.body, "mt-4 max-w-2xl")}>{lede}</p>}
+      {lede && (
+        <p
+          className={cx(
+            TYPE.body,
+            "mt-4 max-w-2xl text-pretty",
+            center && "mx-auto",
+            dark && "!text-white/70",
+          )}
+        >
+          {lede}
+        </p>
+      )}
     </div>
+  );
+}
+
+/** A page band. `tone` sets the background; ids double as scroll targets. */
+export function Section({
+  id,
+  tone = "white",
+  className,
+  children,
+  labelledBy,
+  label,
+}: {
+  id?: string;
+  tone?: "white" | "paper" | "ink";
+  className?: string;
+  children?: ReactNode;
+  labelledBy?: string;
+  label?: string;
+}) {
+  return (
+    <section
+      id={id}
+      aria-labelledby={labelledBy}
+      aria-label={label}
+      className={cx(
+        "relative scroll-mt-24 py-20 sm:py-24 lg:py-28",
+        tone === "white" && "bg-white",
+        tone === "paper" && "bg-rpk-paper",
+        tone === "ink" && "bg-rpk-ink text-white",
+        className,
+      )}
+    >
+      {children}
+    </section>
+  );
+}
+
+/** Done / included: an Ink circle with a white check (success is Ink, never green). */
+export function CheckDot({
+  className,
+  tone = "ink",
+}: {
+  className?: string;
+  tone?: "ink" | "signal" | "white";
+}) {
+  return (
+    <span
+      aria-hidden="true"
+      className={cx(
+        "inline-flex size-5 shrink-0 items-center justify-center rounded-full",
+        tone === "ink" && "bg-rpk-ink text-white",
+        tone === "signal" && "bg-rpk-signal text-rpk-ink",
+        tone === "white" && "bg-white text-rpk-ink",
+        className,
+      )}
+    >
+      <Check className="size-3" strokeWidth={3.2} />
+    </span>
+  );
+}
+
+/** Checklist with Ink check dots. */
+export function CheckList({
+  items,
+  className,
+  tone = "light",
+  size = "md",
+}: {
+  items: ReactNode[];
+  className?: string;
+  tone?: "light" | "dark";
+  size?: "sm" | "md";
+}) {
+  return (
+    <ul className={cx(size === "sm" ? "space-y-2.5" : "space-y-3.5", className)}>
+      {items.map((item, index) => (
+        <li
+          key={index}
+          className={cx(
+            "flex items-start gap-3 leading-[1.5]",
+            size === "sm" ? "text-[15px]" : "text-[16px]",
+            tone === "dark" ? "text-white/85" : "text-rpk-ink",
+          )}
+        >
+          <CheckDot
+            tone={tone === "dark" ? "signal" : "ink"}
+            className={size === "sm" ? "mt-[2px]" : "mt-[3px]"}
+          />
+          <span className="min-w-0">{item}</span>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+/** Catalog / feature icon on an answer-pill tile. */
+export function IconTile({
+  icon: Icon,
+  size = "md",
+  tone = "paper",
+  className,
+}: {
+  icon: LucideIcon;
+  size?: "md" | "lg";
+  tone?: "paper" | "ink" | "soft";
+  className?: string;
+}) {
+  return (
+    <span
+      aria-hidden="true"
+      className={cx(
+        "inline-flex shrink-0 items-center justify-center",
+        SHAPE.answer,
+        size === "lg" ? "h-16 w-20" : "h-12 w-[60px]",
+        tone === "paper" && "bg-rpk-paper text-rpk-ink ring-1 ring-rpk-mist ring-inset",
+        tone === "ink" && "bg-rpk-ink text-white",
+        tone === "soft" && "bg-rpk-signal-soft text-rpk-ink",
+        className,
+      )}
+    >
+      <Icon className={size === "lg" ? "size-7" : "size-[22px]"} strokeWidth={2} />
+    </span>
   );
 }
 

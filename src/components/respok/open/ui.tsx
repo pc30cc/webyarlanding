@@ -220,31 +220,75 @@ export function SectionHeader({
   title,
   lede,
   id,
+  surface = "paper",
+  children,
 }: {
   index?: string;
   eyebrow: string;
   title?: ReactNode;
   lede?: ReactNode;
   id?: string;
+  surface?: Surface;
+  /** Extra content under the lede (e.g. a link), in the title column. */
+  children?: ReactNode;
 }) {
+  const ink = surface === "ink";
   return (
-    <header className="grid gap-x-10 gap-y-4 border-t-2 border-rpk-ink pt-5 md:grid-cols-12">
-      <Eyebrow {...(index ? { index } : {})} className="min-w-0 md:col-span-4 lg:col-span-3">
+    <header
+      className={cx(
+        "grid gap-x-10 gap-y-4 border-t-2 pt-5 md:grid-cols-12",
+        ink ? "border-white" : "border-rpk-ink",
+      )}
+    >
+      <Eyebrow
+        {...(index ? { index } : {})}
+        surface={surface}
+        className="min-w-0 md:col-span-4 lg:col-span-3"
+      >
         {eyebrow}
       </Eyebrow>
       {title ? (
         <div className="min-w-0 md:col-span-8 lg:col-span-9">
-          <h2 id={id} className={cx(HEADING, "wrap-anywhere text-rpk-ink")}>
+          <h2 id={id} className={cx(HEADING, "wrap-anywhere", ink ? "text-white" : "text-rpk-ink")}>
             {title}
           </h2>
           {lede ? (
-            <p className="mt-4 max-w-[60ch] text-[17px] leading-[1.55] text-rpk-slate sm:text-[18px]">
+            <p
+              className={cx(
+                "mt-4 max-w-[60ch] text-[17px] leading-[1.55] sm:text-[18px]",
+                ink ? "text-white/72" : "text-rpk-slate",
+              )}
+            >
               {lede}
             </p>
           ) : null}
+          {children}
         </div>
       ) : null}
     </header>
+  );
+}
+
+/**
+ * The visitor's question, as a message in the widget: a white bubble whose square corner
+ * points down-right, at the button.
+ */
+export function QuestionBubble({
+  children,
+  className,
+}: {
+  children: ReactNode;
+  className?: string;
+}) {
+  return (
+    <p
+      className={cx(
+        "w-fit max-w-[22rem] rounded-[22px] rounded-br-[6px] bg-white px-5 py-3.5 text-[16px] leading-[1.45] font-medium text-rpk-ink",
+        className,
+      )}
+    >
+      {children}
+    </p>
   );
 }
 
@@ -269,6 +313,7 @@ export function ChapterHero({
   className,
   bubble = "right",
   contentClassName,
+  question,
 }: {
   running: string;
   path: string;
@@ -284,6 +329,8 @@ export function ChapterHero({
   bubble?: "right" | "none";
   /** Extra classes for the title block (e.g. to leave room for an overlapping panel). */
   contentClassName?: string;
+  /** The visitor's question, shown as a message above the eyebrow. */
+  question?: string;
 }) {
   return (
     <section className={cx("relative isolate overflow-hidden bg-rpk-ink text-white", className)}>
@@ -308,6 +355,7 @@ export function ChapterHero({
             contentClassName,
           )}
         >
+          {question ? <QuestionBubble className="mb-10 sm:mb-12">{question}</QuestionBubble> : null}
           <Eyebrow index={index} surface="ink">
             {eyebrow}
           </Eyebrow>

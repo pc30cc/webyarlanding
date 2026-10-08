@@ -991,6 +991,96 @@ body:has(.respok-open) {
   }
 }
 
+/* Home hero widget: messages arrive one by one, the agent types first, and the
+ * launcher's glyph turns into a chevron while the panel is open (kit, 200 ms). */
+@keyframes rpk-o-msg {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.96);
+  }
+}
+@keyframes rpk-o-typing {
+  0% {
+    opacity: 0;
+    transform: scale(0.6);
+  }
+  14%,
+  86% {
+    opacity: 1;
+    transform: none;
+  }
+  100% {
+    opacity: 0;
+    transform: none;
+  }
+}
+@keyframes rpk-o-blink {
+  0%,
+  60%,
+  100% {
+    opacity: 0.35;
+    transform: none;
+  }
+  30% {
+    opacity: 1;
+    transform: translateY(-2px);
+  }
+}
+@keyframes rpk-o-turn-out {
+  to {
+    opacity: 0;
+    transform: rotate(90deg) scale(0.6);
+  }
+}
+@keyframes rpk-o-turn-in {
+  from {
+    opacity: 0;
+    transform: rotate(-90deg);
+  }
+}
+@keyframes rpk-o-fade-out {
+  to {
+    opacity: 0;
+  }
+}
+.respok-open .rpk-o-msg {
+  animation: rpk-o-msg 320ms cubic-bezier(0.2, 0.9, 0.25, 1) both;
+}
+.respok-open .rpk-o-typing {
+  animation: rpk-o-typing 1100ms ease both;
+}
+.respok-open .rpk-o-blink > * {
+  animation: rpk-o-blink 1.2s ease-in-out infinite;
+}
+.respok-open .rpk-o-blink > :nth-child(2) {
+  animation-delay: 150ms;
+}
+.respok-open .rpk-o-blink > :nth-child(3) {
+  animation-delay: 300ms;
+}
+.respok-open .rpk-o-turn-out {
+  animation: rpk-o-turn-out 200ms ease both;
+}
+.respok-open .rpk-o-turn-in {
+  animation: rpk-o-turn-in 200ms ease both;
+}
+@media (prefers-reduced-motion: reduce) {
+  .respok-open :is(.rpk-o-msg, .rpk-o-turn-in) {
+    animation-name: rpk-o-fade;
+  }
+  .respok-open .rpk-o-turn-out {
+    animation-name: rpk-o-fade-out;
+  }
+  .respok-open .rpk-o-typing {
+    animation: none;
+    opacity: 0;
+  }
+  .respok-open .rpk-o-blink > * {
+    animation: none;
+    opacity: 0.6;
+  }
+}
+
 .respok-open .rpk-o-prose {
   color: var(--color-rpk-ink);
   font-size: 18px;

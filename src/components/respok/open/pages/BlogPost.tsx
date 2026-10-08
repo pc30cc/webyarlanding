@@ -3,21 +3,31 @@ import { ArrowLeft, ArrowRight } from "lucide-react";
 import { buildBreadcrumbJsonLd } from "@/lib/seo-meta";
 import { useContent } from "../../content";
 import { getBlogContent } from "../../content/blog";
-import { formatPostDate, readingMinutes, tagSlug, textDir } from "../../shared/blog";
+import {
+  blogCategoryLabel,
+  formatPostDate,
+  readingMinutes,
+  tagSlug,
+  textDir,
+} from "../../shared/blog";
 import { useRespok } from "../../shared/context";
 import { JsonLd } from "../../shared/JsonLd";
 import { Markdown } from "../../shared/Markdown";
 import type { BlogPostPageData } from "../../types";
 import { OPEN_COPY } from "../copy";
 import { PostCover } from "../blog";
-import { usePostCategory } from "../blog-data";
 import { Container, CornerDot, Dot, Eyebrow, GiantBubble, SectionHeader } from "../ui";
 import { cx, displayClass, pad } from "../tokens";
 
 export function BlogPostPage({ post, related }: BlogPostPageData) {
-  const { settings, brand, siteUrl } = useRespok();
+  const { settings, brand, siteUrl, t } = useRespok();
   const copy = useContent(getBlogContent);
-  const category = usePostCategory(post);
+  const category = blogCategoryLabel(
+    t,
+    post.categoryName ?? undefined,
+    post.categorySlug ?? undefined,
+    copy.general,
+  );
   const date = formatPostDate(post);
   const minutes = copy.minutes(readingMinutes(post.content));
   const url = siteUrl ? `${siteUrl}/blog/${post.slug}` : undefined;
