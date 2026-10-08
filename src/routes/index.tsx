@@ -118,12 +118,17 @@ export const Route = createFileRoute("/")({
       ...meta,
       scripts: [
         ...((meta as { scripts?: unknown[] }).scripts ?? []),
-        {
-          type: "application/ld+json",
-          children: safeJsonLdHtml(
-            localizeStructuredData(loaderData.settings, videoLd),
-          ).__html,
-        },
+        // ویدیوی تماس تصویری فقط وقتی تماس تصویری روشن است و در سایت فارسی
+        ...(callEnabled && getSiteLanguage(loaderData.settings) !== "en"
+          ? [
+              {
+                type: "application/ld+json",
+                children: safeJsonLdHtml(
+                  localizeStructuredData(loaderData.settings, videoLd),
+                ).__html,
+              },
+            ]
+          : []),
       ],
     } as typeof meta;
   },

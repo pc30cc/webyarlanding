@@ -131,17 +131,12 @@ export function PostCover({
 }
 
 /** "GUIDES · OCT 4, 2026 · 4 MIN READ" */
-function PostMeta({ post, className }: { post: PostDto; className?: string }) {
+function PostMeta({ post }: { post: PostDto }) {
   const blog = useContent(getBlogContent);
   const category = usePostCategory(post);
   const date = formatPostDate(post);
   return (
-    <p
-      className={cx(
-        "flex flex-wrap items-center gap-x-2 gap-y-1 font-rpk-mono text-[12px] tracking-[0.08em] text-rpk-slate uppercase",
-        className,
-      )}
-    >
+    <p className="flex flex-wrap items-center gap-x-2 gap-y-1 font-rpk-mono text-[12px] tracking-[0.08em] text-rpk-slate uppercase">
       <span
         dir={textDir(category)}
         className={cx(
@@ -179,7 +174,8 @@ export function PostCard({
   const category = usePostCategory(post);
   const Heading = headingLevel === 2 ? "h2" : "h3";
   const link = { to: "/blog/$slug", params: { slug: post.slug } } as const;
-  // A Persian post reads right to left: its whole text column aligns to the right edge.
+  // A Persian title and excerpt read right to left across the full column; the English
+  // meta and "Read more" keep the grid's left edge.
   const rtl = textDir(post.title) === "rtl";
 
   return (
@@ -211,15 +207,15 @@ export function PostCard({
         className={cx(
           "flex min-w-0 flex-col",
           featured ? "lg:col-span-5" : "mt-6 flex-1",
-          rtl ? "items-end text-right" : "items-start",
+          "items-start",
         )}
       >
-        <PostMeta post={post} className={rtl ? "justify-end" : ""} />
+        <PostMeta post={post} />
         <Heading
           dir={textDir(post.title)}
           className={cx(
             "mt-3 max-w-full font-bold wrap-anywhere text-rpk-ink",
-            rtl ? "leading-[1.5]" : "tracking-[-0.015em]",
+            rtl ? "w-full leading-[1.5]" : "tracking-[-0.015em]",
             featured ? "text-[28px] sm:text-[36px] lg:text-[40px]" : "text-[21px]",
             !rtl && (featured ? "leading-[1.15]" : "leading-[1.28]"),
           )}
@@ -239,6 +235,7 @@ export function PostCard({
             dir={textDir(post.excerpt)}
             className={cx(
               "mt-3 max-w-full wrap-anywhere text-rpk-slate",
+              textDir(post.excerpt) === "rtl" && "w-full",
               featured
                 ? "line-clamp-4 text-[18px] leading-[1.6]"
                 : "line-clamp-3 text-[16px] leading-[1.6]",

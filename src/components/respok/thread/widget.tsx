@@ -6,11 +6,10 @@
  *
  * Everything here is illustration: aria-hidden by the caller, never interactive.
  */
-import type { ReactNode } from "react";
+import type { CSSProperties, ReactNode } from "react";
 import { ArrowUp, ChevronDown } from "lucide-react";
 import { RESPOK_SYMBOL, RespokLogo } from "../RespokLogo";
 import { cx } from "./classes";
-import type { DelayStyle } from "./stage";
 import { TypingDots } from "./ui";
 
 const GLYPH = RESPOK_SYMBOL.thread;
@@ -23,16 +22,12 @@ export function Launcher({
   className,
   accentClassName,
   badgeClassName,
-  accentStyle,
-  badgeStyle,
 }: {
   unread?: number;
   size?: number;
   className?: string;
   accentClassName?: string;
   badgeClassName?: string;
-  accentStyle?: DelayStyle;
-  badgeStyle?: DelayStyle;
 }) {
   return (
     <span
@@ -42,7 +37,7 @@ export function Launcher({
       <span className="absolute inset-0 grid place-items-center overflow-hidden rounded-full bg-rpk-ink shadow-rpk-launcher">
         <svg viewBox="0 0 104 92" focusable="false" className="block h-auto w-1/2 overflow-visible">
           <path d={GLYPH.main} fill="#FFFFFF" />
-          <path d={GLYPH_ANSWER} fill="#FF5A3C" className={accentClassName} style={accentStyle} />
+          <path d={GLYPH_ANSWER} fill="#FF5A3C" className={accentClassName} />
         </svg>
       </span>
       {unread !== undefined && (
@@ -51,7 +46,6 @@ export function Launcher({
             "absolute -top-[3px] -right-[3px] h-[22px] min-w-[22px] rounded-[11px] border-2 border-white bg-rpk-signal-deep px-1.5 text-center text-[12px] leading-[18px] font-bold text-white",
             badgeClassName,
           )}
-          style={badgeStyle}
         >
           {unread}
         </span>
@@ -70,7 +64,7 @@ export function Bubble({
   from: "agent" | "visitor";
   children: ReactNode;
   className?: string;
-  style?: DelayStyle;
+  style?: CSSProperties;
 }) {
   return (
     <div
@@ -89,7 +83,7 @@ export function Bubble({
 }
 
 /** Agent typing indicator bubble. */
-export function TypingBubble({ className, style }: { className?: string; style?: DelayStyle }) {
+export function TypingBubble({ className, style }: { className?: string; style?: CSSProperties }) {
   return (
     <div
       style={style}

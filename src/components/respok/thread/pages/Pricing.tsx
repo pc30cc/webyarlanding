@@ -191,14 +191,21 @@ function PlanCard({ plan, copy }: { plan: RespokPlan; copy: PricingCopy }) {
               <div
                 key={limit.label}
                 className={cx(
-                  "flex items-baseline justify-between gap-4 border-b border-dashed py-2.5 last:border-0",
+                  "flex items-baseline justify-between gap-3 border-b border-dashed py-2.5 last:border-0",
                   dark ? "border-rpk-ink-line" : "border-rpk-mist",
                 )}
               >
-                <dt className={cx("text-[15px]", dark ? "text-white/80" : "text-rpk-ink")}>
+                <dt
+                  className={cx(
+                    "text-[15px] lg:text-[14px] xl:text-[15px]",
+                    dark ? "text-white/80" : "text-rpk-ink",
+                  )}
+                >
                   {limit.label}
                 </dt>
-                <dd className="text-right font-rpk-mono text-[14px] tabular-nums">{limit.value}</dd>
+                <dd className="shrink-0 text-right font-rpk-mono text-[14px] tabular-nums lg:text-[13px] xl:text-[14px]">
+                  {limit.value}
+                </dd>
               </div>
             ))}
           </dl>
@@ -273,12 +280,12 @@ function Comparison({
             "rounded-[28px] rounded-ee-[6px]",
           )}
         >
-          <table className="w-full min-w-[640px] border-collapse text-left">
+          <table className="w-full min-w-[600px] border-collapse text-left">
             <thead>
               <tr className="border-b border-rpk-mist">
                 <th
                   scope="col"
-                  className="sticky left-0 z-10 bg-white px-5 py-5 font-rpk-mono text-[12px] font-normal tracking-[0.08em] text-rpk-slate uppercase sm:px-7"
+                  className="sticky left-0 z-10 w-[148px] bg-white px-4 py-5 font-rpk-mono text-[12px] font-normal tracking-[0.08em] text-rpk-slate uppercase shadow-[1px_0_0_var(--color-rpk-mist)] sm:w-auto sm:px-7 sm:shadow-none"
                 >
                   {copy.comparisonFeature}
                 </th>
@@ -301,7 +308,7 @@ function Comparison({
                 <tr key={row.label} className="border-b border-rpk-mist last:border-0">
                   <th
                     scope="row"
-                    className="sticky left-0 z-10 bg-white px-5 py-4 text-[15px] leading-[1.4] font-medium text-rpk-ink sm:px-7"
+                    className="sticky left-0 z-10 w-[148px] bg-white px-4 py-4 text-[14px] leading-[1.4] font-medium text-rpk-ink shadow-[1px_0_0_var(--color-rpk-mist)] sm:w-auto sm:px-7 sm:text-[15px] sm:shadow-none"
                   >
                     {row.label}
                   </th>

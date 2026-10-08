@@ -209,7 +209,7 @@ function HeroWidget({ c }: { c: HomeContent }) {
       aria-label={OPEN_COPY.mock.hero(brand)}
       className="relative mx-auto w-full max-w-[620px] [--i:14px] [--l:48px] sm:[--i:22px] sm:[--l:60px]"
     >
-      <div className="relative h-[556px] overflow-hidden rounded-[28px] rounded-br-[8px] bg-rpk-paper shadow-[0_50px_100px_-40px_rgb(0_0_0/0.75)] sm:h-[620px]">
+      <div className="relative h-[584px] overflow-hidden rounded-[28px] rounded-br-[8px] bg-rpk-paper shadow-[0_50px_100px_-40px_rgb(0_0_0/0.75)] sm:h-[620px]">
         <SiteSkeleton />
         <ChatPanel
           agent={c.hero.chat.agent}
@@ -218,7 +218,7 @@ function HeroWidget({ c }: { c: HomeContent }) {
           composer={c.hero.chat.composer}
           ending={callEnabled ? "call" : "typing"}
           start={OPEN_AT + 420}
-          className="rpk-o-grow-br absolute h-[416px] sm:h-[460px]"
+          className="rpk-o-grow-br absolute h-[448px] sm:h-[460px]"
           style={{
             right: corner,
             bottom: corner,

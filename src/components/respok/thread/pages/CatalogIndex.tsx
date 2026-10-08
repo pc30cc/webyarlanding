@@ -9,7 +9,7 @@ import { Reveal } from "../../shared/Reveal";
 import { catalogIndexJsonLd, withOverride } from "../../shared/structured";
 import { CatalogCard } from "../catalog";
 import { THREAD_COPY } from "../copy";
-import { chipClass, cx } from "../classes";
+import { chipClass } from "../classes";
 import { useGatedList } from "../labels";
 import {
   ActionLink,
@@ -50,6 +50,7 @@ export function CatalogIndexPage({
           </span>
         ))}
         lede={c.lede}
+        titleSize={c.title.join(" ").length > 32 ? "md" : "lg"}
       >
         {gated.length > 1 && (
           <nav aria-label={THREAD_COPY.catalog.jump} className="mt-10 sm:mt-12">
@@ -96,8 +97,8 @@ export function CatalogIndexPage({
                     aria-labelledby={headingId}
                     className="scroll-mt-28"
                   >
-                    <div className="flex flex-wrap items-end justify-between gap-x-6 gap-y-3 border-b border-rpk-mist pb-5">
-                      <div className="flex items-baseline gap-4">
+                    <div className="flex items-end justify-between gap-4 border-b border-rpk-mist pb-5 sm:gap-6">
+                      <div className="flex min-w-0 items-baseline gap-3 sm:gap-4">
                         <span
                           aria-hidden="true"
                           className="font-rpk-mono text-[13px] tracking-[0.08em] text-rpk-slate"
@@ -111,7 +112,9 @@ export function CatalogIndexPage({
                           {category.title}
                         </h2>
                       </div>
-                      <Badge>{THREAD_COPY.catalog.count(category.items.length, kind)}</Badge>
+                      <Badge className="mb-1 shrink-0">
+                        {THREAD_COPY.catalog.count(category.items.length, kind)}
+                      </Badge>
                     </div>
                     <ul className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-3 lg:gap-6">
                       {category.items.map((item, itemIndex) => (
@@ -148,7 +151,7 @@ export function CatalogIndexPage({
                   {c.band.body}
                 </p>
               </div>
-              <div className="flex flex-wrap gap-3">
+              <div className="flex flex-wrap gap-3 lg:shrink-0 lg:flex-nowrap">
                 <ActionLink href={c.band.primary.to} size="lg" arrow>
                   {c.band.primary.label}
                 </ActionLink>
@@ -156,9 +159,7 @@ export function CatalogIndexPage({
                   href={c.band.secondary.to}
                   variant="outline"
                   size="lg"
-                  className={cx(
-                    "!bg-transparent !text-white !ring-rpk-ink-line hover:!bg-rpk-ink-raised",
-                  )}
+                  className="!bg-transparent !text-white !ring-white/30 hover:!bg-rpk-ink-raised"
                 >
                   {c.band.secondary.label}
                 </ActionLink>

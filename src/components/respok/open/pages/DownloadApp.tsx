@@ -245,7 +245,11 @@ export function DownloadAppPage({ app, others, settings }: DownloadAppPageData) 
                       <span className="min-w-0 flex-1">
                         <span className="block font-rpk-mono text-[12px] tracking-[0.08em] text-rpk-slate uppercase">
                           {PLATFORM_EN[device.platform].label}
-                          {device.version ? ` · v${device.version.replace(/^v/i, "")}` : ""}
+                          {device.version ? (
+                            <span className="normal-case">
+                              {` · v${device.version.replace(/^v/i, "")}`}
+                            </span>
+                          ) : null}
                         </span>
                         <span className="mt-1 block truncate text-[18px] font-bold tracking-[-0.01em] text-rpk-ink">
                           {deviceName}

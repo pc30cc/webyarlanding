@@ -40,9 +40,18 @@ export interface RespokPlan {
 const usd = new Intl.NumberFormat("en-US", {
   style: "currency",
   currency: "USD",
-  maximumFractionDigits: 2,
-  minimumFractionDigits: 0,
+  maximumFractionDigits: 0,
 });
+const usdCents = new Intl.NumberFormat("en-US", {
+  style: "currency",
+  currency: "USD",
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2,
+});
+/** "$29" for whole dollars, "$82.50" otherwise. */
+function formatUsd(n: number): string {
+  return Number.isInteger(n) ? usd.format(n) : usdCents.format(n);
+}
 const plain = new Intl.NumberFormat("en-US");
 
 function priceOf(plan: PublicPlan, period: BillingPeriod, currency: "USD" | "Toman"): RespokPrice {
@@ -52,7 +61,7 @@ function priceOf(plan: PublicPlan, period: BillingPeriod, currency: "USD" | "Tom
   const total = period === "yearly" ? yearly : monthly;
   if (!total) return { kind: "contact", amount: "Let's talk", unit: "", note: "" };
   const perMonth = period === "yearly" ? total / 12 : total;
-  const format = (n: number) => (currency === "USD" ? usd.format(n) : plain.format(Math.round(n)));
+  const format = (n: number) => (currency === "USD" ? formatUsd(n) : plain.format(Math.round(n)));
   return {
     kind: "amount",
     amount: format(perMonth),
@@ -70,9 +79,9 @@ function staticPrice(plan: (typeof STATIC_PLANS)[number], period: BillingPeriod)
   const total = period === "yearly" ? plan.usd.yearly : plan.usd.monthly;
   return {
     kind: "amount",
-    amount: usd.format(period === "yearly" ? total / 12 : total),
+    amount: formatUsd(period === "yearly" ? total / 12 : total),
     unit: "/ month",
-    note: period === "yearly" ? `Billed ${usd.format(total)} yearly` : "",
+    note: period === "yearly" ? `Billed ${formatUsd(total)} yearly` : "",
   };
 }
 

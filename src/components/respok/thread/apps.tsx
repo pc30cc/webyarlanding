@@ -111,7 +111,7 @@ export function StoreBadge({
     </>
   );
   const base = cx(
-    "inline-flex h-14 min-w-[188px] shrink-0 items-center gap-3 pr-6 pl-4",
+    "inline-flex h-14 min-w-0 shrink-0 items-center gap-2.5 pr-4 pl-3 sm:min-w-[188px] sm:gap-3 sm:pr-6 sm:pl-4",
     "rounded-[18px] rounded-es-[6px]",
     className,
   );
@@ -196,14 +196,7 @@ export function AppCard({
       {subtitle && (
         <p className="mt-2 text-[15px] leading-[1.55] text-pretty text-rpk-slate">{subtitle}</p>
       )}
-      <div className="mt-auto flex items-center justify-between gap-3 pt-6">
-        {app.version ? (
-          <span className="font-rpk-mono text-[12px] tracking-[0.04em] text-rpk-slate">
-            v{app.version.replace(/^v/i, "")}
-          </span>
-        ) : (
-          <span />
-        )}
+      <div className="mt-auto flex flex-wrap items-center justify-between gap-x-3 gap-y-1 pt-6">
         <span className="inline-flex items-center gap-1.5 text-[14px] font-semibold text-rpk-ink">
           {detailsLabel}
           <ArrowRight
@@ -212,6 +205,11 @@ export function AppCard({
             className="size-4 transition-transform duration-200 ease-rpk-spring group-hover/app:translate-x-0.5"
           />
         </span>
+        {app.version && (
+          <span className="font-rpk-mono text-[12px] tracking-[0.04em] text-rpk-slate">
+            v{app.version.replace(/^v/i, "")}
+          </span>
+        )}
       </div>
       {store && (
         <div className="relative z-10 mt-5 border-t border-rpk-mist pt-5">

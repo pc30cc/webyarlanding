@@ -76,8 +76,9 @@ export const OPEN_COPY = {
     breadcrumb: "Breadcrumb",
     home: "Home",
     items: (n: number, kind: "product" | "solution") =>
-      `${String(n).padStart(2, "0")} ${kind === "product" ? (n === 1 ? "product" : "products") : n === 1 ? "solution" : "solutions"}`,
+      `${n} ${kind === "product" ? (n === 1 ? "product" : "products") : n === 1 ? "solution" : "solutions"}`,
     overview: "Overview",
+    features: "Features",
     related: "Related",
     next: "Next step",
   },
@@ -85,6 +86,7 @@ export const OPEN_COPY = {
     stores: "Stores",
     apps: "Apps",
     perks: "Why the apps",
+    perksTitle: "One account on every device",
     gallery: (name: string) => `${name} screenshots`,
     preview: "Preview",
     platform: "Platform",

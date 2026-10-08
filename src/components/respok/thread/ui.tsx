@@ -386,6 +386,7 @@ export function PageOpener({
   meta,
   before,
   aside,
+  titleSize = "lg",
   children,
   className,
 }: {
@@ -399,6 +400,8 @@ export function PageOpener({
   before?: ReactNode;
   /** Right column on desktop (replaces the decorative mark). */
   aside?: ReactNode;
+  /** "md" for long titles. */
+  titleSize?: "lg" | "md";
   children?: ReactNode;
   className?: string;
 }) {
@@ -408,7 +411,14 @@ export function PageOpener({
       <Conversation question={question} />
       <div className="mt-10 sm:mt-12">
         {eyebrow && <Eyebrow className="mb-4">{eyebrow}</Eyebrow>}
-        <h1 className={cx(TYPE.display, "text-balance text-rpk-ink")}>{title}</h1>
+        <h1
+          className={cx(
+            titleSize === "md" ? TYPE.displayMd : TYPE.display,
+            "text-balance text-rpk-ink",
+          )}
+        >
+          {title}
+        </h1>
       </div>
       {lede && <p className={cx(TYPE.lede, "mt-6 max-w-[42rem] text-pretty")}>{lede}</p>}
       {meta && <div className="mt-6">{meta}</div>}
@@ -646,8 +656,8 @@ export function Section({
   tone?: "white" | "paper" | "ink";
   className?: string;
   children?: ReactNode;
-  labelledBy?: string;
-  label?: string;
+  labelledBy?: string | undefined;
+  label?: string | undefined;
 }) {
   return (
     <section

@@ -82,6 +82,17 @@ export function CatalogItemPage({
       </ActionLink>
     );
 
+  const sidePrimary =
+    kind === "product" ? (
+      <ActionLink to={auth.ctaUrl} variant="primary" className="w-full">
+        {c.detail.primary}
+      </ActionLink>
+    ) : (
+      <ActionLink to="/contact" variant="primary" className="w-full">
+        {c.detail.primary}
+      </ActionLink>
+    );
+
   // Chapters after the hero (01) follow the sections that are really there.
   const overviewIndex = pad(2);
   const featuresIndex = pad(description ? 3 : 2);
@@ -153,30 +164,25 @@ export function CatalogItemPage({
         </Container>
       </section>
 
-      {description || bullets.length > 0 ? (
+      {description ? (
         <Container className="py-20 sm:py-28">
           <div className="grid gap-16 lg:grid-cols-12 lg:gap-10">
-            {description ? (
-              <article aria-labelledby="overview-title" className="min-w-0 lg:col-span-7">
-                <h2 id="overview-title" className="border-t-2 border-rpk-ink pt-5">
-                  <Eyebrow as="span" index={overviewIndex}>
-                    {OPEN_COPY.catalog.overview}
-                  </Eyebrow>
-                </h2>
-                <Markdown className="rpk-o-prose mt-10">{description}</Markdown>
-              </article>
-            ) : null}
+            <article aria-labelledby="overview-title" className="min-w-0 lg:col-span-7">
+              <h2 id="overview-title" className="border-t-2 border-rpk-ink pt-5">
+                <Eyebrow as="span" index={overviewIndex}>
+                  {OPEN_COPY.catalog.overview}
+                </Eyebrow>
+              </h2>
+              <Markdown className="rpk-o-prose mt-10">{description}</Markdown>
+            </article>
             {bullets.length > 0 ? (
               <aside
                 aria-labelledby="features-title"
-                className={cx(
-                  "min-w-0",
-                  description ? "lg:col-span-4 lg:col-start-9" : "lg:col-span-8",
-                )}
+                className="min-w-0 lg:col-span-4 lg:col-start-9"
               >
                 <div className="relative mr-6 lg:sticky lg:top-28">
                   <Card size="xl" className="p-7 sm:p-9">
-                    <Eyebrow index={featuresIndex}>{c.eyebrow}</Eyebrow>
+                    <Eyebrow index={featuresIndex}>{OPEN_COPY.catalog.features}</Eyebrow>
                     <h2
                       id="features-title"
                       className="mt-4 text-[24px] leading-[1.2] font-bold tracking-[-0.015em] text-rpk-ink"
@@ -194,17 +200,7 @@ export function CatalogItemPage({
                         </li>
                       ))}
                     </ul>
-                    <div className="mt-8 grid gap-3">
-                      {kind === "product" ? (
-                        <ActionLink to={auth.ctaUrl} variant="primary" className="w-full">
-                          {c.detail.primary}
-                        </ActionLink>
-                      ) : (
-                        <ActionLink to="/contact" variant="primary" className="w-full">
-                          {c.detail.primary}
-                        </ActionLink>
-                      )}
-                    </div>
+                    <div className="mt-8 grid gap-3">{sidePrimary}</div>
                   </Card>
                   <CornerDot size={18} />
                 </div>
@@ -212,6 +208,33 @@ export function CatalogItemPage({
             ) : null}
           </div>
         </Container>
+      ) : bullets.length > 0 ? (
+        <section aria-labelledby="features-title">
+          <Container className="py-20 sm:py-28">
+            <SectionHeader
+              index={featuresIndex}
+              eyebrow={OPEN_COPY.catalog.features}
+              title={c.detail.features(title)}
+              id="features-title"
+            />
+            <div className="mt-10 grid gap-x-10 md:grid-cols-12">
+              <ol className="grid border-t border-rpk-mist sm:grid-cols-2 sm:gap-x-10 md:col-span-12 lg:col-span-9 lg:col-start-4">
+                {bullets.map((bullet, i) => (
+                  <li
+                    key={bullet}
+                    className="flex items-start gap-4 border-b border-rpk-mist py-5 text-[17px] leading-[1.5] text-rpk-ink"
+                  >
+                    <span className="mt-[3px] w-6 shrink-0 font-rpk-mono text-[13px] text-rpk-slate">
+                      {pad(i + 1)}
+                    </span>
+                    <Dot size={7} className="mt-[9px]" />
+                    <span className="min-w-0">{bullet}</span>
+                  </li>
+                ))}
+              </ol>
+            </div>
+          </Container>
+        </section>
       ) : null}
 
       <section aria-labelledby={more.length > 0 ? "related-title" : undefined} className="bg-white">

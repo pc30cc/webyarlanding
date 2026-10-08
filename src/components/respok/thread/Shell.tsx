@@ -720,7 +720,7 @@ function Footer() {
                         rel="noopener noreferrer"
                         aria-label={`${item.name} (opens in a new tab)`}
                         className={cx(
-                          "inline-flex h-11 min-w-11 items-center justify-center px-4 text-[14px] font-semibold text-white ring-1 ring-rpk-ink-line ring-inset transition-colors duration-200 hover:bg-rpk-ink-raised",
+                          "inline-flex h-11 min-w-11 items-center justify-center px-4 text-[14px] font-semibold text-white ring-1 ring-white/25 ring-inset transition-colors duration-200 hover:bg-rpk-ink-raised",
                           SHAPE.answer,
                         )}
                       >

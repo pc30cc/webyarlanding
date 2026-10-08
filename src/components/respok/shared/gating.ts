@@ -26,11 +26,23 @@ export function mentionsAi(...texts: (string | undefined | null)[]): boolean {
   );
 }
 
+/**
+ * Features the main app does not have (checked against its source). Editor-managed
+ * text that mentions them is never shown on the English site.
+ */
+const NOT_OFFERED =
+  /screen[ -]?shar|اشتراک‌گذاری صفحه|REST API|\bwebhooks?\b|Webhook|\bSMS\b|پیامک|(email|e-mail) campaigns?|کمپین|\bSSO\b|single sign-on|white[ -]label|برچسب سفید|Excel|satisfaction|رضایت/i;
+
+export function mentionsNotOffered(...texts: (string | undefined | null)[]): boolean {
+  return texts.some((text) => !!text && NOT_OFFERED.test(text));
+}
+
 /** True when the text is allowed under the current call/AI switches. */
 export function isAllowedText(
   flags: { callEnabled: boolean; aiEnabled: boolean },
   ...texts: (string | undefined | null)[]
 ): boolean {
+  if (mentionsNotOffered(...texts)) return false;
   if (!flags.callEnabled && mentionsCall(...texts)) return false;
   if (!flags.aiEnabled && mentionsAi(...texts)) return false;
   return true;

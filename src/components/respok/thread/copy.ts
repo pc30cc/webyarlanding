@@ -45,7 +45,6 @@ export const THREAD_COPY = {
     clear: "Clear search",
     showAll: "Show all articles",
   },
-  placeholder: "This part of the conversation is still being written.",
   home: {
     stageLabel: "Preview: the chat widget on a website, with a new reply waiting",
     today: "Today",
@@ -77,6 +76,7 @@ export const THREAD_COPY = {
   catalog: {
     jump: "Jump to a category",
     itemQuestion: (title: string) => `Tell me about ${title}`,
+    relatedQuestion: "What else is in this group?",
     breadcrumb: "Breadcrumb",
     home: "Home",
     count: (n: number, kind: "product" | "solution") =>
@@ -84,6 +84,9 @@ export const THREAD_COPY = {
   },
   download: {
     perksQuestion: "What do I get with the apps?",
+    appsQuestion: "Which device are you on?",
+    appQuestion: (platform: string) => `Does it work on ${platform}?`,
+    othersQuestion: "What about my other devices?",
     storesLabel: "Download links",
     gallery: (name: string) => `${name} screenshots`,
     illustration: (name: string) => `Illustration of ${name}: the inbox and a conversation`,

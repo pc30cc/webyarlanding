@@ -248,16 +248,15 @@ function PlanCard({ plan, copy }: { plan: RespokPlan; copy: PricingCopy }) {
           </Badge>
         ) : null}
       </div>
-      {plan.description ? (
-        <p
-          className={cx(
-            "mt-2 text-[15px] leading-[1.55]",
-            ink ? "text-white/70" : "text-rpk-slate",
-          )}
-        >
-          {plan.description}
-        </p>
-      ) : null}
+      {/* Two lines are reserved side by side, so prices and CTAs line up across cards. */}
+      <p
+        className={cx(
+          "mt-2 text-[15px] leading-[1.55] md:min-h-[3.1em]",
+          ink ? "text-white/70" : "text-rpk-slate",
+        )}
+      >
+        {plan.description}
+      </p>
 
       <div className={cx("mt-8 border-t pt-6", rule)}>
         <p

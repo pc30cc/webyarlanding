@@ -1,6 +1,6 @@
 import { Fragment, useEffect, useId, useRef, useState, type ReactNode } from "react";
 import { Link } from "@tanstack/react-router";
-import { ArrowRight, Mic, Pause, PhoneOff, Play, Plus, Video } from "lucide-react";
+import { ArrowRight, Mic, Pause, PhoneOff, Play, Plus, ShoppingBag, Video } from "lucide-react";
 import { LoopVideo } from "@/components/site/LoopVideo";
 import type { AppDto } from "@/lib/apps.functions";
 import type { HomePageData } from "../../types";
@@ -233,7 +233,12 @@ function Stage({ c }: { c: HomeContent }) {
 
 /* ── Channels ───────────────────────────────────────────────────────────── */
 
+/** Logos that are wordmarks (illegible at chip size) get a store glyph instead. */
+const WORDMARK_LOGOS = new Set(["WooCommerce"]);
+
 function ChannelIcon({ item }: { item: ChannelCopy }) {
+  if (WORDMARK_LOGOS.has(item.name))
+    return <ShoppingBag aria-hidden="true" strokeWidth={2.2} className="size-5 shrink-0" />;
   if (item.path)
     return (
       <svg
@@ -333,7 +338,6 @@ function Channels({ c }: { c: HomeContent }) {
         <button
           type="button"
           onClick={() => setPaused((value) => !value)}
-          aria-pressed={paused}
           className="inline-flex min-h-11 items-center gap-2 rounded-full px-3 font-rpk-mono text-[12px] tracking-[0.08em] text-rpk-slate uppercase transition-colors hover:text-rpk-ink motion-reduce:hidden"
         >
           {paused ? (
@@ -378,7 +382,7 @@ function Apps({ c, apps, tone }: { c: HomeContent; apps: AppDto[]; tone: Tone })
             "-mx-4 mt-12 flex snap-x snap-mandatory gap-4 overflow-x-auto px-4 pt-1 pb-6 [scrollbar-width:none] sm:mx-0 sm:mt-14 sm:grid sm:grid-cols-2 sm:gap-5 sm:overflow-visible sm:px-0 sm:pt-0 sm:pb-0 lg:gap-6 [&::-webkit-scrollbar]:hidden",
             sorted.length === 1 && "sm:max-w-sm sm:grid-cols-1",
             sorted.length === 3 && "lg:grid-cols-3",
-            sorted.length >= 4 && "lg:grid-cols-4",
+            sorted.length >= 4 && "xl:grid-cols-4",
           )}
         >
           {sorted.map((app, index) => (

@@ -5,11 +5,12 @@ import { BlogPostPage } from "./pages/BlogPost";
 import { CatalogIndexPage } from "./pages/CatalogIndex";
 import { CatalogItemPage } from "./pages/CatalogItem";
 import { ContactPage } from "./pages/Contact";
+import { DownloadAppPage } from "./pages/DownloadApp";
+import { DownloadIndexPage } from "./pages/DownloadIndex";
 import { HelpPage } from "./pages/Help";
 import { HomePage } from "./pages/Home";
 import { PrivacyPage, TermsPage } from "./pages/Legal";
 import { NotFoundPage } from "./pages/NotFound";
-import { PlaceholderPage } from "./pages/Placeholder";
 import { PricingPage } from "./pages/Pricing";
 import { SlaPage } from "./pages/Sla";
 import { TagPage } from "./pages/Tag";
@@ -28,7 +29,7 @@ export const pages: RespokTemplateModule["pages"] = {
   tag: TagPage,
   catalogIndex: CatalogIndexPage,
   catalogItem: CatalogItemPage,
-  downloadIndex: () => <PlaceholderPage name="Download" />,
-  downloadApp: ({ app }) => <PlaceholderPage name={app.slug} />,
+  downloadIndex: DownloadIndexPage,
+  downloadApp: DownloadAppPage,
   notFound: NotFoundPage,
 };

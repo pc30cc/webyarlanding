@@ -1,3 +1,4 @@
+import { useId } from "react";
 import { Link } from "@tanstack/react-router";
 import { ArrowRight } from "lucide-react";
 import type { PostDto } from "@/lib/blog.functions";
@@ -79,6 +80,8 @@ function PostCard({
   const Heading = headingLevel;
   const date = formatPostDate(post);
   const minutes = readingMinutes(post.content);
+  const titleId = useId();
+  const moreId = useId();
   const category = blogCategoryLabel(
     t,
     post.categoryName ?? undefined,
@@ -147,6 +150,7 @@ function PostCard({
           )}
         >
           <Link
+            id={titleId}
             to="/blog/$slug"
             params={{ slug: post.slug }}
             className="rounded-md decoration-rpk-signal decoration-2 underline-offset-4 hover:underline"
@@ -169,10 +173,13 @@ function PostCard({
           <Link
             to="/blog/$slug"
             params={{ slug: post.slug }}
-            aria-label={copy.readMoreAria(post.title)}
+            aria-labelledby={`${moreId} ${titleId}`}
             className="group/more inline-flex min-h-11 items-center gap-2 rounded-md text-[15px] font-semibold text-rpk-ink"
           >
-            <span className="underline decoration-rpk-mist decoration-2 underline-offset-[6px] transition-colors group-hover/more:decoration-rpk-signal">
+            <span
+              id={moreId}
+              className="underline decoration-rpk-mist decoration-2 underline-offset-[6px] transition-colors group-hover/more:decoration-rpk-signal"
+            >
               {copy.readMore}
             </span>
             <ArrowRight

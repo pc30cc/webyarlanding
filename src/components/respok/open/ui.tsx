@@ -341,7 +341,7 @@ export function ChapterHero({
           <span
             dir="ltr"
             className={cx(
-              "max-w-[55%] min-w-0 truncate normal-case",
+              "max-w-[45%] shrink-0 truncate normal-case",
               // Letter-spacing breaks Persian letter joining (e.g. a Persian tag slug).
               /[\u0600-\u06FF]/.test(path) && "font-rpk tracking-normal",
             )}

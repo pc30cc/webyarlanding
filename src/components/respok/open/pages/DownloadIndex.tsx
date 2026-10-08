@@ -142,10 +142,13 @@ export function DownloadIndexPage({ apps, settings, seoOverride }: DownloadIndex
         className="relative isolate overflow-hidden bg-rpk-ink text-white"
       >
         <Container className="py-20 sm:py-28">
-          <SectionHeader surface="ink" index="03" eyebrow={OPEN_COPY.download.perks} />
-          <h2 id="perks-title" className="sr-only">
-            {OPEN_COPY.download.perks}
-          </h2>
+          <SectionHeader
+            surface="ink"
+            index="03"
+            eyebrow={OPEN_COPY.download.perks}
+            title={OPEN_COPY.download.perksTitle}
+            id="perks-title"
+          />
           <ul className={cx(BALANCED_GRID, "mt-10 sm:mt-12")}>
             {c.perks.map((perk, i) => (
               <li key={perk.title} className={cx("min-w-0", perkSpans[i])}>

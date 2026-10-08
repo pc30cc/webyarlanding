@@ -1,12 +1,5 @@
-/** Stage choreography helpers (see motion.tsx for the keyframes). */
-import { useEffect, useRef, useState, type CSSProperties } from "react";
-
-/** `--d` is the animation delay used by the stage choreography (motion.ts). */
-export type DelayStyle = CSSProperties & { "--d"?: string };
-
-export function delay(ms: number): DelayStyle {
-  return { "--d": `${ms}ms` };
-}
+/** Stage choreography state (see motion.tsx for the keyframes). */
+import { useEffect, useRef, useState } from "react";
 
 export type StageState = "static" | "armed" | "play" | "launcher";
 

@@ -79,6 +79,9 @@ export function chipClass(active = false, className?: string): string {
 export const TYPE = {
   display:
     "break-words font-extrabold text-[44px] leading-[1.02] tracking-[-0.03em] sm:text-[60px] lg:text-[72px] lg:tracking-[-0.035em]",
+  /** Long page titles. */
+  displayMd:
+    "break-words font-extrabold text-[38px] leading-[1.04] tracking-[-0.03em] sm:text-[52px] lg:text-[60px] lg:tracking-[-0.032em]",
   h2: "break-words font-bold text-[30px] leading-[1.12] tracking-[-0.02em] sm:text-[36px]",
   h3: "font-bold text-[20px] leading-[1.25] tracking-[-0.01em]",
   lede: "text-[18px] leading-[1.55] text-rpk-slate sm:text-[20px]",

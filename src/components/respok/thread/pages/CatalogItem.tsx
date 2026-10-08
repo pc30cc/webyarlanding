@@ -172,6 +172,7 @@ export function CatalogItemPage({
           </span>
         }
         title={title}
+        titleSize={title.length > 28 ? "md" : "lg"}
         lede={lead}
         meta={actions}
       />
@@ -181,7 +182,9 @@ export function CatalogItemPage({
           {description ? (
             <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,380px)] lg:gap-10">
               <AnswerCard as="article" className="px-6 py-8 sm:px-10 sm:py-12 lg:px-14">
-                <Markdown className="tt-prose mx-auto max-w-[44rem]">{description}</Markdown>
+                <Markdown className="tt-prose mx-auto max-w-[44rem] [&>:first-child]:!mt-0">
+                  {description}
+                </Markdown>
               </AnswerCard>
               <div className="space-y-6 lg:sticky lg:top-28 lg:self-start">
                 {featuresCard}
@@ -228,7 +231,11 @@ export function CatalogItemPage({
       {relatedItems.length > 0 && (
         <Section tone="white" labelledBy={relatedId}>
           <Container>
-            <SectionHeader id={relatedId} title={c.detail.related} />
+            <SectionHeader
+              id={relatedId}
+              question={THREAD_COPY.catalog.relatedQuestion}
+              title={c.detail.related}
+            />
             <ul className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-3 lg:gap-6">
               {relatedItems.map((entry, index) => (
                 <Reveal as="li" key={entry.id} delay={(index % 3) * 90}>
