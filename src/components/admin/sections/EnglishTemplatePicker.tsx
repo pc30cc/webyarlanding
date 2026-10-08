@@ -25,10 +25,7 @@ const INFO: Record<EnglishTemplate, { title: string; description: string }> = {
 function Preview({ template }: { template: EnglishTemplate }) {
   if (template === "open")
     return (
-      <div
-        dir="ltr"
-        className="relative h-28 overflow-hidden rounded-lg bg-[#16142B] p-3"
-      >
+      <div dir="ltr" className="relative h-28 overflow-hidden rounded-lg bg-[#16142B] p-3">
         <RespokLogo concept="open" colorway="reversed" height={16} />
         <div className="mt-3 h-2.5 w-3/5 rounded-full bg-white/90" />
         <div className="mt-1.5 h-2.5 w-2/5 rounded-full bg-white/90" />
@@ -66,9 +63,8 @@ export function EnglishTemplatePicker({
         <Palette className="h-4 w-4" /> قالب سایت انگلیسی (Respok)
       </h3>
       <p className="mt-2 text-sm text-muted-foreground">
-        نسخه انگلیسی سایت با برند Respok و یکی از دو قالب زیر نمایش داده
-        می‌شود؛ هر دو قالب همه صفحات و محتوای سایت را دارند. با یک کلیک قالب
-        عوض و ذخیره می‌شود. نام برند در متن‌ها:{" "}
+        نسخه انگلیسی سایت با برند Respok و یکی از دو قالب زیر نمایش داده می‌شود؛ هر دو قالب همه
+        صفحات و محتوای سایت را دارند. با یک کلیک قالب عوض و ذخیره می‌شود. نام برند در متن‌ها:{" "}
         <span dir="ltr" className="font-medium text-foreground">
           {getRespokBrandName(settings)}
         </span>{" "}

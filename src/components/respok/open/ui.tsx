@@ -8,7 +8,7 @@ import type { CSSProperties, ElementType, ReactNode } from "react";
 import { ArrowRight } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { RESPOK_SYMBOL } from "../RespokLogo";
-import { buttonClass, cx } from "./tokens";
+import { buttonClass, cx, displayClass } from "./tokens";
 
 /* ─── Shape ─────────────────────────────────────────────────────────────── */
 
@@ -45,10 +45,11 @@ export function Container({
 
 /* ─── Dot ───────────────────────────────────────────────────────────────── */
 
-export type DotTone = "signal" | "ink" | "white" | "away" | "away-ink";
+export type DotTone = "signal" | "deep" | "ink" | "white" | "away" | "away-ink";
 
 const DOT_TONE: Record<DotTone, string> = {
   signal: "bg-rpk-signal",
+  deep: "bg-rpk-signal-deep",
   ink: "bg-rpk-ink",
   white: "bg-white",
   away: "border-2 border-rpk-away bg-transparent",
@@ -81,26 +82,28 @@ export function Dot({
 export function CornerDot({
   size = 16,
   tone = "signal",
-  corner = "br",
+  pop,
   className,
 }: {
   size?: number;
   tone?: DotTone;
-  corner?: "br" | "tl" | "tr";
+  /** Pop in (0.2 → 1.35 → 1, 360 ms) after this many ms, e.g. once a panel has grown. */
+  pop?: number;
   className?: string;
 }) {
   const offset = `calc(100% + ${Math.max(1, Math.round(size / 12))}px)`;
-  const position: CSSProperties =
-    corner === "br"
-      ? { left: offset, top: offset }
-      : corner === "tl"
-        ? { right: offset, bottom: offset }
-        : { left: offset, bottom: offset };
+  const style = { width: size, height: size, left: offset, top: offset } as CSSProperties;
+  if (pop !== undefined) (style as Record<string, string | number>)["--rpk-o-delay"] = `${pop}ms`;
   return (
     <span
       aria-hidden="true"
-      className={cx("pointer-events-none absolute rounded-full", DOT_TONE[tone], className)}
-      style={{ width: size, height: size, ...position }}
+      className={cx(
+        "pointer-events-none absolute rounded-full",
+        DOT_TONE[tone],
+        pop !== undefined && "rpk-o-pop",
+        className,
+      )}
+      style={style}
     />
   );
 }
@@ -113,11 +116,14 @@ export function BubbleGlyph({
   dot,
   className,
   style,
+  align,
 }: {
   /** Draw the dot too: live (Signal), away (empty ring) or none. */
   dot?: "live" | "away" | "ink" | "white";
   className?: string;
   style?: CSSProperties;
+  /** SVG alignment inside a box of another ratio, e.g. "xMaxYMax meet". */
+  align?: string;
 }) {
   const symbol = RESPOK_SYMBOL.open;
   const accent = "circle" in symbol.accent ? symbol.accent.circle : ([96, 96, 12] as const);
@@ -125,6 +131,7 @@ export function BubbleGlyph({
   return (
     <svg
       viewBox={dot ? "0 0 108 108" : "0 0 82 82"}
+      preserveAspectRatio={align}
       aria-hidden="true"
       focusable="false"
       className={className}
@@ -141,12 +148,25 @@ export function BubbleGlyph({
   );
 }
 
-/** Giant cropped background bubble for Ink chapters (rpk-ink-soft on Ink). */
-export function GiantBubble({ className }: { className?: string }) {
+/**
+ * Giant background bubble for Ink chapters (rpk-ink-soft on Ink), as on the guideline
+ * cover: it bleeds off the top of the chapter while its square corner stays in view near
+ * the bottom-right. The box takes the chapter's height; the glyph sits in its bottom-right.
+ */
+export function GiantBubble({ size = "lg" }: { size?: "lg" | "md" }) {
   return (
-    <BubbleGlyph
-      className={cx("pointer-events-none absolute text-rpk-ink-soft select-none", className)}
-    />
+    <div
+      aria-hidden="true"
+      className={cx(
+        "pointer-events-none absolute -z-10 aspect-square select-none",
+        "-top-[24%] right-4 bottom-10 sm:right-[4%] sm:bottom-12",
+        size === "lg"
+          ? "max-w-[min(68vw,620px)] sm:max-w-[46vw]"
+          : "max-w-[min(60vw,480px)] sm:max-w-[38vw]",
+      )}
+    >
+      <BubbleGlyph align="xMaxYMax meet" className="h-full w-full text-rpk-ink-soft" />
+    </div>
   );
 }
 
@@ -185,16 +205,14 @@ export function Eyebrow({
   );
 }
 
-export const DISPLAY =
-  "font-extrabold tracking-[-0.035em] leading-[1.02] text-[44px] sm:text-[56px] lg:text-[72px]";
-export const DISPLAY_SM =
-  "font-extrabold tracking-[-0.03em] leading-[1.04] text-[40px] sm:text-[48px] lg:text-[60px]";
+export const DISPLAY = displayClass("lg");
 export const HEADING =
   "font-extrabold tracking-[-0.025em] leading-[1.08] text-[30px] sm:text-[36px] lg:text-[44px]";
 
 /**
- * Paper-chapter section header in the brand-book "contents" pattern: mono label, a 2px
- * Ink rule, then the title and lede on a 12-column grid.
+ * Paper-chapter section header: a 2px Ink rule, the mono "02 · FAQ" label, then the
+ * title and lede on the 12-column grid (label in columns 1–3, title from column 4).
+ * Without a title it is just the rule and the label.
  */
 export function SectionHeader({
   index,
@@ -202,50 +220,30 @@ export function SectionHeader({
   title,
   lede,
   id,
-  surface = "paper",
-  className,
-  children,
 }: {
   index?: string;
   eyebrow: string;
-  title: ReactNode;
+  title?: ReactNode;
   lede?: ReactNode;
   id?: string;
-  surface?: Surface;
-  className?: string;
-  children?: ReactNode;
 }) {
   return (
-    <header
-      className={cx(
-        "grid gap-x-10 gap-y-4 border-t-2 pt-5 md:grid-cols-12",
-        surface === "ink" ? "border-white/80" : "border-rpk-ink",
-        className,
-      )}
-    >
-      <Eyebrow
-        {...(index ? { index } : {})}
-        surface={surface}
-        className="md:col-span-4 lg:col-span-3"
-      >
+    <header className="grid gap-x-10 gap-y-4 border-t-2 border-rpk-ink pt-5 md:grid-cols-12">
+      <Eyebrow {...(index ? { index } : {})} className="min-w-0 md:col-span-4 lg:col-span-3">
         {eyebrow}
       </Eyebrow>
-      <div className="md:col-span-8 lg:col-span-9">
-        <h2 id={id} className={cx(HEADING, surface === "ink" ? "text-white" : "text-rpk-ink")}>
-          {title}
-        </h2>
-        {lede ? (
-          <p
-            className={cx(
-              "mt-4 max-w-[60ch] text-[17px] leading-[1.55] sm:text-[18px]",
-              surface === "ink" ? "text-white/72" : "text-rpk-slate",
-            )}
-          >
-            {lede}
-          </p>
-        ) : null}
-        {children}
-      </div>
+      {title ? (
+        <div className="min-w-0 md:col-span-8 lg:col-span-9">
+          <h2 id={id} className={cx(HEADING, "wrap-anywhere text-rpk-ink")}>
+            {title}
+          </h2>
+          {lede ? (
+            <p className="mt-4 max-w-[60ch] text-[17px] leading-[1.55] text-rpk-slate sm:text-[18px]">
+              {lede}
+            </p>
+          ) : null}
+        </div>
+      ) : null}
     </header>
   );
 }
@@ -289,13 +287,20 @@ export function ChapterHero({
 }) {
   return (
     <section className={cx("relative isolate overflow-hidden bg-rpk-ink text-white", className)}>
-      {bubble === "right" ? (
-        <GiantBubble className="-right-[18%] top-[14%] -z-10 w-[min(760px,92vw)] sm:-right-[10%] lg:-right-[4%] lg:top-[10%] lg:w-[min(680px,52vw)]" />
-      ) : null}
+      {bubble === "right" ? <GiantBubble size={size} /> : null}
       <Container className={cx("relative", size === "lg" ? "pb-20 sm:pb-24" : "pb-14 sm:pb-16")}>
         <div className="flex items-center justify-between gap-4 border-b border-rpk-ink-line py-4 font-rpk-mono text-[12px] tracking-[0.08em] text-white/60 uppercase">
-          <span className="truncate">{running}</span>
-          <span className="shrink-0 normal-case">{path}</span>
+          <span className="min-w-0 truncate">{running}</span>
+          <span
+            dir="ltr"
+            className={cx(
+              "max-w-[55%] min-w-0 truncate normal-case",
+              // Letter-spacing breaks Persian letter joining (e.g. a Persian tag slug).
+              /[\u0600-\u06FF]/.test(path) && "font-rpk tracking-normal",
+            )}
+          >
+            {path}
+          </span>
         </div>
         <div
           className={cx(
@@ -309,8 +314,9 @@ export function ChapterHero({
           <h1
             dir={titleDir}
             className={cx(
-              size === "lg" ? DISPLAY : DISPLAY_SM,
-              "mt-5 max-w-[16ch] text-balance text-white",
+              displayClass(size, titleDir),
+              "mt-5 text-balance text-white",
+              titleDir !== "rtl" && "max-w-[16ch]",
             )}
           >
             {title}
@@ -332,7 +338,7 @@ export function ChapterHero({
 
 /* ─── Actions ───────────────────────────────────────────────────────────── */
 
-export type ButtonVariant = "primary" | "ink" | "secondary" | "ghost";
+export type ButtonVariant = "primary" | "ink" | "secondary";
 
 /** Trailing mark: the "on-signal" colorway puts an Ink dot on coral; Ink buttons get the Signal dot. */
 function Trail({ variant, icon }: { variant: ButtonVariant; icon?: LucideIcon | "dot" }) {
@@ -390,7 +396,7 @@ export function ActionLink({
   const classes = cx(buttonClass(variant, surface, size), className);
   const content = (
     <>
-      <span>{children}</span>
+      <span className="min-w-0 truncate">{children}</span>
       <Trail variant={variant} {...(icon ? { icon } : {})} />
     </>
   );
@@ -501,7 +507,7 @@ export function Field({
           id={`${id}-error`}
           className="mt-2 flex items-center gap-2 text-[13px] font-medium text-rpk-signal-deep"
         >
-          <Dot tone="signal" size={7} className="bg-rpk-signal-deep" />
+          <Dot tone="deep" size={7} />
           {error}
         </p>
       ) : null}

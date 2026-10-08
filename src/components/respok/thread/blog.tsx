@@ -4,54 +4,24 @@ import type { PostDto } from "@/lib/blog.functions";
 import { RESPOK_SYMBOL } from "../RespokLogo";
 import { getBlogContent } from "../content/blog";
 import { useContent } from "../content";
-import { useRespok } from "../shared/context";
 import { formatPostDate, readingMinutes, textDir } from "../shared/blog";
-import { cx, SHAPE } from "./ui";
-
-const PERSIAN = /[\u0600-\u06FF]/;
-
-function humanize(slug: string): string {
-  const text = slug.replace(/[-_]+/g, " ").trim();
-  return text.charAt(0).toUpperCase() + text.slice(1);
-}
-
-/**
- * Category names come from the database. When a name has no English translation
- * yet, its (Latin) slug is a better English label than the Persian original.
- */
-export function useCategoryLabel() {
-  const { t } = useRespok();
-  return (name: string | null | undefined, slug: string | null | undefined, fallback: string) => {
-    if (!name) return fallback;
-    const translated = t(name);
-    if (!PERSIAN.test(translated)) return translated;
-    if (slug && !PERSIAN.test(slug) && /[a-z]/i.test(slug)) return humanize(slug);
-    return translated;
-  };
-}
-
-/** The Persian brand as an author is the English brand on this site. */
-export function useAuthorName() {
-  const { t, brand, settings } = useRespok();
-  return (author: string | null | undefined) => {
-    const name = (author || "").trim();
-    if (!name || name === settings.brand.name?.trim()) return brand;
-    return t(name);
-  };
-}
+import { cx, SHAPE } from "./classes";
+import { useCategoryLabel } from "./labels";
+import { Reveal } from "../shared/Reveal";
 
 const THREAD = RESPOK_SYMBOL.thread;
 const ANSWER_PATH = "path" in THREAD.accent ? THREAD.accent.path : "";
 
 const COVER_TONES = [
-  { bg: "#16142B", question: "#FFFFFF", answer: "#FF5A3C", dots: "#16142B" },
-  { bg: "#F5F5F8", question: "#16142B", answer: "#FF5A3C", dots: "#16142B" },
-  { bg: "#FFE3DC", question: "#16142B", answer: "#FF5A3C", dots: "#16142B" },
+  { bg: "#16142B", question: "#FFFFFF" },
+  { bg: "#F5F5F8", question: "#16142B" },
+  { bg: "#FFE3DC", question: "#16142B" },
 ] as const;
 
 /**
- * Branded placeholder when a post has no cover: the Thread mark, oversized and
- * cropped, with Respok "typing" inside the answer pill.
+ * Branded placeholder when a post has no cover: the Thread mark with Respok "typing"
+ * inside the answer pill. In cards it is oversized and scrolled up like a chat (the
+ * question leaves the top edge, the answer and its tail stay in view).
  */
 export function CoverArt({
   seed,
@@ -79,19 +49,19 @@ export function CoverArt({
       className={cx("block h-full w-full", className)}
     >
       <rect width={wide ? 640 : 320} height={wide ? 320 : 200} fill={tone.bg} />
-      <g transform={wide ? "translate(330 58) scale(2.2)" : "translate(96 22) scale(2.3)"}>
+      <g transform={wide ? "translate(330 58) scale(2.2)" : "translate(60 -30) scale(2.3)"}>
         <path d={THREAD.main} fill={tone.question} />
-        <path d={ANSWER_PATH} fill={tone.answer} />
-        <circle cx="50" cy="71" r="3.6" fill={tone.dots} />
-        <circle cx="63" cy="71" r="3.6" fill={tone.dots} opacity="0.7" />
-        <circle cx="76" cy="71" r="3.6" fill={tone.dots} opacity="0.45" />
+        <path d={ANSWER_PATH} fill="#FF5A3C" />
+        <circle cx="50" cy="71" r="3.6" fill="#16142B" />
+        <circle cx="63" cy="71" r="3.6" fill="#16142B" />
+        <circle cx="76" cy="71" r="3.6" fill="#16142B" />
       </g>
     </svg>
   );
 }
 
 /** Blog card: reads like a message with an attachment. */
-export function PostCard({
+function PostCard({
   post,
   headingLevel = "h2",
   featured = false,
@@ -165,7 +135,7 @@ export function PostCard({
         <Heading
           dir={textDir(post.title)}
           className={cx(
-            "mt-3 font-bold text-balance text-rpk-ink",
+            "mt-3 font-bold text-balance break-words text-rpk-ink",
             featured
               ? "text-[24px] leading-[1.15] tracking-[-0.02em] sm:text-[34px]"
               : "text-[20px] leading-[1.25] tracking-[-0.01em]",
@@ -215,6 +185,10 @@ export function PostCard({
   );
 }
 
+/**
+ * Card grid. A lone post gets the wide (featured) card and two posts share the row,
+ * so short lists never leave an empty column.
+ */
 export function PostGrid({
   posts,
   headingLevel = "h2",
@@ -225,11 +199,21 @@ export function PostGrid({
   featureFirst?: boolean;
 }) {
   return (
-    <ul className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 lg:gap-8">
+    <ul
+      className={cx(
+        "grid grid-cols-1 gap-6 sm:grid-cols-2 lg:gap-8",
+        posts.length !== 2 && "lg:grid-cols-3",
+      )}
+    >
       {posts.map((post, index) => {
-        const featured = featureFirst && index === 0;
+        const featured = (featureFirst && index === 0) || posts.length === 1;
         return (
-          <li key={post.id} className={cx(featured && "sm:col-span-2 lg:col-span-3")}>
+          <Reveal
+            as="li"
+            key={post.id}
+            delay={(index % 3) * 90}
+            className={cx(featured && "sm:col-span-2 lg:col-span-3")}
+          >
             <PostCard
               post={post}
               headingLevel={headingLevel}
@@ -237,7 +221,7 @@ export function PostGrid({
               eager={index < 3}
               index={index}
             />
-          </li>
+          </Reveal>
         );
       })}
     </ul>

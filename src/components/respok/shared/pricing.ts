@@ -45,20 +45,14 @@ const usd = new Intl.NumberFormat("en-US", {
 });
 const plain = new Intl.NumberFormat("en-US");
 
-function priceOf(
-  plan: PublicPlan,
-  period: BillingPeriod,
-  currency: "USD" | "Toman",
-): RespokPrice {
+function priceOf(plan: PublicPlan, period: BillingPeriod, currency: "USD" | "Toman"): RespokPrice {
   if (plan.isFree) return { kind: "free", amount: "Free", unit: "", note: "" };
   const monthly = currency === "USD" ? plan.usdMonthly : plan.monthly;
   const yearly = currency === "USD" ? plan.usdYearly : plan.yearly;
   const total = period === "yearly" ? yearly : monthly;
-  if (!total)
-    return { kind: "contact", amount: "Let's talk", unit: "", note: "" };
+  if (!total) return { kind: "contact", amount: "Let's talk", unit: "", note: "" };
   const perMonth = period === "yearly" ? total / 12 : total;
-  const format = (n: number) =>
-    currency === "USD" ? usd.format(n) : plain.format(Math.round(n));
+  const format = (n: number) => (currency === "USD" ? usd.format(n) : plain.format(Math.round(n)));
   return {
     kind: "amount",
     amount: format(perMonth),
@@ -97,12 +91,9 @@ export function usePricingModel(data: PricingPageData) {
   const remote = data.remotePlans?.plans ?? null;
   // Dollars only when the app really bills these plans in USD; today in-app checkout
   // charges rials (Toman), so the app's Toman prices are shown otherwise.
-  const paid = (remote ?? []).filter(
-    (p) => !p.isFree && (p.monthly || p.usdMonthly),
-  );
+  const paid = (remote ?? []).filter((p) => !p.isFree && (p.monthly || p.usdMonthly));
   const currency: "USD" | "Toman" =
-    paid.length > 0 &&
-    paid.every((p) => p.defaultCurrency === "USD" && !!p.usdMonthly)
+    paid.length > 0 && paid.every((p) => p.defaultCurrency === "USD" && !!p.usdMonthly)
       ? "USD"
       : "Toman";
 
@@ -133,9 +124,7 @@ export function usePricingModel(data: PricingPageData) {
               : {
                   kind: "amount",
                   amount: plain.format(
-                    activePeriod === "yearly"
-                      ? Math.round(plan.toman * 0.8)
-                      : plan.toman,
+                    activePeriod === "yearly" ? Math.round(plan.toman * 0.8) : plan.toman,
                   ),
                   unit: "Toman / month",
                   note: activePeriod === "yearly" ? "Billed yearly" : "",
@@ -152,12 +141,9 @@ export function usePricingModel(data: PricingPageData) {
     const isCurrent = !!currentSlug && plan.slug === currentSlug;
     const loggedIn = currentIndex >= 0;
     const isBlocked =
-      loggedIn &&
-      !isCurrent &&
-      (index < currentIndex || plan.price.kind === "free");
+      loggedIn && !isCurrent && (index < currentIndex || plan.price.kind === "free");
     const isUpgrade = loggedIn && !isCurrent && !isBlocked;
-    const contactSales =
-      plan.slug === "enterprise" || plan.price.kind === "contact";
+    const contactSales = plan.slug === "enterprise" || plan.price.kind === "contact";
     return {
       ...plan,
       cta: isCurrent
@@ -196,9 +182,7 @@ export function usePricingModel(data: PricingPageData) {
       }
     : {
         columns: STATIC_COMPARISON.columns,
-        rows: STATIC_COMPARISON.rows.filter(
-          (row) => !row.needs || flags[`${row.needs}Enabled`],
-        ),
+        rows: STATIC_COMPARISON.rows.filter((row) => !row.needs || flags[`${row.needs}Enabled`]),
       };
 
   return {

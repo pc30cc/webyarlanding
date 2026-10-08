@@ -971,10 +971,24 @@ body:has(.respok-open) {
   animation: rpk-o-grow 280ms cubic-bezier(0.2, 0.9, 0.25, 1) both;
 }
 .respok-open .rpk-o-pop {
-  animation: rpk-o-pop 360ms cubic-bezier(0.3, 1.5, 0.5, 1) both;
+  animation: rpk-o-pop 360ms cubic-bezier(0.3, 1.5, 0.5, 1) var(--rpk-o-delay, 0ms) both;
 }
 .respok-open .rpk-o-live {
   animation: rpk-o-ring 2.4s ease-out 1s infinite;
+}
+@keyframes rpk-o-fade {
+  from {
+    opacity: 0;
+  }
+}
+/* Reduced motion (kit): nothing moves or scales; everything fades. */
+@media (prefers-reduced-motion: reduce) {
+  .respok-open :is(.rpk-o-grow-tl, .rpk-o-grow-tr, .rpk-o-grow-br, .rpk-o-pop) {
+    animation-name: rpk-o-fade;
+  }
+  .respok-open .rpk-o-live {
+    animation: none;
+  }
 }
 
 .respok-open .rpk-o-prose {
@@ -992,7 +1006,7 @@ body:has(.respok-open) {
 }
 .respok-open .rpk-o-prose h2 {
   margin-top: 2.2em;
-  font-size: 30px;
+  font-size: clamp(26px, 2.2vw + 18px, 30px);
   font-weight: 800;
   line-height: 1.15;
   letter-spacing: -0.02em;
@@ -1018,13 +1032,14 @@ body:has(.respok-open) {
 .respok-open .rpk-o-prose > :first-child {
   margin-top: 0;
 }
+/* Ink links with a Signal underline: Signal Deep text is only 4.48:1 on Paper. */
 .respok-open .rpk-o-prose a {
-  color: var(--color-rpk-signal-deep);
+  color: var(--color-rpk-ink);
   font-weight: 600;
   text-decoration: underline;
-  text-decoration-thickness: 1.5px;
+  text-decoration-thickness: 2px;
   text-underline-offset: 4px;
-  text-decoration-color: rgb(211 54 26 / 0.35);
+  text-decoration-color: var(--color-rpk-signal);
   border-radius: 4px;
 }
 .respok-open .rpk-o-prose a:hover {
@@ -1073,9 +1088,11 @@ body:has(.respok-open) {
   letter-spacing: 0.06em;
   color: var(--color-rpk-slate);
 }
+/* A quote is a bubble with the dot just outside its square corner (room kept for it). */
 .respok-open .rpk-o-prose blockquote {
   position: relative;
   margin: 2em 0;
+  margin-inline-end: 20px;
   padding: 24px 28px;
   border-radius: 28px 28px 6px 28px;
   background: #fff;

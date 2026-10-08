@@ -11,8 +11,8 @@ import type { BlogPostPageData } from "../../types";
 import { OPEN_COPY } from "../copy";
 import { PostCover } from "../blog";
 import { usePostCategory } from "../blog-data";
-import { Container, CornerDot, DISPLAY_SM, Dot, Eyebrow, SectionHeader } from "../ui";
-import { cx, pad } from "../tokens";
+import { Container, CornerDot, Dot, Eyebrow, GiantBubble, SectionHeader } from "../ui";
+import { cx, displayClass, pad } from "../tokens";
 
 export function BlogPostPage({ post, related }: BlogPostPageData) {
   const { settings, brand, siteUrl } = useRespok();
@@ -22,6 +22,7 @@ export function BlogPostPage({ post, related }: BlogPostPageData) {
   const minutes = copy.minutes(readingMinutes(post.content));
   const url = siteUrl ? `${siteUrl}/blog/${post.slug}` : undefined;
   const hasCover = !!post.coverImage;
+  const rtl = textDir(post.title) === "rtl";
 
   const jsonLd = [
     {
@@ -64,6 +65,7 @@ export function BlogPostPage({ post, related }: BlogPostPageData) {
     <>
       <JsonLd data={jsonLd} />
       <section className="relative isolate overflow-hidden bg-rpk-ink text-white">
+        {hasCover ? null : <GiantBubble size="md" />}
         <Container
           className={cx("relative", hasCover ? "pb-40 sm:pb-56 lg:pb-64" : "pb-16 sm:pb-20")}
         >
@@ -71,7 +73,13 @@ export function BlogPostPage({ post, related }: BlogPostPageData) {
             <span className="truncate">
               {brand} · {copy.eyebrow}
             </span>
-            <span dir={textDir(category)} className="max-w-[50%] shrink-0 truncate">
+            <span
+              dir={textDir(category)}
+              className={cx(
+                "max-w-[50%] shrink-0 truncate",
+                textDir(category) === "rtl" && "font-rpk tracking-normal",
+              )}
+            >
               {category}
             </span>
           </div>
@@ -85,7 +93,8 @@ export function BlogPostPage({ post, related }: BlogPostPageData) {
             />
             {copy.back}
           </Link>
-          <div className="pt-10 sm:pt-14">
+          {/* A Persian title sets the reading edge: its dateline and byline follow it right. */}
+          <div className={cx("pt-10 sm:pt-14", rtl && "text-right")}>
             <Eyebrow surface="ink">
               {date ? (
                 <>
@@ -100,15 +109,20 @@ export function BlogPostPage({ post, related }: BlogPostPageData) {
             <h1
               dir={textDir(post.title)}
               className={cx(
-                DISPLAY_SM,
+                displayClass("md", rtl ? "rtl" : "ltr"),
                 "mt-5 text-balance text-white",
-                textDir(post.title) === "rtl" ? "leading-[1.3] tracking-normal" : "max-w-[22ch]",
+                !rtl && "max-w-[22ch]",
               )}
             >
               {post.title}
             </h1>
             {post.author ? (
-              <p className="mt-8 flex items-center gap-3 text-[15px] text-white/72">
+              <p
+                className={cx(
+                  "mt-8 flex items-center gap-3 text-[15px] text-white/72",
+                  rtl && "justify-end",
+                )}
+              >
                 <Dot size={8} />
                 <span>
                   {copy.by}{" "}
@@ -129,22 +143,23 @@ export function BlogPostPage({ post, related }: BlogPostPageData) {
               post={post}
               label={category}
               eager
-              className="aspect-[16/9] rounded-[40px] rounded-br-[6px] bg-rpk-ink-soft shadow-rpk-panel"
+              bubble="xl"
+              className="aspect-[16/9] bg-rpk-ink-soft shadow-rpk-panel"
             />
             <CornerDot size={22} />
           </div>
         ) : null}
 
         <div className="mt-14 grid gap-12 sm:mt-20 lg:grid-cols-12 lg:gap-10">
-          <aside className="lg:col-span-3">
+          <aside className="min-w-0 lg:col-span-3">
             <div className="lg:sticky lg:top-[104px]">
               <dl className="grid grid-cols-2 gap-x-6 border-t-2 border-rpk-ink lg:grid-cols-1">
                 {meta.map((item) => (
-                  <div key={item.label} className="border-b border-rpk-mist py-4">
+                  <div key={item.label} className="min-w-0 border-b border-rpk-mist py-4">
                     <dt className="font-rpk-mono text-[12px] tracking-[0.08em] text-rpk-slate uppercase">
                       {item.label}
                     </dt>
-                    <dd className="mt-1 text-[16px] font-semibold text-rpk-ink">
+                    <dd className="mt-1 text-[16px] font-semibold wrap-anywhere text-rpk-ink">
                       {item.dateTime ? (
                         <time dateTime={item.dateTime}>{item.value}</time>
                       ) : (
@@ -166,7 +181,7 @@ export function BlogPostPage({ post, related }: BlogPostPageData) {
                           to="/tag/$slug"
                           params={{ slug: tagSlug(tag) }}
                           dir={textDir(tag)}
-                          className="inline-flex min-h-9 items-center rounded-[12px] rounded-br-[3px] bg-white px-3 text-[14px] font-medium text-rpk-ink transition-colors hover:bg-rpk-ink hover:text-white"
+                          className="inline-flex min-h-9 max-w-full items-center rounded-[12px] rounded-br-[3px] bg-white px-3 text-[14px] font-medium wrap-anywhere text-rpk-ink transition-colors hover:bg-rpk-ink hover:text-white"
                         >
                           <span aria-hidden="true" className="mr-0.5 text-rpk-signal-deep">
                             #
@@ -181,7 +196,7 @@ export function BlogPostPage({ post, related }: BlogPostPageData) {
             </div>
           </aside>
 
-          <article className="min-w-0 lg:col-span-8 lg:col-start-5">
+          <article className="min-w-0 lg:col-span-7 lg:col-start-5">
             {post.excerpt ? (
               <p
                 dir={textDir(post.excerpt)}
@@ -219,7 +234,7 @@ export function BlogPostPage({ post, related }: BlogPostPageData) {
                     </span>
                     <span
                       dir={textDir(item.title)}
-                      className="text-[19px] leading-[1.3] font-bold tracking-[-0.01em] text-rpk-ink md:col-span-5 lg:col-span-6 lg:text-[22px]"
+                      className="min-w-0 text-[19px] leading-[1.3] font-bold tracking-[-0.01em] wrap-anywhere text-rpk-ink md:col-span-5 lg:col-span-6 lg:text-[22px]"
                     >
                       {item.title}
                     </span>

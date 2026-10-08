@@ -85,29 +85,47 @@ export function Reveal({
 
   useEffect(() => {
     const node = ref.current;
-    if (!node || prefersReducedMotion() || !("IntersectionObserver" in window)) {
+    if (!node || prefersReducedMotion()) {
       setState("shown");
       return;
     }
-    const rect = node.getBoundingClientRect();
+    const limit = () => window.innerHeight * 0.92;
     // Already on screen at hydration: leave it exactly as rendered.
-    if (rect.top < window.innerHeight * 0.92) {
+    if (node.getBoundingClientRect().top < limit()) {
       setState("shown");
       return;
     }
     setState("hidden");
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries.some((entry) => entry.isIntersecting)) {
-          setState("shown");
-          observer.disconnect();
-        }
-      },
-      { rootMargin: "0px 0px -8% 0px", threshold: 0.08 },
-    );
-    observer.observe(node);
-    return () => observer.disconnect();
-  }, []);
+    // Measure the element's real box, not the scaled/shifted hidden one, so a tiny
+    // "corner" or "pop" start state can never stay hidden off screen.
+    const realTop = () => {
+      const rect = node.getBoundingClientRect();
+      if (effect === "corner") return rect.bottom - rect.height / 0.2;
+      if (effect === "pop") return rect.top + rect.height / 2 - rect.height / 0.4;
+      if (effect === "rise") return rect.top - 16;
+      return rect.top;
+    };
+    let frame = 0;
+    const check = () => {
+      frame = 0;
+      if (realTop() < limit()) {
+        setState("shown");
+        stop();
+      }
+    };
+    const schedule = () => {
+      if (!frame) frame = window.requestAnimationFrame(check);
+    };
+    const stop = () => {
+      window.removeEventListener("scroll", schedule);
+      window.removeEventListener("resize", schedule);
+      if (frame) window.cancelAnimationFrame(frame);
+    };
+    window.addEventListener("scroll", schedule, { passive: true });
+    window.addEventListener("resize", schedule, { passive: true });
+    schedule();
+    return stop;
+  }, [effect]);
 
   const motionStyle: CSSProperties =
     state === "hidden"
@@ -122,12 +140,7 @@ export function Reveal({
         : {};
 
   return (
-    <Tag
-      ref={ref}
-      className={className}
-      style={{ ...style, ...motionStyle }}
-      {...rest}
-    >
+    <Tag ref={ref} className={className} style={{ ...style, ...motionStyle }} {...rest}>
       {children}
     </Tag>
   );

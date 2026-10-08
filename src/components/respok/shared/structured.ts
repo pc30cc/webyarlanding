@@ -28,10 +28,7 @@ export function withOverride(
   return parseSchemaJson(seoOverride?.schemaJson) ?? fallback;
 }
 
-export function breadcrumbs(
-  settings: SiteSettings,
-  items: { name: string; path: string }[],
-) {
+export function breadcrumbs(settings: SiteSettings, items: { name: string; path: string }[]) {
   return buildBreadcrumbJsonLd(settings, items);
 }
 
@@ -96,10 +93,7 @@ export function pricingJsonLd(
       offers: plans
         .map((plan) => {
           if (plan.price.kind === "contact") return null;
-          const price =
-            plan.price.kind === "free"
-              ? "0"
-              : plan.price.amount.replace(/[^\d.]/g, "");
+          const price = plan.price.kind === "free" ? "0" : plan.price.amount.replace(/[^\d.]/g, "");
           if (!price) return null;
           return {
             "@type": "Offer",
@@ -191,12 +185,7 @@ const OS: Record<AppPlatform, string> = {
   mac: "macOS",
 };
 
-export function appJsonLd(
-  settings: SiteSettings,
-  app: AppDto,
-  name: string,
-  description: string,
-) {
+export function appJsonLd(settings: SiteSettings, app: AppDto, name: string, description: string) {
   return {
     "@context": "https://schema.org",
     "@type": "SoftwareApplication",
@@ -214,9 +203,7 @@ export function downloadIndexJsonLd(
   apps: { app: AppDto; name: string; description: string }[],
 ) {
   return [
-    ...apps.map(({ app, name, description }) =>
-      appJsonLd(settings, app, name, description),
-    ),
+    ...apps.map(({ app, name, description }) => appJsonLd(settings, app, name, description)),
     breadcrumbs(settings, [
       { name: "Home", path: "/" },
       { name: "Download apps", path: "/download" },

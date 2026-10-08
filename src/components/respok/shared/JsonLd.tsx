@@ -8,9 +8,7 @@ export function JsonLd({ data }: { data: unknown }) {
   return (
     <script
       type="application/ld+json"
-      dangerouslySetInnerHTML={safeJsonLdHtml(
-        localizeStructuredData(settings, data),
-      )}
+      dangerouslySetInnerHTML={safeJsonLdHtml(localizeStructuredData(settings, data))}
     />
   );
 }

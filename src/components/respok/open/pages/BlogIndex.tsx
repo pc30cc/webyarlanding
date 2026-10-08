@@ -42,6 +42,8 @@ export function BlogIndexPage({ page, categories, category, q }: BlogIndexPageDa
     ]),
   ];
 
+  // Filtering by category keeps the current search, as searching keeps the category.
+  const keepQuery = q ? { q } : {};
   const chip =
     "inline-flex h-11 items-center gap-2 rounded-[14px] rounded-br-[4px] px-4 text-[14px] font-semibold transition-colors";
   const chipIdle = "bg-white text-rpk-ink hover:bg-rpk-mist";
@@ -101,7 +103,7 @@ export function BlogIndexPage({ page, categories, category, q }: BlogIndexPageDa
               <li>
                 <Link
                   to="/blog"
-                  search={{ page: 1 }}
+                  search={{ page: 1, ...keepQuery }}
                   aria-current={!category ? "page" : undefined}
                   className={cx(chip, !category ? chipActive : chipIdle)}
                 >
@@ -116,7 +118,7 @@ export function BlogIndexPage({ page, categories, category, q }: BlogIndexPageDa
                   <li key={c.id}>
                     <Link
                       to="/blog"
-                      search={{ category: c.slug, page: 1 }}
+                      search={{ category: c.slug, page: 1, ...keepQuery }}
                       aria-current={active ? "page" : undefined}
                       className={cx(chip, active ? chipActive : chipIdle)}
                     >

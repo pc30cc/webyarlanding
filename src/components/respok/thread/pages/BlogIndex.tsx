@@ -7,9 +7,11 @@ import { getBlogContent } from "../../content/blog";
 import { pageList, useBlogSearch } from "../../shared/blog";
 import { useRespok } from "../../shared/context";
 import { JsonLd } from "../../shared/JsonLd";
-import { PostGrid, useCategoryLabel } from "../blog";
+import { PostGrid } from "../blog";
+import { useCategoryLabel } from "../labels";
 import { THREAD_COPY } from "../copy";
-import { AnswerPill, Container, PageOpener, QuestionPill, SHAPE, chipClass, cx } from "../ui";
+import { SHAPE, chipClass, cx } from "../classes";
+import { ActionLink, AnswerPill, Container, Exchange, PageOpener, QuestionPill } from "../ui";
 
 const PAGE_BUTTON =
   "inline-flex size-11 items-center justify-center rounded-full text-[15px] font-semibold tabular-nums transition-colors duration-200";
@@ -67,7 +69,7 @@ export function BlogIndexPage({ settings, page, categories, category, q }: BlogI
                 <li key={c.id}>
                   <Link
                     to="/blog"
-                    search={{ category: c.slug, page: 1 }}
+                    search={{ category: c.slug, q, page: 1 }}
                     aria-current={category === c.slug ? "page" : undefined}
                     className={chipClass(category === c.slug)}
                   >
@@ -97,7 +99,7 @@ export function BlogIndexPage({ settings, page, categories, category, q }: BlogI
               onChange={(event) => search.setValue(event.target.value)}
               placeholder={copy.searchPlaceholder}
               className={cx(
-                "block h-12 w-full bg-rpk-paper pr-12 pl-12 text-[16px] text-rpk-ink ring-1 ring-rpk-mist ring-inset placeholder:text-rpk-slate/80 hover:ring-rpk-haze focus:bg-white focus:outline-none [&::-webkit-search-cancel-button]:hidden",
+                "block h-12 w-full bg-rpk-paper pr-12 pl-12 text-[16px] text-rpk-ink ring-1 ring-rpk-mist ring-inset placeholder:text-rpk-slate hover:ring-rpk-haze focus:bg-white focus:outline-none [&::-webkit-search-cancel-button]:hidden",
                 SHAPE.question,
               )}
             />
@@ -124,21 +126,23 @@ export function BlogIndexPage({ settings, page, categories, category, q }: BlogI
           )}
 
           {posts.length === 0 ? (
-            <div className="flex flex-col items-start py-10 sm:py-16">
-              <QuestionPill size="lg">
-                <bdi>{q ? q : copy.search}</bdi>
-              </QuestionPill>
-              <AnswerPill size="lg" away className="mt-2 ml-8 sm:ml-10">
-                {copy.empty}
-              </AnswerPill>
+            <div className="py-10 sm:py-16">
+              <Exchange
+                question={
+                  <QuestionPill size="lg" className="[overflow-wrap:anywhere]">
+                    <bdi>{q ? q : copy.search}</bdi>
+                  </QuestionPill>
+                }
+                answer={
+                  <AnswerPill size="lg" away>
+                    {copy.empty}
+                  </AnswerPill>
+                }
+              />
               {filtered && (
-                <Link
-                  to="/blog"
-                  className="mt-10 inline-flex min-h-11 items-center gap-2 rounded-md text-[15px] font-semibold text-rpk-ink underline decoration-rpk-signal decoration-2 underline-offset-[6px]"
-                >
-                  {copy.all}
-                  <ArrowRight aria-hidden="true" className="size-4" strokeWidth={2.4} />
-                </Link>
+                <ActionLink href="/blog" variant="secondary" arrow className="mt-10">
+                  {THREAD_COPY.blog.showAll}
+                </ActionLink>
               )}
             </div>
           ) : (

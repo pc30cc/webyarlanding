@@ -1,6 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { ArrowUpRight } from "lucide-react";
-import { TrustBadge } from "@/components/site/SiteFooter";
+import { TrustBadge } from "@/components/site/TrustBadge";
 import { RespokLogo } from "../RespokLogo";
 import { useRespok } from "../shared/context";
 import { useRespokFooter } from "../shared/footer";

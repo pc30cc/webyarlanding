@@ -48,9 +48,10 @@ export function TagPage({ posts, slug }: TagPageData) {
             <span aria-hidden="true" className="text-rpk-signal">
               #
             </span>
-            <span dir={textDir(slug)}>{slug}</span>
+            {slug}
           </>
         }
+        titleDir={textDir(slug)}
         size="md"
       >
         <div className="mt-8 flex flex-wrap items-center gap-4">

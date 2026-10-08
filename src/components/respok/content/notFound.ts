@@ -1,6 +1,9 @@
 import type { NotFoundKind } from "../types";
 
-const COPY: Record<NotFoundKind, { title: string; body: string; back: { label: string; to: string } }> = {
+const COPY: Record<
+  NotFoundKind,
+  { title: string; body: string; back: { label: string; to: string } }
+> = {
   page: {
     title: "Page not found",
     body: "The page you're looking for doesn't exist or has moved. Head back home or use the menu to find what you need.",

@@ -9,12 +9,7 @@
 import type { ReactNode, SVGProps } from "react";
 
 export type RespokConcept = "open" | "thread";
-export type RespokVariant =
-  | "horizontal"
-  | "stacked"
-  | "symbol"
-  | "symbol-small"
-  | "wordmark";
+export type RespokVariant = "horizontal" | "stacked" | "symbol" | "symbol-small" | "wordmark";
 export type RespokColorway = "color" | "reversed" | "on-signal" | "mono";
 
 const INK = "#16142B";
@@ -28,9 +23,7 @@ const WORDMARK =
   "M279.5 11.5V130.5M279.5 50a40.5 40.5 0 1 0 81 0a40.5 40.5 0 1 0 -81 0" +
   "M394.5 50a40.5 40.5 0 1 0 81 0a40.5 40.5 0 1 0 -81 0M512.5 -30.5V88.5M554.5 11.5L514.5 61M530.5 41.2L556.5 88.5";
 
-type Accent =
-  | { circle: readonly [number, number, number] }
-  | { path: string };
+type Accent = { circle: readonly [number, number, number] } | { path: string };
 
 interface SymbolGeometry {
   box: readonly [number, number];
@@ -93,18 +86,14 @@ const LAYOUT: Record<
   },
 };
 
-const COLORWAYS: Record<
-  RespokColorway,
-  { main: string; accent: string; word: string }
-> = {
+const COLORWAYS: Record<RespokColorway, { main: string; accent: string; word: string }> = {
   color: { main: INK, accent: SIGNAL, word: INK },
   reversed: { main: WHITE, accent: SIGNAL, word: WHITE },
   "on-signal": { main: WHITE, accent: INK, word: INK },
   mono: { main: "currentColor", accent: "currentColor", word: "currentColor" },
 };
 
-export interface RespokLogoProps
-  extends Omit<SVGProps<SVGSVGElement>, "height" | "width"> {
+export interface RespokLogoProps extends Omit<SVGProps<SVGSVGElement>, "height" | "width"> {
   concept?: RespokConcept;
   variant?: RespokVariant;
   colorway?: RespokColorway;

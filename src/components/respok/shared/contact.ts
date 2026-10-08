@@ -30,12 +30,8 @@ export function useContactForm() {
     staleTime: 0,
   });
   const [values, setValues] = useState(EMPTY);
-  const [errors, setErrors] = useState<Partial<Record<ContactField, string>>>(
-    {},
-  );
-  const [status, setStatus] = useState<"idle" | "sending" | "sent" | "error">(
-    "idle",
-  );
+  const [errors, setErrors] = useState<Partial<Record<ContactField, string>>>({});
+  const [status, setStatus] = useState<"idle" | "sending" | "sent" | "error">("idle");
   const [message, setMessage] = useState("");
 
   function refreshCaptcha() {

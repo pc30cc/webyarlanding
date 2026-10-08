@@ -42,7 +42,10 @@ export function SlaPage(_: LegalPageData) {
           {copy.stats.map((stat, index) => {
             const Icon = stat.icon;
             return (
-              <li key={stat.title} className="flex flex-col bg-rpk-ink p-6 sm:p-7">
+              <li
+                key={stat.title}
+                className="flex min-w-0 flex-col bg-rpk-ink p-6 wrap-anywhere sm:p-7"
+              >
                 <div className="flex items-center justify-between">
                   <span className="font-rpk-mono text-[12px] tracking-[0.08em] text-rpk-signal">
                     {pad(index + 1)}
@@ -51,7 +54,7 @@ export function SlaPage(_: LegalPageData) {
                     <Icon aria-hidden="true" className="size-5 text-white/60" strokeWidth={1.75} />
                   ) : null}
                 </div>
-                <p className="mt-6 text-[36px] sm:mt-10 leading-none font-extrabold tracking-[-0.03em] text-white tabular-nums sm:text-[40px] xl:text-[34px]">
+                <p className="mt-6 text-[36px] leading-none font-extrabold tracking-[-0.03em] text-white tabular-nums sm:mt-10 sm:text-[40px] xl:text-[34px]">
                   {stat.value}
                 </p>
                 <h3 className="mt-4 text-[16px] font-semibold text-white">{stat.title}</h3>
@@ -72,12 +75,12 @@ export function SlaPage(_: LegalPageData) {
         <div className="mt-10 grid gap-x-10 sm:mt-12 md:grid-cols-12">
           <Reveal
             effect="corner"
-            className="mr-6 sm:mr-8 md:col-span-8 md:col-start-5 lg:col-span-9 lg:col-start-4"
+            className="mr-6 min-w-0 sm:mr-8 md:col-span-8 md:col-start-5 lg:col-span-9 lg:col-start-4"
           >
             <div className="relative">
               <Card className="overflow-hidden">
                 <div className="overflow-x-auto">
-                  <table className="w-full min-w-[480px] border-collapse text-left">
+                  <table className="w-full border-collapse text-left">
                     <caption className="sr-only">{copy.credits.title}</caption>
                     <thead>
                       <tr className="border-b-2 border-rpk-ink">
@@ -85,7 +88,7 @@ export function SlaPage(_: LegalPageData) {
                           <th
                             key={column}
                             scope="col"
-                            className="px-6 pt-6 pb-3 font-rpk-mono text-[12px] font-normal tracking-[0.08em] text-rpk-slate uppercase sm:px-8"
+                            className="px-4 pt-6 pb-3 font-rpk-mono text-[12px] font-normal tracking-[0.08em] text-rpk-slate uppercase sm:px-8"
                           >
                             {column}
                           </th>
@@ -99,12 +102,12 @@ export function SlaPage(_: LegalPageData) {
                           <tr key={uptime} className="border-b border-rpk-mist last:border-b-0">
                             <th
                               scope="row"
-                              className="px-6 py-6 font-rpk-mono text-[16px] font-medium whitespace-nowrap text-rpk-ink sm:px-8"
+                              className="px-4 py-6 font-rpk-mono text-[14px] font-medium whitespace-nowrap text-rpk-ink sm:px-8 sm:text-[16px]"
                             >
                               {uptime}
                             </th>
-                            <td className="px-6 py-6 sm:px-8">
-                              <span className="block text-[17px] font-semibold text-rpk-ink">
+                            <td className="px-4 py-6 sm:px-8">
+                              <span className="block text-[15px] leading-[1.35] font-semibold text-rpk-ink sm:text-[17px]">
                                 {credit}
                               </span>
                               {share > 0 ? (

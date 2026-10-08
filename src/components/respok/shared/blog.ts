@@ -70,3 +70,23 @@ export function useBlogSearch(initial: string | undefined) {
   }, [value]);
   return { value, setValue };
 }
+
+/**
+ * Blog category names are editor content and are not part of the site translation.
+ * On the English site, a Persian name falls back to its translation or, failing that,
+ * to its Latin slug ("customer-support" → "Customer support").
+ */
+export function blogCategoryLabel(
+  t: (text: string) => string,
+  name: string | undefined,
+  slug: string | undefined,
+  fallback = "General",
+): string {
+  const translated = name ? t(name) : "";
+  if (translated && !/[\u0600-\u06ff]/.test(translated)) return translated;
+  if (slug && /^[a-z0-9-]+$/i.test(slug)) {
+    const words = slug.replace(/-+/g, " ").trim();
+    return words.charAt(0).toUpperCase() + words.slice(1);
+  }
+  return fallback;
+}

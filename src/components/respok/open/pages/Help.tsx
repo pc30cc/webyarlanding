@@ -11,6 +11,7 @@ import { OPEN_COPY } from "../copy";
 import { Linkified } from "../legal";
 import {
   ActionLink,
+  BubbleGlyph,
   Card,
   ChapterHero,
   Container,
@@ -20,8 +21,6 @@ import {
   SectionHeader,
 } from "../ui";
 import { pad, textLinkClass } from "../tokens";
-
-const DELETION_SUBJECT = "Account%20Deletion%20Request";
 
 export function HelpPage(_: LegalPageData) {
   const { settings, brand, siteUrl } = useRespok();
@@ -71,7 +70,7 @@ export function HelpPage(_: LegalPageData) {
   ];
 
   const cardBody = "mt-3 text-[16px] leading-[1.6] text-rpk-slate";
-  const cardTitle = "mt-8 text-[22px] leading-[1.2] font-bold tracking-[-0.01em]";
+  const cardTitle = "mt-8 text-[22px] leading-[1.2] font-bold tracking-[-0.01em] wrap-anywhere";
 
   return (
     <>
@@ -97,10 +96,8 @@ export function HelpPage(_: LegalPageData) {
 
       {/* 01 · Contact */}
       <Container className="py-16 sm:py-24">
-        <div className="border-b-2 border-rpk-ink pb-2">
-          <Eyebrow index="01">{OPEN_COPY.help.contact}</Eyebrow>
-        </div>
-        <div className="mt-8 grid gap-5 md:grid-cols-2 md:gap-6">
+        <SectionHeader index="01" eyebrow={OPEN_COPY.help.contact} />
+        <div className="mt-8 grid gap-5 md:grid-cols-2 md:gap-6 [&>*]:min-w-0">
           {email ? (
             <Reveal effect="corner">
               <Card tone="ink" className="relative flex h-full flex-col p-7 sm:p-9">
@@ -125,7 +122,7 @@ export function HelpPage(_: LegalPageData) {
               <h2 className={cardTitle}>{copy.cards.response.title}</h2>
               <p className={cardBody}>{copy.cards.response.body}</p>
               {phone || address ? (
-                <dl className="mt-6 grid gap-3 border-t border-rpk-mist pt-5">
+                <dl className="mt-6 grid gap-3 border-t border-rpk-mist pt-5 wrap-anywhere">
                   {phone ? (
                     <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
                       <dt className="font-rpk-mono text-[12px] tracking-[0.08em] text-rpk-slate uppercase">
@@ -163,7 +160,7 @@ export function HelpPage(_: LegalPageData) {
                 <p className={cardBody}>
                   {copy.cards.deletion.before}{" "}
                   <a
-                    href={`mailto:${email}?subject=${DELETION_SUBJECT}`}
+                    href={`mailto:${email}?subject=${encodeURIComponent(copy.cards.deletion.subject)}`}
                     className={textLinkClass()}
                   >
                     {email}
@@ -211,7 +208,7 @@ export function HelpPage(_: LegalPageData) {
           {copy.faqs.map((faq, index) => (
             <li
               key={faq.q}
-              className="grid gap-x-10 gap-y-3 border-b border-rpk-mist py-7 md:grid-cols-12 md:py-9"
+              className="grid gap-x-10 gap-y-3 border-b border-rpk-mist py-7 md:grid-cols-12 md:py-9 [&>*]:min-w-0 [&>*]:wrap-anywhere"
             >
               <span
                 aria-hidden="true"
@@ -230,18 +227,30 @@ export function HelpPage(_: LegalPageData) {
         </ol>
       </Container>
 
-      {/* 03 · Closing */}
+      {/* 03 · Closing: a big bubble with the dot outside its corner. */}
       {email ? (
         <Container className="pb-24 sm:pb-32">
           <Reveal effect="corner">
             <div className="relative mr-6 sm:mr-8">
-              <Card tone="ink" size="xl" className="relative overflow-hidden p-8 sm:p-12 lg:p-16">
-                <Eyebrow index="03" surface="ink">
-                  {OPEN_COPY.help.stuck}
-                </Eyebrow>
-                <p className="mt-6 max-w-[40ch] text-[22px] leading-[1.4] font-semibold tracking-[-0.01em] text-white sm:text-[28px]">
-                  <Linkified text={copy.closing(email)} surface="ink" />
-                </p>
+              <Card
+                tone="ink"
+                size="xl"
+                className="relative isolate overflow-hidden p-8 sm:p-12 lg:grid lg:grid-cols-12 lg:items-end lg:gap-10 lg:p-16"
+              >
+                <BubbleGlyph className="absolute -top-[40%] right-[6%] -z-10 hidden w-[300px] text-rpk-ink-soft lg:block" />
+                <div className="lg:col-span-8">
+                  <Eyebrow index="03" surface="ink">
+                    {OPEN_COPY.help.write}
+                  </Eyebrow>
+                  <p className="mt-6 max-w-[40ch] text-[22px] leading-[1.4] font-semibold tracking-[-0.01em] text-white sm:text-[28px]">
+                    <Linkified text={copy.closing(email)} surface="ink" />
+                  </p>
+                </div>
+                <div className="mt-8 lg:col-span-4 lg:mt-0 lg:justify-self-end">
+                  <ActionLink to={`mailto:${email}`} variant="primary" size="lg">
+                    {email}
+                  </ActionLink>
+                </div>
               </Card>
               <CornerDot size={22} />
             </div>

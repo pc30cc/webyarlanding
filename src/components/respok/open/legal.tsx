@@ -3,7 +3,7 @@
  * (brand-book "contents" rows with a live dot on the section you're reading), numbered
  * sections, emails turned into mailto links.
  */
-import { Fragment, useEffect, useState, type ReactNode } from "react";
+import { Fragment, useEffect, useState } from "react";
 import type { LegalSection } from "@/lib/legal-en";
 import { OPEN_COPY } from "./copy";
 import { Container, Dot, type Surface } from "./ui";
@@ -41,49 +41,54 @@ function LabelledItem({ text }: { text: string }) {
   );
 }
 
-export interface TocEntry {
+interface TocEntry {
   id: string;
   n: string;
   title: string;
 }
 
-/** Highlights the section currently being read. */
+/** Offset of the reading line below the sticky header. */
+const READING_LINE = 140;
+
+/**
+ * The section being read: the last one whose top has passed the reading line. Before the
+ * first section reaches it, nothing is highlighted.
+ */
 function useScrollSpy(ids: string[]): string | null {
   const [active, setActive] = useState<string | null>(null);
   const key = ids.join("|");
   useEffect(() => {
-    if (!("IntersectionObserver" in window)) return;
     const nodes = key
       .split("|")
       .map((id) => document.getElementById(id))
       .filter((node): node is HTMLElement => !!node);
-    const visible = new Map<string, number>();
-    const observer = new IntersectionObserver(
-      (entries) => {
-        for (const entry of entries) {
-          if (entry.isIntersecting) visible.set(entry.target.id, entry.boundingClientRect.top);
-          else visible.delete(entry.target.id);
-        }
-        const first = [...visible.entries()].sort((a, b) => a[1] - b[1])[0];
-        if (first) setActive(first[0]);
-      },
-      { rootMargin: "-96px 0px -55% 0px", threshold: 0 },
-    );
-    nodes.forEach((node) => observer.observe(node));
-    return () => observer.disconnect();
+    let frame = 0;
+    const update = () => {
+      frame = 0;
+      let current: string | null = null;
+      for (const node of nodes) {
+        if (node.getBoundingClientRect().top - READING_LINE > 0) break;
+        current = node.id;
+      }
+      setActive(current);
+    };
+    const schedule = () => {
+      if (!frame) frame = requestAnimationFrame(update);
+    };
+    update();
+    window.addEventListener("scroll", schedule, { passive: true });
+    window.addEventListener("resize", schedule);
+    return () => {
+      cancelAnimationFrame(frame);
+      window.removeEventListener("scroll", schedule);
+      window.removeEventListener("resize", schedule);
+    };
   }, [key]);
   return active;
 }
 
-export function TableOfContents({
-  entries,
-  active,
-  label = OPEN_COPY.legal.contents,
-}: {
-  entries: TocEntry[];
-  active: string | null;
-  label?: string;
-}) {
+function TableOfContents({ entries, active }: { entries: TocEntry[]; active: string | null }) {
+  const label = OPEN_COPY.legal.contents;
   return (
     <nav aria-label={label}>
       <p className="flex items-center justify-between border-b-2 border-rpk-ink pb-2 font-rpk-mono text-[12px] tracking-[0.08em] text-rpk-slate uppercase">
@@ -127,7 +132,7 @@ export function TableOfContents({
 }
 
 /** Mobile contents: a collapsible block before the text. */
-export function CollapsibleContents({ entries }: { entries: TocEntry[] }) {
+function CollapsibleContents({ entries }: { entries: TocEntry[] }) {
   return (
     <details className="group/details rounded-[24px] rounded-br-[6px] bg-white lg:hidden">
       <summary className="flex min-h-14 cursor-pointer list-none items-center justify-between gap-4 rounded-[24px] rounded-br-[6px] px-5 py-3 [&::-webkit-details-marker]:hidden">
@@ -166,7 +171,7 @@ function tocFromSections(sections: LegalSection[]): TocEntry[] {
 }
 
 /** Paper chapter with sticky contents (desktop) and numbered sections. */
-export function LegalBody({ sections, aside }: { sections: LegalSection[]; aside?: ReactNode }) {
+export function LegalBody({ sections }: { sections: LegalSection[] }) {
   const entries = tocFromSections(sections);
   const active = useScrollSpy(entries.map((entry) => entry.id));
 
@@ -176,7 +181,6 @@ export function LegalBody({ sections, aside }: { sections: LegalSection[]; aside
         <aside className="hidden lg:col-span-4 lg:block xl:col-span-3">
           <div className="sticky top-[104px] max-h-[calc(100dvh-128px)] overflow-y-auto pr-2 pb-4">
             <TableOfContents entries={entries} active={active} />
-            {aside}
           </div>
         </aside>
         <div className="min-w-0 lg:col-span-8 xl:col-span-8 xl:col-start-5">
@@ -212,7 +216,7 @@ export function LegalBody({ sections, aside }: { sections: LegalSection[]; aside
                           {section.body.map((text, i) => (
                             <li
                               key={i}
-                              className="relative pl-6 text-[17px] leading-[1.65] text-rpk-ink/85"
+                              className="relative max-w-[68ch] pl-6 text-[17px] leading-[1.65] text-rpk-ink/85"
                             >
                               <span
                                 aria-hidden="true"
@@ -225,7 +229,10 @@ export function LegalBody({ sections, aside }: { sections: LegalSection[]; aside
                       ) : (
                         <div className="mt-4 space-y-4">
                           {section.body.map((text, i) => (
-                            <p key={i} className="text-[17px] leading-[1.7] text-rpk-ink/85">
+                            <p
+                              key={i}
+                              className="max-w-[68ch] text-[17px] leading-[1.7] text-rpk-ink/85"
+                            >
                               <LabelledItem text={text} />
                             </p>
                           ))}

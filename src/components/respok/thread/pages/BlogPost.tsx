@@ -9,8 +9,11 @@ import { formatPostDate, readingMinutes, tagSlug, textDir } from "../../shared/b
 import { useRespok } from "../../shared/context";
 import { JsonLd } from "../../shared/JsonLd";
 import { Markdown } from "../../shared/Markdown";
-import { CoverArt, PostGrid, useAuthorName, useCategoryLabel } from "../blog";
-import { Container, SHAPE, SectionHeader, chipClass, cx } from "../ui";
+import { CoverArt, PostGrid } from "../blog";
+import { useAuthorName, useCategoryLabel } from "../labels";
+import { THREAD_COPY } from "../copy";
+import { SHAPE, chipClass, cx } from "../classes";
+import { Container, SectionHeader } from "../ui";
 
 /** "Sara Mitchell" → "SM" */
 function initials(name: string): string {
@@ -86,7 +89,8 @@ export function BlogPostPage({ settings, post, related }: BlogPostPageData) {
                 {copy.back}
               </Link>
 
-              <div className="mt-10 sm:mt-14">
+              {/* The article column follows the post's language (Persian posts align right). */}
+              <div dir={titleDir} className="mt-10 sm:mt-14">
                 {post.categorySlug ? (
                   <Link
                     to="/blog"
@@ -98,10 +102,7 @@ export function BlogPostPage({ settings, post, related }: BlogPostPageData) {
                 ) : (
                   <span className={chipClass(false, "!min-h-9 !text-[13px]")}>{category}</span>
                 )}
-                <h1
-                  dir={titleDir}
-                  className="mt-6 text-[36px] leading-[1.06] font-extrabold tracking-[-0.03em] text-balance text-rpk-ink sm:text-[52px] lg:text-[60px]"
-                >
+                <h1 className="mt-6 text-[36px] leading-[1.06] font-extrabold tracking-[-0.03em] text-balance break-words text-rpk-ink sm:text-[52px] lg:text-[60px]">
                   {post.title}
                 </h1>
 
@@ -125,12 +126,15 @@ export function BlogPostPage({ settings, post, related }: BlogPostPageData) {
                         {initials(author)}
                       </span>
                     )}
-                    <p className="text-[15px] font-semibold text-rpk-ink">
+                    <p dir="ltr" className="text-[15px] font-semibold text-rpk-ink">
                       <span className="text-rpk-slate">{copy.by} </span>
                       <bdi>{author}</bdi>
                     </p>
                   </div>
-                  <p className="flex flex-wrap items-center gap-x-3 font-rpk-mono text-[13px] tracking-[0.04em] text-rpk-slate">
+                  <p
+                    dir="ltr"
+                    className="flex flex-wrap items-center gap-x-3 font-rpk-mono text-[13px] tracking-[0.04em] text-rpk-slate"
+                  >
                     {date && (
                       <>
                         <time dateTime={post.publishedAt || post.createdAt}>{date}</time>
@@ -169,7 +173,7 @@ export function BlogPostPage({ settings, post, related }: BlogPostPageData) {
 
         <div className="bg-white pt-12 pb-20 sm:pt-16 sm:pb-28">
           <Container>
-            <div className="mx-auto max-w-[760px]">
+            <div dir={textDir(post.content)} className="mx-auto max-w-[760px]">
               {post.excerpt && (
                 <p
                   dir={textDir(post.excerpt)}
@@ -200,12 +204,13 @@ export function BlogPostPage({ settings, post, related }: BlogPostPageData) {
                         <Link
                           to="/tag/$slug"
                           params={{ slug: tagSlug(tag) }}
+                          dir={textDir(tag)}
                           className={chipClass(false)}
                         >
                           <span aria-hidden="true" className="text-rpk-signal-deep">
                             #
                           </span>
-                          <bdi>{tag}</bdi>
+                          {tag}
                         </Link>
                       </li>
                     ))}
@@ -220,7 +225,12 @@ export function BlogPostPage({ settings, post, related }: BlogPostPageData) {
       {related.length > 0 && (
         <section aria-labelledby="related-posts" className="bg-rpk-paper py-16 sm:py-24">
           <Container>
-            <SectionHeader id="related-posts" title={copy.related} className="mb-10 sm:mb-12" />
+            <SectionHeader
+              id="related-posts"
+              question={THREAD_COPY.blog.relatedQuestion}
+              title={copy.related}
+              className="mb-10 sm:mb-12"
+            />
             <PostGrid posts={related.slice(0, 3)} headingLevel="h3" />
           </Container>
         </section>

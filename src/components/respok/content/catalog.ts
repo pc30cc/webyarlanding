@@ -1,7 +1,10 @@
 import type { CatalogType } from "@/lib/catalog.functions";
 import { joinEn, type ContentFlags } from ".";
 
-export function getCatalogContent(kind: CatalogType, { callEnabled: call, aiEnabled: ai, brand }: ContentFlags) {
+export function getCatalogContent(
+  kind: CatalogType,
+  { callEnabled: call, aiEnabled: ai, brand }: ContentFlags,
+) {
   if (kind === "product")
     return {
       question: "What can I do with it?",

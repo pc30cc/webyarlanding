@@ -38,7 +38,10 @@ function useIsActive() {
   return (link: NavLinkItem) => {
     if (link.hash) return false;
     const clean = pathname.replace(/\/+$/, "") || "/";
-    return link.to === "/" ? clean === "/" : clean === link.to || clean.startsWith(`${link.to}/`);
+    if (link.to === "/") return clean === "/";
+    // Tag pages are part of the blog.
+    if (link.to === "/blog" && clean.startsWith("/tag/")) return true;
+    return clean === link.to || clean.startsWith(`${link.to}/`);
   };
 }
 
@@ -102,14 +105,18 @@ function MegaPanel({
     >
       <div className="columns-2 gap-x-10">
         {categories.map((category) => (
-          <section
+          <div
             key={category.id}
-            aria-label={category.title}
+            role="group"
+            aria-labelledby={`${id}-${category.id}`}
             className="mb-7 break-inside-avoid"
           >
-            <h3 className="border-b-2 border-rpk-ink pb-2 font-rpk-mono text-[12px] tracking-[0.08em] text-rpk-slate uppercase">
+            <p
+              id={`${id}-${category.id}`}
+              className="border-b-2 border-rpk-ink pb-2 font-rpk-mono text-[12px] tracking-[0.08em] text-rpk-slate uppercase"
+            >
               {category.title}
-            </h3>
+            </p>
             <ul>
               {category.items.map((item) => {
                 const Icon = getIcon(item.icon);
@@ -146,7 +153,7 @@ function MegaPanel({
                 );
               })}
             </ul>
-          </section>
+          </div>
         ))}
       </div>
       <div className="-mx-7 -mb-7 flex items-center justify-between gap-4 rounded-br-[28px] rounded-bl-[28px] border-t border-rpk-mist bg-rpk-paper px-7 py-4">
@@ -355,7 +362,7 @@ function AuthActions({ layout }: { layout: "bar" | "sheet" }) {
         <span
           className={cx(
             "truncate text-[14px]",
-            sheet ? "font-semibold text-rpk-ink" : "max-w-[180px] text-white/70",
+            sheet ? "font-semibold text-rpk-ink" : "hidden max-w-[180px] text-white/70 xl:inline",
           )}
         >
           {auth.welcome}

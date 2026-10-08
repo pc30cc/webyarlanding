@@ -18,9 +18,7 @@ export function RespokNotFoundSwitch({
   kind: NotFoundKind;
   children: ReactNode;
 }) {
-  const root = rootRoute.useLoaderData() as
-    | { settings?: SiteSettings }
-    | undefined;
+  const root = rootRoute.useLoaderData() as { settings?: SiteSettings } | undefined;
   const settings = root?.settings;
   if (settings && getSiteLanguage(settings) === "en")
     return <RespokPage page="notFound" data={{ settings, kind }} />;

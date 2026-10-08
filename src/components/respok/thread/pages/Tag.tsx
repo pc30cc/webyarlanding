@@ -7,7 +7,7 @@ import { useRespok } from "../../shared/context";
 import { JsonLd } from "../../shared/JsonLd";
 import { PostGrid } from "../blog";
 import { THREAD_COPY } from "../copy";
-import { Badge, Container, Eyebrow, PageOpener } from "../ui";
+import { Badge, Container, PageOpener } from "../ui";
 
 export function TagPage({ settings, posts, slug }: TagPageData) {
   const { siteUrl } = useRespok();
@@ -40,19 +40,24 @@ export function TagPage({ settings, posts, slug }: TagPageData) {
     <>
       <JsonLd data={jsonLd} />
       <PageOpener
-        question={`${THREAD_COPY.blog.tagQuestion} #${slug}`}
-        title={
+        question={
           <>
-            <Eyebrow as="span" className="mb-4 block">
-              {copy.tag.eyebrow}
-            </Eyebrow>
-            <span className="block break-words">
-              <span aria-hidden="true" className="text-rpk-signal-deep">
-                #
-              </span>
-              <bdi dir={textDir(slug)}>{slug}</bdi>
-            </span>
+            {THREAD_COPY.blog.tagQuestion}{" "}
+            {/* Short tags stay on one line instead of breaking at a hyphen. */}
+            <bdi className={slug.length <= 24 ? "whitespace-nowrap" : "[overflow-wrap:anywhere]"}>
+              #{slug}
+            </bdi>
           </>
+        }
+        eyebrow={copy.tag.eyebrow}
+        title={
+          <span className="block break-words">
+            <span className="sr-only">{copy.tag.eyebrow}: </span>
+            <span aria-hidden="true" className="text-rpk-signal-deep">
+              #
+            </span>
+            <bdi dir={textDir(slug)}>{slug}</bdi>
+          </span>
         }
         meta={<Badge tone="ink">{copy.tag.count(posts.length)}</Badge>}
       />

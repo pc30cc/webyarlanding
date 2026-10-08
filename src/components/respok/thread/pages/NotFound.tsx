@@ -1,6 +1,7 @@
 import type { NotFoundPageData } from "../../types";
 import { getNotFoundContent } from "../../content/notFound";
-import { ActionLink, Container, Conversation, OpenerMark, TYPE, cx } from "../ui";
+import { TYPE, cx } from "../classes";
+import { ActionLink, Container, Conversation, OpenerMark } from "../ui";
 
 /** 404: the visitor asks, and the answer pill is an outline — nobody's here. */
 export function NotFoundPage({ kind }: NotFoundPageData) {

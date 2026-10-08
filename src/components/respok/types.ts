@@ -6,11 +6,7 @@ import type { ComponentType, ReactNode } from "react";
 import type { EnglishTemplate, SiteSettings } from "@/lib/settings";
 import type { SeoPageDto } from "@/lib/seo.functions";
 import type { AppDto } from "@/lib/apps.functions";
-import type {
-  CatalogCategoryDto,
-  CatalogItemDto,
-  CatalogType,
-} from "@/lib/catalog.functions";
+import type { CatalogCategoryDto, CatalogItemDto, CatalogType } from "@/lib/catalog.functions";
 import type { CategoryDto, PostDto, PostPageDto } from "@/lib/blog.functions";
 import type { PlansComparison, PublicPlan } from "@/lib/plans";
 

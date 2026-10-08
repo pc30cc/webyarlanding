@@ -16,7 +16,7 @@ export function buttonClass(
   size: "md" | "lg" | "sm" = "md",
 ): string {
   const base =
-    "group/btn relative inline-flex select-none items-center justify-center gap-3 whitespace-nowrap font-semibold transition-[transform,box-shadow,background-color,border-color,color] duration-200 ease-rpk-spring active:scale-[.97] disabled:pointer-events-none disabled:opacity-50 rounded-[22px] rounded-br-[6px]";
+    "group/btn relative inline-flex max-w-full select-none items-center justify-center gap-3 whitespace-nowrap font-semibold transition-[transform,box-shadow,background-color,border-color,color] duration-200 ease-rpk-spring active:scale-[.97] disabled:pointer-events-none disabled:opacity-50 rounded-[22px] rounded-br-[6px]";
   const sizes = {
     sm: "h-11 px-4 text-[14px]",
     md: "h-12 px-6 text-[15px]",
@@ -30,19 +30,18 @@ export function buttonClass(
       surface === "ink"
         ? "border border-white/25 text-white hover:-translate-y-px hover:border-white/60 hover:bg-white/[0.06]"
         : "border border-rpk-ink/20 bg-white/40 text-rpk-ink hover:-translate-y-px hover:border-rpk-ink/50 hover:bg-white",
-    ghost:
-      surface === "ink"
-        ? "h-auto px-0 text-white hover:text-white/80"
-        : "h-auto px-0 text-rpk-ink hover:text-rpk-signal-deep",
   };
-  return cx(base, variant === "ghost" ? "" : sizes[size], variants[variant]);
+  return cx(base, sizes[size], variants[variant]);
 }
 
-/** Inline text link: Signal Deep on light (4.87:1), white on Ink. */
+/**
+ * Inline text link. Ink text with a Signal underline on light surfaces: Signal Deep text
+ * is only 4.48:1 on Paper (large text only, per the brand book). White on Ink.
+ */
 export function textLinkClass(surface: Surface = "paper"): string {
   return surface === "ink"
     ? "rounded-[4px] text-white underline decoration-white/35 decoration-[1.5px] underline-offset-[5px] transition-colors hover:decoration-rpk-signal"
-    : "rounded-[4px] font-semibold text-rpk-signal-deep underline decoration-rpk-signal-deep/30 decoration-[1.5px] underline-offset-[5px] transition-colors hover:decoration-rpk-signal-deep";
+    : "rounded-[4px] font-semibold text-rpk-ink underline decoration-rpk-signal decoration-2 underline-offset-[5px] transition-[text-decoration-color] hover:decoration-rpk-ink";
 }
 
 export function inputClass(invalid: boolean, extra?: string): string {
@@ -69,5 +68,27 @@ export function anchorId(text: string): string {
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, "-")
       .replace(/^-|-$/g, "") || "section"
+  );
+}
+
+const DISPLAY_SIZE = {
+  lg: "text-[44px] sm:text-[56px] lg:text-[72px]",
+  md: "text-[40px] sm:text-[48px] lg:text-[60px]",
+} as const;
+
+/**
+ * Display title classes. Latin: tight Figtree 800 at line-height ~1.0. Persian/Arabic
+ * titles (blog posts) get no negative tracking (it breaks letter joining) and a taller
+ * line for the script's ascenders and dots.
+ */
+export function displayClass(size: "lg" | "md", dir?: "ltr" | "rtl"): string {
+  return cx(
+    "font-extrabold break-words",
+    DISPLAY_SIZE[size],
+    dir === "rtl"
+      ? "leading-[1.35] tracking-normal"
+      : size === "lg"
+        ? "leading-[1.02] tracking-[-0.035em]"
+        : "leading-[1.04] tracking-[-0.03em]",
   );
 }

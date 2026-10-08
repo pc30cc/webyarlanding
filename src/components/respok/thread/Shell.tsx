@@ -8,7 +8,7 @@ import {
 } from "react";
 import { Link, useRouterState } from "@tanstack/react-router";
 import { ArrowRight, ChevronDown, Menu, X } from "lucide-react";
-import { TrustBadge } from "@/components/site/SiteFooter";
+import { TrustBadge } from "@/components/site/TrustBadge";
 import { getIcon } from "@/lib/icon-registry";
 import type { RespokShellProps } from "../types";
 import { RespokLogo } from "../RespokLogo";
@@ -24,7 +24,9 @@ import {
   type NavLinkItem,
 } from "../shared/nav";
 import { THREAD_COPY } from "./copy";
-import { ActionButton, ActionLink, Container, Eyebrow, QuestionPill, SHAPE, cx } from "./ui";
+import { SHAPE, cx } from "./classes";
+import { ActionButton, ActionLink, Container, Eyebrow, Exchange, QuestionPill } from "./ui";
+import { Reveal } from "../shared/Reveal";
 
 type MenuKind = "products" | "solutions";
 
@@ -35,6 +37,8 @@ function usePathname(): string {
 function isActive(pathname: string, link: NavLinkItem): boolean {
   if (link.hash) return false;
   const clean = pathname.replace(/\/+$/, "") || "/";
+  // Tag pages are part of the blog.
+  if (link.to === "/blog" && clean.startsWith("/tag/")) return true;
   return clean === link.to || clean.startsWith(`${link.to}/`);
 }
 
@@ -196,7 +200,7 @@ function NavMenu({
           >
             {categories.map((category) => (
               <div key={category.id} className="min-w-0 p-2">
-                <Eyebrow as="p" className="px-3 pt-2 pb-3 !text-[12px]">
+                <Eyebrow as="p" className="px-3 pt-2 pb-3 !text-[12px] !tracking-[0.04em]">
                   {category.title}
                 </Eyebrow>
                 <ul className="space-y-0.5">
@@ -325,8 +329,14 @@ function MobileSheet({
       onKeyDown={trapFocus}
       className="fixed inset-0 z-[70] flex flex-col bg-white animate-in fade-in-0 slide-in-from-bottom-4 duration-300 lg:hidden"
     >
-      <div className="flex h-[76px] shrink-0 items-center justify-between px-4 pt-3 sm:px-6">
-        <Link to="/" onClick={onNavigate} aria-label={`${brand} home`} className="rounded-md pl-2">
+      {/* Same positions as the header bar, so logo and button don't jump. */}
+      <div className="flex h-[76px] shrink-0 items-center justify-between pt-3 pr-5 pl-3 sm:pr-6 sm:pl-4">
+        <Link
+          to="/"
+          onClick={onNavigate}
+          aria-label={`${brand} home`}
+          className="ml-5 rounded-md sm:ml-6"
+        >
           <RespokLogo concept="thread" height={26} title="" />
         </Link>
         <button
@@ -443,12 +453,15 @@ function MobileSheet({
             );
           })}
         </ul>
-        <div className="mt-10 flex flex-col items-start">
-          <QuestionPill size="md">{THREAD_COPY.footer.question}</QuestionPill>
-          <ActionLink href="/contact" arrow onClick={onNavigate} className="mt-2 ml-8">
-            {THREAD_COPY.footer.answer}
-          </ActionLink>
-        </div>
+        <Exchange
+          className="mt-10"
+          question={<QuestionPill size="md">{THREAD_COPY.footer.question}</QuestionPill>}
+          answer={
+            <ActionLink href="/contact" arrow onClick={onNavigate}>
+              {THREAD_COPY.footer.answer}
+            </ActionLink>
+          }
+        />
       </nav>
 
       {auth.enabled && (auth.isLoggedIn || auth.loginUrl || auth.signupUrl) && (
@@ -619,7 +632,7 @@ function Header() {
                 <ActionLink
                   href={auth.signupUrl}
                   size="sm"
-                  className="!hidden !h-11 !px-5 sm:!inline-flex"
+                  className="!hidden !h-11 min-[360px]:!inline-flex sm:!px-5"
                 >
                   {auth.labels.signup}
                 </ActionLink>
@@ -663,19 +676,27 @@ function Footer() {
     <footer className="relative mt-auto overflow-hidden bg-rpk-ink text-white">
       <Container className="pt-20 pb-10 sm:pt-24">
         <div className="flex flex-col gap-12 lg:flex-row lg:items-end lg:justify-between">
-          <div className="flex flex-col items-start">
-            <QuestionPill tone="white" size="xl" as="p">
-              {THREAD_COPY.footer.question}
-            </QuestionPill>
-            <ActionLink
-              href="/contact"
-              size="lg"
-              arrow
-              className="mt-2 ml-10 !h-14 !px-8 !text-[18px] sm:ml-14 sm:!h-16 sm:!text-[22px]"
-            >
-              {THREAD_COPY.footer.answer}
-            </ActionLink>
-          </div>
+          <Exchange
+            question={
+              <Reveal effect="from-left">
+                <QuestionPill tone="white" size="xl">
+                  {THREAD_COPY.footer.question}
+                </QuestionPill>
+              </Reveal>
+            }
+            answer={
+              <Reveal effect="from-right" delay={120}>
+                <ActionLink
+                  href="/contact"
+                  size="lg"
+                  arrow
+                  className="!h-14 !px-8 !text-[18px] sm:!h-16 sm:!text-[22px]"
+                >
+                  {THREAD_COPY.footer.answer}
+                </ActionLink>
+              </Reveal>
+            }
+          />
           {(footer.email || social.length > 0) && (
             <div className="flex flex-col gap-4 lg:items-end">
               {footer.email && (

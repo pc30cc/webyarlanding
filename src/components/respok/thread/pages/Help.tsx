@@ -8,17 +8,17 @@ import { getHelpContent } from "../../content/legal";
 import { useRespok } from "../../shared/context";
 import { JsonLd } from "../../shared/JsonLd";
 import { THREAD_COPY } from "../copy";
+import { SHAPE, cx } from "../classes";
 import {
   AnswerCard,
   Container,
   IconBadge,
   PageOpener,
   ReadTicks,
-  SHAPE,
   SectionHeader,
   Timestamp,
-  cx,
 } from "../ui";
+import { Reveal } from "../../shared/Reveal";
 
 const LINK =
   "rounded-sm font-semibold text-rpk-ink underline decoration-rpk-signal decoration-2 underline-offset-4 transition-colors hover:text-rpk-signal-deep";
@@ -27,19 +27,23 @@ function HelpCard({
   icon,
   title,
   children,
+  delay = 0,
 }: {
   icon: LucideIcon;
   title: string;
   children: ReactNode;
+  delay?: number;
 }) {
   return (
-    <AnswerCard as="li" className="flex flex-col p-6 sm:p-8">
-      <IconBadge icon={icon} tone="soft" />
-      <h2 className="mt-6 text-[20px] leading-[1.25] font-bold tracking-[-0.01em] text-rpk-ink">
-        {title}
-      </h2>
-      <div className="mt-3 space-y-3 text-[16px] leading-[1.6] text-rpk-slate">{children}</div>
-    </AnswerCard>
+    <Reveal as="li" delay={delay}>
+      <AnswerCard tone="paper" className="flex h-full flex-col p-6 sm:p-8">
+        <IconBadge icon={icon} tone="soft" />
+        <h2 className="mt-6 text-[20px] leading-[1.25] font-bold tracking-[-0.01em] text-rpk-ink">
+          {title}
+        </h2>
+        <div className="mt-3 space-y-3 text-[16px] leading-[1.6] text-rpk-slate">{children}</div>
+      </AnswerCard>
+    </Reveal>
   );
 }
 
@@ -114,14 +118,14 @@ export function HelpPage({ settings }: LegalPageData) {
       <JsonLd data={jsonLd} />
       <PageOpener question={copy.question} title={copy.title} lede={copy.lede} />
 
-      <section aria-label={copy.eyebrow} className="bg-rpk-paper py-14 sm:py-20">
+      <section aria-label={copy.eyebrow} className="bg-white pb-16 sm:pb-24">
         <Container>
           <ul className="grid gap-4 sm:grid-cols-2 sm:gap-5">
             <HelpCard icon={Mail} title={cards.email.title}>
               <p className="text-[18px]">{emailLink}</p>
               <p>{cards.email.body}</p>
             </HelpCard>
-            <HelpCard icon={Clock} title={cards.response.title}>
+            <HelpCard icon={Clock} title={cards.response.title} delay={90}>
               <p>{cards.response.body}</p>
               {(phone || address) && (
                 <dl className="space-y-2 border-t border-rpk-mist pt-3">
@@ -148,7 +152,7 @@ export function HelpPage({ settings }: LegalPageData) {
                 </dl>
               )}
             </HelpCard>
-            <HelpCard icon={Trash2} title={cards.deletion.title}>
+            <HelpCard icon={Trash2} title={cards.deletion.title} delay={180}>
               <p>
                 {email ? (
                   <>
@@ -168,7 +172,7 @@ export function HelpPage({ settings }: LegalPageData) {
                 )}
               </p>
             </HelpCard>
-            <HelpCard icon={FileText} title={cards.policies.title}>
+            <HelpCard icon={FileText} title={cards.policies.title} delay={270}>
               <ul className="flex flex-wrap gap-2 pt-1">
                 {[
                   { to: "/privacy", label: cards.policies.privacy },
@@ -178,7 +182,7 @@ export function HelpPage({ settings }: LegalPageData) {
                     <Link
                       to={item.to}
                       className={cx(
-                        "inline-flex min-h-11 items-center px-5 text-[15px] font-semibold text-rpk-ink ring-1 ring-rpk-mist ring-inset transition-colors hover:bg-rpk-ink hover:text-white hover:ring-rpk-ink",
+                        "inline-flex min-h-11 items-center bg-white px-5 text-[15px] font-semibold text-rpk-ink ring-1 ring-rpk-mist ring-inset transition-colors hover:bg-rpk-ink hover:text-white hover:ring-rpk-ink",
                         SHAPE.answer,
                       )}
                     >
@@ -192,7 +196,7 @@ export function HelpPage({ settings }: LegalPageData) {
         </Container>
       </section>
 
-      <section aria-labelledby="help-faq" className="bg-white py-16 sm:py-24">
+      <section aria-labelledby="help-faq" className="bg-rpk-paper py-16 sm:py-24">
         <Container>
           <SectionHeader
             id="help-faq"
@@ -202,7 +206,10 @@ export function HelpPage({ settings }: LegalPageData) {
           <ol className="relative mt-12 space-y-10 sm:mt-16">
             {copy.faqs.map((faq, index) => (
               <li key={faq.q} className="flex flex-col gap-3">
-                <div className="flex max-w-[92%] items-end gap-3 sm:max-w-[72%]">
+                <Reveal
+                  effect="from-left"
+                  className="flex max-w-[92%] items-end gap-3 sm:max-w-[72%]"
+                >
                   <h3
                     className={cx(
                       "bg-rpk-ink px-5 py-3.5 text-[16px] leading-[1.4] font-semibold text-white sm:px-6 sm:text-[17px]",
@@ -212,8 +219,8 @@ export function HelpPage({ settings }: LegalPageData) {
                     {faq.q}
                   </h3>
                   <Timestamp className="mb-2 hidden sm:inline">{clock(index * 3)}</Timestamp>
-                </div>
-                <div className="flex flex-col items-end">
+                </Reveal>
+                <Reveal effect="from-right" delay={120} className="flex flex-col items-end">
                   <AnswerCard className="max-w-[92%] px-5 py-4 sm:max-w-[72%] sm:px-7 sm:py-5">
                     <p className="text-[16px] leading-[1.65] text-rpk-ink/85">{faq.a}</p>
                   </AnswerCard>
@@ -221,12 +228,12 @@ export function HelpPage({ settings }: LegalPageData) {
                     <Timestamp>{clock(index * 3 + 1)}</Timestamp>
                     <ReadTicks className="size-3.5 text-rpk-signal-deep" />
                   </span>
-                </div>
+                </Reveal>
               </li>
             ))}
           </ol>
 
-          <div className="mt-16 flex flex-col items-end sm:mt-20">
+          <Reveal effect="from-right" className="mt-16 flex flex-col items-end sm:mt-20">
             <AnswerCard
               tone="soft"
               className="max-w-[92%] px-6 py-5 sm:max-w-[72%] sm:px-8 sm:py-7"
@@ -246,7 +253,7 @@ export function HelpPage({ settings }: LegalPageData) {
                   : copy.closing("us")}
               </p>
             </AnswerCard>
-          </div>
+          </Reveal>
         </Container>
       </section>
     </>

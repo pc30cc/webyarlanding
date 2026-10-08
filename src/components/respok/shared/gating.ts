@@ -16,18 +16,13 @@ export type FeatureNeed = "call" | "ai";
 export function mentionsCall(...texts: (string | undefined | null)[]): boolean {
   return texts.some(
     (text) =>
-      !!text &&
-      (CALL_KEYWORDS.some((keyword) => text.includes(keyword)) ||
-        CALL_EN.test(text)),
+      !!text && (CALL_KEYWORDS.some((keyword) => text.includes(keyword)) || CALL_EN.test(text)),
   );
 }
 
 export function mentionsAi(...texts: (string | undefined | null)[]): boolean {
   return texts.some(
-    (text) =>
-      !!text &&
-      (AI_KEYWORDS.some((keyword) => text.includes(keyword)) ||
-        AI_EN.test(text)),
+    (text) => !!text && (AI_KEYWORDS.some((keyword) => text.includes(keyword)) || AI_EN.test(text)),
   );
 }
 
@@ -47,8 +42,6 @@ export function allowed<T extends { needs?: FeatureNeed | undefined }>(
   flags: { callEnabled: boolean; aiEnabled: boolean },
 ): T[] {
   return items.filter(
-    (item) =>
-      !item.needs ||
-      (item.needs === "call" ? flags.callEnabled : flags.aiEnabled),
+    (item) => !item.needs || (item.needs === "call" ? flags.callEnabled : flags.aiEnabled),
   );
 }

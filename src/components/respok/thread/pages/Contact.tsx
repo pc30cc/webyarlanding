@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { Check, Mail, MapPin, Phone, RefreshCw, Send, type LucideIcon } from "lucide-react";
 import { buildBreadcrumbJsonLd } from "@/lib/seo-meta";
 import type { ContactPageData } from "../../types";
@@ -9,6 +9,7 @@ import { useContactForm, type ContactField } from "../../shared/contact";
 import { useRespok } from "../../shared/context";
 import { JsonLd } from "../../shared/JsonLd";
 import { THREAD_COPY } from "../copy";
+import { SHAPE, cx } from "../classes";
 import {
   ActionButton,
   ActionLink,
@@ -20,11 +21,9 @@ import {
   IconBadge,
   PageOpener,
   QuestionCard,
-  SHAPE,
   TextArea,
   TextInput,
   TypingDots,
-  cx,
 } from "../ui";
 
 function ContactCard({
@@ -46,6 +45,8 @@ function ContactCard({
     </AnswerCard>
   );
 }
+
+const FIELD_ORDER: ContactField[] = ["name", "email", "subject", "message", "answer"];
 
 const VALUE_LINK =
   "rounded-sm underline decoration-rpk-mist decoration-2 underline-offset-4 transition-colors hover:decoration-rpk-signal";
@@ -81,6 +82,15 @@ export function ContactPage({ settings }: ContactPageData) {
       { name: "Contact", path: "/contact" },
     ]),
   ];
+
+  // After a failed submit, move focus to the first field that needs attention.
+  const [attempt, setAttempt] = useState(0);
+  useEffect(() => {
+    if (!attempt) return;
+    const first = FIELD_ORDER.find((name) => form.errors[name]);
+    if (first) document.getElementById(`contact-${first}`)?.focus();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [attempt]);
 
   const field = (name: ContactField) => {
     const error = form.errors[name];
@@ -125,7 +135,9 @@ export function ContactPage({ settings }: ContactPageData) {
               <form
                 noValidate
                 aria-label={THREAD_COPY.contact.form}
-                onSubmit={(event) => void form.submit(event)}
+                onSubmit={(event) => {
+                  void form.submit(event).then(() => setAttempt((n) => n + 1));
+                }}
                 className="px-5 pt-7 pb-6 sm:px-8 sm:pt-9 sm:pb-8"
               >
                 <div className="grid gap-5 sm:grid-cols-2">
@@ -236,7 +248,6 @@ export function ContactPage({ settings }: ContactPageData) {
                     type="submit"
                     size="lg"
                     disabled={form.sending}
-                    aria-disabled={form.sending || undefined}
                     className="w-full sm:w-auto"
                   >
                     {form.sending ? copy.form.sending : copy.form.submit}

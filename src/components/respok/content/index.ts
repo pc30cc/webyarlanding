@@ -42,9 +42,7 @@ export function gate<T extends { needs?: FeatureNeed | undefined }>(
   flags: Pick<ContentFlags, "callEnabled" | "aiEnabled">,
 ): T[] {
   return items.filter(
-    (item) =>
-      !item.needs ||
-      (item.needs === "call" ? flags.callEnabled : flags.aiEnabled),
+    (item) => !item.needs || (item.needs === "call" ? flags.callEnabled : flags.aiEnabled),
   );
 }
 

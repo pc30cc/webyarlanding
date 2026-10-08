@@ -15,12 +15,15 @@ export interface LegalDoc {
   sections: LegalSection[];
 }
 
+/** Used in legal sentences when no support email is configured. */
+export const SUPPORT_FALLBACK = "our support team";
+
 export function getPrivacyContent(brand: string, email: string, address: string): LegalDoc {
   return {
     title: "Privacy Policy",
     question: "What happens to my data?",
     meta: `Effective date: ${LEGAL_EFFECTIVE_DATE_EN} · ${brand}`,
-    sections: privacySectionsEn(brand, email, address),
+    sections: privacySectionsEn(brand, email.trim() || SUPPORT_FALLBACK, address),
   };
 }
 
@@ -29,7 +32,7 @@ export function getTermsContent(brand: string, email: string): LegalDoc {
     title: "Terms of Use",
     question: "What are the rules?",
     meta: `Effective date: ${LEGAL_EFFECTIVE_DATE_EN} · ${brand}`,
-    sections: termsSectionsEn(brand, email),
+    sections: termsSectionsEn(brand, email.trim() || SUPPORT_FALLBACK),
   };
 }
 
@@ -40,8 +43,16 @@ export function getHelpContent({ brand }: ContentFlags) {
     title: "Support & Help Center",
     lede: `Need help with ${brand}? Our support team answers every message. Use the contact details below for technical issues, billing questions, privacy requests or account deletion.`,
     cards: {
-      email: { title: "Support email", body: "The main support channel for all users, including App Store reviewers." },
-      response: { title: "Response time", body: "Within 1 business day (Saturday to Thursday).", phone: "Phone", address: "Address" },
+      email: {
+        title: "Support email",
+        body: "The main support channel for all users, including App Store reviewers.",
+      },
+      response: {
+        title: "Response time",
+        body: "Within 1 business day (Saturday to Thursday).",
+        phone: "Phone",
+        address: "Address",
+      },
       deletion: {
         title: "Account deletion",
         before: "Email",
@@ -64,10 +75,30 @@ export function getSlaContent({ brand }: ContentFlags) {
     title: "Service Level Agreement (SLA)",
     lede: `${brand}'s commitments to a high-quality, reliable service.`,
     stats: [
-      { icon: Zap, value: "99.9%", title: "Guaranteed uptime", body: "The platform is available 99.9% of the time." },
-      { icon: Clock, value: "< 2 hours", title: "Support response", body: "Maximum response time on the Professional plan." },
-      { icon: Shield, value: "< 4 hours", title: "Data recovery", body: "Restore from the most recent backup." },
-      { icon: CheckCircle2, value: "Zero downtime", title: "Updates", body: "Updates ship without taking the service down." },
+      {
+        icon: Zap,
+        value: "99.9%",
+        title: "Guaranteed uptime",
+        body: "The platform is available 99.9% of the time.",
+      },
+      {
+        icon: Clock,
+        value: "< 2 hours",
+        title: "Support response",
+        body: "Maximum response time on the Professional plan.",
+      },
+      {
+        icon: Shield,
+        value: "< 4 hours",
+        title: "Data recovery",
+        body: "Restore from the most recent backup.",
+      },
+      {
+        icon: CheckCircle2,
+        value: "Zero downtime",
+        title: "Updates",
+        body: "Updates ship without taking the service down.",
+      },
     ] satisfies (FeatureCopy & { value: string })[],
     credits: {
       title: "Service credits",

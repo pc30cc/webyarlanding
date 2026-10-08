@@ -15,13 +15,7 @@ import {
   Users,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
-import {
-  siGmail,
-  siInstagram,
-  siTelegram,
-  siWhatsapp,
-  siWoocommerce,
-} from "simple-icons";
+import { siGmail, siInstagram, siTelegram, siWhatsapp, siWoocommerce } from "simple-icons";
 import {
   gate,
   joinEn,
@@ -156,19 +150,58 @@ export function getHomeContent(flags: ContentFlags) {
       title: "Every customer conversation, in one dashboard",
       lede: `Every message sent from your website lands in the ${brand} inbox, ready to answer from the web dashboard${call ? ", with calls one click away" : ""}.`,
       features: [
-        { title: "Real-time conversations", body: "See messages as they arrive, with typing indicators and read receipts." },
-        { title: "Your widget, your brand", body: "Your colors, logo, welcome message and launcher, on the left or the right, in English, Persian or Turkish." },
-        { title: "Files, photos and voice notes", body: "Let visitors send attachments and voice notes when you switch them on." },
-        { title: "Opening hours", body: "Set your hours, then show an away message or a leave-a-message form." },
-        { title: "Pre-chat form", body: "Ask for a name, email or phone before the chat, with optional verification." },
-        { title: "Proactive messages", body: "Greet visitors automatically based on the page, time on page, scroll or exit intent." },
+        {
+          title: "Real-time conversations",
+          body: "See messages as they arrive, with typing indicators and read receipts.",
+        },
+        {
+          title: "Your widget, your brand",
+          body: "Your colors, logo, welcome message and launcher, on the left or the right, in English, Persian or Turkish.",
+        },
+        {
+          title: "Files, photos and voice notes",
+          body: "Let visitors send attachments and voice notes when you switch them on.",
+        },
+        {
+          title: "Opening hours",
+          body: "Set your hours, then show an away message or a leave-a-message form.",
+        },
+        {
+          title: "Pre-chat form",
+          body: "Ask for a name, email or phone before the chat, with optional verification.",
+        },
+        {
+          title: "Proactive messages",
+          body: "Greet visitors automatically based on the page, time on page, scroll or exit intent.",
+        },
       ] satisfies FeatureCopy[],
       conversations: gate(
         [
-          { name: "Sara Mitchell", message: "How much is the Pro plan?", time: "2 min", avatar: "/avatars/c1.jpg" },
-          { name: "Daniel Reyes", message: "I have a problem with my payment", time: "10 min", avatar: "/avatars/c2.jpg" },
-          { name: "Mia Thompson", message: "Thanks for your help!", time: "25 min", avatar: "/avatars/c3.jpg" },
-          { name: "Leo Carter", message: "Can we do a video call?", time: "1 hr", avatar: "/avatars/c4.jpg", needs: "call" },
+          {
+            name: "Sara Mitchell",
+            message: "How much is the Pro plan?",
+            time: "2 min",
+            avatar: "/avatars/c1.jpg",
+          },
+          {
+            name: "Daniel Reyes",
+            message: "I have a problem with my payment",
+            time: "10 min",
+            avatar: "/avatars/c2.jpg",
+          },
+          {
+            name: "Mia Thompson",
+            message: "Thanks for your help!",
+            time: "25 min",
+            avatar: "/avatars/c3.jpg",
+          },
+          {
+            name: "Leo Carter",
+            message: "Can we do a video call?",
+            time: "1 hr",
+            avatar: "/avatars/c4.jpg",
+            needs: "call",
+          },
         ] satisfies ConversationCopy[],
         flags,
       ),
@@ -180,12 +213,25 @@ export function getHomeContent(flags: ContentFlags) {
           title: "When text isn't enough, start a call",
           lede: "Invite a visitor to a voice or video call straight from the chat. They join in their browser, with nothing to install.",
           features: [
-            { title: "Calls from the chat", body: "Send a call invitation from the conversation; the visitor joins with one click." },
-            { title: "Nothing to install", body: "Calls run in the visitor's browser, inside the chat widget." },
+            {
+              title: "Calls from the chat",
+              body: "Send a call invitation from the conversation; the visitor joins with one click.",
+            },
+            {
+              title: "Nothing to install",
+              body: "Calls run in the visitor's browser, inside the chat widget.",
+            },
             { title: "HD video", body: "720p video calls for a clear picture." },
-            { title: "A call button for your site", body: "Add a separate call widget with a live queue, callback requests, recording and call ratings." },
+            {
+              title: "A call button for your site",
+              body: "Add a separate call widget with a live queue, callback requests, recording and call ratings.",
+            },
           ] satisfies FeatureCopy[],
-          video: { src: "/videos/video-call.mp4", poster: "/videos/video-call-poster.jpg", operator: "/videos/operator.mp4" },
+          video: {
+            src: "/videos/video-call.mp4",
+            poster: "/videos/video-call-poster.jpg",
+            operator: "/videos/operator.mp4",
+          },
         }
       : null,
     platform: {
@@ -195,18 +241,69 @@ export function getHomeContent(flags: ContentFlags) {
       lede: `${call ? "Live chat and calls are" : "Live chat is"} just the start. ${joinEn([ai && "An AI agent", "contacts", "a knowledge base", "SEO tools", "web analytics"])} live in the same dashboard.`,
       features: gate(
         [
-          { icon: MessageSquare, title: "Shared inbox", body: "Open, pending and resolved views. Assign, transfer, prioritize and tag conversations, add internal notes and reply faster with / saved replies." },
-          { icon: Phone, title: "Call center", body: "A live call queue, callback requests, call recording, transfers and call ratings, with today's call stats at a glance.", needs: "call" },
-          { icon: Bot, title: "AI agent", body: "Trained on your website, files and Q&A. It answers visitors in their language, stays on your topics and hands the chat to your team when it should.", needs: "ai" },
-          { icon: Sparkles, title: "AI drafts for operators", body: "Draft a reply in one click, pick a tone, edit it and send. Rate drafts and see how your team uses them.", needs: "ai" },
-          { icon: Users, title: "Contacts", body: "Profiles with tags, notes, and chat and call history. Import and export contacts as CSV." },
-          { icon: Eye, title: "Live visitors", body: "See who's on your site right now on a map, with the current page, journey, referrer and device, and start a chat in one click." },
-          { icon: BookOpen, title: "Knowledge base", body: `Write help articles once: they power the help tab in your widget${ai ? " and the AI agent, and AI can draft articles from your website" : ""}.` },
-          { icon: Search, title: "SEO & web analytics", body: "Site audit, Core Web Vitals, keywords, rank tracking, backlinks, Search Console insights, Brand Radar and website analytics from the same snippet." },
-          { icon: Mail, title: "Email inbox", body: "Connect your Gmail or Yahoo mailbox and read and reply to email next to your chats." },
-          { icon: Plug, title: "Channels & connectors", body: "Telegram, WhatsApp, Instagram and Bale in the inbox. WooCommerce, OpenCart and WHMCS connectors, and a JavaScript API for the widget." },
-          { icon: BarChart3, title: "Reports", body: "A dashboard with daily activity and conversation volume, plus each teammate's assigned, resolved and replied conversations." },
-          { icon: ShieldCheck, title: "Security & privacy", body: "Email sign-in codes, active-session control, IP masking by default, and data export or erasure on request." },
+          {
+            icon: MessageSquare,
+            title: "Shared inbox",
+            body: "Open, pending and resolved views. Assign, transfer, prioritize and tag conversations, add internal notes and reply faster with / saved replies.",
+          },
+          {
+            icon: Phone,
+            title: "Call center",
+            body: "A live call queue, callback requests, call recording, transfers and call ratings, with today's call stats at a glance.",
+            needs: "call",
+          },
+          {
+            icon: Bot,
+            title: "AI agent",
+            body: "Trained on your website, files and Q&A. It answers visitors in their language, stays on your topics and hands the chat to your team when it should.",
+            needs: "ai",
+          },
+          {
+            icon: Sparkles,
+            title: "AI drafts for operators",
+            body: "Draft a reply in one click, pick a tone, edit it and send. Rate drafts and see how your team uses them.",
+            needs: "ai",
+          },
+          {
+            icon: Users,
+            title: "Contacts",
+            body: "Profiles with tags, notes, and chat and call history. Import and export contacts as CSV.",
+          },
+          {
+            icon: Eye,
+            title: "Live visitors",
+            body: "See who's on your site right now on a map, with the current page, journey, referrer and device, and start a chat in one click.",
+          },
+          {
+            icon: BookOpen,
+            title: "Knowledge base",
+            body: `Write help articles once: they power the help tab in your widget${ai ? " and the AI agent, and AI can draft articles from your website" : ""}.`,
+          },
+          {
+            icon: Search,
+            title: "SEO & web analytics",
+            body: "Site audit, Core Web Vitals, keywords, rank tracking, backlinks, Search Console insights, Brand Radar and website analytics from the same snippet.",
+          },
+          {
+            icon: Mail,
+            title: "Email inbox",
+            body: "Connect your Gmail or Yahoo mailbox and read and reply to email next to your chats.",
+          },
+          {
+            icon: Plug,
+            title: "Channels & connectors",
+            body: "Telegram, WhatsApp, Instagram and Bale in the inbox. WooCommerce, OpenCart and WHMCS connectors, and a JavaScript API for the widget.",
+          },
+          {
+            icon: BarChart3,
+            title: "Reports",
+            body: "A dashboard with daily activity and conversation volume, plus each teammate's assigned, resolved and replied conversations.",
+          },
+          {
+            icon: ShieldCheck,
+            title: "Security & privacy",
+            body: "Email sign-in codes, active-session control, IP masking by default, and data export or erasure on request.",
+          },
         ] satisfies FeatureCopy[],
         flags,
       ),
@@ -216,11 +313,21 @@ export function getHomeContent(flags: ContentFlags) {
       eyebrow: "Quick start",
       title: "Three steps to your first conversation",
       items: [
-        { title: "Copy the widget code", body: "Get a small snippet of code from your dashboard.", time: "00:00" },
-        { title: "Add it to your website", body: "Paste it before the closing body tag, or install a store connector.", time: "00:30" },
+        {
+          title: "Copy the widget code",
+          body: "Get a small snippet of code from your dashboard.",
+          time: "00:00",
+        },
+        {
+          title: "Add it to your website",
+          body: "Paste it before the closing body tag, or install a store connector.",
+          time: "00:30",
+        },
         {
           title: "Start talking",
-          body: call ? "From that moment, chats and calls arrive in your dashboard." : "From that moment, chats arrive in your dashboard.",
+          body: call
+            ? "From that moment, chats and calls arrive in your dashboard."
+            : "From that moment, chats arrive in your dashboard.",
           time: "05:00",
         },
       ],
@@ -232,11 +339,63 @@ export function getHomeContent(flags: ContentFlags) {
       lede: `The real sections of the ${brand} dashboard, from conversations${call ? " and calls" : ""} to ${joinEn([ai && "AI", "SEO", "contacts", "account settings"])}.`,
       groups: gate(
         [
-          { icon: Layers, title: "Workspace and conversations", items: ["Overview and daily activity", "Shared inbox with saved replies", "Team chat and internal notes", "Departments and automatic assignment", "Widget appearance and opening hours"] },
-          { icon: Phone, title: "Call center", needs: "call", items: ["Voice and video calls from the chat", "Live call queue", "Callback requests", "Call recordings", "Call widget for your site"] },
-          { icon: Bot, title: "Artificial intelligence", needs: "ai", items: ["Knowledge sources: website, files, Q&A", "Playground to test answers", "Behavior, tone and handoff rules", "AI drafts for operators", "Unanswered questions and handoff reasons"] },
-          { icon: Search, title: "SEO and analytics", items: ["Site audit and Core Web Vitals", "Keyword research and rank tracking", "Google Search Console insights", "Brand Radar and AI-crawler log analysis", "Website analytics, events and funnels"] },
-          { icon: Users, title: "Customers and team", items: ["Contacts with tags and notes", "CSV import and export", "Live visitors on a map", "Admins, operators and departments", "Team activity"] },
+          {
+            icon: Layers,
+            title: "Workspace and conversations",
+            items: [
+              "Overview and daily activity",
+              "Shared inbox with saved replies",
+              "Team chat and internal notes",
+              "Departments and automatic assignment",
+              "Widget appearance and opening hours",
+            ],
+          },
+          {
+            icon: Phone,
+            title: "Call center",
+            needs: "call",
+            items: [
+              "Voice and video calls from the chat",
+              "Live call queue",
+              "Callback requests",
+              "Call recordings",
+              "Call widget for your site",
+            ],
+          },
+          {
+            icon: Bot,
+            title: "Artificial intelligence",
+            needs: "ai",
+            items: [
+              "Knowledge sources: website, files, Q&A",
+              "Playground to test answers",
+              "Behavior, tone and handoff rules",
+              "AI drafts for operators",
+              "Unanswered questions and handoff reasons",
+            ],
+          },
+          {
+            icon: Search,
+            title: "SEO and analytics",
+            items: [
+              "Site audit and Core Web Vitals",
+              "Keyword research and rank tracking",
+              "Google Search Console insights",
+              "Brand Radar and AI-crawler log analysis",
+              "Website analytics, events and funnels",
+            ],
+          },
+          {
+            icon: Users,
+            title: "Customers and team",
+            items: [
+              "Contacts with tags and notes",
+              "CSV import and export",
+              "Live visitors on a map",
+              "Admins, operators and departments",
+              "Team activity",
+            ],
+          },
           {
             icon: Globe,
             title: "Connections and account",

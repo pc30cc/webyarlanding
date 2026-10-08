@@ -43,9 +43,7 @@ export function RespokProvider({
     }),
     [settings, translate],
   );
-  return (
-    <RespokContext.Provider value={value}>{children}</RespokContext.Provider>
-  );
+  return <RespokContext.Provider value={value}>{children}</RespokContext.Provider>;
 }
 
 export function useRespok(): RespokContextValue {

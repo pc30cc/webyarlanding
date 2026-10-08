@@ -12,16 +12,28 @@ import { useContent } from "../content";
 import { formatPostDate, pageList, readingMinutes, textDir } from "../shared/blog";
 import { usePostCategory } from "./blog-data";
 import { OPEN_COPY } from "./copy";
-import { BubbleGlyph, CornerDot, Dot } from "./ui";
+import { BUBBLE, BubbleGlyph, CornerDot, Dot, type BubbleSize } from "./ui";
 import { cx } from "./tokens";
+
+/**
+ * Mono uppercase label for Latin text. Persian/Arabic DB strings (categories) keep the
+ * sans face with no letter-spacing, which would break the script's letter joining.
+ */
+function monoLabel(dir: "ltr" | "rtl"): string {
+  return dir === "rtl"
+    ? "font-rpk text-[13px] font-medium"
+    : "font-rpk-mono text-[12px] tracking-[0.08em] uppercase";
+}
 
 /**
  * Cover drawn from the mark when a post has no image, in three colorways that rotate
  * through a list: Ink with the cover's cropped bubble, Haze with the color symbol, and
  * the symbol cropped huge on white so only its corner and dot show.
  */
-export function CoverArt({ variant, label }: { variant: number; label: string }) {
+function CoverArt({ variant, label }: { variant: number; label: string }) {
   const tone = ((variant % 3) + 3) % 3;
+  const dir = textDir(label);
+  const labelClass = cx("absolute left-[7%] truncate", monoLabel(dir));
   if (tone === 0) {
     return (
       <div className="relative h-full w-full overflow-hidden bg-rpk-ink">
@@ -34,10 +46,7 @@ export function CoverArt({ variant, label }: { variant: number; label: string })
           title=""
           className="absolute top-[11%] left-[7%]"
         />
-        <span
-          dir={textDir(label)}
-          className="absolute bottom-[10%] left-[7%] max-w-[60%] truncate font-rpk-mono text-[12px] tracking-[0.08em] text-white/70 uppercase"
-        >
+        <span dir={dir} className={cx(labelClass, "bottom-[10%] max-w-[60%] text-white/70")}>
           {label}
         </span>
       </div>
@@ -50,10 +59,7 @@ export function CoverArt({ variant, label }: { variant: number; label: string })
           dot="live"
           className="absolute top-1/2 left-1/2 w-[34%] -translate-x-1/2 -translate-y-1/2 text-rpk-ink"
         />
-        <span
-          dir={textDir(label)}
-          className="absolute top-[10%] left-[7%] max-w-[60%] truncate font-rpk-mono text-[12px] tracking-[0.08em] text-rpk-ink/75 uppercase"
-        >
+        <span dir={dir} className={cx(labelClass, "top-[10%] max-w-[60%] text-rpk-ink/75")}>
           {label}
         </span>
       </div>
@@ -62,10 +68,7 @@ export function CoverArt({ variant, label }: { variant: number; label: string })
   return (
     <div className="relative h-full w-full overflow-hidden bg-white">
       <BubbleGlyph dot="live" className="absolute -top-[55%] -left-[18%] w-[90%] text-rpk-mist" />
-      <span
-        dir={textDir(label)}
-        className="absolute bottom-[10%] left-[7%] max-w-[50%] truncate font-rpk-mono text-[12px] tracking-[0.08em] text-rpk-slate uppercase"
-      >
+      <span dir={dir} className={cx(labelClass, "bottom-[10%] max-w-[50%] text-rpk-slate")}>
         {label}
       </span>
     </div>
@@ -78,15 +81,17 @@ export function PostCover({
   className,
   eager,
   variant = 0,
+  bubble = "lg",
 }: {
   post: PostDto;
   label: string;
   className?: string;
   eager?: boolean;
   variant?: number;
+  bubble?: BubbleSize;
 }) {
   return (
-    <div className={cx("overflow-hidden rounded-[28px] rounded-br-[6px]", className)}>
+    <div className={cx("overflow-hidden", BUBBLE[bubble], className)}>
       {post.coverImage ? (
         <img
           src={post.coverImage}
@@ -108,7 +113,7 @@ export function PostCover({
 }
 
 /** "GUIDES · OCT 4, 2026 · 4 MIN READ" */
-export function PostMeta({ post, className }: { post: PostDto; className?: string }) {
+function PostMeta({ post, className }: { post: PostDto; className?: string }) {
   const blog = useContent(getBlogContent);
   const category = usePostCategory(post);
   const date = formatPostDate(post);
@@ -119,7 +124,13 @@ export function PostMeta({ post, className }: { post: PostDto; className?: strin
         className,
       )}
     >
-      <span dir={textDir(category)} className="text-rpk-ink">
+      <span
+        dir={textDir(category)}
+        className={cx(
+          "text-rpk-ink",
+          textDir(category) === "rtl" && "font-rpk text-[13px] font-medium tracking-normal",
+        )}
+      >
         {category}
       </span>
       {date ? (
@@ -150,6 +161,8 @@ export function PostCard({
   const category = usePostCategory(post);
   const Heading = headingLevel === 2 ? "h2" : "h3";
   const link = { to: "/blog/$slug", params: { slug: post.slug } } as const;
+  // A Persian post reads right to left: its whole text column aligns to the right edge.
+  const rtl = textDir(post.title) === "rtl";
 
   return (
     <article
@@ -162,7 +175,7 @@ export function PostCard({
         {...link}
         tabIndex={-1}
         aria-hidden="true"
-        className={cx("relative block", featured && "lg:col-span-7")}
+        className={cx("relative block min-w-0", featured && "lg:col-span-7")}
       >
         <PostCover
           post={post}
@@ -176,20 +189,29 @@ export function PostCard({
           className="scale-0 transition-transform duration-300 ease-rpk-pop group-hover/card:scale-100"
         />
       </Link>
-      <div className={cx(featured ? "lg:col-span-5" : "mt-6 flex flex-1 flex-col items-start")}>
-        <PostMeta post={post} />
+      <div
+        className={cx(
+          "flex min-w-0 flex-col",
+          featured ? "lg:col-span-5" : "mt-6 flex-1",
+          rtl ? "items-end text-right" : "items-start",
+        )}
+      >
+        <PostMeta post={post} className={rtl ? "justify-end" : ""} />
         <Heading
           dir={textDir(post.title)}
           className={cx(
-            "mt-3 font-bold tracking-[-0.015em] text-rpk-ink",
-            featured
-              ? "text-[28px] leading-[1.15] sm:text-[36px] lg:text-[40px]"
-              : "text-[21px] leading-[1.28]",
+            "mt-3 max-w-full font-bold wrap-anywhere text-rpk-ink",
+            rtl ? "leading-[1.5]" : "tracking-[-0.015em]",
+            featured ? "text-[28px] sm:text-[36px] lg:text-[40px]" : "text-[21px]",
+            !rtl && (featured ? "leading-[1.15]" : "leading-[1.28]"),
           )}
         >
           <Link
             {...link}
-            className="rounded-[4px] bg-[linear-gradient(currentColor,currentColor)] bg-[length:0%_2px] bg-left-bottom bg-no-repeat transition-[background-size] duration-300 group-hover/card:bg-[length:100%_2px]"
+            className={cx(
+              "rounded-[4px] bg-[linear-gradient(currentColor,currentColor)] bg-[length:0%_2px] bg-no-repeat transition-[background-size] duration-300 group-hover/card:bg-[length:100%_2px]",
+              rtl ? "bg-right-bottom" : "bg-left-bottom",
+            )}
           >
             {post.title}
           </Link>
@@ -198,7 +220,7 @@ export function PostCard({
           <p
             dir={textDir(post.excerpt)}
             className={cx(
-              "mt-3 text-rpk-slate",
+              "mt-3 max-w-full wrap-anywhere text-rpk-slate",
               featured
                 ? "line-clamp-4 text-[18px] leading-[1.6]"
                 : "line-clamp-3 text-[16px] leading-[1.6]",

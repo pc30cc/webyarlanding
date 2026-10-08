@@ -5,7 +5,9 @@ import { getSlaContent } from "../../content/legal";
 import { useRespok } from "../../shared/context";
 import { JsonLd } from "../../shared/JsonLd";
 import { THREAD_COPY } from "../copy";
-import { AnswerCard, Container, IconBadge, PageOpener, SHAPE, SectionHeader, cx } from "../ui";
+import { SHAPE, cx } from "../classes";
+import { AnswerCard, Container, IconBadge, PageOpener, SectionHeader } from "../ui";
+import { Reveal } from "../../shared/Reveal";
 
 export function SlaPage({ settings }: LegalPageData) {
   const { brand, siteUrl } = useRespok();
@@ -35,17 +37,19 @@ export function SlaPage({ settings }: LegalPageData) {
       <section aria-label={THREAD_COPY.sla.statsLabel} className="bg-rpk-paper py-14 sm:py-20">
         <Container>
           <ul className="grid gap-4 sm:grid-cols-2 sm:gap-5 xl:grid-cols-4">
-            {copy.stats.map((stat) => (
-              <AnswerCard as="li" key={stat.title} className="flex flex-col p-6 sm:p-7">
-                {stat.icon && <IconBadge icon={stat.icon} tone="soft" />}
-                <p className="mt-8 flex items-end text-[34px] leading-[1.05] font-extrabold tracking-[-0.03em] text-balance text-rpk-ink tabular-nums sm:text-[38px] xl:min-h-[2.1em]">
-                  {stat.value}
-                </p>
-                <h2 className="mt-4 text-[17px] leading-[1.3] font-bold text-rpk-ink">
-                  {stat.title}
-                </h2>
-                <p className="mt-2 text-[15px] leading-[1.55] text-rpk-slate">{stat.body}</p>
-              </AnswerCard>
+            {copy.stats.map((stat, index) => (
+              <Reveal as="li" key={stat.title} delay={index * 90}>
+                <AnswerCard className="flex h-full flex-col p-6 sm:p-7">
+                  {stat.icon && <IconBadge icon={stat.icon} tone="soft" />}
+                  <p className="mt-8 flex items-end text-[34px] leading-[1.05] font-extrabold tracking-[-0.03em] text-balance text-rpk-ink tabular-nums sm:text-[38px] xl:min-h-[2.1em]">
+                    {stat.value}
+                  </p>
+                  <h2 className="mt-4 text-[17px] leading-[1.3] font-bold text-rpk-ink">
+                    {stat.title}
+                  </h2>
+                  <p className="mt-2 text-[15px] leading-[1.55] text-rpk-slate">{stat.body}</p>
+                </AnswerCard>
+              </Reveal>
             ))}
           </ul>
         </Container>
@@ -92,7 +96,7 @@ export function SlaPage({ settings }: LegalPageData) {
                         </th>
                         <td className="px-6 py-6 sm:px-8">
                           <div className="flex items-center gap-5">
-                            <span className="text-[16px] font-semibold whitespace-nowrap text-rpk-ink">
+                            <span className="w-48 shrink-0 text-[16px] font-semibold whitespace-nowrap text-rpk-ink">
                               {credit}
                             </span>
                             <span

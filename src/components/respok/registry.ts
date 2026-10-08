@@ -9,41 +9,48 @@ import { use } from "react";
 import type { EnglishTemplate } from "@/lib/settings";
 import type { RespokTemplateModule } from "./types";
 
-const importers: Record<
-  EnglishTemplate,
-  () => Promise<{ default: RespokTemplateModule }>
-> = {
+const importers: Record<EnglishTemplate, () => Promise<{ default: RespokTemplateModule }>> = {
   open: () => import("./open"),
   thread: () => import("./thread"),
 };
 
-const loaded: Partial<Record<EnglishTemplate, RespokTemplateModule>> = {};
-const pending: Partial<Record<EnglishTemplate, Promise<RespokTemplateModule>>> =
-  {};
+/** A promise React's use() can read synchronously once it has settled. */
+type TrackedPromise = Promise<RespokTemplateModule> & {
+  status?: "pending" | "fulfilled" | "rejected";
+  value?: RespokTemplateModule;
+  reason?: unknown;
+};
 
-export function loadRespokTemplate(
-  template: EnglishTemplate,
-): Promise<RespokTemplateModule> {
-  const ready = loaded[template];
-  if (ready) return Promise.resolve(ready);
-  let promise = pending[template];
+const promises: Partial<Record<EnglishTemplate, TrackedPromise>> = {};
+
+export function loadRespokTemplate(template: EnglishTemplate): Promise<RespokTemplateModule> {
+  let promise = promises[template];
   if (!promise) {
-    promise = importers[template]().then((module) => {
-      loaded[template] = module.default;
-      return module.default;
-    });
-    // A failed chunk download must be retryable on the next navigation.
-    promise.catch(() => {
-      delete pending[template];
-    });
-    pending[template] = promise;
+    const tracked: TrackedPromise = importers[template]().then(
+      (module) => {
+        tracked.status = "fulfilled";
+        tracked.value = module.default;
+        return module.default;
+      },
+      (error: unknown) => {
+        tracked.status = "rejected";
+        tracked.reason = error;
+        // A failed chunk download must be retryable on the next navigation.
+        delete promises[template];
+        throw error;
+      },
+    );
+    tracked.status = "pending";
+    promise = tracked;
+    promises[template] = promise;
   }
   return promise;
 }
 
-/** Renders synchronously once loaded; otherwise suspends until the chunk arrives. */
-export function useRespokTemplate(
-  template: EnglishTemplate,
-): RespokTemplateModule {
-  return loaded[template] ?? use(loadRespokTemplate(template));
+/**
+ * Always reads the same promise with use(): synchronous once the chunk has loaded
+ * (React sees status "fulfilled"), suspends until then.
+ */
+export function useRespokTemplate(template: EnglishTemplate): RespokTemplateModule {
+  return use(loadRespokTemplate(template));
 }

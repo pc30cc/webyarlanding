@@ -1,6 +1,6 @@
+import { TrustBadge } from "./TrustBadge";
 import { useSiteTranslation } from "@/components/site/SiteLanguage";
 import { Link, useRouterState } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
 import {
   getBrandNameEn,
   getPublicTagline,
@@ -9,18 +9,6 @@ import {
 
 /** نماد اعتماد بعد از بارگذاری بقیه صفحه تزریق می‌شود تا تصویر کند اینماد
  *  جلوی بارگذاری ابزارک‌ها و رویداد load صفحه را نگیرد. کد اینماد بدون تغییر می‌ماند. */
-export function TrustBadge({ html }: { html: string }) {
-  const [ready, setReady] = useState(false);
-  useEffect(() => {
-    const timer = window.setTimeout(() => setReady(true), 3000);
-    return () => window.clearTimeout(timer);
-  }, []);
-  if (!ready) return <div className="enamad-badge min-h-[96px]" aria-hidden />;
-  return (
-    <div className="enamad-badge" dangerouslySetInnerHTML={{ __html: html }} />
-  );
-}
-
 const FA = {
   tagline: "پلتفرم جامع مدیریت ارتباط با مشتری برای کسب‌وکارهای ایرانی",
   product: "محصول",

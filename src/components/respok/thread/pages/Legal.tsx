@@ -6,7 +6,8 @@ import { getPrivacyContent, getTermsContent, type LegalDoc } from "../../content
 import { useRespok } from "../../shared/context";
 import { JsonLd } from "../../shared/JsonLd";
 import { THREAD_COPY } from "../copy";
-import { AnswerCard, Container, Eyebrow, PageOpener, SHAPE, cx } from "../ui";
+import { SHAPE, cx } from "../classes";
+import { AnswerCard, Container, Eyebrow, PageOpener } from "../ui";
 
 interface Section {
   id: string;
@@ -32,7 +33,7 @@ function toSections(doc: LegalDoc): Section[] {
 const EMAIL = /([\w.+-]+@[\w-]+(?:\.[\w-]+)+)/g;
 
 /** Turns e-mail addresses into mailto links and bolds a leading "Label:". */
-export function RichLine({ text }: { text: string }): ReactNode {
+function RichLine({ text }: { text: string }): ReactNode {
   const label = /^([A-Z][A-Za-z ]{2,28}):\s(.+)$/.exec(text);
   const rest = label?.[2] ?? text;
   const parts = rest.split(EMAIL);
@@ -122,6 +123,36 @@ function Toc({ sections, active }: { sections: Section[]; active: string }) {
   );
 }
 
+const BODY_TEXT = "text-[16px] leading-[1.7] text-rpk-slate sm:text-[17px]";
+
+/** Paragraphs; a run of "To …" purposes reads better as a list with answer-pill bullets. */
+function SectionBody({ lines }: { lines: string[] }) {
+  const isList = lines.length > 2 && lines.every((line) => /^To\s/.test(line));
+  if (isList)
+    return (
+      <ul className="mt-5 space-y-3 sm:pl-[60px]">
+        {lines.map((line, index) => (
+          <li key={index} className={cx(BODY_TEXT, "relative pl-7")}>
+            <span
+              aria-hidden="true"
+              className="absolute top-[0.62em] left-0 h-2.5 w-4 rounded-full rounded-br-[2px] bg-rpk-signal"
+            />
+            <RichLine text={line} />
+          </li>
+        ))}
+      </ul>
+    );
+  return (
+    <div className="mt-5 space-y-4 sm:pl-[60px]">
+      {lines.map((line, index) => (
+        <p key={index} className={BODY_TEXT}>
+          <RichLine text={line} />
+        </p>
+      ))}
+    </div>
+  );
+}
+
 function LegalDocument({ doc, path, pageName }: { doc: LegalDoc; path: string; pageName: string }) {
   const { settings, brand, siteUrl } = useRespok();
   const sections = toSections(doc);
@@ -196,7 +227,7 @@ function LegalDocument({ doc, path, pageName }: { doc: LegalDoc; path: string; p
                     <span
                       aria-hidden="true"
                       className={cx(
-                        "mt-0.5 inline-flex h-8 shrink-0 items-center bg-rpk-ink px-3 font-rpk-mono text-[13px] text-white tabular-nums",
+                        "mt-0.5 inline-flex h-8 w-11 shrink-0 items-center justify-center bg-rpk-ink font-rpk-mono text-[13px] text-white tabular-nums",
                         SHAPE.question,
                       )}
                     >
@@ -207,16 +238,7 @@ function LegalDocument({ doc, path, pageName }: { doc: LegalDoc; path: string; p
                       {section.title}
                     </h2>
                   </div>
-                  <div className="mt-5 space-y-4 sm:pl-[60px]">
-                    {section.body.map((line, index) => (
-                      <p
-                        key={index}
-                        className="text-[16px] leading-[1.7] text-rpk-slate sm:text-[17px]"
-                      >
-                        <RichLine text={line} />
-                      </p>
-                    ))}
-                  </div>
+                  <SectionBody lines={section.body} />
                 </AnswerCard>
               ))}
             </div>

@@ -23,11 +23,9 @@ export const THREAD_COPY = {
   },
   legal: {
     toc: "On this page",
-    top: "Back to top",
   },
   help: {
     faqQuestion: "Can you answer a quick one?",
-    closingQuestion: "Still stuck?",
   },
   sla: {
     creditsQuestion: "What if you miss it?",
@@ -42,8 +40,10 @@ export const THREAD_COPY = {
     filter: "Filter by category",
     pagination: "Blog pages",
     tagQuestion: "Show me everything tagged",
+    relatedQuestion: "What should I read next?",
     searching: (q: string) => `Results for “${q}”`,
     clear: "Clear search",
+    showAll: "Show all articles",
   },
   placeholder: "This part of the conversation is still being written.",
 } as const;

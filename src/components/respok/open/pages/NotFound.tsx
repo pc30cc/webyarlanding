@@ -29,14 +29,11 @@ export function NotFoundPage({ kind }: NotFoundPageData) {
         <div className="grid items-center gap-14 pt-14 sm:pt-20 lg:grid-cols-12 lg:gap-10 lg:pt-24">
           <div className="lg:col-span-6">
             {/* The visitor's question, as a message in the widget. */}
-            <div className="flex items-end gap-3">
-              <p className="relative max-w-[22rem] rounded-[22px] rounded-br-[6px] bg-white px-5 py-3.5 text-[16px] leading-[1.45] font-medium text-rpk-ink">
-                {copy.question}
-              </p>
-              <span className="mb-1 font-rpk-mono text-[12px] text-white/60">{copy.code}</span>
-            </div>
+            <p className="w-fit max-w-[22rem] rounded-[22px] rounded-br-[6px] bg-white px-5 py-3.5 text-[16px] leading-[1.45] font-medium text-rpk-ink">
+              {copy.question}
+            </p>
 
-            <Eyebrow index={copy.code} surface="ink" className="mt-12">
+            <Eyebrow index="01" surface="ink" className="mt-12">
               {OPEN_COPY.notFound.status}
             </Eyebrow>
             <h1 className={cx(DISPLAY, "mt-5 max-w-[12ch] text-balance")}>{copy.title}</h1>
@@ -58,7 +55,7 @@ export function NotFoundPage({ kind }: NotFoundPageData) {
               <BubbleGlyph dot="away" className="w-full text-rpk-ink-raised" />
               <span
                 aria-hidden="true"
-                className="absolute top-[38%] left-[38%] -translate-x-1/2 -translate-y-1/2 font-rpk-mono text-[clamp(52px,11vw,132px)] leading-none font-medium tracking-[-0.04em] text-white"
+                className="absolute top-[38%] left-[38%] -translate-x-1/2 -translate-y-1/2 text-[clamp(56px,12vw,148px)] leading-none font-extrabold tracking-[-0.04em] text-white tabular-nums"
               >
                 {copy.code}
               </span>

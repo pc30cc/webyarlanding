@@ -57,8 +57,6 @@ describe("plans synced from the app", () => {
     for (const label of ["ورود یکپارچه (SSO)", "دسترسی API", "کمپین ایمیلی"])
       expect(plan?.features).not.toContain(label);
     expect(plan?.limits.map((l) => l.label)).toEqual(["تعداد اپراتور"]);
-    expect(
-      result?.comparison.rows.some((row) => row.label === "دسترسی API"),
-    ).toBe(false);
+    expect(result?.comparison.rows.some((row) => row.label === "دسترسی API")).toBe(false);
   });
 });

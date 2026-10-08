@@ -10,23 +10,8 @@ import { forwardRef, type ComponentPropsWithoutRef, type ElementType, type React
 import { Link } from "@tanstack/react-router";
 import { ArrowRight, CheckCheck, type LucideIcon } from "lucide-react";
 import { RESPOK_SYMBOL } from "../RespokLogo";
-
-export function cx(...parts: (string | false | null | undefined)[]): string {
-  return parts.filter(Boolean).join(" ");
-}
-
-/* ── Shapes ─────────────────────────────────────────────────────────────── */
-
-/** Tail classes, so every surface uses exactly the brand's geometry. */
-export const SHAPE = {
-  question: "rounded-full rounded-bl-[4px]",
-  answer: "rounded-full rounded-br-[4px]",
-  questionCard: "rounded-[28px] rounded-bl-[6px]",
-  answerCard: "rounded-[28px] rounded-br-[6px]",
-  /** Smaller cards (menus, fields, chips that may wrap). */
-  questionSoft: "rounded-[22px] rounded-bl-[6px]",
-  answerSoft: "rounded-[22px] rounded-br-[6px]",
-} as const;
+import { SHAPE, TYPE, actionClass, cx, type ActionSize, type ActionVariant } from "./classes";
+import { Reveal } from "../shared/Reveal";
 
 /* ── Layout ─────────────────────────────────────────────────────────────── */
 
@@ -248,61 +233,7 @@ export function QuestionCard({
   );
 }
 
-/** The thin vertical line that ties a transcript together (desktop). */
-export function ThreadLine({ className }: { className?: string }) {
-  return (
-    <span
-      aria-hidden="true"
-      className={cx("pointer-events-none absolute w-px bg-rpk-mist", className)}
-    />
-  );
-}
-
 /* ── Actions ────────────────────────────────────────────────────────────── */
-
-export type ActionVariant = "primary" | "secondary" | "ghost" | "outline" | "text";
-type ActionSize = "sm" | "md" | "lg";
-
-const ACTION_BASE =
-  "group/action inline-flex shrink-0 items-center justify-center gap-2 font-semibold whitespace-nowrap transition-[transform,box-shadow,background-color,color] duration-200 ease-rpk-spring select-none disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50";
-
-const ACTION_VARIANT: Record<ActionVariant, string> = {
-  /** Answer pill: Signal, Ink text, tail bottom-right. */
-  primary: cx(
-    SHAPE.answer,
-    "bg-rpk-signal text-rpk-ink hover:-translate-y-px hover:shadow-[0_10px_24px_-10px_rgb(211_54_26/0.7)] active:translate-y-0 active:scale-[.97]",
-  ),
-  /** Question pill: Ink, white text, tail bottom-left. */
-  secondary: cx(
-    SHAPE.question,
-    "bg-rpk-ink text-white hover:-translate-y-px hover:shadow-[0_10px_24px_-12px_rgb(22_20_43/0.7)] active:translate-y-0 active:scale-[.97]",
-  ),
-  ghost: "rounded-full text-rpk-ink hover:bg-rpk-paper active:scale-[.97]",
-  outline: cx(
-    SHAPE.question,
-    "bg-white text-rpk-ink ring-1 ring-rpk-mist ring-inset hover:bg-rpk-paper active:scale-[.97]",
-  ),
-  text: "rounded-md text-rpk-ink underline-offset-4 hover:text-rpk-signal-deep",
-};
-
-const ACTION_SIZE: Record<ActionSize, string> = {
-  sm: "h-10 px-4 text-[14px]",
-  md: "h-12 px-6 text-[15px]",
-  lg: "h-14 px-7 text-[16px]",
-};
-
-export function actionClass(
-  variant: ActionVariant = "primary",
-  size: ActionSize = "md",
-  className?: string,
-): string {
-  return cx(
-    ACTION_BASE,
-    ACTION_VARIANT[variant],
-    variant === "text" ? "min-h-11 text-[15px]" : ACTION_SIZE[size],
-    className,
-  );
-}
 
 function ArrowEnd() {
   return (
@@ -412,17 +343,6 @@ export function IconBadge({
   );
 }
 
-/** Pill chip, e.g. a category filter or a tag. */
-export function chipClass(active = false, className?: string): string {
-  return cx(
-    "inline-flex min-h-10 items-center gap-2 px-4 text-[14px] font-semibold transition-colors duration-200",
-    active
-      ? cx(SHAPE.question, "bg-rpk-ink text-white")
-      : cx("rounded-full bg-white text-rpk-ink ring-1 ring-rpk-mist ring-inset hover:bg-rpk-paper"),
-    className,
-  );
-}
-
 /** Mono badge, e.g. "3 articles" or a section number. */
 export function Badge({
   children,
@@ -448,17 +368,6 @@ export function Badge({
   );
 }
 
-/* ── Type ───────────────────────────────────────────────────────────────── */
-
-export const TYPE = {
-  display:
-    "font-extrabold text-[44px] leading-[1.02] tracking-[-0.03em] sm:text-[60px] lg:text-[72px] lg:tracking-[-0.035em]",
-  h2: "font-bold text-[30px] leading-[1.12] tracking-[-0.02em] sm:text-[36px]",
-  h3: "font-bold text-[20px] leading-[1.25] tracking-[-0.01em]",
-  lede: "text-[18px] leading-[1.55] text-rpk-slate sm:text-[20px]",
-  body: "text-[16px] leading-[1.6] text-rpk-slate sm:text-[17px]",
-} as const;
-
 /* ── Openers ────────────────────────────────────────────────────────────── */
 
 /**
@@ -468,49 +377,36 @@ export const TYPE = {
  */
 export function PageOpener({
   question,
-  time = "09:41",
+  eyebrow,
   title,
-  titleDir,
   lede,
   meta,
   children,
   className,
-  aside,
 }: {
-  question: string;
-  time?: string;
+  question: ReactNode;
+  /** Mono label above the title (outside the h1). */
+  eyebrow?: ReactNode;
   title: ReactNode;
-  titleDir?: "ltr" | "rtl";
   lede?: ReactNode;
   meta?: ReactNode;
   children?: ReactNode;
   className?: string;
-  aside?: ReactNode;
 }) {
   return (
     <section className={cx("relative overflow-hidden bg-white", className)}>
-      {!aside && <OpenerMark compact={!!children} />}
+      <OpenerMark compact={!!children} />
       <Container className="relative pt-12 pb-16 sm:pt-16 sm:pb-20 lg:pt-20 lg:pb-24">
-        <div
-          className={cx(
-            !!aside &&
-              "lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(0,380px)] lg:items-end lg:gap-16",
-          )}
-        >
-          <div className={cx("min-w-0", !aside && "lg:max-w-[640px] xl:max-w-[760px]")}>
-            <Conversation question={question} time={time} />
-            <h1
-              dir={titleDir}
-              className={cx(TYPE.display, "mt-10 text-balance text-rpk-ink sm:mt-12")}
-            >
-              {title}
-            </h1>
-            {lede && <p className={cx(TYPE.lede, "mt-6 max-w-[42rem] text-pretty")}>{lede}</p>}
-            {meta && <div className="mt-6">{meta}</div>}
-            {children}
+        <div className="lg:max-w-[640px] xl:max-w-[760px]">
+          <Conversation question={question} />
+          <div className="mt-10 sm:mt-12">
+            {eyebrow && <Eyebrow className="mb-4">{eyebrow}</Eyebrow>}
+            <h1 className={cx(TYPE.display, "text-balance text-rpk-ink")}>{title}</h1>
           </div>
-          {aside && <div className="mt-12 lg:mt-0">{aside}</div>}
+          {lede && <p className={cx(TYPE.lede, "mt-6 max-w-[42rem] text-pretty")}>{lede}</p>}
+          {meta && <div className="mt-6">{meta}</div>}
         </div>
+        {children}
       </Container>
     </section>
   );
@@ -566,6 +462,32 @@ export function OpenerMark({
   );
 }
 
+/**
+ * The mark's geometry with real content: the question sits left, the answer sits
+ * right, 8px below, and always reaches past the question's end (logo: 62 / 82 wide,
+ * overlapping by 40). Works for any text length.
+ */
+export function Exchange({
+  question,
+  answer,
+  className,
+}: {
+  question: ReactNode;
+  answer: ReactNode;
+  className?: string | undefined;
+}) {
+  return (
+    <div className={cx("flex w-fit max-w-full flex-col items-start gap-2", className)}>
+      <div className="mr-10 max-w-[calc(100%-2.5rem)] sm:mr-14 sm:max-w-[calc(100%-3.5rem)]">
+        {question}
+      </div>
+      <div className="ml-10 max-w-[calc(100%-2.5rem)] self-end sm:ml-14 sm:max-w-[calc(100%-3.5rem)]">
+        {answer}
+      </div>
+    </div>
+  );
+}
+
 /** Question pill + typing answer pill: the logo, drawn with a real question. */
 export function Conversation({
   question,
@@ -574,7 +496,7 @@ export function Conversation({
   away = false,
   answer,
 }: {
-  question: string;
+  question: ReactNode;
   time?: string;
   className?: string;
   /** Outline (away) answer pill instead of the Signal one. */
@@ -583,19 +505,29 @@ export function Conversation({
   answer?: ReactNode;
 }) {
   return (
-    <div className={cx("flex flex-col items-start", className)}>
-      <div className="flex max-w-full items-end gap-3">
-        <QuestionPill size="lg" className="tt-in-left">
-          {question}
-        </QuestionPill>
-        <Timestamp className="mb-1.5 hidden sm:inline">{time}</Timestamp>
-      </div>
-      <div className="mt-2 ml-8 flex items-center gap-3 sm:ml-10">
-        <AnswerPill as="span" size="lg" away={away} className="tt-in-right justify-center">
-          {answer ?? <TypingDots tone="ink" className="tt-typing px-1" />}
+    <Exchange
+      className={className}
+      question={
+        <div className="relative">
+          <QuestionPill size="lg" className="tt-in-left">
+            {question}
+          </QuestionPill>
+          <Timestamp className="absolute top-1/2 left-full ml-3 hidden -translate-y-1/2 sm:inline">
+            {time}
+          </Timestamp>
+        </div>
+      }
+      answer={
+        <AnswerPill
+          as="span"
+          size="lg"
+          away={away}
+          className="tt-in-right min-w-[104px] justify-center sm:min-w-[124px]"
+        >
+          {answer ?? <TypingDots tone="ink" className="tt-typing" />}
         </AnswerPill>
-      </div>
-    </div>
+      }
+    />
   );
 }
 
@@ -620,9 +552,9 @@ export function SectionHeader({
   return (
     <div className={cx("max-w-3xl", className)}>
       {question && (
-        <QuestionPill size="md" className="mb-6">
-          {question}
-        </QuestionPill>
+        <Reveal effect="from-left" className="mb-6">
+          <QuestionPill size="md">{question}</QuestionPill>
+        </Reveal>
       )}
       {eyebrow && <Eyebrow className="mb-3">{eyebrow}</Eyebrow>}
       <Heading id={id} className={cx(TYPE.h2, "text-balance text-rpk-ink")}>
@@ -636,7 +568,7 @@ export function SectionHeader({
 /* ── Forms ──────────────────────────────────────────────────────────────── */
 
 const FIELD_BASE =
-  "block w-full bg-white px-5 text-[16px] text-rpk-ink ring-1 ring-rpk-mist ring-inset transition-[box-shadow,background-color] duration-200 placeholder:text-rpk-slate/70 hover:ring-rpk-haze focus:outline-none aria-[invalid=true]:ring-2 aria-[invalid=true]:ring-rpk-signal-deep";
+  "block w-full bg-white px-5 text-[16px] text-rpk-ink ring-1 ring-rpk-mist ring-inset transition-[box-shadow,background-color] duration-200 placeholder:text-rpk-slate hover:ring-rpk-haze focus:outline-none aria-[invalid=true]:ring-2 aria-[invalid=true]:ring-rpk-signal-deep";
 
 export function FieldLabel({
   htmlFor,

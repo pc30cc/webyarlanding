@@ -1,3 +1,4 @@
+import { useEffect, useRef } from "react";
 import { Check, RefreshCw } from "lucide-react";
 import { buildBreadcrumbJsonLd } from "@/lib/seo-meta";
 import { RespokLogo } from "../../RespokLogo";
@@ -9,12 +10,23 @@ import { JsonLd } from "../../shared/JsonLd";
 import type { ContactPageData } from "../../types";
 import { OPEN_COPY } from "../copy";
 import { ActionLink, Card, ChapterHero, Container, CornerDot, Dot, Eyebrow, Field } from "../ui";
-import { buttonClass, cx, inputClass } from "../tokens";
+import { buttonClass, cx, inputClass, textLinkClass } from "../tokens";
+
+const FIELD_ORDER: ContactField[] = ["name", "email", "subject", "message", "answer"];
 
 export function ContactPage(_: ContactPageData) {
   const { settings, brand, siteUrl } = useRespok();
   const copy = useContent(getContactContent);
   const form = useContactForm();
+  const focusFirstError = useRef(false);
+
+  // After a submit that fails validation, move focus to the first invalid field.
+  useEffect(() => {
+    if (!focusFirstError.current) return;
+    focusFirstError.current = false;
+    const first = FIELD_ORDER.find((field) => form.errors[field]);
+    if (first) document.getElementById(`c-${first}`)?.focus();
+  }, [form.errors]);
   const email = settings.brand.email?.trim() || "";
   const phone = settings.brand.phone?.trim() || "";
   const address = settings.brand.address?.trim() || "";
@@ -86,7 +98,7 @@ export function ContactPage(_: ContactPageData) {
       <Container className="relative pb-24 sm:pb-32">
         <div className="grid gap-14 lg:grid-cols-12 lg:gap-10">
           {/* The form is the chat panel: square corner at the bottom-right, the dot just outside. */}
-          <div className="relative -mt-10 mr-6 sm:-mt-14 sm:mr-8 lg:order-2 lg:col-span-7 lg:col-start-6 lg:-mt-72">
+          <div className="relative -mt-10 mr-6 min-w-0 sm:-mt-14 sm:mr-8 lg:order-2 lg:col-span-7 lg:col-start-6 lg:-mt-72">
             <div className="rpk-o-grow-br relative">
               <Card size="lg" className="overflow-hidden shadow-rpk-panel">
                 <div className="flex items-center gap-3 border-b border-rpk-mist px-6 py-5 sm:px-8">
@@ -113,7 +125,10 @@ export function ContactPage(_: ContactPageData) {
 
                 <form
                   noValidate
-                  onSubmit={(event) => void form.submit(event)}
+                  onSubmit={(event) => {
+                    focusFirstError.current = true;
+                    void form.submit(event);
+                  }}
                   className="grid gap-6 px-6 py-7 sm:px-8 sm:py-8"
                   aria-labelledby="contact-form-title"
                 >
@@ -243,11 +258,12 @@ export function ContactPage(_: ContactPageData) {
                   </div>
                 </form>
               </Card>
-              <CornerDot size={22} />
+              {/* The panel grows out of its corner, then the dot pops (kit motion). */}
+              <CornerDot size={22} pop={240} />
             </div>
           </div>
 
-          <div className="lg:order-1 lg:col-span-4 lg:pt-20">
+          <div className="min-w-0 lg:order-1 lg:col-span-4 lg:pt-20">
             {details.length > 0 ? (
               <section aria-labelledby="contact-details">
                 <h2 id="contact-details" className="border-b-2 border-rpk-ink pb-2">
@@ -261,12 +277,12 @@ export function ContactPage(_: ContactPageData) {
                       <dt className="font-rpk-mono text-[12px] tracking-[0.08em] text-rpk-slate uppercase">
                         {item.label}
                       </dt>
-                      <dd className="mt-1.5 text-[18px] font-semibold break-words text-rpk-ink">
+                      <dd className="mt-1.5 text-[18px] font-semibold wrap-anywhere text-rpk-ink">
                         {item.href ? (
                           <a
                             href={item.href}
                             dir={item.ltr ? "ltr" : undefined}
-                            className="rounded-[4px] text-rpk-ink underline decoration-rpk-signal decoration-2 underline-offset-[6px] transition-colors hover:text-rpk-signal-deep"
+                            className={textLinkClass()}
                           >
                             {item.value}
                           </a>

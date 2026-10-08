@@ -20,9 +20,7 @@ export interface NavCategory {
 }
 
 /** Catalog categories, translated and filtered by the call/AI switches. */
-export function useGatedCatalog(
-  categories: CatalogCategoryDto[],
-): NavCategory[] {
+export function useGatedCatalog(categories: CatalogCategoryDto[]): NavCategory[] {
   const { t, callEnabled, aiEnabled } = useRespok();
   return categories
     .map((category) => ({

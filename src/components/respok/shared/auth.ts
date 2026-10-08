@@ -9,8 +9,7 @@ export function useRespokAuth() {
   const { settings } = useRespok();
   const auth = settings.auth;
   const session = useAppSession(auth.sessionCheckUrl, auth.logoutUrl);
-  const isLoggedIn =
-    auth.enabled && session.status === "loggedIn" && session.user !== null;
+  const isLoggedIn = auth.enabled && session.status === "loggedIn" && session.user !== null;
   const fullName = session.user?.fullName?.trim();
   return {
     enabled: auth.enabled,
