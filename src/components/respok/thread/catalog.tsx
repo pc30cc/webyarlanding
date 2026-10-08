@@ -54,7 +54,9 @@ export function CatalogCard({
         </Link>
       </Heading>
       {item.shortDesc && (
-        <p className="mt-2 text-[15px] leading-[1.6] text-pretty text-rpk-slate">{item.shortDesc}</p>
+        <p className="mt-2 text-[15px] leading-[1.6] text-pretty text-rpk-slate">
+          {item.shortDesc}
+        </p>
       )}
       {bullets.length > 0 && <CheckList items={bullets} size="sm" className="mt-5" />}
       <span className="mt-auto inline-flex items-center gap-2 pt-6 text-[15px] font-semibold text-rpk-ink">

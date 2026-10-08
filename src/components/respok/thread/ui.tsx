@@ -195,16 +195,19 @@ export function AnswerCard({
   as: Tag = "div",
   tone = "white",
   id,
+  "aria-labelledby": labelledBy,
 }: {
   children?: ReactNode;
   className?: string;
   as?: ElementType;
   tone?: "white" | "paper" | "soft";
   id?: string;
+  "aria-labelledby"?: string;
 }) {
   return (
     <Tag
       id={id}
+      aria-labelledby={labelledBy}
       className={cx(
         SHAPE.answerCard,
         tone === "white" && "bg-white shadow-rpk-card",
