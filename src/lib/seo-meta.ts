@@ -114,7 +114,7 @@ export function buildPageMeta(opts: {
     override?.ogImage ||
     fallbackOgImage ||
     settings.seo.ogImage ||
-    (base ? `${base}/og-image.png` : "/og-image.png");
+    (base ? `${base}/og-image.png?v=2` : "/og-image.png?v=2");
   const canonical =
     override?.canonicalUrl || (base ? `${base}${path}` : undefined);
   const robots =
