@@ -307,8 +307,22 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
                 },
               ]
             : [
-                { rel: "icon", href: "/favicon.png", type: "image/png" },
+                // آیکون‌ها از کیت برند وب‌یار (public/)
+                { rel: "icon", href: "/favicon.ico", sizes: "48x48" },
+                { rel: "icon", href: "/favicon.svg", type: "image/svg+xml" },
+                {
+                  rel: "icon",
+                  href: "/favicon-32x32.png",
+                  type: "image/png",
+                  sizes: "32x32",
+                },
                 { rel: "apple-touch-icon", href: "/apple-touch-icon.png" },
+                {
+                  rel: "mask-icon",
+                  href: "/safari-pinned-tab.svg",
+                  color: "#0B7D6C",
+                },
+                { rel: "manifest", href: "/site.webmanifest" },
               ]),
         ],
         scripts: buildHeadScripts(settings),
