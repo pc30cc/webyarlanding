@@ -1,12 +1,12 @@
 import { Link } from "@tanstack/react-router";
 import { ArrowRight, Mic, PhoneOff, Plus, Video } from "lucide-react";
 import type { AppDto } from "@/lib/apps.functions";
-import { AndroidIcon, AppleIcon, WindowsIcon } from "@/components/site/brand-icons";
 import { LoopVideo } from "@/components/site/LoopVideo";
 import { useContent } from "../../content";
 import { getHomeContent, type ChannelCopy, type HomeContent } from "../../content/home";
 import { PLATFORM_EN, sortApps } from "../../shared/apps";
 import { useRespokAuth } from "../../shared/auth";
+import { DeviceLineup } from "../../shared/DeviceLineup";
 import { useRespok } from "../../shared/context";
 import { JsonLd } from "../../shared/JsonLd";
 import { Reveal } from "../../shared/Reveal";
@@ -90,18 +90,9 @@ function DotStop({ text }: { text: string }) {
   );
 }
 
-const PLATFORM_MARK = { apple: AppleIcon, android: AndroidIcon, windows: WindowsIcon } as const;
-
 function Hero({ c, apps }: { c: HomeContent; apps: AppDto[] }) {
   const { brand } = useRespok();
   const auth = useRespokAuth();
-  const marks = [
-    ...new Set(
-      apps.map((app) =>
-        app.platform === "android" ? "android" : app.platform === "windows" ? "windows" : "apple",
-      ),
-    ),
-  ];
   const [first = "", ...rest] = c.hero.title;
 
   return (
@@ -155,31 +146,27 @@ function Hero({ c, apps }: { c: HomeContent; apps: AppDto[] }) {
               </li>
             </ul>
             {apps.length > 0 ? (
-              <Link
-                to="/download"
-                className="group/apps mt-6 inline-flex min-h-11 items-center gap-3 rounded-[12px] rounded-br-[3px] text-[15px] font-semibold text-white transition-colors"
-              >
-                <span aria-hidden="true" className="flex -space-x-1.5">
-                  {marks.map((mark) => {
-                    const Icon = PLATFORM_MARK[mark];
-                    return (
-                      <span
-                        key={mark}
-                        className="grid size-8 place-items-center rounded-full bg-rpk-ink-raised ring-2 ring-rpk-ink"
-                      >
-                        <Icon className="size-3.5 text-white" />
-                      </span>
-                    );
-                  })}
-                </span>
-                <span className="underline decoration-white/30 decoration-[1.5px] underline-offset-[5px] transition-colors group-hover/apps:decoration-rpk-signal">
-                  {c.hero.appsCta}
-                </span>
-                <ArrowRight
-                  aria-hidden="true"
-                  className="size-4 text-white/70 transition-transform group-hover/apps:translate-x-1"
+              <div className="mt-10">
+                <DeviceLineup
+                  apps={apps}
+                  brand={brand}
+                  concept="open"
+                  surface="ink"
+                  avatars={c.chat.conversations.map((row) => row.avatar)}
                 />
-              </Link>
+                <Link
+                  to="/download"
+                  className="group/apps mt-4 inline-flex min-h-11 items-center gap-2 rounded-[6px] text-[15px] font-semibold text-white"
+                >
+                  <span className="underline decoration-white/30 decoration-[1.5px] underline-offset-[5px] transition-colors group-hover/apps:decoration-rpk-signal">
+                    {c.hero.appsCta}
+                  </span>
+                  <ArrowRight
+                    aria-hidden="true"
+                    className="size-4 text-white/70 transition-transform group-hover/apps:translate-x-1"
+                  />
+                </Link>
+              </div>
             ) : null}
           </div>
 
