@@ -9,11 +9,12 @@ import { useContent } from "../../content";
 import { getHomeContent, type ChannelCopy, type HomeContent } from "../../content/home";
 import { useRespokAuth } from "../../shared/auth";
 import { sortApps } from "../../shared/apps";
+import { DeviceLineup } from "../../shared/DeviceLineup";
 import { useRespok } from "../../shared/context";
 import { JsonLd } from "../../shared/JsonLd";
 import { Reveal } from "../../shared/Reveal";
 import { homeJsonLd, withOverride } from "../../shared/structured";
-import { AppCard, PlatformGlyph } from "../apps";
+import { AppCard } from "../apps";
 import { THREAD_COPY } from "../copy";
 import { SHAPE, cx } from "../classes";
 import { ThreadMotion } from "../motion";
@@ -48,12 +49,7 @@ function clock(step: number): string {
 
 function Hero({ c, apps }: { c: HomeContent; apps: AppDto[] }) {
   const auth = useRespokAuth();
-  // One glyph per logo: iPhone and Mac share Apple's.
-  const platforms = [
-    ...new Map(
-      sortApps(apps).map((app) => [app.platform === "mac" ? "ios" : app.platform, app.platform]),
-    ).values(),
-  ];
+  const { brand } = useRespok();
   return (
     <section className="relative overflow-hidden bg-white">
       <Container wide className="flex flex-col items-center pt-12 text-center sm:pt-16 lg:pt-20">
@@ -110,30 +106,29 @@ function Hero({ c, apps }: { c: HomeContent; apps: AppDto[] }) {
           <ReadTicks className="text-rpk-signal-deep" />
           {c.hero.install}
         </p>
-        {platforms.length > 0 && (
-          <Link
-            to="/download"
-            className="group/apps mt-4 inline-flex min-h-11 items-center gap-3 rounded-full px-2 text-[15px] font-semibold text-rpk-ink"
-          >
-            <span aria-hidden="true" className="flex items-center gap-1.5 text-rpk-ink">
-              {platforms.map((platform) => (
-                <span
-                  key={platform}
-                  className="grid size-8 place-items-center rounded-full bg-rpk-paper ring-1 ring-rpk-mist ring-inset"
-                >
-                  <PlatformGlyph platform={platform} className="size-4" />
-                </span>
-              ))}
-            </span>
-            <span className="underline decoration-rpk-mist decoration-2 underline-offset-[6px] transition-colors group-hover/apps:decoration-rpk-signal">
-              {c.hero.appsCta}
-            </span>
-            <ArrowRight
-              aria-hidden="true"
-              strokeWidth={2.4}
-              className="size-4 transition-transform duration-200 ease-rpk-spring group-hover/apps:translate-x-0.5"
+        {apps.length > 0 && (
+          <>
+            <DeviceLineup
+              apps={sortApps(apps)}
+              brand={brand}
+              concept="thread"
+              avatars={c.chat.conversations.map((row) => row.avatar)}
+              className="mt-10 w-full max-w-[600px]"
             />
-          </Link>
+            <Link
+              to="/download"
+              className="group/apps mt-3 inline-flex min-h-11 items-center gap-2 rounded-full px-2 text-[15px] font-semibold text-rpk-ink"
+            >
+              <span className="underline decoration-rpk-mist decoration-2 underline-offset-[6px] transition-colors group-hover/apps:decoration-rpk-signal">
+                {c.hero.appsCta}
+              </span>
+              <ArrowRight
+                aria-hidden="true"
+                strokeWidth={2.4}
+                className="size-4 transition-transform duration-200 ease-rpk-spring group-hover/apps:translate-x-0.5"
+              />
+            </Link>
+          </>
         )}
       </Container>
       <Stage c={c} />
