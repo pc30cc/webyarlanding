@@ -73,7 +73,7 @@ export function SiteFooter({
           <div className="col-span-2 space-y-3 md:col-span-1">
             <Link to="/" className="flex items-center gap-2">
               <img
-                src={settings.brand.logoUrl || "/webyar-logo.png"}
+                src={settings.brand.logoUrl || "/webyar-logo.png?v=2"}
                 alt={translateText(brandName || "وب‌یار")}
                 width={32}
                 height={32}

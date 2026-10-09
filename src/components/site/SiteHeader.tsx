@@ -110,7 +110,7 @@ export function SiteHeader({
       <div className="glass mx-auto flex h-14 max-w-7xl items-center justify-between rounded-2xl px-3 shadow-[0_10px_40px_-20px_oklch(0_0_0/0.8)] sm:h-16 sm:px-5">
         <Link to="/" className="flex items-center gap-3">
           <img
-            src={settings.brand.logoUrl || "/webyar-logo.png"}
+            src={settings.brand.logoUrl || "/webyar-logo.png?v=2"}
             alt={translateText(brandName || "وب‌یار")}
             width={36}
             height={36}

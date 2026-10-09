@@ -239,8 +239,8 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
             content: respok
               ? `${base}${respok}/og-image.png`
               : base
-                ? `${base}/og-image.png`
-                : "/og-image.png",
+                ? `${base}/og-image.png?v=2`
+                : "/og-image.png?v=2",
           },
           { name: "twitter:card", content: "summary_large_image" },
           ...(twitterHandle
@@ -316,7 +316,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
                   type: "image/png",
                   sizes: "32x32",
                 },
-                { rel: "apple-touch-icon", href: "/apple-touch-icon.png" },
+                { rel: "apple-touch-icon", href: "/apple-touch-icon.png?v=2" },
                 {
                   rel: "mask-icon",
                   href: "/safari-pinned-tab.svg",
