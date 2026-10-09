@@ -35,6 +35,8 @@ const empty: AppInput = {
   downloadUrl: "",
   sortOrder: 0,
   enabled: true,
+  downloadUrlEn: "",
+  enabledEn: true,
 };
 
 export default function AppsSection() {
@@ -153,12 +155,18 @@ export default function AppsSection() {
                   {!a.enabled && (
                     <span className="rounded bg-muted px-1.5 text-xs text-muted-foreground">خاموش</span>
                   )}
+                  {!a.enabledEn && (
+                    <span className="rounded bg-muted px-1.5 text-xs text-muted-foreground">خاموش در انگلیسی</span>
+                  )}
                 </div>
                 <div className="text-xs text-muted-foreground">
                   {PLATFORM_LABEL[a.platform]} · نسخه {a.version || "—"}
                 </div>
                 <div dir="ltr" className="mt-1 truncate text-start text-xs text-muted-foreground">
                   {a.downloadUrl || "لینک تنظیم نشده"}
+                </div>
+                <div dir="ltr" className="truncate text-start text-xs text-muted-foreground">
+                  EN: {a.downloadUrlEn || "لینک انگلیسی تنظیم نشده"}
                 </div>
                 <div className="mt-3 flex gap-2">
                   <Button size="sm" variant="outline" onClick={() => setForm({ ...a })} className="gap-1">
@@ -209,6 +217,13 @@ export default function AppsSection() {
               <Label>لینک دانلود (App Store / Google Play / فایل نصب)</Label>
               <Input dir="ltr" value={form.downloadUrl} onChange={(e) => set("downloadUrl", e.target.value)} placeholder="https://..." />
             </div>
+            <div className="space-y-1.5 md:col-span-2">
+              <Label>لینک دانلود سایت انگلیسی (Respok)</Label>
+              <Input dir="ltr" value={form.downloadUrlEn} onChange={(e) => set("downloadUrlEn", e.target.value)} placeholder="https://..." />
+              <p className="text-xs text-muted-foreground">
+                جدا از لینک فارسی است. خالی بماند، در سایت انگلیسی «به‌زودی» نمایش داده می‌شود.
+              </p>
+            </div>
             <div className="space-y-1.5">
               <Label>زیرعنوان</Label>
               <Input value={form.subtitle} onChange={(e) => set("subtitle", e.target.value)} />
@@ -256,6 +271,10 @@ export default function AppsSection() {
             <div className="flex items-center gap-3 pt-6">
               <Switch checked={form.enabled} onCheckedChange={(v) => set("enabled", v)} />
               <Label>نمایش در سایت</Label>
+            </div>
+            <div className="flex items-center gap-3">
+              <Switch checked={form.enabledEn} onCheckedChange={(v) => set("enabledEn", v)} />
+              <Label>نمایش در سایت انگلیسی (Respok)</Label>
             </div>
             <div className="flex gap-2 md:col-span-2">
               <Button onClick={onSave} disabled={busy}>ذخیره</Button>

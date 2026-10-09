@@ -20,6 +20,10 @@ export interface AppDto {
   downloadUrl: string;
   sortOrder: number;
   enabled: boolean;
+  /** لینک دانلود سایت انگلیسی (Respok)؛ جدا از لینک سایت فارسی */
+  downloadUrlEn: string;
+  /** نمایش در سایت انگلیسی */
+  enabledEn: boolean;
 }
 
 export interface AppStats {
@@ -45,12 +49,14 @@ const appSchema = z.object({
   downloadUrl: z.string().optional().default(""),
   sortOrder: z.number().optional().default(0),
   enabled: z.boolean().optional().default(true),
+  downloadUrlEn: z.string().optional().default(""),
+  enabledEn: z.boolean().optional().default(true),
 });
 export type AppInput = z.infer<typeof appSchema>;
 
 /** نسخه عمومی بدون لینک مستقیم (کلیک‌ها باید از /go عبور کنند) */
 function publicShape(a: AppDto): AppDto {
-  return { ...a, downloadUrl: a.downloadUrl ? "1" : "" };
+  return { ...a, downloadUrl: a.downloadUrl ? "1" : "", downloadUrlEn: "" };
 }
 
 export const getPublicApps = createServerFn({ method: "GET" }).handler(async () => {
