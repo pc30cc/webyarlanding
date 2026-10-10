@@ -150,7 +150,6 @@ function Hero({ c, apps }: { c: HomeContent; apps: AppDto[] }) {
                 <DeviceLineup
                   apps={apps}
                   brand={brand}
-                  concept="open"
                   surface="ink"
                   avatars={c.chat.conversations.map((row) => row.avatar)}
                 />

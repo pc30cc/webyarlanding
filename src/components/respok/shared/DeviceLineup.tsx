@@ -7,7 +7,6 @@
 import type { CSSProperties, ReactNode } from "react";
 import { Link } from "@tanstack/react-router";
 import type { AppDto, AppPlatform } from "@/lib/apps.functions";
-import { RespokLogo, type RespokConcept } from "../RespokLogo";
 import { PLATFORM_EN } from "./apps";
 
 const cx = (...classes: (string | false | null | undefined)[]) => classes.filter(Boolean).join(" ");
@@ -52,24 +51,16 @@ function Chat() {
   );
 }
 
-function ScreenHeader({ concept }: { concept: RespokConcept }) {
+function ScreenHeader() {
   return (
     <div className="flex items-center gap-[6%] px-[8%] pt-[4%]">
-      <RespokLogo concept={concept} variant="symbol" height={9} title="" />
       <span className="h-[3px] w-[30%] rounded-full bg-rpk-ink" />
+      <span className="ml-auto size-[6px] rounded-full bg-rpk-haze" />
     </div>
   );
 }
 
-function Phone({
-  platform,
-  concept,
-  avatars,
-}: {
-  platform: "ios" | "android";
-  concept: RespokConcept;
-  avatars: string[];
-}) {
+function Phone({ platform, avatars }: { platform: "ios" | "android"; avatars: string[] }) {
   const ios = platform === "ios";
   return (
     <span
@@ -87,7 +78,7 @@ function Phone({
       </span>
       {ios ? (
         <span className="flex flex-1 flex-col">
-          <ScreenHeader concept={concept} />
+          <ScreenHeader />
           <Rows avatars={avatars} count={Math.min(5, Math.max(3, avatars.length))} />
           <span className="mt-auto flex justify-around border-t border-rpk-mist px-[10%] py-[6%]">
             <span className="size-[6px] rounded-[2px] bg-rpk-signal" />
@@ -97,7 +88,7 @@ function Phone({
         </span>
       ) : (
         <span className="flex flex-1 flex-col">
-          <ScreenHeader concept={concept} />
+          <ScreenHeader />
           <span className="mt-[6%] flex-1">
             <Chat />
           </span>
@@ -112,15 +103,7 @@ function Phone({
   );
 }
 
-function DesktopScreen({
-  concept,
-  avatars,
-  mac,
-}: {
-  concept: RespokConcept;
-  avatars: string[];
-  mac: boolean;
-}) {
+function DesktopScreen({ avatars, mac }: { avatars: string[]; mac: boolean }) {
   return (
     <span className="flex h-full flex-col overflow-hidden bg-white">
       <span className="flex h-[9%] min-h-[8px] items-center gap-[1.5%] border-b border-rpk-mist bg-rpk-paper px-[3%]">
@@ -140,7 +123,7 @@ function DesktopScreen({
       </span>
       <span className="grid flex-1 grid-cols-[2fr_3fr]">
         <span className="flex flex-col border-r border-rpk-mist">
-          <ScreenHeader concept={concept} />
+          <ScreenHeader />
           <Rows avatars={avatars} count={Math.min(4, Math.max(3, avatars.length))} />
         </span>
         <Chat />
@@ -149,22 +132,22 @@ function DesktopScreen({
   );
 }
 
-function Laptop({ concept, avatars }: { concept: RespokConcept; avatars: string[] }) {
+function Laptop({ avatars }: { avatars: string[] }) {
   return (
     <span className="flex w-full flex-col items-center">
       <span className="block aspect-[16/10] w-[86%] overflow-hidden rounded-t-[10px] border-[4px] border-b-[6px] border-(--rpk-frame) bg-(--rpk-frame) shadow-[0_30px_50px_-30px_rgb(22_20_43/0.7)]">
-        <DesktopScreen concept={concept} avatars={avatars} mac />
+        <DesktopScreen avatars={avatars} mac />
       </span>
       <span className="h-[7px] w-full rounded-b-[8px] bg-gradient-to-b from-rpk-haze to-rpk-away" />
     </span>
   );
 }
 
-function Monitor({ concept, avatars }: { concept: RespokConcept; avatars: string[] }) {
+function Monitor({ avatars }: { avatars: string[] }) {
   return (
     <span className="flex w-full flex-col items-center">
       <span className="block aspect-[16/10] w-full overflow-hidden rounded-[8px] border-[4px] border-(--rpk-frame) bg-(--rpk-frame) shadow-[0_30px_50px_-30px_rgb(22_20_43/0.7)]">
-        <DesktopScreen concept={concept} avatars={avatars} mac={false} />
+        <DesktopScreen avatars={avatars} mac={false} />
       </span>
       <span className="h-[14px] w-[10%] bg-(--rpk-frame)" />
       <span className="h-[4px] w-[30%] rounded-full bg-(--rpk-frame)" />
@@ -205,14 +188,12 @@ function DeviceLink({
 export function DeviceLineup({
   apps,
   brand,
-  concept,
   avatars,
   surface = "paper",
   className,
 }: {
   apps: AppDto[];
   brand: string;
-  concept: RespokConcept;
   /** Contact photos shown in the drawn inboxes. */
   avatars: string[];
   surface?: Surface;
@@ -248,7 +229,7 @@ export function DeviceLineup({
                 : { left: "18%", top: "6%", width: "64%" }
             }
           >
-            <Monitor concept={concept} avatars={avatars} />
+            <Monitor avatars={avatars} />
           </DeviceLink>
         )}
         {mac && (
@@ -262,7 +243,7 @@ export function DeviceLineup({
                 : { left: "16%", top: "12%", width: "68%" }
             }
           >
-            <Laptop concept={concept} avatars={avatars} />
+            <Laptop avatars={avatars} />
           </DeviceLink>
         )}
         {ios && (
@@ -272,7 +253,7 @@ export function DeviceLineup({
             className="z-20 -rotate-[4deg]"
             style={{ left: "0%", bottom: "0%", width: "19%" }}
           >
-            <Phone platform="ios" concept={concept} avatars={avatars} />
+            <Phone platform="ios" avatars={avatars} />
           </DeviceLink>
         )}
         {android && (
@@ -282,7 +263,7 @@ export function DeviceLineup({
             className="z-20 rotate-[4deg]"
             style={{ right: "0%", bottom: "0%", width: "19%" }}
           >
-            <Phone platform="android" concept={concept} avatars={avatars} />
+            <Phone platform="android" avatars={avatars} />
           </DeviceLink>
         )}
       </div>
