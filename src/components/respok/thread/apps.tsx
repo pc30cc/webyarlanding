@@ -8,7 +8,6 @@ import { Link } from "@tanstack/react-router";
 import { ArrowRight } from "lucide-react";
 import type { AppDto, AppPlatform } from "@/lib/apps.functions";
 import { AndroidIcon, AppleIcon, GooglePlayIcon, WindowsIcon } from "@/components/site/brand-icons";
-import { RespokLogo } from "../RespokLogo";
 import { PLATFORM_EN, downloadHref } from "../shared/apps";
 import { useRespok } from "../shared/context";
 import { SHAPE, cx } from "./classes";
@@ -39,44 +38,68 @@ function StoreGlyph({
   return <PlatformGlyph platform={platform} className={className} />;
 }
 
-/** The Respok app icon: Ink tile, the symbol at 56%, an optional platform badge. */
+/**
+ * Platform tile for an app: only the operating system's mark, on a surface in that
+ * platform's own colours (iPhone graphite, Mac aluminium, Android green, Windows blue),
+ * with a soft top highlight and a hairline edge like a real app icon.
+ */
+const PLATFORM_TILE: Record<AppPlatform, { surface: string; mark: string; ring: string }> = {
+  ios: {
+    surface: "linear-gradient(160deg, #3a3a3f 0%, #1c1c1f 55%, #0a0a0b 100%)",
+    mark: "text-white",
+    ring: "ring-black/40",
+  },
+  mac: {
+    surface: "linear-gradient(160deg, #ffffff 0%, #ececf0 55%, #d6d6dd 100%)",
+    mark: "text-[#1d1d1f]",
+    ring: "ring-black/10",
+  },
+  android: {
+    surface: "linear-gradient(160deg, #5ef0a1 0%, #2fd47d 50%, #149a57 100%)",
+    mark: "text-white",
+    ring: "ring-black/10",
+  },
+  windows: {
+    surface: "linear-gradient(160deg, #4aa8ff 0%, #0f7ae5 50%, #0050a8 100%)",
+    mark: "text-white",
+    ring: "ring-black/15",
+  },
+};
+
 export function AppIcon({
   size = 56,
   platform,
   className,
 }: {
   size?: number;
-  platform?: AppPlatform;
+  platform: AppPlatform;
   className?: string;
 }) {
-  const glyph = Math.round(size * 0.56);
-  const badge = Math.max(22, Math.round(size * 0.4));
+  const tile = PLATFORM_TILE[platform];
   return (
     <span
       aria-hidden="true"
-      className={cx("relative inline-flex shrink-0", className)}
-      style={{ width: size, height: size }}
+      className={cx(
+        "relative inline-grid shrink-0 place-items-center overflow-hidden ring-1 ring-inset",
+        "shadow-[0_1px_1px_rgb(22_20_43/0.08),0_12px_24px_-12px_rgb(22_20_43/0.55)]",
+        tile.ring,
+        className,
+      )}
+      style={{
+        width: size,
+        height: size,
+        borderRadius: Math.round(size * 0.24),
+        background: tile.surface,
+      }}
     >
       <span
-        className="absolute inset-0 grid place-items-center bg-rpk-ink shadow-[0_10px_24px_-12px_rgb(22_20_43/0.6)]"
-        style={{ borderRadius: Math.round(size * 0.225) }}
-      >
-        <RespokLogo
-          concept="thread"
-          variant="symbol"
-          colorway="reversed"
-          height={Math.round((glyph * 92) / 104)}
-          title=""
-        />
-      </span>
-      {platform && (
-        <span
-          className="absolute grid place-items-center rounded-full bg-white text-rpk-ink shadow-[0_2px_8px_rgb(22_20_43/0.18)] ring-2 ring-white"
-          style={{ width: badge, height: badge, right: -badge * 0.28, bottom: -badge * 0.28 }}
-        >
-          <PlatformGlyph platform={platform} className="size-[52%]" />
-        </span>
-      )}
+        className="pointer-events-none absolute inset-x-0 top-0 h-1/2 bg-gradient-to-b from-white/25 to-transparent"
+        style={{ borderTopLeftRadius: "inherit", borderTopRightRadius: "inherit" }}
+      />
+      <PlatformGlyph
+        platform={platform}
+        className={cx("relative size-[50%] drop-shadow-[0_1px_1px_rgb(0_0_0/0.18)]", tile.mark)}
+      />
     </span>
   );
 }

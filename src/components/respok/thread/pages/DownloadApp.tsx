@@ -116,7 +116,7 @@ export function DownloadAppPage({ settings, app, others }: DownloadAppPageData) 
         question={THREAD_COPY.download.appQuestion(meta.label)}
         eyebrow={
           <span className="flex items-center gap-3">
-            <AppIcon size={36} />
+            <AppIcon size={36} platform={app.platform} />
             {meta.label}
           </span>
         }

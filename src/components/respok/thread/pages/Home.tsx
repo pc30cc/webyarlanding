@@ -111,7 +111,6 @@ function Hero({ c, apps }: { c: HomeContent; apps: AppDto[] }) {
             <DeviceLineup
               apps={sortApps(apps)}
               brand={brand}
-              concept="thread"
               avatars={c.chat.conversations.map((row) => row.avatar)}
               className="mt-10 w-full max-w-[600px]"
             />
