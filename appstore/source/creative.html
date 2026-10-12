@@ -1,0 +1,217 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<!--
+  WebYar — App Store creative (iOS 27 product page header / search results / universal).
+  Query: ?lang=fa|en&c=universal|header|search[&guides=1]
+  Render viewport = canvas/2 at deviceScaleFactor 2.
+  Art Safe Areas (canvas px, from Apple's templates):
+    universal 5244x2950 → 1921,660 1402x962
+    header    3840x1646 → 1097,493 1646x661
+    search    3840x2560 →  836,765 2168x1030
+  Everything essential lives inside the safe area (what iPhone shows);
+  the rest is decorative bleed that wider crops (iPad/Mac) reveal.
+-->
+<style>
+@font-face{font-family:"IR";font-weight:400;src:url("IRANSansWeb.woff2")}
+@font-face{font-family:"IR";font-weight:500;src:url("IRANSansWeb-Medium.woff2")}
+@font-face{font-family:"IR";font-weight:700;src:url("IRANSansWeb-Bold.woff2")}
+@font-face{font-family:"IN";font-weight:100 900;src:url("Inter-Latin-Variable.woff2")}
+:root{
+  --u:4px;
+  --purple:oklch(0.62 0.216 292);
+  --blue:oklch(0.64 0.196 262);
+  --teal:#1cc8a9;
+  --ink:#1d1b33;
+  --muted:#6b6886;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{width:100vw;height:100vh;overflow:hidden}
+body{color:#fff;background:#120f2b;position:relative;font-family:"IR","IN",sans-serif}
+body.en{font-family:"IN",sans-serif}
+.bg{position:absolute;inset:0;
+  background:
+    radial-gradient(ellipse 45% 60% at var(--gx1,30%) 45%, oklch(0.55 0.22 292 / .75), transparent 70%),
+    radial-gradient(ellipse 45% 60% at var(--gx2,75%) 75%, oklch(0.55 0.2 262 / .55), transparent 70%),
+    radial-gradient(ellipse 30% 40% at 60% 8%, rgba(28,200,169,.2), transparent 70%),
+    linear-gradient(135deg,#1a1440 0%,#120f2b 55%,#0e1233 100%)}
+.dots{position:absolute;inset:0;
+  background-image:radial-gradient(rgba(255,255,255,.12) calc(var(--u)*.22), transparent calc(var(--u)*.28));
+  background-size:calc(var(--u)*4.4) calc(var(--u)*4.4);
+  -webkit-mask-image:radial-gradient(ellipse 60% 70% at 50% 50%, #000 15%, transparent 75%)}
+
+/* the 180u x 100u design box, centered in the safe area */
+.box{position:absolute;width:calc(var(--u)*180);height:calc(var(--u)*100)}
+.copy{position:absolute;inset-inline-start:0;top:0;bottom:0;width:calc(var(--u)*124);display:flex;flex-direction:column;justify-content:center}
+.brand{display:flex;align-items:center;gap:calc(var(--u)*3.2);margin-bottom:calc(var(--u)*5.5)}
+.brand img{width:calc(var(--u)*15);height:calc(var(--u)*15);border-radius:calc(var(--u)*3.6);box-shadow:0 calc(var(--u)*2) calc(var(--u)*6) rgba(28,200,169,.35)}
+.brand .name{font-weight:700;font-size:calc(var(--u)*9.5);line-height:1}
+.en .brand .name{font-weight:800;letter-spacing:-.02em}
+.brand .tag{font-size:calc(var(--u)*3.9);color:rgba(255,255,255,.75);margin-top:calc(var(--u)*1.6)}
+h1{font-weight:700;font-size:calc(var(--u)*10.4);line-height:1.3}
+.en h1{font-weight:800;font-size:calc(var(--u)*10);line-height:1.12;letter-spacing:-.025em}
+h1 .g{background:linear-gradient(90deg,#c4a8ff,#8ab4ff 60%,#6ee7d2);-webkit-background-clip:text;background-clip:text;color:transparent}
+.rtl h1 .g{background:linear-gradient(270deg,#c4a8ff,#8ab4ff 60%,#6ee7d2);-webkit-background-clip:text;background-clip:text}
+.feats{display:flex;gap:calc(var(--u)*2);margin-top:calc(var(--u)*6)}
+.feat{display:flex;align-items:center;gap:calc(var(--u)*1.4);padding:calc(var(--u)*1.7) calc(var(--u)*2.8);border-radius:calc(var(--u)*2.4);
+  background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.14);font-size:calc(var(--u)*3.9);font-weight:500;white-space:nowrap}
+.feat svg{width:calc(var(--u)*4.4);height:calc(var(--u)*4.4)}
+
+/* phones */
+.phone{position:absolute;width:calc(var(--u)*52);height:calc(var(--u)*108);border-radius:calc(var(--u)*8.6);
+  background:#0b0a18;padding:calc(var(--u)*1.7);
+  box-shadow:0 0 0 calc(var(--u)*.55) #3a3560, 0 calc(var(--u)*6) calc(var(--u)*14) rgba(0,0,0,.55), 0 0 calc(var(--u)*16) oklch(0.6 0.22 292 / .35)}
+.screen{width:100%;height:100%;border-radius:calc(var(--u)*7);overflow:hidden;background:#f6f5fb;position:relative;color:var(--ink)}
+.island{position:absolute;top:calc(var(--u)*1.9);left:50%;transform:translateX(-50%);width:calc(var(--u)*16);height:calc(var(--u)*4.4);border-radius:99px;background:#0b0a18;z-index:3}
+.main{inset-inline-end:calc(var(--u)*-2);top:calc(var(--u)*2);z-index:3}
+.back{inset-inline-end:calc(var(--u)*-52);top:calc(var(--u)*14);z-index:2;opacity:.95}
+.rtl .main{transform:rotate(-4deg)} .en .main{transform:rotate(4deg)}
+.rtl .back{transform:rotate(-10deg)} .en .back{transform:rotate(10deg)}
+
+.status{height:calc(var(--u)*8.4)}
+.appbar{padding:0 calc(var(--u)*3.6) calc(var(--u)*2.2);display:flex;align-items:center;justify-content:space-between}
+.appbar b{font-size:calc(var(--u)*4.2)}
+.appbar .on{font-size:calc(var(--u)*2.1);color:#0f8f78;background:rgba(28,200,169,.15);padding:calc(var(--u)*.6) calc(var(--u)*1.8);border-radius:99px;font-weight:500}
+.row{display:flex;gap:calc(var(--u)*2);align-items:center;padding:calc(var(--u)*2) calc(var(--u)*3.6);border-top:1px solid #ecebf3;background:#fff}
+.av{flex:none;width:calc(var(--u)*7.2);height:calc(var(--u)*7.2);border-radius:50%;display:grid;place-items:center;font-weight:700;font-size:calc(var(--u)*2.8);color:#fff;background-size:cover;background-position:center}
+.meta{flex:1;min-width:0}
+.meta .t{display:flex;justify-content:space-between;font-size:calc(var(--u)*2.5);font-weight:700}
+.meta .t small{font-weight:400;color:var(--muted);font-size:calc(var(--u)*2)}
+.meta .m{font-size:calc(var(--u)*2.2);color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:calc(var(--u)*.4)}
+.badge{flex:none;min-width:calc(var(--u)*3.4);height:calc(var(--u)*3.4);border-radius:99px;background:var(--purple);color:#fff;font-size:calc(var(--u)*1.9);display:grid;place-items:center;font-weight:700}
+
+.chead{background:linear-gradient(135deg,var(--purple),var(--blue));color:#fff;padding:calc(var(--u)*9) calc(var(--u)*3.6) calc(var(--u)*3);display:flex;align-items:center;gap:calc(var(--u)*2)}
+.chead .av{border:2px solid rgba(255,255,255,.7)}
+.chead b{font-size:calc(var(--u)*3)}
+.chead div small{display:block;font-size:calc(var(--u)*2);opacity:.85;margin-top:calc(var(--u)*.3)}
+.chead .vid{margin-inline-start:auto;width:calc(var(--u)*6.4);height:calc(var(--u)*6.4);border-radius:50%;background:rgba(255,255,255,.2);display:grid;place-items:center}
+.chead .vid svg{width:calc(var(--u)*3.4);height:calc(var(--u)*3.4)}
+.msgs{padding:calc(var(--u)*3);display:flex;flex-direction:column;gap:calc(var(--u)*1.8)}
+.b{max-width:80%;font-size:calc(var(--u)*2.6);line-height:1.6;padding:calc(var(--u)*1.7) calc(var(--u)*2.4);border-radius:calc(var(--u)*3)}
+.b.in{align-self:flex-start;background:#fff;box-shadow:0 1px 3px rgba(30,20,80,.08)}
+.b.out{align-self:flex-end;background:linear-gradient(135deg,var(--purple),var(--blue));color:#fff}
+.typing{align-self:flex-start;background:#fff;border-radius:calc(var(--u)*3);padding:calc(var(--u)*2) calc(var(--u)*2.6);display:flex;gap:calc(var(--u)*1);box-shadow:0 1px 3px rgba(30,20,80,.08)}
+.typing i{width:calc(var(--u)*1.4);height:calc(var(--u)*1.4);background:#b9b5d0;transform:rotate(45deg)}
+
+/* floating cards (bleed decoration) */
+.float{position:absolute;z-index:5;background:rgba(255,255,255,.96);color:var(--ink);border-radius:calc(var(--u)*3.4);
+  box-shadow:0 calc(var(--u)*3) calc(var(--u)*8) rgba(10,5,40,.45);display:flex;align-items:center;gap:calc(var(--u)*2);padding:calc(var(--u)*2.3) calc(var(--u)*3);white-space:nowrap}
+.float .ic{width:calc(var(--u)*7);height:calc(var(--u)*7);border-radius:calc(var(--u)*2.1);display:grid;place-items:center;flex:none}
+.float .ic svg{width:calc(var(--u)*3.8);height:calc(var(--u)*3.8)}
+.float b{font-size:calc(var(--u)*2.7);display:block}
+.float small{font-size:calc(var(--u)*2.1);color:var(--muted)}
+.f1{inset-inline-end:calc(var(--u)*-30);top:calc(var(--u)*-14)}
+.f2{inset-inline-end:calc(var(--u)*-14);top:calc(var(--u)*78)}
+.d1{inset-inline-start:calc(var(--u)*-78);top:calc(var(--u)*6)}
+.d2{inset-inline-start:calc(var(--u)*-60);top:calc(var(--u)*72)}
+.d3{inset-inline-end:calc(var(--u)*-96);top:calc(var(--u)*60)}
+.deco{opacity:.92}
+
+.guide{position:absolute;outline:3px dashed #ff3b6b;z-index:99;pointer-events:none}
+</style>
+</head>
+<body>
+<div class="bg"></div><div class="dots"></div>
+<div class="box" id="box">
+  <div class="copy">
+    <div class="brand"><img src="icon-512.png" alt=""><div><div class="name" data-t="name"></div><div class="tag" data-t="tag"></div></div></div>
+    <h1 data-h="h1"></h1>
+    <div class="feats">
+      <div class="feat"><svg viewBox="0 0 24 24" fill="none" stroke="#9fd8ff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg><span data-t="f1"></span></div>
+      <div class="feat"><svg viewBox="0 0 24 24" fill="none" stroke="#c4a8ff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m22 8-6 4 6 4V8z"/><rect x="2" y="6" width="14" height="12" rx="2"/></svg><span data-t="f2"></span></div>
+      <div class="feat"><svg viewBox="0 0 24 24" fill="none" stroke="#6ee7d2" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.9 5.8L20 10l-6.1 1.2L12 17l-1.9-5.8L4 10l6.1-1.2z"/></svg><span data-t="f3"></span></div>
+    </div>
+  </div>
+
+  <div class="phone back"><div class="screen">
+    <div class="island"></div><div class="status"></div>
+    <div class="appbar"><b data-t="inbox"></b><span class="on" data-t="online"></span></div>
+    <div id="rows"></div>
+  </div></div>
+
+  <div class="phone main"><div class="screen">
+    <div class="island"></div>
+    <div class="chead">
+      <div class="av" style="background-image:url(caller-woman.jpg)"></div>
+      <div><b data-t="cname"></b><small data-t="cbrowse"></small></div>
+      <div class="vid"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m22 8-6 4 6 4V8z"/><rect x="2" y="6" width="14" height="12" rx="2"/></svg></div>
+    </div>
+    <div class="msgs" id="msgs"></div>
+  </div></div>
+
+  <div class="float f1">
+    <div class="ic" style="background:rgba(28,200,169,.15)"><svg viewBox="0 0 24 24" fill="none" stroke="#0f9f85" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg></div>
+    <div><b data-t="n1"></b><small data-t="n1s"></small></div>
+  </div>
+  <div class="float f2">
+    <div class="ic" style="background:linear-gradient(135deg,var(--purple),var(--blue))"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.9 5.8L20 10l-6.1 1.2L12 17l-1.9-5.8L4 10l6.1-1.2z"/></svg></div>
+    <div><b data-t="n2"></b><small data-t="n2s"></small></div>
+  </div>
+</div>
+
+<div class="float deco d1" id="d1">
+  <div class="ic" style="background:rgba(139,92,246,.14)"><svg viewBox="0 0 24 24" fill="none" stroke="#7c3aed" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m22 8-6 4 6 4V8z"/><rect x="2" y="6" width="14" height="12" rx="2"/></svg></div>
+  <div><b data-t="d1"></b><small data-t="d1s"></small></div>
+</div>
+<div class="float deco d2">
+  <div class="ic" style="background:rgba(59,130,246,.14)"><svg viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
+  <div><b data-t="d2"></b><small data-t="d2s"></small></div>
+</div>
+<div class="float deco d3">
+  <div class="ic" style="background:rgba(28,200,169,.15)"><svg viewBox="0 0 24 24" fill="none" stroke="#0f9f85" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 14v-3a9 9 0 0 1 18 0v3"/><path d="M21 16a2 2 0 0 1-2 2h-1v-6h1a2 2 0 0 1 2 2zM3 16a2 2 0 0 0 2 2h1v-6H5a2 2 0 0 0-2 2z"/></svg></div>
+  <div><b data-t="d3"></b><small data-t="d3s"></small></div>
+</div>
+<script>
+document.getElementById("box").append(...document.querySelectorAll(".deco"));
+const T = {
+  fa: {
+    name:"وب‌یار", tag:"یار همیشه‌آنلاین سایت شما",
+    h1:'چت زنده و تماس تصویری<br><span class="g">هر جا که هستید</span>',
+    f1:"چت زنده", f2:"تماس تصویری", f3:"هوش مصنوعی",
+    inbox:"گفتگوها", online:"● آنلاین", cname:"سارا محمدی", cbrowse:"در حال مشاهده صفحه محصولات",
+    rows:[["caller-woman.jpg","سارا محمدی","اکنون","سلام، به شیراز هم ارسال دارید؟","۲"],["#8b5cf6:ع","علی رضایی","۲ دقیقه","ممنون، سفارشم ثبت شد","۱"],["#3b82f6:م","مریم کریمی","۱۵ دقیقه","امکان تماس تصویری هست؟",""],["operator-man.jpg","بازدیدکننده ۴۸۲","۱ ساعت","در حال مشاهده صفحه تعرفه‌ها",""],["#14b8a6:ن","نیما احمدی","دیروز","سفارشم کی می‌رسه؟",""],["#f59e0b:ز","زهرا حسینی","دیروز","پشتیبانی عالی بود، مرسی",""]],
+    msgs:[["in","سلام وقت بخیر 👋<br>به شیراز هم ارسال دارید؟"],["out","سلام، خوش اومدید. بله، به شیراز ارسال داریم و فردا می‌رسه."],["in","میشه با تماس تصویری محصول رو ببینم؟"],["out","حتماً، همین الان تماس می‌گیرم"]],
+    n1:"پیام جدید از سایت", n1s:"سارا: به شیراز هم ارسال…", n2:"پاسخ پیشنهادی هوش مصنوعی", n2s:"آماده ارسال · ۱ ثانیه", d1:"تماس تصویری ورودی", d1s:"مریم کریمی · صفحه محصول", d2:"۱۲ بازدیدکننده آنلاین", d2s:"۳ نفر در صفحه پرداخت", d3:"۳ اپراتور آنلاین", d3s:"آماده پاسخ به مشتری‌ها"
+  },
+  en: {
+    name:"WebYar", tag:"Your website’s always-online companion",
+    h1:'Live chat &amp; video calls,<br><span class="g">wherever you are</span>',
+    f1:"Live chat", f2:"Video calls", f3:"AI agent",
+    inbox:"Inbox", online:"● Online", cname:"Sarah Miller", cbrowse:"Browsing the products page",
+    rows:[["caller-woman.jpg","Sarah Miller","now","Hi! Do you ship to Austin?","2"],["#8b5cf6:A","Alex Chen","2m","Thanks, my order went through","1"],["#3b82f6:M","Maria Lopez","15m","Can we do a quick video call?",""],["operator-man.jpg","Visitor #482","1h","Viewing the pricing page",""],["#14b8a6:N","Noah Wilson","Yesterday","When will my order arrive?",""],["#f59e0b:E","Emma Davis","Yesterday","Great support, thank you!",""]],
+    msgs:[["in","Hi there 👋<br>Do you ship to Austin?"],["out","Hi Sarah, welcome! Yes, we ship to Austin. It arrives tomorrow."],["in","Could you show me the product on a video call?"],["out","Sure, calling you right now!"]],
+    n1:"New message from your site", n1s:"Sarah: Do you ship to Austin?", n2:"AI suggested reply", n2s:"Ready to send · 1s", d1:"Incoming video call", d1s:"Maria Lopez · Product page", d2:"12 visitors online", d2s:"3 on the checkout page", d3:"3 operators online", d3s:"Ready to help customers"
+  }
+};
+const CANVAS = {
+  universal:{w:5244,h:2950,safe:[1921,660,1402,962]},
+  header:{w:3840,h:1646,safe:[1097,493,1646,661]},
+  search:{w:3840,h:2560,safe:[836,765,2168,1030]},
+};
+const q = new URLSearchParams(location.search);
+const lang = q.get("lang")||"fa", c = CANVAS[q.get("c")||"header"], t = T[lang];
+document.documentElement.lang = lang; document.documentElement.dir = lang==="fa"?"rtl":"ltr";
+document.body.classList.add(lang==="fa"?"rtl":"en");
+document.querySelectorAll("[data-t]").forEach(e=>e.textContent=t[e.dataset.t]);
+document.querySelector("[data-h]").innerHTML = t.h1;
+document.getElementById("rows").innerHTML = t.rows.map(([a,n,tm,m,b])=>{
+  const av = a.startsWith("#") ? `style="background:${a.split(":")[0]}">${a.split(":")[1]}` : `style="background-image:url(${a})">`;
+  return `<div class="row"><div class="av" ${av}</div><div class="meta"><div class="t">${n}<small>${tm}</small></div><div class="m">${m}</div></div>${b?`<div class="badge">${b}</div>`:""}</div>`;
+}).join("");
+document.getElementById("msgs").innerHTML = t.msgs.map(([k,m])=>`<div class="b ${k}">${m}</div>`).join("") + `<div class="typing"><i></i><i></i><i></i></div>`;
+
+// layout: CSS px = canvas px / 2
+const k = innerWidth / c.w;
+const [sx,sy,sw,sh] = c.safe.map(v=>v*k);
+const u = Math.min(sw/192, sh/106); // small inner margin inside the safe area
+document.documentElement.style.setProperty("--u", u+"px");
+const box = document.getElementById("box");
+box.style.left = (sx + (sw-180*u)/2)+"px";
+box.style.top = (sy + (sh-100*u)/2)+"px";
+const gx = (sx+sw*.3)/innerWidth*100;
+document.body.style.setProperty("--gx1", (lang==="fa"? 100-gx : gx)+"%");
+if (q.get("guides")) { const g=document.createElement("div"); g.className="guide"; Object.assign(g.style,{left:sx+"px",top:sy+"px",width:sw+"px",height:sh+"px"}); document.body.appendChild(g); }
+</script>
+</body>
+</html>
