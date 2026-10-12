@@ -1,5 +1,10 @@
 import { buildBreadcrumbJsonLd } from "@/lib/seo-meta";
-import { getPrivacyContent, getTermsContent, type LegalDoc } from "../../content/legal";
+import {
+  getPrivacyContent,
+  getRefundContent,
+  getTermsContent,
+  type LegalDoc,
+} from "../../content/legal";
 import { useRespok } from "../../shared/context";
 import { JsonLd } from "../../shared/JsonLd";
 import type { LegalPageData } from "../../types";
@@ -7,7 +12,7 @@ import { OPEN_COPY } from "../copy";
 import { LegalBody } from "../legal";
 import { Badge, ChapterHero, Dot } from "../ui";
 
-function LegalPage({ doc, path }: { doc: LegalDoc; path: "/privacy" | "/terms" }) {
+function LegalPage({ doc, path }: { doc: LegalDoc; path: "/privacy" | "/terms" | "/refund" }) {
   const { settings, brand, siteUrl } = useRespok();
   const jsonLd = [
     {
@@ -59,4 +64,10 @@ export function TermsPage(_: LegalPageData) {
   const { settings, brand } = useRespok();
   const doc = getTermsContent(brand, settings.brand.email?.trim() || "");
   return <LegalPage doc={doc} path="/terms" />;
+}
+
+export function RefundPage(_: LegalPageData) {
+  const { settings, brand } = useRespok();
+  const doc = getRefundContent(brand, settings.brand.email?.trim() || "");
+  return <LegalPage doc={doc} path="/refund" />;
 }

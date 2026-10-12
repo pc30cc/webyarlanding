@@ -106,6 +106,7 @@ export const FOOTER_COLUMNS: { title: string; links: NavLinkItem[] }[] = [
     links: [
       { label: "Terms of Use", to: "/terms" },
       { label: "Privacy Policy", to: "/privacy" },
+      { label: "Refund Policy", to: "/refund" },
       { label: "Service Level Agreement", to: "/sla" },
     ],
   },

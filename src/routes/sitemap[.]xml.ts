@@ -14,6 +14,7 @@ const staticPaths = [
   "/terms",
   "/privacy",
   "/sla",
+  "/refund",
   "/download",
 ];
 

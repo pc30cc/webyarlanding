@@ -19,6 +19,7 @@ import { Route as HealthzRouteImport } from './routes/healthz'
 import { Route as HelpRouteImport } from './routes/help'
 import { Route as PricingRouteImport } from './routes/pricing'
 import { Route as PrivacyRouteImport } from './routes/privacy'
+import { Route as RefundRouteImport } from './routes/refund'
 import { Route as RobotsDottxtRouteImport } from './routes/robots[.]txt'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as SlaRouteImport } from './routes/sla'
@@ -104,6 +105,11 @@ const PricingRoute = PricingRouteImport.update({
 const PrivacyRoute = PrivacyRouteImport.update({
   id: '/privacy',
   path: '/privacy',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RefundRoute = RefundRouteImport.update({
+  id: '/refund',
+  path: '/refund',
   getParentRoute: () => rootRouteImport,
 } as any)
 const RobotsDottxtRoute = RobotsDottxtRouteImport.update({
@@ -299,6 +305,7 @@ export interface FileRoutesByFullPath {
   '/help': typeof HelpRoute
   '/pricing': typeof PricingRoute
   '/privacy': typeof PrivacyRoute
+  '/refund': typeof RefundRoute
   '/robots.txt': typeof RobotsDottxtRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/sla': typeof SlaRoute
@@ -346,6 +353,7 @@ export interface FileRoutesByTo {
   '/help': typeof HelpRoute
   '/pricing': typeof PricingRoute
   '/privacy': typeof PrivacyRoute
+  '/refund': typeof RefundRoute
   '/robots.txt': typeof RobotsDottxtRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/sla': typeof SlaRoute
@@ -395,6 +403,7 @@ export interface FileRoutesById {
   '/help': typeof HelpRoute
   '/pricing': typeof PricingRoute
   '/privacy': typeof PrivacyRoute
+  '/refund': typeof RefundRoute
   '/robots.txt': typeof RobotsDottxtRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/sla': typeof SlaRoute
@@ -445,6 +454,7 @@ export interface FileRouteTypes {
     | '/help'
     | '/pricing'
     | '/privacy'
+    | '/refund'
     | '/robots.txt'
     | '/sitemap.xml'
     | '/sla'
@@ -492,6 +502,7 @@ export interface FileRouteTypes {
     | '/help'
     | '/pricing'
     | '/privacy'
+    | '/refund'
     | '/robots.txt'
     | '/sitemap.xml'
     | '/sla'
@@ -540,6 +551,7 @@ export interface FileRouteTypes {
     | '/help'
     | '/pricing'
     | '/privacy'
+    | '/refund'
     | '/robots.txt'
     | '/sitemap.xml'
     | '/sla'
@@ -589,6 +601,7 @@ export interface RootRouteChildren {
   HelpRoute: typeof HelpRoute
   PricingRoute: typeof PricingRoute
   PrivacyRoute: typeof PrivacyRoute
+  RefundRoute: typeof RefundRoute
   RobotsDottxtRoute: typeof RobotsDottxtRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   SlaRoute: typeof SlaRoute
@@ -679,6 +692,13 @@ declare module '@tanstack/react-router' {
       path: '/privacy'
       fullPath: '/privacy'
       preLoaderRoute: typeof PrivacyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/refund': {
+      id: '/refund'
+      path: '/refund'
+      fullPath: '/refund'
+      preLoaderRoute: typeof RefundRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/robots.txt': {
@@ -991,6 +1011,7 @@ const rootRouteChildren: RootRouteChildren = {
   HelpRoute: HelpRoute,
   PricingRoute: PricingRoute,
   PrivacyRoute: PrivacyRoute,
+  RefundRoute: RefundRoute,
   RobotsDottxtRoute: RobotsDottxtRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   SlaRoute: SlaRoute,
