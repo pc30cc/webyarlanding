@@ -2,7 +2,12 @@ import { Fragment, useEffect, useState, type ReactNode } from "react";
 import { ChevronDown } from "lucide-react";
 import { buildBreadcrumbJsonLd } from "@/lib/seo-meta";
 import type { LegalPageData } from "../../types";
-import { getPrivacyContent, getTermsContent, type LegalDoc } from "../../content/legal";
+import {
+  getPrivacyContent,
+  getRefundContent,
+  getTermsContent,
+  type LegalDoc,
+} from "../../content/legal";
 import { useRespok } from "../../shared/context";
 import { JsonLd } from "../../shared/JsonLd";
 import { THREAD_COPY } from "../copy";
@@ -266,4 +271,10 @@ export function TermsPage({ settings }: LegalPageData) {
   const { brand } = useRespok();
   const doc = getTermsContent(brand, settings.brand.email?.trim() || NO_EMAIL);
   return <LegalDocument doc={doc} path="/terms" pageName="Terms of Use" />;
+}
+
+export function RefundPage({ settings }: LegalPageData) {
+  const { brand } = useRespok();
+  const doc = getRefundContent(brand, settings.brand.email?.trim() || NO_EMAIL);
+  return <LegalDocument doc={doc} path="/refund" pageName="Refund Policy" />;
 }

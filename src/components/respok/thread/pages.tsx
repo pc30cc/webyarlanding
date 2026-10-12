@@ -9,7 +9,7 @@ import { DownloadAppPage } from "./pages/DownloadApp";
 import { DownloadIndexPage } from "./pages/DownloadIndex";
 import { HelpPage } from "./pages/Help";
 import { HomePage } from "./pages/Home";
-import { PrivacyPage, TermsPage } from "./pages/Legal";
+import { PrivacyPage, RefundPage, TermsPage } from "./pages/Legal";
 import { NotFoundPage } from "./pages/NotFound";
 import { PricingPage } from "./pages/Pricing";
 import { SlaPage } from "./pages/Sla";
@@ -23,6 +23,7 @@ export const pages: RespokTemplateModule["pages"] = {
   privacy: PrivacyPage,
   terms: TermsPage,
   sla: SlaPage,
+  refund: RefundPage,
   help: HelpPage,
   blogIndex: BlogIndexPage,
   blogPost: BlogPostPage,

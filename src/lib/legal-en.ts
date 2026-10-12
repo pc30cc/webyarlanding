@@ -1,5 +1,5 @@
 /**
- * English legal and support texts. Used by /privacy, /terms and /help (English pages,
+ * English legal and support texts. Used by /privacy, /terms, /refund and /help (English pages,
  * also shown in Persian mode when "fully English legal pages" is on) and by the English
  * Respok templates, so both always show the same wording.
  */
@@ -144,6 +144,7 @@ export function termsSectionsEn(brand: string, email: string) {
       body: [
         "Paid plans are billed in advance on a recurring basis and renew automatically until cancelled. You can cancel at any time from your account settings or by contacting support; cancellation takes effect at the end of the current billing period.",
         "Purchases made through the Apple App Store or Google Play are billed by that store and are governed by the store's own billing, renewal and refund rules; manage or cancel those subscriptions in your store account settings.",
+        "Payments made on our website come with a 14-day money-back guarantee, described in our Refund Policy.",
       ],
     },
     {
@@ -191,6 +192,79 @@ export function termsSectionsEn(brand: string, email: string) {
     {
       title: "14. Contact",
       body: [`For questions about these Terms, contact ${email}.`],
+    },
+  ];
+}
+
+/** Number of days after a payment in which a full refund can be requested. */
+export const REFUND_WINDOW_DAYS = 14;
+export const REFUND_EFFECTIVE_DATE_EN = "October 12, 2026";
+
+export function refundSectionsEn(brand: string, email: string) {
+  const days = REFUND_WINDOW_DAYS;
+  return [
+    {
+      title: "1. Our 14-Day Money-Back Guarantee",
+      body: [
+        `We want you to be happy with ${brand}. If a paid plan is not right for you, you can ask for a full refund within ${days} days of the payment date. No questions asked, and no partial deductions.`,
+        `This policy covers subscriptions and plan upgrades purchased directly on our website. It applies to your first payment and to each renewal, as long as the request reaches us within ${days} days of that payment.`,
+      ],
+    },
+    {
+      title: "2. How to Request a Refund",
+      body: [
+        `Email ${email} from the address on your account, with the subject "Refund Request". Include the invoice or transaction number if you have it; a reason is welcome but not required.`,
+        "We confirm every request by email, normally within one business day.",
+      ],
+    },
+    {
+      title: "3. When You Get Your Money Back",
+      body: [
+        "Approved refunds are returned to the original payment method. Most banks and card issuers show the credit within 5 to 10 business days, depending on the payment method and your bank.",
+        "Once the refund is issued, the refunded plan ends and your account moves to the free plan. Your conversations, contacts and settings stay in your account.",
+      ],
+    },
+    {
+      title: "4. After 14 Days",
+      body: [
+        `Payments are not refundable after the ${days}-day window, including partial or pro-rated refunds for unused time, unless the law requires otherwise.`,
+        "You can cancel at any time from your account settings or by contacting support. Cancelling stops future renewals, and you keep access to your plan until the end of the period you have already paid for.",
+      ],
+    },
+    {
+      title: "5. App Store and Google Play Purchases",
+      body: [
+        "Subscriptions bought inside our iPhone or Android apps are billed by Apple or Google. Refunds for those purchases follow the store's own rules and are requested from the store: reportaproblem.apple.com for the App Store, or play.google.com for Google Play.",
+      ],
+    },
+    {
+      title: "6. Exceptions",
+      body: [
+        "We may decline a refund when an account was suspended or terminated for breaking our Terms of Use, or when refunds are requested repeatedly for the same account in a way that suggests misuse of this policy.",
+        "Service credits under our Service Level Agreement are separate from this policy and do not reduce your right to a refund within the 14-day window.",
+      ],
+    },
+    {
+      title: "7. Chargebacks",
+      body: [
+        "If something went wrong with a payment, please contact us first; we can usually resolve it faster than a card dispute. Accounts with an open chargeback may be paused until the dispute is closed.",
+      ],
+    },
+    {
+      title: "8. Your Legal Rights",
+      body: [
+        "This policy does not limit any rights you have under the consumer protection laws of your country, such as a statutory right of withdrawal. Where the law gives you more, the law applies.",
+      ],
+    },
+    {
+      title: "9. Changes to This Policy",
+      body: [
+        "We may update this Refund Policy. Changes are posted on this page with a new effective date and never apply to payments made before the change.",
+      ],
+    },
+    {
+      title: "10. Contact",
+      body: [`For questions about refunds or billing, contact ${email}.`],
     },
   ];
 }

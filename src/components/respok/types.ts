@@ -64,6 +64,7 @@ export interface RespokPageProps {
   privacy: LegalPageData;
   terms: LegalPageData;
   sla: LegalPageData;
+  refund: LegalPageData;
   help: LegalPageData;
   blogIndex: BlogIndexPageData;
   blogPost: BlogPostPageData;

@@ -3,6 +3,8 @@ import {
   HELP_FAQS_EN,
   LEGAL_EFFECTIVE_DATE_EN,
   privacySectionsEn,
+  REFUND_EFFECTIVE_DATE_EN,
+  refundSectionsEn,
   termsSectionsEn,
   type LegalSection,
 } from "@/lib/legal-en";
@@ -33,6 +35,15 @@ export function getTermsContent(brand: string, email: string): LegalDoc {
     question: "What are the rules?",
     meta: `Effective date: ${LEGAL_EFFECTIVE_DATE_EN} · ${brand}`,
     sections: termsSectionsEn(brand, email.trim() || SUPPORT_FALLBACK),
+  };
+}
+
+export function getRefundContent(brand: string, email: string): LegalDoc {
+  return {
+    title: "Refund Policy",
+    question: "Can I get my money back?",
+    meta: `Effective date: ${REFUND_EFFECTIVE_DATE_EN} · 14-day money-back guarantee`,
+    sections: refundSectionsEn(brand, email.trim() || SUPPORT_FALLBACK),
   };
 }
 
