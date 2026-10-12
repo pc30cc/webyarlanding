@@ -14,7 +14,6 @@ const staticPaths = [
   "/terms",
   "/privacy",
   "/sla",
-  "/refund",
   "/download",
 ];
 
@@ -54,6 +53,8 @@ export const Route = createFileRoute("/sitemap.xml")({
         const base = (settings.brand.siteUrl || "").replace(/\/$/, "");
         const urls: SitemapUrl[] = [
           ...staticPaths.map((p): SitemapUrl => ({ loc: `${base}${p}` })),
+          // صفحه بازپرداخت فقط در سایت انگلیسی وجود دارد
+          ...(settings.localization?.language === "en" ? [{ loc: `${base}/refund` }] : []),
           ...posts.map((p): SitemapUrl => ({
             loc: `${base}/blog/${p.slug}`,
             lastmod: toLastmod(p.updatedAt),

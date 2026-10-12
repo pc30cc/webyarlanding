@@ -24,7 +24,6 @@ const FA = {
   legal: "قانونی",
   terms: "شرایط استفاده",
   privacy: "حریم خصوصی",
-  refund: "سیاست بازپرداخت",
   sla: "SLA",
 };
 
@@ -43,7 +42,6 @@ const EN: typeof FA = {
   legal: "Legal",
   terms: "Terms of Use",
   privacy: "Privacy Policy",
-  refund: "Refund Policy",
   sla: "SLA",
 };
 
@@ -169,12 +167,6 @@ export function SiteFooter({
                 className="block transition-colors hover:text-foreground"
               >
                 {translateText(t.privacy)}
-              </Link>
-              <Link
-                to="/refund"
-                className="block transition-colors hover:text-foreground"
-              >
-                {translateText(t.refund)}
               </Link>
               <Link
                 to="/sla"
