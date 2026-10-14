@@ -1,5 +1,6 @@
 // تنظیمات چندزبانه سایت — ساختار مشترک بین کلاینت و سرور.
 // در دیتابیس به صورت key/value متنی ذخیره می‌شود تا انتقال به MySQL ساده باشد.
+import { LEGACY_BRAND_EN } from "./brand-scrub";
 
 export interface BrandSettings {
   name: string;
@@ -400,7 +401,7 @@ export function getEnglishTemplate(settings: SiteSettings): EnglishTemplate {
 /** نام برند برای صفحات انگلیسی؛ اگر تنظیم نشده باشد به Webyar برمی‌گردد. */
 export function getBrandNameEn(settings: SiteSettings): string {
   const en = settings.brand.nameEn?.trim();
-  return en && en.length > 0 ? en : "Webyar";
+  return en && en.length > 0 ? en : LEGACY_BRAND_EN;
 }
 
 /**
@@ -410,7 +411,7 @@ export function getBrandNameEn(settings: SiteSettings): string {
  */
 export function getRespokBrandName(settings: SiteSettings): string {
   const en = settings.brand.nameEn?.trim();
-  return en && en.toLowerCase() !== "webyar" ? en : "Respok";
+  return en && en.toLowerCase() !== LEGACY_BRAND_EN.toLowerCase() ? en : "Respok";
 }
 
 /** نام برند برای متن انگلیسی: Respok در سایت انگلیسی، nameEn در صفحات حقوقی انگلیسیِ سایت فارسی. */

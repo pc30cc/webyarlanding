@@ -1,6 +1,6 @@
 import englishMessages from "./site-translations.en.json";
 import { getEnglishBrandName, type SiteSettings } from "./settings";
-import { RESPOK_BUILD, scrubBrandText } from "./brand-scrub";
+import { LEGACY_BRAND_EN, RESPOK_BUILD, scrubBrandText } from "./brand-scrub";
 
 export type SiteLanguage = "fa" | "en";
 export const normalizeMessage = (text: string) =>
@@ -32,9 +32,15 @@ export function createSiteTranslator(
   /** English brand that replaces the legacy "Webyar" name in translated text. */
   brand?: string,
 ) {
+  // Built at runtime so server and browser match the same names in the respok.app build,
+  // where the browser bundle (and the public data) already read "Respok".
+  const legacyName = new RegExp(
+    RESPOK_BUILD ? `\\b(?:${LEGACY_BRAND_EN}|Respok)\\b` : `\\b${LEGACY_BRAND_EN}\\b`,
+    "g",
+  );
   const rebrand =
-    brand && brand !== "Webyar"
-      ? (text: string) => text.replace(/\bWebyar\b/g, brand)
+    brand && brand !== LEGACY_BRAND_EN
+      ? (text: string) => text.replace(legacyName, brand)
       : (text: string) => text;
   // respok.app build: the browser bundle already has brand-free text, so keys, lookups and
   // results go through the same rewrite here and server and client always agree.

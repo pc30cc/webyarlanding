@@ -20,6 +20,9 @@ const LATIN = chars(119, 101, 98, 121, 97, 114);
 const PERSIAN = [chars(0x648, 0x628), chars(0x6cc, 0x627, 0x631)] as const;
 const PERSIAN_REPLACEMENT = chars(0x631, 0x633, 0x67e, 0x627, 0x6a9);
 
+/** The Persian site's English name, for comparisons that must read the same in every build. */
+export const LEGACY_BRAND_EN = LATIN[0]!.toUpperCase() + LATIN.slice(1);
+
 /** Slug prefix the English site used for its apps before they were renamed. */
 export const LEGACY_SLUG_PREFIX = `${LATIN}-`;
 
