@@ -1,4 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
+import { brandSafe } from "./brand-scrub";
 import { z } from "zod";
 
 export interface PostDto {
@@ -85,7 +86,7 @@ export const listPublishedPosts = createServerFn({ method: "GET" })
   .handler(async ({ data }): Promise<PostDto[]> => {
     try {
       const { listPosts } = await import("./blog.server");
-      return await listPosts({ ...data, status: "published" });
+      return brandSafe(await listPosts({ ...data, status: "published" }));
     } catch (error) {
       console.error("listPublishedPosts failed:", error);
       return [];
@@ -125,7 +126,7 @@ export const listPublishedPostsPage = createServerFn({ method: "GET" })
         page,
         pageSize: BLOG_PAGE_SIZE,
       });
-      return { posts, total, page, pageSize: BLOG_PAGE_SIZE };
+      return brandSafe({ posts, total, page, pageSize: BLOG_PAGE_SIZE });
     } catch (error) {
       console.error("listPublishedPostsPage failed:", error);
       return { posts: [], total: 0, page, pageSize: BLOG_PAGE_SIZE };
@@ -140,7 +141,7 @@ export const getPublishedPost = createServerFn({ method: "GET" })
       const { getPostBySlug } = await import("./blog.server");
       const post = await getPostBySlug(data.slug);
       if (!post || post.status !== "published") return null;
-      return post;
+      return brandSafe(post);
     } catch (error) {
       console.error("getPublishedPost failed:", error);
       return null;
@@ -151,7 +152,7 @@ export const listCategories = createServerFn({ method: "GET" }).handler(
   async (): Promise<CategoryDto[]> => {
     try {
       const { fetchCategories } = await import("./blog.server");
-      return await fetchCategories();
+      return brandSafe(await fetchCategories());
     } catch (error) {
       console.error("listCategories failed:", error);
       return [];
@@ -162,7 +163,7 @@ export const listCategories = createServerFn({ method: "GET" }).handler(
 export const listTags = createServerFn({ method: "GET" }).handler(async (): Promise<TagDto[]> => {
   try {
     const { fetchTags } = await import("./blog.server");
-    return await fetchTags();
+    return brandSafe(await fetchTags());
   } catch (error) {
     console.error("listTags failed:", error);
     return [];

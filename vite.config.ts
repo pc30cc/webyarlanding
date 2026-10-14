@@ -5,7 +5,7 @@
 //     React/TanStack dedupe, error logger plugins, and sandbox detection (port/host/strictPort).
 // You can pass additional config via defineConfig({ vite: { ... }, etc... }) if needed.
 import { defineConfig } from "@lovable.dev/vite-tanstack-config";
-import { copyFileSync, existsSync, rmSync, writeFileSync } from "node:fs";
+import { copyFileSync, existsSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import type { Plugin } from "vite";
 import { scrubBrandText } from "./src/lib/brand-scrub";
@@ -47,6 +47,14 @@ function replaceRespokPublicFiles(out: string) {
   for (const [target, source] of Object.entries(replace))
     if (existsSync(source)) copyFileSync(source, join(out, target));
   rmSync(join(out, "webyar-logo.png"), { force: true });
+  // Media only the Persian site's pages use (one shows an Iranian office); never shown here.
+  for (const name of ["operator-man.mp4", "operator-man.webm", "caller-woman.mp4", "caller-woman.webm"])
+    rmSync(join(out, "videos", name), { force: true });
+  const assets = join(out, "assets");
+  if (existsSync(assets))
+    for (const file of readdirSync(assets))
+      if (/^(?:operator-man|caller-woman|operator-avatar)-[\w-]+\.jpg$/.test(file))
+        rmSync(join(assets, file), { force: true });
   writeFileSync(
     join(out, "site.webmanifest"),
     JSON.stringify(

@@ -1,4 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
+import { brandSafe } from "./brand-scrub";
 import { z } from "zod";
 
 export type AppPlatform = "ios" | "android" | "windows" | "mac";
@@ -62,7 +63,7 @@ function publicShape(a: AppDto): AppDto {
 export const getPublicApps = createServerFn({ method: "GET" }).handler(async () => {
   try {
     const { fetchPublicApps } = await import("./apps.server");
-    return (await fetchPublicApps()).map(publicShape);
+    return brandSafe((await fetchPublicApps()).map(publicShape));
   } catch (e) {
     console.error("getPublicApps failed:", e);
     return [] as AppDto[];
@@ -75,7 +76,7 @@ export const getPublicApp = createServerFn({ method: "GET" })
     try {
       const { fetchPublicApp } = await import("./apps.server");
       const a = await fetchPublicApp(data.slug);
-      return a ? publicShape(a) : null;
+      return a ? brandSafe(publicShape(a)) : null;
     } catch (e) {
       console.error("getPublicApp failed:", e);
       return null;

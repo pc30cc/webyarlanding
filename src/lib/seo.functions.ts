@@ -1,4 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
+import { brandSafe } from "./brand-scrub";
 import { z } from "zod";
 
 export interface SeoPageDto {
@@ -97,7 +98,7 @@ export const getPublicSeoPage = createServerFn({ method: "GET" })
         .eq("path", data.path)
         .maybeSingle();
       if (!row) return null;
-      return {
+      return brandSafe({
         id: row.id,
         pageKey: row.page_key,
         path: row.path,
@@ -109,7 +110,7 @@ export const getPublicSeoPage = createServerFn({ method: "GET" })
         schemaJson: row.schema_json,
         createdAt: row.created_at,
         updatedAt: row.updated_at,
-      };
+      });
     } catch (error) {
       // دیتابیس در دسترس نیست — صفحه عمومی باید با متای پیش‌فرض رندر شود، نه با خطا
       console.error("getPublicSeoPage failed:", error);
