@@ -6,7 +6,7 @@ import {
   useSiteTranslation,
   useSiteLocale,
 } from "@/components/site/SiteLanguage";
-import { createFileRoute, Link, notFound } from "@tanstack/react-router";
+import { createFileRoute, Link, notFound, redirect } from "@tanstack/react-router";
 import { motion } from "framer-motion";
 import { Check, ChevronLeft, HardDrive, Smartphone, Tag } from "lucide-react";
 import { fetchSettings } from "@/lib/settings.functions";
@@ -37,7 +37,16 @@ export const Route = createFileRoute("/download/$slug")({
       getPublicApp({ data: { slug: params.slug } }),
       getPublicApps(),
     ]);
-    if (!app) throw notFound({ data: { language: getSiteLanguage(settings) } });
+    if (!app) {
+      // English site: apps used to be published under webyar-* slugs; send old links to respok-*.
+      if (getSiteLanguage(settings) === "en" && params.slug.startsWith("webyar-"))
+        throw redirect({
+          to: "/download/$slug",
+          params: { slug: params.slug.replace(/^webyar-/, "respok-") },
+          statusCode: 301,
+        });
+      throw notFound({ data: { language: getSiteLanguage(settings) } });
+    }
     return { settings, app, others: apps.filter((a) => a.id !== app.id) };
   },
   head: ({ loaderData, match }) => {
