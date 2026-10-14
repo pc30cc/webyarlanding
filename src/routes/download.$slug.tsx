@@ -1,6 +1,7 @@
 import { RespokNotFoundSwitch } from "@/components/respok/RespokNotFound";
 import { RespokPage } from "@/components/respok/RespokPage";
 import { getSiteLanguage } from "@/lib/site-i18n";
+import { LEGACY_SLUG_PREFIX } from "@/lib/brand-scrub";
 import { localizeStructuredData } from "@/lib/site-i18n";
 import {
   useSiteTranslation,
@@ -38,11 +39,11 @@ export const Route = createFileRoute("/download/$slug")({
       getPublicApps(),
     ]);
     if (!app) {
-      // English site: apps used to be published under webyar-* slugs; send old links to respok-*.
-      if (getSiteLanguage(settings) === "en" && params.slug.startsWith("webyar-"))
+      // English site: apps used to be published under a legacy slug prefix; send old links to respok-*.
+      if (getSiteLanguage(settings) === "en" && params.slug.startsWith(LEGACY_SLUG_PREFIX))
         throw redirect({
           to: "/download/$slug",
-          params: { slug: params.slug.replace(/^webyar-/, "respok-") },
+          params: { slug: `respok-${params.slug.slice(LEGACY_SLUG_PREFIX.length)}` },
           statusCode: 301,
         });
       throw notFound({ data: { language: getSiteLanguage(settings) } });
