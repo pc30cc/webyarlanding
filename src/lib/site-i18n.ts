@@ -1,5 +1,6 @@
 import englishMessages from "./site-translations.en.json";
 import { getEnglishBrandName, type SiteSettings } from "./settings";
+import { RESPOK_BUILD, scrubBrandText } from "./brand-scrub";
 
 export type SiteLanguage = "fa" | "en";
 export const normalizeMessage = (text: string) =>
@@ -35,7 +36,17 @@ export function createSiteTranslator(
     brand && brand !== "Webyar"
       ? (text: string) => text.replace(/\bWebyar\b/g, brand)
       : (text: string) => text;
-  const dictionary = { ...messages, ...overrides };
+  // respok.app build: the browser bundle already has brand-free text, so keys, lookups and
+  // results go through the same rewrite here and server and client always agree.
+  const scrub = RESPOK_BUILD ? scrubBrandText : (value: string) => value;
+  const dictionary: Record<string, string> = RESPOK_BUILD
+    ? Object.fromEntries(
+        Object.entries({ ...messages, ...overrides }).map(([key, value]) => [
+          scrub(normalizeMessage(key)),
+          scrub(value),
+        ]),
+      )
+    : { ...messages, ...overrides };
   const templates = Object.entries(dictionary)
     .filter(([key]) => /\{\d+\}/.test(key))
     .sort(
@@ -59,7 +70,7 @@ export function createSiteTranslator(
   const cache = new Map<string, string>();
   function text(source: string, depth = 0): string {
     if (language !== "en" || !source) return source;
-    const key = normalizeMessage(source);
+    const key = scrub(normalizeMessage(source));
     const cached = cache.get(source);
     if (cached !== undefined) return cached;
     const direct = own(dictionary, key);
@@ -88,7 +99,7 @@ export function createSiteTranslator(
         }
       }
     }
-    result = rebrand(latinDigits(result ?? source));
+    result = scrub(rebrand(latinDigits(result ?? source)));
     if (direct !== undefined || result !== latinDigits(source)) {
       result =
         (source.match(/^\s+/)?.[0] ?? "") +

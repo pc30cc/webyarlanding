@@ -2,6 +2,7 @@ import "./lib/error-capture";
 
 import { consumeLastCapturedError } from "./lib/error-capture";
 import { renderErrorPage } from "./lib/error-page";
+import { RESPOK_BUILD, scrubBrandText } from "./lib/brand-scrub";
 
 type ServerEntry = {
   fetch: (request: Request, env: unknown, ctx: unknown) => Promise<Response> | Response;
@@ -72,6 +73,22 @@ function isH3SwallowedErrorBody(body: string): boolean {
   }
 }
 
+// respok.app build: the page HTML (markup and the data it carries) is rewritten with the same
+// function as the browser bundle, so nothing names the Persian brand and hydration matches.
+async function brandSafeDocument(response: Response, request: Request): Promise<Response> {
+  if (!RESPOK_BUILD) return response;
+  const type = response.headers.get("content-type") ?? "";
+  const pathname = new URL(request.url).pathname;
+  const text =
+    type.includes("text/html") ||
+    (!pathname.startsWith("/api/") && /(?:text|application)\/(?:xml|plain)/.test(type));
+  if (!text || !response.body) return response;
+  const body = scrubBrandText(await response.text());
+  const headers = new Headers(response.headers);
+  headers.delete("content-length");
+  return new Response(body, { status: response.status, statusText: response.statusText, headers });
+}
+
 // www → apex ریدایرکت (کنانیکال‌سازی دامنه). این کار در سطح DNS/Cloudflare قابل انجام
 // نیست چون www اصلاً رکورد DNS ندارد؛ به‌محض این‌که یک رکورد CNAME برای www در کلودفلر
 // اضافه شود (این بخش هنوز نیاز به تنظیم دستی دارد)، این هندلر خودش ریدایرکت ۳۰۱ به دامنه‌ی
@@ -111,7 +128,8 @@ export default {
     try {
       const handler = await getServerEntry();
       const response = await handler.fetch(request, env, ctx);
-      return withSecurityHeaders(await normalizeCatastrophicSsrResponse(response), request);
+      const normalized = await normalizeCatastrophicSsrResponse(response);
+      return withSecurityHeaders(await brandSafeDocument(normalized, request), request);
     } catch (error) {
       console.error(error);
       return withSecurityHeaders(
