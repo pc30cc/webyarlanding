@@ -59,4 +59,26 @@ describe("plans synced from the app", () => {
     expect(plan?.limits.map((l) => l.label)).toEqual(["تعداد اپراتور"]);
     expect(result?.comparison.rows.some((row) => row.label === "دسترسی API")).toBe(false);
   });
+
+  it("shows storage in megabytes from storage_mb and ignores the old storage_gb", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => ({
+        ok: true,
+        json: async () => ({
+          plans: [
+            { slug: "free", name: "Free", sort_order: 0, is_free: true, limits: { storage_mb: 0, storage_gb: 0 } },
+            { slug: "trial", name: "Trial", sort_order: 1, limits: { storage_mb: 1024, storage_gb: 1 } },
+            { slug: "max", name: "Max", sort_order: 2, limits: { storage_mb: -1, storage_gb: -1 } },
+          ],
+        }),
+      })),
+    );
+    const result = await loadRemotePlans();
+    const labels = (result?.plans ?? []).flatMap((p) => p.limits.map((l) => l.label));
+    expect(labels.every((label) => !label.includes("گیگابایت"))).toBe(true);
+    expect(result?.plans[1]?.limits).toEqual([{ label: "فضای ذخیره‌سازی (مگابایت)", value: "۱٬۰۲۴" }]);
+    const row = result?.comparison.rows.find((r) => r.label === "فضای ذخیره‌سازی (مگابایت)");
+    expect(row?.values).toEqual(["۰", "۱٬۰۲۴", "نامحدود"]);
+  });
 });

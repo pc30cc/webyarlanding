@@ -131,7 +131,7 @@ export const LIMIT_LABELS_FA: Record<string, string> = {
   max_contacts: "تعداد مخاطب",
   max_visitors: "بازدیدکننده",
   max_widget_domains: "تعداد دامنه",
-  storage_gb: "فضای ذخیره‌سازی (گیگابایت)",
+  storage_mb: "فضای ذخیره‌سازی (مگابایت)",
   data_retention_days: "نگهداری داده (روز)",
   max_call_minutes_per_month: "دقیقه تماس ماهانه",
   max_concurrent_calls: "تماس هم‌زمان",
@@ -144,7 +144,7 @@ export const COMPARISON_LIMIT_KEYS = [
   "max_conversations",
   "max_contacts",
   "max_widget_domains",
-  "storage_gb",
+  "storage_mb",
 ];
 export const COMPARISON_FEATURE_KEYS = [
   "chat_widget",
