@@ -15,6 +15,7 @@ import { RespokLogo } from "../RespokLogo";
 import { useRespok } from "../shared/context";
 import { useRespokAuth } from "../shared/auth";
 import { useRespokFooter } from "../shared/footer";
+import { PaymentMethods } from "../shared/PaymentMethods";
 import {
   FOOTER_COLUMNS,
   PRIMARY_NAV,
@@ -780,11 +781,14 @@ function Footer() {
           <p className="font-rpk-mono text-[12px] tracking-[0.04em] text-white/60">
             {footer.copyright}
           </p>
-          {footer.trustBadgeHtml && (
-            <div className="rounded-[18px] bg-white p-2">
-              <TrustBadge html={footer.trustBadgeHtml} />
-            </div>
-          )}
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:gap-6">
+            <PaymentMethods />
+            {footer.trustBadgeHtml && (
+              <div className="self-start rounded-[18px] bg-white p-2 sm:self-auto">
+                <TrustBadge html={footer.trustBadgeHtml} />
+              </div>
+            )}
+          </div>
         </div>
       </Container>
     </footer>
