@@ -5,6 +5,7 @@ import { RespokLogo } from "../RespokLogo";
 import { useRespok } from "../shared/context";
 import { useRespokFooter } from "../shared/footer";
 import { FOOTER_COLUMNS, useSocialLinks } from "../shared/nav";
+import { PaymentMethods } from "../shared/PaymentMethods";
 import { OPEN_COPY } from "./copy";
 import { Container, Dot } from "./ui";
 import { pad } from "./tokens";
@@ -131,15 +132,18 @@ export function OpenFooter() {
           </div>
         ) : null}
 
-        <div className="mt-10 flex flex-col gap-3 border-t border-rpk-ink-line pt-6 font-rpk-mono text-[12px] tracking-[0.04em] text-white/60 sm:flex-row sm:items-center sm:justify-between">
-          <p>{footer.copyright}</p>
-          <a
-            href="#top"
-            className="inline-flex min-h-11 items-center gap-2 self-start rounded-[6px] uppercase transition-colors hover:text-white sm:self-auto"
-          >
-            <Dot size={7} />
-            {OPEN_COPY.footer.top}
-          </a>
+        <div className="mt-10 flex flex-col gap-6 border-t border-rpk-ink-line pt-6 sm:flex-row sm:items-end sm:justify-between">
+          <div className="flex flex-col gap-1 font-rpk-mono text-[12px] tracking-[0.04em] text-white/60">
+            <p>{footer.copyright}</p>
+            <a
+              href="#top"
+              className="inline-flex min-h-11 items-center gap-2 self-start rounded-[6px] uppercase transition-colors hover:text-white"
+            >
+              <Dot size={7} />
+              {OPEN_COPY.footer.top}
+            </a>
+          </div>
+          <PaymentMethods />
         </div>
       </Container>
 
