@@ -1,22 +1,26 @@
- .
+# WEBYAR website
 
-This project was built with [Lovable](https://lovable.dev).
-
-## Build with Lovable
-
-Continue developing this project in the [Lovable editor](https://lovable.dev/projects/48a52c70-c609-4768-8f0a-a7b389533724).
-
-- **Ship faster**: describe what you want to build and Lovable handles the code.
-- **Stay in sync**: every change made in Lovable is committed straight to this repository.
-- **Full ownership**: this code is yours. Push to `main` on GitHub and your changes sync back into Lovable, ready for your next prompt.
+Public website and admin panel of webyar.ai, built with TanStack Start (React, SSR) on Vite and
+Nitro, backed by a self-hosted PostgreSQL database.
 
 ## Development
 
-Prefer working locally? You need Node.js and npm — [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating).
+You need Node.js 22 and npm, plus a PostgreSQL database (`DATABASE_URL`). The schema in
+`db/schema.sql` is applied automatically on the first query.
 
 ```sh
-git clone <this-repository-url>
-cd <repository-name>
-npm i
-npm run dev
+npm ci
+DATABASE_URL=postgresql://user:pass@localhost:5432/webyar npm run dev   # http://localhost:8080
+npm test                                                                # vitest
 ```
+
+## Build and run
+
+```sh
+npm run build                                          # emits dist/server + dist/client
+node --env-file-if-exists=.env dist/server/index.mjs   # serves SSR and static assets
+```
+
+`NITRO_PRESET` selects another Nitro deploy target; the default is a plain Node server.
+Production runs on Coolify with Nixpacks (`nixpacks.toml`). Environment variables are listed in
+`.env.example`; database setup, backups and transfers are described in `docs/self-host-postgres.md`.

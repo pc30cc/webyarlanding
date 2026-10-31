@@ -360,26 +360,20 @@ function sqlLiteral(value: unknown): string {
   return `'${str}'`;
 }
 
-/** کلاینت Supabase عمومی — هم دیتابیس خودِ سایت (db) و هم دیتابیس مقصد از همین شکل هستند */
-type SupabaseLike = { from: (table: string) => any };
-
-export async function buildTableExport(
-  table: TableDef,
-  client?: SupabaseLike,
-): Promise<Record<string, unknown>[]> {
-  const source = client ?? (await import("./db.server")).db;
+export async function buildTableExport(table: TableDef): Promise<Record<string, unknown>[]> {
+  const { db } = await import("./db.server");
   const rows: Record<string, unknown>[] = [];
   const pageSize = 1000;
   let from = 0;
   for (;;) {
-    const { data, error } = await source
-      .from(table.name as any)
+    const { data, error } = await db
+      .from(table.name)
       .select("*")
       .range(from, from + pageSize - 1);
-    // کلاینت Supabase روی خطاهای API (RLS، جدول ناموجود، کلید نامعتبر و...) throw نمی‌کند —
-    // فقط error برمی‌گرداند؛ اگر این‌جا نادیده گرفته شود، خواندن ساکت با آرایه خالی جایگزین می‌شود.
+    // کلاینت دیتابیس روی خطا (جدول ناموجود، قطع اتصال و...) throw نمی‌کند — فقط error
+    // برمی‌گرداند؛ اگر این‌جا نادیده گرفته شود، خواندن ساکت با آرایه خالی جایگزین می‌شود.
     if (error) throw new Error(`${table.name}: ${error.message}`);
-    const chunk = (data ?? []) as unknown as Record<string, unknown>[];
+    const chunk = data;
     rows.push(...chunk);
     if (chunk.length < pageSize) break;
     from += pageSize;
@@ -421,9 +415,7 @@ export const getDatabaseInfo = createServerFn({ method: "GET" }).handler(async (
 
   const results = await Promise.all(
     TABLES.map(async (table) => {
-      const { count } = await db
-        .from(table.name as any)
-        .select("*", { count: "exact", head: true });
+      const { count } = await db.from(table.name).select("*", { count: "exact", head: true });
       return { name: table.name, rowCount: count ?? 0 };
     }),
   );
@@ -462,7 +454,7 @@ const importSchema = z.object({
   data: z.record(z.string(), z.array(z.record(z.string(), z.unknown()))),
 });
 
-/** منطق مشترک بازیابی — چه از فایل آپلودشده بیاید چه از یک دیتابیس مقصد */
+/** منطق مشترک بازیابی — چه از فایل آپلودشده بیاید چه از تاریخچه بک‌آپ‌ها */
 export async function performImport(
   data: Record<string, unknown[]>,
 ): Promise<{ ok: true; totalInserted: number }> {
@@ -471,10 +463,7 @@ export async function performImport(
   const deleteOrder = [...TABLES].reverse();
   for (const table of deleteOrder) {
     if (!data[table.name]) continue;
-    await db
-      .from(table.name as any)
-      .delete()
-      .not(table.pk, "is", null);
+    await db.from(table.name).delete().not(table.pk, "is", null);
   }
 
   let totalInserted = 0;
@@ -482,10 +471,10 @@ export async function performImport(
     const rows = data[table.name];
     if (!rows || rows.length === 0) continue;
     // درج دسته‌ای: جدول‌های بزرگ (مثل site_visits) در یک درخواست از سقف پارامترهای
-    // PostgreSQL (۶۵۵۳۵) یا حجم درخواست PostgREST عبور می‌کنند.
+    // PostgreSQL (۶۵۵۳۵) عبور می‌کنند.
     for (let i = 0; i < rows.length; i += 500) {
-      const chunk = rows.slice(i, i + 500);
-      const { error } = await db.from(table.name as any).insert(chunk as any);
+      const chunk = rows.slice(i, i + 500) as Record<string, unknown>[];
+      const { error } = await db.from(table.name).insert(chunk);
       if (error) console.error(`[restore] ${table.name}: ${error.message}`);
       else totalInserted += chunk.length;
     }
@@ -501,309 +490,3 @@ export const importBackup = createServerFn({ method: "POST" })
     await requireAdmin();
     return performImport(data.data);
   });
-
-/* ───────────── ترانسفر مستقیم به یک پروژه Supabase مقصد ─────────────
- * دقیقاً همان روشی که این سایت با دیتابیس خودش صحبت می‌کند (@supabase/supabase-js
- * روی HTTP/PostgREST، بدون هیچ اتصال TCP خامی) — فقط با URL و Service Role Key یک
- * پروژه Supabase دیگر.
- *
- * PostgREST خودش اجازه اجرای CREATE TABLE را نمی‌دهد (فقط CRUD روی جدول‌های موجود)،
- * برای همین برای ساخت خودکار جدول‌های ناموجود روی مقصد از یک تابع کمکی کوچک در همان
- * پروژه مقصد استفاده می‌شود (DESTINATION_BOOTSTRAP_SQL) که فقط یک‌بار، دستی، باید
- * در SQL Editor مقصد اجرا شود. بعد از آن، دکمه بک‌آپ همیشه با یک کلیک هر جدول
- * ناموجود را خودش می‌سازد — نیازی به اجرای دستی SQL دیگری نیست.
- */
-
-const META_SETTING_KEY = "_destination_backup_meta";
-const CHUNK_SIZE = 500;
-const EXEC_SQL_FN = "webyar_exec_sql";
-
-/** یک‌بار در SQL Editor پروژه Supabase مقصد اجرا شود تا بک‌آپ خودکار (با ساخت خودکار جدول‌ها) فعال شود */
-export const DESTINATION_BOOTSTRAP_SQL = `create or replace function public.${EXEC_SQL_FN}(query text)
-returns void
-language plpgsql
-security definer
-set search_path = public
-as $$
-begin
-  execute query;
-end;
-$$;
-
-grant execute on function public.${EXEC_SQL_FN}(text) to service_role;
-revoke execute on function public.${EXEC_SQL_FN}(text) from anon, authenticated;`;
-
-function pgColumnType(col: ColumnDef): string {
-  switch (col.type) {
-    case "VARCHAR":
-      return `VARCHAR(${col.length ?? 191})`;
-    case "TEXT":
-      return "TEXT";
-    case "INT":
-      return "INTEGER";
-    case "SMALLINT":
-      return "SMALLINT";
-    case "BIGINT":
-      return "BIGINT";
-    case "TIMESTAMP":
-      return "TIMESTAMP";
-  }
-}
-
-function buildCreateTableSql(table: TableDef): string {
-  const cols = table.columns.map((c) => `"${c.name}" ${pgColumnType(c)}`).join(", ");
-  return `CREATE TABLE IF NOT EXISTS public."${table.name}" (${cols})`;
-}
-
-/**
- * هر جدول ناموجود روی مقصد را از طریق تابع کمکی می‌سازد (idempotent — IF NOT EXISTS).
- * اگر خودِ تابع کمکی هنوز نصب نشده باشد (اولین بار)، bootstrapRequired=true برمی‌گردد
- * تا رابط کاربری اسکریپت نصب یک‌باره را نشان دهد.
- */
-async function ensureDestinationSchema(
-  dest: Awaited<ReturnType<typeof connectDestinationSupabase>>,
-): Promise<{ bootstrapRequired: boolean; tableErrors: Record<string, string> }> {
-  const tableErrors: Record<string, string> = {};
-  for (const table of TABLES) {
-    const { error } = await dest.rpc(
-      EXEC_SQL_FN as any,
-      {
-        query: buildCreateTableSql(table),
-      } as any,
-    );
-    if (error) {
-      if (/Could not find the function|function .* does not exist/i.test(error.message)) {
-        return { bootstrapRequired: true, tableErrors: {} };
-      }
-      tableErrors[table.name] = error.message;
-    }
-  }
-  return { bootstrapRequired: false, tableErrors };
-}
-
-function isNewSupabaseApiKey(value: string): boolean {
-  return value.startsWith("sb_publishable_") || value.startsWith("sb_secret_");
-}
-
-/** همان wrapper که client.server.ts برای دیتابیس خودِ سایت استفاده می‌کند — این‌جا برای مقصد */
-function createSupabaseFetch(supabaseKey: string): typeof fetch {
-  return (input, init) => {
-    const headers = new Headers(
-      typeof Request !== "undefined" && input instanceof Request ? input.headers : undefined,
-    );
-    if (init?.headers) {
-      new Headers(init.headers).forEach((value, key) => headers.set(key, value));
-    }
-    if (
-      isNewSupabaseApiKey(supabaseKey) &&
-      headers.get("Authorization") === `Bearer ${supabaseKey}`
-    ) {
-      headers.delete("Authorization");
-    }
-    headers.set("apikey", supabaseKey);
-    return fetch(input, { ...init, headers });
-  };
-}
-
-async function connectDestinationSupabase() {
-  const { loadDestinationDb } = await import("./settings.server");
-  const conn = await loadDestinationDb();
-  if (!conn.url || !conn.serviceRoleKey) {
-    throw new Error(
-      "اتصال Supabase مقصد هنوز تنظیم نشده — اول در بخش پشتیبان‌گیری آدرس پروژه و کلید Service Role را وارد و ذخیره کنید.",
-    );
-  }
-  const { createClient } = await import("@supabase/supabase-js");
-  return createClient(conn.url, conn.serviceRoleKey, {
-    global: { fetch: createSupabaseFetch(conn.serviceRoleKey) },
-    auth: { persistSession: false, autoRefreshToken: false },
-  });
-}
-
-/** وضعیت اتصال Supabase مقصد — کلید واقعی هرگز به کلاینت برنمی‌گردد */
-export const getDestinationDbStatus = createServerFn({ method: "GET" }).handler(async () => {
-  const { requireAdmin } = await import("./auth.server");
-  await requireAdmin();
-  const { loadDestinationDb } = await import("./settings.server");
-  const conn = await loadDestinationDb();
-  return {
-    configured: !!(conn.url && conn.serviceRoleKey),
-    url: conn.url,
-    serviceRoleKeySet: !!conn.serviceRoleKey,
-  };
-});
-
-const saveDestinationDbSchema = z.object({
-  url: z.string().min(1, "آدرس پروژه Supabase الزامی است"),
-  serviceRoleKey: z.string().optional(),
-});
-
-/** ذخیره مشخصات اتصال — اگر کلید را خالی بفرستید، کلید قبلی دست‌نخورده می‌ماند */
-export const saveDestinationDbSettings = createServerFn({ method: "POST" })
-  .inputValidator((input: unknown) => saveDestinationDbSchema.parse(input))
-  .handler(async ({ data }): Promise<{ ok: boolean }> => {
-    const { requireAdmin } = await import("./auth.server");
-    await requireAdmin();
-    const { saveDestinationDb } = await import("./settings.server");
-    const partial: { url: string; serviceRoleKey?: string } = { url: data.url.trim() };
-    if (data.serviceRoleKey) partial.serviceRoleKey = data.serviceRoleKey;
-    await saveDestinationDb(partial);
-    return { ok: true };
-  });
-
-/** آمار دیتابیس مقصد — تعداد ردیف هر جدول و زمان آخرین بک‌آپ، قبل از بازیابی */
-export const inspectDestinationDatabase = createServerFn({ method: "GET" }).handler(
-  async (): Promise<{
-    generatedAt: string | null;
-    tables: { name: string; rowCount: number; error: string | null }[];
-  }> => {
-    const { requireAdmin } = await import("./auth.server");
-    await requireAdmin();
-
-    const dest = await connectDestinationSupabase();
-
-    let generatedAt: string | null = null;
-    const { data: metaRow, error: metaError } = await dest
-      .from("settings" as any)
-      .select("setting_value")
-      .eq("setting_key", META_SETTING_KEY)
-      .maybeSingle();
-    if (!metaError && metaRow?.setting_value) {
-      try {
-        generatedAt =
-          (JSON.parse(metaRow.setting_value) as { generatedAt?: string }).generatedAt ?? null;
-      } catch {
-        generatedAt = null;
-      }
-    }
-
-    const tables = await Promise.all(
-      TABLES.map(async (table) => {
-        const { count, error } = await dest
-          .from(table.name as any)
-          .select("*", { count: "exact", head: true });
-        // خطا (مثلاً RLS یا جدول ناموجود) نادیده گرفته نمی‌شود — دقیقاً همان پیامی که
-        // Supabase برمی‌گرداند نمایش داده می‌شود تا دلیل واقعی مشخص باشد
-        return { name: table.name, rowCount: count ?? 0, error: error?.message ?? null };
-      }),
-    );
-
-    return { generatedAt, tables };
-  },
-);
-
-/** بک‌آپ مستقیم دیتابیس فعلی سایت به داخل پروژه Supabase مقصد — بدون فایل واسط */
-export const backupToDestinationDb = createServerFn({ method: "POST" }).handler(
-  async (): Promise<{
-    ok: boolean;
-    generatedAt: string;
-    bootstrapRequired?: boolean;
-    bootstrapSql?: string;
-    tables: { name: string; rowCount: number; error: string | null }[];
-  }> => {
-    const { requireAdmin } = await import("./auth.server");
-    await requireAdmin();
-
-    const dest = await connectDestinationSupabase();
-
-    // هر جدول ناموجود روی مقصد را قبل از نوشتن داده خودش می‌سازد — به همین دلیل بک‌آپ
-    // همیشه با یک کلیک کار می‌کند، حتی روی یک پروژه Supabase کاملاً خالی
-    const schema = await ensureDestinationSchema(dest);
-    if (schema.bootstrapRequired) {
-      return {
-        ok: false,
-        generatedAt: new Date().toISOString(),
-        bootstrapRequired: true,
-        bootstrapSql: DESTINATION_BOOTSTRAP_SQL,
-        tables: [],
-      };
-    }
-
-    const summary: { name: string; rowCount: number; error: string | null }[] = [];
-    for (const table of TABLES) {
-      const schemaError = schema.tableErrors[table.name];
-      if (schemaError) {
-        summary.push({ name: table.name, rowCount: 0, error: schemaError });
-        continue;
-      }
-      const rows = await buildTableExport(table);
-      try {
-        const { error: deleteError } = await dest
-          .from(table.name as any)
-          .delete()
-          .not(table.pk, "is", null);
-        if (deleteError) throw new Error(deleteError.message);
-
-        let inserted = 0;
-        for (let i = 0; i < rows.length; i += CHUNK_SIZE) {
-          const chunk = rows.slice(i, i + CHUNK_SIZE);
-          if (chunk.length === 0) continue;
-          const { error: insertError } = await dest.from(table.name as any).insert(chunk as any);
-          // نادیده گرفتن error این‌جا دقیقاً همان چیزی بود که باعث می‌شد بک‌آپ ظاهراً موفق
-          // گزارش شود بدون این‌که واقعاً چیزی روی مقصد نوشته شده باشد
-          if (insertError) throw new Error(insertError.message);
-          inserted += chunk.length;
-        }
-        summary.push({ name: table.name, rowCount: inserted, error: null });
-      } catch (err) {
-        // این جدول رد می‌شود و پیام خطای واقعی گزارش می‌شود؛ بقیه جدول‌ها ادامه پیدا می‌کنند
-        summary.push({
-          name: table.name,
-          rowCount: 0,
-          error: err instanceof Error ? err.message : "خطای نامشخص",
-        });
-      }
-    }
-
-    const generatedAt = new Date().toISOString();
-    const metaValue = JSON.stringify({ generatedAt });
-    const { data: existingMeta } = await dest
-      .from("settings" as any)
-      .select("id")
-      .eq("setting_key", META_SETTING_KEY)
-      .maybeSingle();
-    if (existingMeta) {
-      await dest
-        .from("settings" as any)
-        .update({ setting_value: metaValue, updated_at: generatedAt })
-        .eq("id", existingMeta.id);
-    } else {
-      await dest.from("settings" as any).insert({
-        id: crypto.randomUUID(),
-        setting_key: META_SETTING_KEY,
-        setting_value: metaValue,
-        is_private: 0,
-        updated_at: generatedAt,
-      } as any);
-    }
-
-    return { ok: true, generatedAt, tables: summary };
-  },
-);
-
-/** بازیابی دیتابیس فعلی سایت از یک پروژه Supabase مقصد که قبلاً با همین ابزار بک‌آپ گرفته شده */
-export const restoreFromDestinationDb = createServerFn({ method: "POST" }).handler(
-  async (): Promise<{ ok: boolean; totalInserted: number }> => {
-    const { requireAdmin } = await import("./auth.server");
-    await requireAdmin();
-
-    const dest = await connectDestinationSupabase();
-
-    const gathered: Record<string, unknown[]> = {};
-    const failures: string[] = [];
-    for (const table of TABLES) {
-      try {
-        gathered[table.name] = await buildTableExport(table, dest);
-      } catch (err) {
-        // جدول روی مقصد وجود ندارد یا خواندن از آن شکست خورد — رد می‌شود، بقیه ادامه پیدا می‌کنند
-        failures.push(err instanceof Error ? err.message : `${table.name}: خطای نامشخص`);
-      }
-    }
-    // اگر هیچ جدولی قابل خواندن نبود (مثلاً کلید اشتباه یا دسترسی رد شده)، به‌جای گزارش
-    // موفقیت با صفر رکورد، دلیل واقعی را نشان بده
-    if (failures.length === TABLES.length) {
-      throw new Error(failures[0] ?? "خواندن از Supabase مقصد ممکن نشد");
-    }
-    return performImport(gathered);
-  },
-);

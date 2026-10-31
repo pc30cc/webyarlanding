@@ -30,9 +30,7 @@ export async function loadSettings(): Promise<SiteSettings> {
       .select("setting_value")
       .eq("setting_key", SITE_KEY)
       .maybeSingle();
-    return mergeSettings(
-      parseJson<Partial<SiteSettings>>(data?.setting_value, {}),
-    );
+    return mergeSettings(parseJson<Partial<SiteSettings>>(data?.setting_value, {}));
   } catch (error) {
     // دیتابیس در دسترس نیست — صفحه عمومی با تنظیمات پیش‌فرض رندر می‌شود
     console.error("loadSettings failed, using defaults:", error);
@@ -43,10 +41,7 @@ export async function loadSettings(): Promise<SiteSettings> {
 export async function saveSettings(next: SiteSettings): Promise<void> {
   // ترجمه‌های انگلیسی قدیمی (localization.english) پس از انتقال به ردیف site_translations_en
   // دوباره در تنظیمات عمومی نوشته نمی‌شوند؛ مثلاً از فرمی که پیش از انتقال باز شده بود.
-  if (
-    hasEntries(next.localization?.english) &&
-    (await siteTranslationsRowExists("en"))
-  ) {
+  if (hasEntries(next.localization?.english) && (await siteTranslationsRowExists("en"))) {
     next = { ...next, localization: { ...next.localization, english: {} } };
   }
   const { data, error: readError } = await db
@@ -63,15 +58,10 @@ export async function saveSettings(next: SiteSettings): Promise<void> {
     updated_at: nextUpdatedAt(data?.updated_at),
   };
   if (data) {
-    const { error } = await db
-      .from("settings")
-      .update(payload)
-      .eq("id", data.id);
+    const { error } = await db.from("settings").update(payload).eq("id", data.id);
     if (error) throw error;
   } else {
-    const { error } = await db
-      .from("settings")
-      .insert({ id: newId(), ...payload });
+    const { error } = await db.from("settings").insert({ id: newId(), ...payload });
     if (error) throw error;
   }
   settingsRevision++;
@@ -210,9 +200,7 @@ export async function clearLegacyEnglishTranslations(): Promise<boolean> {
 }
 
 /** تنظیمات محرمانه (اتصال FTP/رسانه و مانند آن) — هرگز به کلاینت ارسال نمی‌شود */
-export async function loadPrivateSettings<T extends object>(
-  fallback: T,
-): Promise<T> {
+export async function loadPrivateSettings<T extends object>(fallback: T): Promise<T> {
   const { data } = await db
     .from("settings")
     .select("setting_value")
@@ -221,15 +209,24 @@ export async function loadPrivateSettings<T extends object>(
   return parseJson<T>(data?.setting_value, fallback);
 }
 
+/**
+ * کلیدهای قدیمی تنظیمات محرمانه که دیگر هیچ بخشی آن‌ها را نمی‌خواند (اتصال حذف‌شده «ترانسفر
+ * مستقیم به دیتابیس مقصد»: آدرس و کلید Service Role). هنگام خواندن نادیده گرفته می‌شوند و در
+ * اولین ذخیره بعدی از ردیف حذف می‌شوند تا کلید بی‌استفاده در دیتابیس نماند.
+ */
+const LEGACY_PRIVATE_KEYS = ["url", "serviceRoleKey"];
+
 export async function savePrivateSettings(value: object): Promise<void> {
   const { data } = await db
     .from("settings")
     .select("id")
     .eq("setting_key", PRIVATE_KEY)
     .maybeSingle();
+  const cleaned: Record<string, unknown> = { ...value };
+  for (const key of LEGACY_PRIVATE_KEYS) delete cleaned[key];
   const payload = {
     setting_key: PRIVATE_KEY,
-    setting_value: JSON.stringify(value),
+    setting_value: JSON.stringify(cleaned),
     is_private: 1,
     updated_at: nowIso(),
   };
@@ -276,9 +273,7 @@ export async function loadMediaKeys(): Promise<MediaApiKeys> {
   return { ...MEDIA_KEYS_DEFAULTS, ...stored };
 }
 
-export async function saveMediaKeys(
-  partial: Partial<MediaApiKeys>,
-): Promise<void> {
+export async function saveMediaKeys(partial: Partial<MediaApiKeys>): Promise<void> {
   const stored = await loadPrivateSettings<Partial<MediaApiKeys>>({});
   await savePrivateSettings({ ...stored, ...partial });
 }
@@ -300,9 +295,7 @@ export async function loadTelegramKeys(): Promise<TelegramApiKeys> {
   return { ...TELEGRAM_KEYS_DEFAULTS, ...stored };
 }
 
-export async function saveTelegramKeys(
-  partial: Partial<TelegramApiKeys>,
-): Promise<void> {
+export async function saveTelegramKeys(partial: Partial<TelegramApiKeys>): Promise<void> {
   const stored = await loadPrivateSettings<Partial<TelegramApiKeys>>({});
   await savePrivateSettings({ ...stored, ...partial });
 }
@@ -322,30 +315,5 @@ export async function loadGscKeys(): Promise<GscApiKeys> {
 
 export async function saveGscKeys(partial: Partial<GscApiKeys>): Promise<void> {
   const stored = await loadPrivateSettings<Partial<GscApiKeys>>({});
-  await savePrivateSettings({ ...stored, ...partial });
-}
-
-/** اتصال به یک پروژه Supabase مقصد برای ترانسفر مستقیم بک‌آپ — بخشی از تنظیمات محرمانه */
-export interface DestinationDbSettings {
-  /** آدرس پروژه Supabase مقصد، مثل https://xxxx.supabase.co یا آدرس نمونه self-hosted شما */
-  url: string;
-  /** کلید Service Role همان پروژه مقصد — هرگز به کلاینت ارسال نمی‌شود */
-  serviceRoleKey: string;
-}
-
-const DESTINATION_DB_DEFAULTS: DestinationDbSettings = {
-  url: "",
-  serviceRoleKey: "",
-};
-
-export async function loadDestinationDb(): Promise<DestinationDbSettings> {
-  const stored = await loadPrivateSettings<Partial<DestinationDbSettings>>({});
-  return { ...DESTINATION_DB_DEFAULTS, ...stored };
-}
-
-export async function saveDestinationDb(
-  partial: Partial<DestinationDbSettings>,
-): Promise<void> {
-  const stored = await loadPrivateSettings<Partial<DestinationDbSettings>>({});
   await savePrivateSettings({ ...stored, ...partial });
 }

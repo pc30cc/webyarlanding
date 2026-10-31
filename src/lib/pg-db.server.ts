@@ -1,11 +1,12 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-// کلاینت PostgreSQL مستقیم (برای دیتابیس سلف‌هاست روی Coolify) با همان API زنجیره‌ای
-// @supabase/supabase-js که در کل پروژه استفاده می‌شود: from().select().eq().order()...
-// فقط زیرمجموعه‌ای که واقعاً در کد استفاده شده پیاده‌سازی شده و رفتارش (شکل خروجی
-// { data, error, count }، throw نکردن روی خطا، single/maybeSingle، فرمت تاریخ‌ها و
-// bigint به عدد) عیناً مثل PostgREST است تا جابه‌جایی بین Supabase و Postgres بی‌دردسر باشد.
+// کلاینت PostgreSQL سایت (دیتابیس سلف‌هاست روی Coolify، از DATABASE_URL) با API زنجیره‌ای
+// تایپ‌شده: from().select().eq().order()... فقط زیرمجموعه‌ای که واقعاً در کد استفاده شده
+// پیاده‌سازی شده؛ خروجی همیشه { data, error, count } است و روی خطای دیتابیس throw نمی‌کند،
+// single/maybeSingle، تاریخ‌ها به رشته ISO و bigint به عدد برمی‌گردند.
+// تایپ ردیف‌ها از src/lib/db-types.ts می‌آید (هم‌خوان با db/schema.sql).
 import type { Pool, PoolClient } from "pg";
 import schemaSql from "../../db/schema.sql?raw";
+import type { DbTables, TableName } from "./db-types";
 
 type Row = Record<string, unknown>;
 
@@ -16,13 +17,63 @@ export interface PgError {
   hint: string | null;
 }
 
-export interface PgResult<T = any> {
-  data: T;
-  error: PgError | null;
+interface PgResponseBase {
   count: number | null;
   status: number;
   statusText: string;
 }
+
+export interface PgSuccess<T> extends PgResponseBase {
+  data: T;
+  error: null;
+}
+
+export interface PgFailure extends PgResponseBase {
+  data: null;
+  error: PgError;
+}
+
+/** نتیجه هر کوئری: یا داده، یا خطا (هرگز هر دو) */
+export type PgResult<T> = PgSuccess<T> | PgFailure;
+
+/**
+ * شکل یک جدول برای سازنده کوئری: ردیف خوانده‌شده، مقدار درج و مقدار به‌روزرسانی.
+ * خودِ TableShape برای جدولی است که نامش در زمان کامپایل معلوم نیست (مثل بک‌آپ همه جدول‌ها).
+ */
+export interface TableShape {
+  Row: Row;
+  Insert: Row;
+  Update: Row;
+}
+
+type ColumnOf<T extends TableShape> = keyof T["Row"] & string;
+
+type TrimStart<S extends string> = S extends ` ${infer R}` | `\n${infer R}` | `\t${infer R}`
+  ? TrimStart<R>
+  : S;
+type TrimEnd<S extends string> = S extends `${infer L} ` | `${infer L}\n` | `${infer L}\t`
+  ? TrimEnd<L>
+  : S;
+type SelectedColumns<Q extends string> = Q extends `${infer Head},${infer Tail}`
+  ? TrimEnd<TrimStart<Head>> | SelectedColumns<Tail>
+  : TrimEnd<TrimStart<Q>>;
+type UnknownColumns<TRow, Q extends string> = Exclude<
+  SelectedColumns<Q>,
+  (keyof TRow & string) | "*" | ""
+>;
+/** نام ستون ناموجود در select() خطای کامپایل می‌دهد */
+type CheckedColumns<TRow, Q extends string> = [UnknownColumns<TRow, Q>] extends [never]
+  ? string
+  : `unknown column: ${UnknownColumns<TRow, Q>}`;
+
+/** ردیف خروجی select("a, b"): فقط ستون‌های خواسته‌شده؛ "*" یعنی کل ردیف */
+export type SelectedRow<TRow, Q extends string> = string extends Q
+  ? TRow
+  : "*" extends SelectedColumns<Q>
+    ? TRow
+    : { [K in SelectedColumns<Q> & keyof TRow]: TRow[K] };
+
+type SingleOf<T> = T extends readonly (infer E)[] ? E : T;
 
 const IDENT_RE = /^[A-Za-z_][A-Za-z0-9_]*$/;
 
@@ -46,7 +97,7 @@ function toPgError(err: unknown): PgError {
 
 let poolPromise: Promise<Pool> | null = null;
 
-/** مقدارها را دقیقاً به شکل خروجی PostgREST برمی‌گرداند (رشته ISO برای تاریخ، عدد برای bigint) */
+/** تاریخ‌ها به رشته ISO و bigint/numeric به عدد (شکلی که بقیه کد انتظار دارد) */
 function installTypeParsers(types: any): void {
   const TIMESTAMP = 1114;
   const TIMESTAMPTZ = 1184;
@@ -77,7 +128,11 @@ export async function getPool(): Promise<Pool> {
       const pg = mod.default ?? mod;
       installTypeParsers(pg.types);
       const connectionString = getDatabaseUrl();
-      if (!connectionString) throw new Error("DATABASE_URL تنظیم نشده است");
+      if (!connectionString) {
+        throw new Error(
+          "DATABASE_URL تنظیم نشده است — رشته اتصال PostgreSQL (مثل postgresql://user:pass@host:5432/webyar) را در متغیرهای محیطی سرور تعریف کنید",
+        );
+      }
       // داخل شبکه داخلی Coolify اتصال SSL ندارد؛ برای سرور بیرونی ?sslmode=require بگذارید.
       const wantsSsl = /sslmode=(require|verify-ca|verify-full|prefer)/i.test(connectionString);
       const pool: Pool = new pg.Pool({
@@ -88,7 +143,7 @@ export async function getPool(): Promise<Pool> {
         max: Number(process.env["DATABASE_POOL_MAX"] ?? 10),
         idleTimeoutMillis: 30_000,
         connectionTimeoutMillis: 15_000,
-        // زمان‌ها مثل Supabase به UTC ذخیره و خوانده می‌شوند
+        // زمان‌ها به UTC ذخیره و خوانده می‌شوند
         options: "-c timezone=UTC",
       });
       pool.on("error", (err) => console.error("[pg] idle client error", err.message));
@@ -200,7 +255,10 @@ function parseColumns(columns: string): string {
     .join(", ");
 }
 
-export class PgQueryBuilder<T = any> implements PromiseLike<PgResult<T>> {
+export class PgQueryBuilder<
+  T extends TableShape = TableShape,
+  TResult = T["Row"][],
+> implements PromiseLike<PgResult<TResult>> {
   private action: Action = "select";
   private columns = "*";
   private returning: string | null = null;
@@ -221,41 +279,48 @@ export class PgQueryBuilder<T = any> implements PromiseLike<PgResult<T>> {
 
   /* ---- اکشن‌ها ---- */
 
-  select(columns = "*", options?: { count?: "exact" | "planned" | "estimated"; head?: boolean }) {
+  select<Q extends string = "*">(
+    columns?: Q & CheckedColumns<T["Row"], Q>,
+    options?: { count?: "exact" | "planned" | "estimated"; head?: boolean },
+  ): PgQueryBuilder<T, SelectedRow<T["Row"], Q>[]> {
+    const cols: string = columns ?? "*";
     if (this.action === "select") {
-      this.columns = columns;
+      this.columns = cols;
       if (options?.count) this.countMode = "exact";
       if (options?.head) this.head = true;
     } else {
       // insert/update/upsert/delete + select() → RETURNING
-      this.returning = columns;
+      this.returning = cols;
     }
-    return this;
+    return this as unknown as PgQueryBuilder<T, SelectedRow<T["Row"], Q>[]>;
   }
 
-  insert(values: Row | Row[]) {
+  insert(values: T["Insert"] | T["Insert"][]): PgQueryBuilder<T, null> {
     this.action = "insert";
     this.payload = values;
-    return this;
+    return this as unknown as PgQueryBuilder<T, null>;
   }
 
-  upsert(values: Row | Row[], options?: { onConflict?: string; ignoreDuplicates?: boolean }) {
+  upsert(
+    values: T["Insert"] | T["Insert"][],
+    options?: { onConflict?: string; ignoreDuplicates?: boolean },
+  ): PgQueryBuilder<T, null> {
     this.action = "upsert";
     this.payload = values;
     this.onConflict = options?.onConflict ?? null;
     this.ignoreDuplicates = !!options?.ignoreDuplicates;
-    return this;
+    return this as unknown as PgQueryBuilder<T, null>;
   }
 
-  update(values: Row) {
+  update(values: T["Update"]): PgQueryBuilder<T, null> {
     this.action = "update";
     this.payload = values;
-    return this;
+    return this as unknown as PgQueryBuilder<T, null>;
   }
 
-  delete() {
+  delete(): PgQueryBuilder<T, null> {
     this.action = "delete";
-    return this;
+    return this as unknown as PgQueryBuilder<T, null>;
   }
 
   /* ---- فیلترها ---- */
@@ -265,54 +330,54 @@ export class PgQueryBuilder<T = any> implements PromiseLike<PgResult<T>> {
     return this;
   }
 
-  eq(column: string, value: unknown) {
+  eq<C extends ColumnOf<T>>(column: C, value: T["Row"][C]) {
     return this.add(column, "eq", value);
   }
-  neq(column: string, value: unknown) {
+  neq<C extends ColumnOf<T>>(column: C, value: T["Row"][C]) {
     return this.add(column, "neq", value);
   }
-  gt(column: string, value: unknown) {
+  gt<C extends ColumnOf<T>>(column: C, value: T["Row"][C]) {
     return this.add(column, "gt", value);
   }
-  gte(column: string, value: unknown) {
+  gte<C extends ColumnOf<T>>(column: C, value: T["Row"][C]) {
     return this.add(column, "gte", value);
   }
-  lt(column: string, value: unknown) {
+  lt<C extends ColumnOf<T>>(column: C, value: T["Row"][C]) {
     return this.add(column, "lt", value);
   }
-  lte(column: string, value: unknown) {
+  lte<C extends ColumnOf<T>>(column: C, value: T["Row"][C]) {
     return this.add(column, "lte", value);
   }
-  like(column: string, pattern: string) {
+  like(column: ColumnOf<T>, pattern: string) {
     return this.add(column, "like", pattern);
   }
-  ilike(column: string, pattern: string) {
+  ilike(column: ColumnOf<T>, pattern: string) {
     return this.add(column, "ilike", pattern);
   }
-  is(column: string, value: null | boolean) {
+  is(column: ColumnOf<T>, value: null | boolean) {
     return this.add(column, "is", value);
   }
-  in(column: string, values: readonly unknown[]) {
+  in<C extends ColumnOf<T>>(column: C, values: readonly T["Row"][C][]) {
     return this.add(column, "in", [...values]);
   }
-  match(query: Row) {
+  match(query: Partial<T["Row"]>) {
     for (const [k, v] of Object.entries(query)) this.add(k, "eq", v);
     return this;
   }
-  not(column: string, operator: string, value: unknown) {
+  not(column: ColumnOf<T>, operator: string, value: unknown) {
     const op = operator as Op;
     if (!(op in OP_SQL) && op !== "is" && op !== "in") {
       throw new Error(`unsupported not() operator: ${operator}`);
     }
     return this.add(column, op, value, true);
   }
-  filter(column: string, operator: string, value: unknown) {
+  filter(column: ColumnOf<T>, operator: string, value: unknown) {
     return this.add(column, operator as Op, value);
   }
 
   /* ---- مرتب‌سازی و صفحه‌بندی ---- */
 
-  order(column: string, options?: { ascending?: boolean; nullsFirst?: boolean }) {
+  order(column: ColumnOf<T>, options?: { ascending?: boolean; nullsFirst?: boolean }) {
     this.orders.push({
       column,
       ascending: options?.ascending ?? true,
@@ -332,14 +397,14 @@ export class PgQueryBuilder<T = any> implements PromiseLike<PgResult<T>> {
     return this;
   }
 
-  single() {
+  single(): PgQueryBuilder<T, SingleOf<TResult>> {
     this.singleMode = "single";
-    return this as unknown as PgQueryBuilder<any>;
+    return this as unknown as PgQueryBuilder<T, SingleOf<TResult>>;
   }
 
-  maybeSingle() {
+  maybeSingle(): PgQueryBuilder<T, SingleOf<TResult> | null> {
     this.singleMode = "maybe";
-    return this as unknown as PgQueryBuilder<any>;
+    return this as unknown as PgQueryBuilder<T, SingleOf<TResult> | null>;
   }
 
   /* ---- ساخت SQL ---- */
@@ -398,7 +463,7 @@ export class PgQueryBuilder<T = any> implements PromiseLike<PgResult<T>> {
     if (!p) return [];
     return (Array.isArray(p) ? p : [p]).map((r) => {
       const out: Row = {};
-      // undefined مثل PostgREST نادیده گرفته می‌شود؛ ستون مقدار پیش‌فرض خودش را می‌گیرد
+      // undefined نادیده گرفته می‌شود؛ ستون مقدار پیش‌فرض خودش را می‌گیرد
       for (const [k, v] of Object.entries(r)) if (v !== undefined) out[k] = normalizeValue(v);
       return out;
     });
@@ -524,15 +589,15 @@ export class PgQueryBuilder<T = any> implements PromiseLike<PgResult<T>> {
     }
   }
 
-  then<R1 = PgResult<T>, R2 = never>(
-    onfulfilled?: ((value: PgResult<T>) => R1 | PromiseLike<R1>) | null,
+  then<R1 = PgResult<TResult>, R2 = never>(
+    onfulfilled?: ((value: PgResult<TResult>) => R1 | PromiseLike<R1>) | null,
     onrejected?: ((reason: unknown) => R2 | PromiseLike<R2>) | null,
   ): PromiseLike<R1 | R2> {
     return this.execute().then(onfulfilled as any, onrejected as any);
   }
 }
 
-/** شیء/آرایه (ستون‌های json) به رشته JSON تبدیل می‌شود؛ مثل ارسال JSON به PostgREST */
+/** شیء/آرایه (ستون‌های json) به رشته JSON تبدیل می‌شود */
 function normalizeValue(value: unknown): unknown {
   if (value === null) return null;
   if (value instanceof Date) return value.toISOString();
@@ -548,21 +613,16 @@ function fail(error: PgError, status: number): PgResult<any> {
   return { data: null, error, count: null, status, statusText: "Error" };
 }
 
-export function createPgDb() {
+/** کلاینت دیتابیس: جدول‌های db/schema.sql تایپ‌شده‌اند، نام دلخواه (string) بدون تایپ ستون */
+export interface PgDb {
+  from<K extends TableName>(table: K): PgQueryBuilder<DbTables[K]>;
+  from(table: string): PgQueryBuilder<TableShape>;
+}
+
+export function createPgDb(): PgDb {
   return {
     from(table: string) {
       return new PgQueryBuilder(table);
-    },
-    async rpc(): Promise<PgResult<null>> {
-      return fail(
-        {
-          message: "rpc روی Postgres مستقیم پشتیبانی نمی‌شود",
-          code: "UNSUPPORTED",
-          details: null,
-          hint: null,
-        },
-        400,
-      );
     },
   };
 }

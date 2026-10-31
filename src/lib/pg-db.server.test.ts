@@ -1,12 +1,11 @@
 // @vitest-environment node
-/* eslint-disable @typescript-eslint/no-explicit-any */
 // تست یکپارچه کلاینت Postgres روی یک دیتابیس واقعی. فقط وقتی اجرا می‌شود که
 // TEST_DATABASE_URL تنظیم شده باشد (مثلاً postgres://postgres@localhost:5432/webyar_test).
 import { beforeAll, describe, expect, it } from "vitest";
 
 const url = process.env["TEST_DATABASE_URL"];
 
-describe.skipIf(!url)("pg-db (Supabase-compatible query builder)", () => {
+describe.skipIf(!url)("pg-db query builder", () => {
   let db: ReturnType<typeof import("./pg-db.server").createPgDb>;
   let pgQuery: typeof import("./pg-db.server").pgQuery;
 
@@ -19,7 +18,8 @@ describe.skipIf(!url)("pg-db (Supabase-compatible query builder)", () => {
   });
 
   it("insert / select / filters / order / range", async () => {
-    const ins = await db.from("blog_tags").insert([
+    // نام جدول به‌صورت string (بدون تایپ ستون‌ها) تا مقدارهای غیرمتنی/undefined هم آزموده شوند
+    const ins = await db.from("blog_tags" as string).insert([
       { id: "t1", slug: "a", name: "آلفا", sort_order: 2 },
       { id: "t2", slug: "b", name: "بتا", sort_order: 1, description: { x: 1 } },
       { id: "t3", slug: "c", name: "گاما", sort_order: 3, description: undefined },
@@ -28,8 +28,8 @@ describe.skipIf(!url)("pg-db (Supabase-compatible query builder)", () => {
     expect(ins.data).toBeNull();
 
     const all = await db.from("blog_tags").select("id, name").order("sort_order");
-    expect(all.data!.map((r: any) => r.id)).toEqual(["t2", "t1", "t3"]);
-    expect(Object.keys(all.data![0])).toEqual(["id", "name"]);
+    expect(all.data!.map((r) => r.id)).toEqual(["t2", "t1", "t3"]);
+    expect(Object.keys(all.data![0]!)).toEqual(["id", "name"]);
 
     const page = await db
       .from("blog_tags")
@@ -37,7 +37,7 @@ describe.skipIf(!url)("pg-db (Supabase-compatible query builder)", () => {
       .order("sort_order", { ascending: false })
       .range(1, 1);
     expect(page.count).toBe(3);
-    expect(page.data!.map((r: any) => r.id)).toEqual(["t1"]);
+    expect(page.data!.map((r) => r.id)).toEqual(["t1"]);
 
     const head = await db
       .from("blog_tags")
@@ -47,7 +47,7 @@ describe.skipIf(!url)("pg-db (Supabase-compatible query builder)", () => {
     expect(head.data).toBeNull();
 
     const inq = await db.from("blog_tags").select("id").in("id", ["t1", "t3"]).order("id");
-    expect(inq.data!.map((r: any) => r.id)).toEqual(["t1", "t3"]);
+    expect(inq.data!.map((r) => r.id)).toEqual(["t1", "t3"]);
     const emptyIn = await db.from("blog_tags").select("id").in("id", []);
     expect(emptyIn.data).toEqual([]);
 

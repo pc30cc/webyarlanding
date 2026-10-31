@@ -1,4 +1,4 @@
-// انتقال مستقیم دیتابیس به دیتابیس — اتصال خام PostgreSQL به سرور مقصد (psql/Supabase سلف‌هاست).
+// انتقال مستقیم دیتابیس به دیتابیس — اتصال خام PostgreSQL به سرور مقصد (هر PostgreSQL).
 // فقط سمت سرور اجرا می‌شود.
 import type { Client } from "pg";
 import { TABLES, type ColumnDef, type TableDef } from "./backup.functions";
@@ -152,11 +152,11 @@ async function readSourceRows(tableName: string): Promise<Record<string, unknown
   const rows: Record<string, unknown>[] = [];
   for (let from = 0; ; from += PAGE_SIZE) {
     const { data, error } = await db
-      .from(tableName as any)
+      .from(tableName)
       .select("*")
       .range(from, from + PAGE_SIZE - 1);
     if (error) throw new Error(`${tableName}: ${error.message}`);
-    const chunk = (data ?? []) as unknown as Record<string, unknown>[];
+    const chunk = data;
     rows.push(...chunk);
     if (chunk.length < PAGE_SIZE) break;
   }
@@ -165,7 +165,7 @@ async function readSourceRows(tableName: string): Promise<Record<string, unknown
 
 async function sourceRowCount(tableName: string): Promise<number> {
   const { db } = await import("./db.server");
-  const { count } = await db.from(tableName as any).select("*", { count: "exact", head: true });
+  const { count } = await db.from(tableName).select("*", { count: "exact", head: true });
   return count ?? 0;
 }
 
@@ -222,10 +222,7 @@ export async function compareWithTarget(connectionString: string): Promise<Compa
     }
 
     const identical = tables.every(
-      (t) =>
-        !t.missingOnTarget &&
-        t.missingColumns.length === 0 &&
-        t.targetRows === t.sourceRows,
+      (t) => !t.missingOnTarget && t.missingColumns.length === 0 && t.targetRows === t.sourceRows,
     );
 
     return { identical, targetTableCount: Number(all.rows[0]?.count ?? 0), tables };

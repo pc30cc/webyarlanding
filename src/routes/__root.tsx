@@ -12,11 +12,10 @@ import {
 } from "@tanstack/react-router";
 import { motion } from "framer-motion";
 import { Compass, ChevronLeft } from "lucide-react";
-import { useEffect, type ReactNode } from "react";
+import type { ReactNode } from "react";
 
 import appCss from "../styles.css?url";
 import { Toaster } from "../components/ui/sonner";
-import { reportLovableError } from "../lib/lovable-error-reporting";
 import { fetchSettings } from "../lib/settings.functions";
 import { getPublicCatalog } from "../lib/catalog.functions";
 import { VisitTracker } from "../components/site/VisitTracker";
@@ -47,9 +46,7 @@ interface RootLoaderData {
 }
 
 /** اسکریپت‌های گوگل آنالیتیکس (در صورت تنظیم) + اسکریپت‌های سفارشی head از تنظیمات عمومی */
-function buildHeadScripts(
-  settings: SiteSettings | undefined,
-): Array<Record<string, unknown>> {
+function buildHeadScripts(settings: SiteSettings | undefined): Array<Record<string, unknown>> {
   const scripts: Array<Record<string, unknown>> = [];
   const gaId = settings?.analytics.googleAnalyticsId?.trim();
   if (gaId) {
@@ -149,9 +146,6 @@ function NotFoundComponent() {
 function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
   console.error(error);
   const router = useRouter();
-  useEffect(() => {
-    reportLovableError(error, { boundary: "tanstack_root_error_component" });
-  }, [error]);
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
@@ -160,8 +154,7 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
           This page didn't load
         </h1>
         <p className="mt-2 text-sm text-muted-foreground">
-          Something went wrong on our end. You can try refreshing or head back
-          home.
+          Something went wrong on our end. You can try refreshing or head back home.
         </p>
         <div className="mt-6 flex flex-wrap justify-center gap-2">
           <button
@@ -185,159 +178,154 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
   );
 }
 
-export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
-  {
-    // پیشوند زبان آدرس عمومی (پیش از rewrite روتر؛ src/router.tsx)
-    beforeLoad: async ({ location }) => {
-      // روی سرور head() صفحات دیکشنری را از کش می‌خواند (site-i18n: i18nFromMatches)
-      if (typeof window === "undefined") await loadAllSiteMessages();
-      return {
-        urlLocale: splitLocalePrefix(new URL(location.publicHref, "http://local").pathname)
-          .locale,
-      };
-    },
-    loader: async ({ context, location }): Promise<RootLoaderData> => {
-      const [settings, productCatalog, solutionCatalog] = await Promise.all([
-        fetchSettings().catch((error) => {
-          console.error("root settings load failed, using defaults:", error);
-          return mergeSettings({});
-        }),
-        getPublicCatalog({ data: { type: "product" } }).catch(() => []),
-        getPublicCatalog({ data: { type: "solution" } }).catch(() => []),
-      ]);
-      const locale = resolvePageLocale(settings, context.urlLocale);
-      // پیشوندی که زبان فعالِ غیرپیش‌فرض نیست (معمولاً server.ts زودتر ریدایرکت کرده است؛
-      // این برای پنجره کش تنظیمات و ناوبری سمت مرورگر است).
-      if (context.urlLocale && context.urlLocale !== locale)
-        throw redirect({ href: location.href, statusCode: 302, reloadDocument: true });
-      if (context.urlLocale && context.urlLocale === getDefaultLocale(settings))
-        throw redirect({ href: location.href, statusCode: 301, reloadDocument: true });
-      // دیکشنری در کش ماژول می‌ماند (مرورگر: src/client.tsx پیش از hydration) و در داده‌های
-      // route فرستاده نمی‌شود تا داخل HTML هر صفحه تکرار نشود.
-      await loadSiteMessages(locale);
-      const data: RootLoaderData = { settings, productCatalog, solutionCatalog, locale };
-      // صفحات فارسی هیچ کلید اضافه‌ای در داده‌های route ندارند (HTML آن‌ها تغییر نمی‌کند)؛
-      // انگلیسیِ بدون ردیف ترجمه هم ندارد، چون ترجمه‌هایش همان localization.english تنظیمات است.
-      if (locale !== "fa") {
-        const overrides = await loadPageTranslations(locale);
-        // نقشه خالی (ترکی/عربی بدون ترجمه) فرستاده نمی‌شود؛ برای انگلیسی نقشه خالی یعنی ردیف
-        // ترجمه هست و جای localization.english قدیمی را می‌گیرد، پس همان فرستاده می‌شود
-        if (overrides && (locale === "en" || Object.keys(overrides).length > 0))
-          data.overrides = overrides;
-      }
-      return data;
-    },
-    head: ({ loaderData }) => {
-      const settings = loaderData?.settings;
-      const base = (settings?.brand.siteUrl || "").replace(/\/$/, "");
-      const locale = loaderData?.locale ?? "fa";
-      const info = LOCALE_INFO[locale];
-      const twitterHandle = settings?.seo.twitterHandle
-        ? settings.seo.twitterHandle.startsWith("@")
-          ? settings.seo.twitterHandle
-          : `@${settings.seo.twitterHandle}`
-        : "";
-      return {
-        meta: [
-          { charSet: "utf-8" },
-          {
-            name: "viewport",
-            content:
-              "width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover, interactive-widget=resizes-content",
-          },
-          { name: "theme-color", content: "#12141f" },
-          {
-            name: "author",
-            content:
-              settings && locale !== "fa"
-                ? getBrandNameEn(settings)
-                : settings?.brand.name || "وب‌یار",
-          },
-          { property: "og:type", content: "website" },
-          { property: "og:locale", content: info.ogLocale },
-          {
-            property: "og:site_name",
-            content:
-              settings && locale !== "fa"
-                ? getBrandNameEn(settings)
-                : settings?.brand.name || "وب‌یار",
-          },
-          {
-            property: "og:image",
-            content: base ? `${base}/og-image.png?v=2` : "/og-image.png?v=2",
-          },
-          { name: "twitter:card", content: "summary_large_image" },
-          ...(twitterHandle
-            ? [{ name: "twitter:site", content: twitterHandle }]
-            : []),
-          ...(settings?.seo.googleVerification
-            ? [
-                {
-                  name: "google-site-verification",
-                  content: settings.seo.googleVerification,
-                },
-              ]
-            : []),
-        ],
-        links: [
-          // پیش‌بارگذاری فونت خودمیزبان‌شده (public/fonts) تا قبل از رندر اول دانلود شود
-          // و فلش فونت پیش‌فرض مرورگر (FOUT) به حداقل برسد.
-          ...(info.dir === "ltr"
-            ? [
-                {
-                  rel: "preload",
-                  href: "/fonts/Inter-Latin-Variable.woff2",
-                  as: "font",
-                  type: "font/woff2",
-                  crossOrigin: "anonymous" as const,
-                },
-              ]
-            : [
-                {
-                  rel: "preload",
-                  href: "/fonts/IRANSansWeb.woff2",
-                  as: "font",
-                  type: "font/woff2",
-                  crossOrigin: "anonymous" as const,
-                },
-                {
-                  rel: "preload",
-                  href: "/fonts/IRANSansWeb-Bold.woff2",
-                  as: "font",
-                  type: "font/woff2",
-                  crossOrigin: "anonymous" as const,
-                },
-              ]),
-          {
-            rel: "stylesheet",
-            href: appCss,
-          },
-          // آیکون‌ها از کیت برند وب‌یار (public/)
-          { rel: "icon", href: "/favicon.ico", sizes: "48x48" },
-          { rel: "icon", href: "/favicon.svg", type: "image/svg+xml" },
-          {
-            rel: "icon",
-            href: "/favicon-32x32.png",
-            type: "image/png",
-            sizes: "32x32",
-          },
-          { rel: "apple-touch-icon", href: "/apple-touch-icon.png?v=2" },
-          {
-            rel: "mask-icon",
-            href: "/safari-pinned-tab.svg",
-            color: "#0B7D6C",
-          },
-          { rel: "manifest", href: "/site.webmanifest" },
-        ],
-        scripts: buildHeadScripts(settings),
-      };
-    },
-    shellComponent: RootShell,
-    component: RootComponent,
-    notFoundComponent: NotFoundComponent,
-    errorComponent: ErrorComponent,
+export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()({
+  // پیشوند زبان آدرس عمومی (پیش از rewrite روتر؛ src/router.tsx)
+  beforeLoad: async ({ location }) => {
+    // روی سرور head() صفحات دیکشنری را از کش می‌خواند (site-i18n: i18nFromMatches)
+    if (typeof window === "undefined") await loadAllSiteMessages();
+    return {
+      urlLocale: splitLocalePrefix(new URL(location.publicHref, "http://local").pathname).locale,
+    };
   },
-);
+  loader: async ({ context, location }): Promise<RootLoaderData> => {
+    const [settings, productCatalog, solutionCatalog] = await Promise.all([
+      fetchSettings().catch((error) => {
+        console.error("root settings load failed, using defaults:", error);
+        return mergeSettings({});
+      }),
+      getPublicCatalog({ data: { type: "product" } }).catch(() => []),
+      getPublicCatalog({ data: { type: "solution" } }).catch(() => []),
+    ]);
+    const locale = resolvePageLocale(settings, context.urlLocale);
+    // پیشوندی که زبان فعالِ غیرپیش‌فرض نیست (معمولاً server.ts زودتر ریدایرکت کرده است؛
+    // این برای پنجره کش تنظیمات و ناوبری سمت مرورگر است).
+    if (context.urlLocale && context.urlLocale !== locale)
+      throw redirect({ href: location.href, statusCode: 302, reloadDocument: true });
+    if (context.urlLocale && context.urlLocale === getDefaultLocale(settings))
+      throw redirect({ href: location.href, statusCode: 301, reloadDocument: true });
+    // دیکشنری در کش ماژول می‌ماند (مرورگر: src/client.tsx پیش از hydration) و در داده‌های
+    // route فرستاده نمی‌شود تا داخل HTML هر صفحه تکرار نشود.
+    await loadSiteMessages(locale);
+    const data: RootLoaderData = { settings, productCatalog, solutionCatalog, locale };
+    // صفحات فارسی هیچ کلید اضافه‌ای در داده‌های route ندارند (HTML آن‌ها تغییر نمی‌کند)؛
+    // انگلیسیِ بدون ردیف ترجمه هم ندارد، چون ترجمه‌هایش همان localization.english تنظیمات است.
+    if (locale !== "fa") {
+      const overrides = await loadPageTranslations(locale);
+      // نقشه خالی (ترکی/عربی بدون ترجمه) فرستاده نمی‌شود؛ برای انگلیسی نقشه خالی یعنی ردیف
+      // ترجمه هست و جای localization.english قدیمی را می‌گیرد، پس همان فرستاده می‌شود
+      if (overrides && (locale === "en" || Object.keys(overrides).length > 0))
+        data.overrides = overrides;
+    }
+    return data;
+  },
+  head: ({ loaderData }) => {
+    const settings = loaderData?.settings;
+    const base = (settings?.brand.siteUrl || "").replace(/\/$/, "");
+    const locale = loaderData?.locale ?? "fa";
+    const info = LOCALE_INFO[locale];
+    const twitterHandle = settings?.seo.twitterHandle
+      ? settings.seo.twitterHandle.startsWith("@")
+        ? settings.seo.twitterHandle
+        : `@${settings.seo.twitterHandle}`
+      : "";
+    return {
+      meta: [
+        { charSet: "utf-8" },
+        {
+          name: "viewport",
+          content:
+            "width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover, interactive-widget=resizes-content",
+        },
+        { name: "theme-color", content: "#12141f" },
+        {
+          name: "author",
+          content:
+            settings && locale !== "fa"
+              ? getBrandNameEn(settings)
+              : settings?.brand.name || "وب‌یار",
+        },
+        { property: "og:type", content: "website" },
+        { property: "og:locale", content: info.ogLocale },
+        {
+          property: "og:site_name",
+          content:
+            settings && locale !== "fa"
+              ? getBrandNameEn(settings)
+              : settings?.brand.name || "وب‌یار",
+        },
+        {
+          property: "og:image",
+          content: base ? `${base}/og-image.png?v=2` : "/og-image.png?v=2",
+        },
+        { name: "twitter:card", content: "summary_large_image" },
+        ...(twitterHandle ? [{ name: "twitter:site", content: twitterHandle }] : []),
+        ...(settings?.seo.googleVerification
+          ? [
+              {
+                name: "google-site-verification",
+                content: settings.seo.googleVerification,
+              },
+            ]
+          : []),
+      ],
+      links: [
+        // پیش‌بارگذاری فونت خودمیزبان‌شده (public/fonts) تا قبل از رندر اول دانلود شود
+        // و فلش فونت پیش‌فرض مرورگر (FOUT) به حداقل برسد.
+        ...(info.dir === "ltr"
+          ? [
+              {
+                rel: "preload",
+                href: "/fonts/Inter-Latin-Variable.woff2",
+                as: "font",
+                type: "font/woff2",
+                crossOrigin: "anonymous" as const,
+              },
+            ]
+          : [
+              {
+                rel: "preload",
+                href: "/fonts/IRANSansWeb.woff2",
+                as: "font",
+                type: "font/woff2",
+                crossOrigin: "anonymous" as const,
+              },
+              {
+                rel: "preload",
+                href: "/fonts/IRANSansWeb-Bold.woff2",
+                as: "font",
+                type: "font/woff2",
+                crossOrigin: "anonymous" as const,
+              },
+            ]),
+        {
+          rel: "stylesheet",
+          href: appCss,
+        },
+        // آیکون‌ها از کیت برند وب‌یار (public/)
+        { rel: "icon", href: "/favicon.ico", sizes: "48x48" },
+        { rel: "icon", href: "/favicon.svg", type: "image/svg+xml" },
+        {
+          rel: "icon",
+          href: "/favicon-32x32.png",
+          type: "image/png",
+          sizes: "32x32",
+        },
+        { rel: "apple-touch-icon", href: "/apple-touch-icon.png?v=2" },
+        {
+          rel: "mask-icon",
+          href: "/safari-pinned-tab.svg",
+          color: "#0B7D6C",
+        },
+        { rel: "manifest", href: "/site.webmanifest" },
+      ],
+      scripts: buildHeadScripts(settings),
+    };
+  },
+  shellComponent: RootShell,
+  component: RootComponent,
+  notFoundComponent: NotFoundComponent,
+  errorComponent: ErrorComponent,
+});
 
 function RootShell({ children }: { children: ReactNode }) {
   const loaderData = Route.useLoaderData();
@@ -362,9 +350,7 @@ function RootShell({ children }: { children: ReactNode }) {
       </head>
       <body>
         {children}
-        {bodyScripts && (
-          <div dangerouslySetInnerHTML={{ __html: bodyScripts }} />
-        )}
+        {bodyScripts && <div dangerouslySetInnerHTML={{ __html: bodyScripts }} />}
         <Scripts />
       </body>
     </html>
@@ -387,11 +373,7 @@ function RootComponent() {
         messages={messages}
         overrides={overrides}
       >
-        <Toaster
-          position="top-center"
-          richColors
-          dir={LOCALE_INFO[locale].dir}
-        />
+        <Toaster position="top-center" richColors dir={LOCALE_INFO[locale].dir} />
         <VisitTracker />
         {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
         <Outlet />

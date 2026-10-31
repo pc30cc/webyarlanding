@@ -1,4 +1,4 @@
-// بک‌آپ و بازیابی واقعی PostgreSQL با pg_dump / psql (فقط در حالت DATABASE_URL).
+// بک‌آپ و بازیابی واقعی PostgreSQL با pg_dump / psql (اتصال از DATABASE_URL).
 // خروجی یک فایل SQL متنی فشرده (.sql.gz) است که با psql هم بیرون از پنل قابل بازیابی است:
 //   gunzip -c backup.sql.gz | psql "$DATABASE_URL" -v ON_ERROR_STOP=1 --single-transaction
 // باینری‌های pg_dump/psql از طریق nixpacks.toml (postgresql_17) داخل ایمیج نصب می‌شوند.

@@ -1,21 +1,12 @@
 // لایه دسترسی دیتابیس — فقط سمت سرور.
-// دو حالت دارد:
-//   ۱) DATABASE_URL تنظیم شده باشد → اتصال مستقیم به PostgreSQL سلف‌هاست (کانتینر Coolify)
-//   ۲) در غیر این صورت → Supabase (همه جدول‌ها RLS دارند و تنها راه دسترسی کلاینت سرویس است)
-// هر دو حالت دقیقاً یک API دارند، پس بقیه کد نیازی به تغییر ندارد.
-import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import { createPgDb, getDatabaseUrl } from "./pg-db.server";
+// اتصال مستقیم به PostgreSQL سلف‌هاست (کانتینر Coolify) از طریق DATABASE_URL؛ اتصال در اولین
+// کوئری برقرار می‌شود و نبودِ DATABASE_URL همان‌جا خطای روشن می‌دهد (صفحه‌های عمومی این خطا
+// را مثل هر خطای دیگر دیتابیس می‌گیرند و با مقادیر پیش‌فرض رندر می‌شوند).
+import { createPgDb, type PgDb } from "./pg-db.server";
 
-export type DatabaseBackend = "postgres" | "supabase";
+export type { PgDb } from "./pg-db.server";
 
-export function databaseBackend(): DatabaseBackend {
-  return getDatabaseUrl() ? "postgres" : "supabase";
-}
-
-export const db: typeof supabaseAdmin =
-  databaseBackend() === "postgres"
-    ? (createPgDb() as unknown as typeof supabaseAdmin)
-    : supabaseAdmin;
+export const db: PgDb = createPgDb();
 
 /** شناسه یکتای ۳۶ کاراکتری (سازگار با varchar(36) در MySQL) */
 export function newId(): string {
@@ -48,7 +39,10 @@ export function parseCsv(value?: string | null): string[] {
 
 export function toCsv(items?: string[] | null): string {
   if (!items || items.length === 0) return "";
-  return items.map((item) => item.trim()).filter(Boolean).join(",");
+  return items
+    .map((item) => item.trim())
+    .filter(Boolean)
+    .join(",");
 }
 
 /** JSON امن (ستون‌های text به‌جای jsonb) */
