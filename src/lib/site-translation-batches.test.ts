@@ -19,7 +19,6 @@ describe("untranslated text detection", () => {
 
   it("accepts Arabic translations although they share the Persian script", () => {
     expect(containsPersianProse(ARABIC)).toBe(true); // روش قدیمی عربی را فارسی می‌دانست
-    expect(isUntranslated(ARABIC, "ar", "چت زنده در سایت شما")).toBe(false);
     expect(isUntranslated(ARABIC, "ar")).toBe(false);
   });
 
@@ -27,19 +26,21 @@ describe("untranslated text detection", () => {
     for (const text of ["پشتیبانی", "چت", "ژورنال", "گفتگو", "کمک", "سایت"]) {
       expect(isUntranslated(text, "ar")).toBe(true);
     }
+    // آدرس و کد متن قابل ترجمه نیستند
+    expect(isUntranslated("رابط `کد` [صفحه](https://example.com/پشتیبانی)", "ar")).toBe(false);
   });
 
-  it("detects Arabic output identical to the Persian source", () => {
-    // «تماس» حرف مخصوص فارسی ندارد؛ فقط مقایسه با متن مبدأ آن را تشخیص می‌دهد
-    expect(isUntranslated("تماس", "ar")).toBe(false);
-    expect(isUntranslated("تماس", "ar", "تماس")).toBe(true);
-    // ارقام و فاصله‌ها در مقایسه یکسان می‌شوند (مترجم سایت ارقام را لاتین می‌کند)
-    expect(isUntranslated("سلام 2", "ar", "سلام  ۲")).toBe(true);
-    // متن لاتین یکسان (مثلاً نام محصول) ترجمه‌نشده نیست
-    expect(isUntranslated("API", "ar", "API")).toBe(false);
+  it("accepts Arabic text spelled exactly like the Persian source", () => {
+    // نام‌ها و واژه‌هایی که در عربی همان املای فارسی را دارند ترجمه درست‌اند، نه متن ترجمه‌نشده
+    for (const name of ["سارا", "محمد", "حسن", "واتساب", "تماس"]) {
+      expect(isUntranslated(name, "ar")).toBe(false);
+    }
+    // ارقام فارسی هنگام نمایش لاتین می‌شوند و نشانه ترجمه‌نشدن نیستند
+    expect(isUntranslated("سارا ۲", "ar")).toBe(false);
+    expect(isUntranslated("API", "ar")).toBe(false);
   });
 
   it("never flags Persian itself", () => {
-    expect(isUntranslated("چت زنده", "fa", "چت زنده")).toBe(false);
+    expect(isUntranslated("چت زنده", "fa")).toBe(false);
   });
 });

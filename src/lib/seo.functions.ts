@@ -20,7 +20,7 @@ export interface SeoPageDto {
   locale?: Locale;
   /**
    * فقط در getPublicSeoPage و وقتی این مسیر ردیف زبان‌دار هم دارد: canonical سفارشی هر نسخه
-   * زبان برای hreflang
+   * زبان برای hreflang (حتی وقتی ردیف برگشتی متعلق به زبان دیگری است و اعمال نمی‌شود)
    */
   alternateCanonicals?: SeoCanonicals;
 }
@@ -184,7 +184,8 @@ export const deleteSeoPage = createServerFn({ method: "POST" })
 /**
  * خواندن عمومی (بدون نیاز به ورود مدیر) تنظیمات سئوی یک صفحه، برای رندر متا/کنونیکال/JSON-LD.
  * `locale` زبان آدرس صفحه است (پیشوند /en و…؛ خالی = زبان پیش‌فرض). ردیف همان زبان برمی‌گردد،
- * وگرنه ردیف زبان پیش‌فرض (selectSeoPageRow) که buildPageMeta فقط روی زبان خودش اعمال می‌کند.
+ * وگرنه ردیف زبان پیش‌فرض (selectSeoPageRow)، وگرنه ردیف زبانی که canonical سفارشی دارد (برای
+ * hreflang)؛ buildPageMeta هر ردیف را فقط روی زبان خودش اعمال می‌کند.
  * تنظیمات سایت فقط وقتی خوانده می‌شود که این مسیر ردیف زبان‌دار داشته باشد؛ سایت تک‌زبانه
  * مثل قبل با یک کوئری جواب می‌گیرد.
  */
@@ -212,10 +213,16 @@ export const getPublicSeoPage = createServerFn({ method: "GET" })
       const { loadSettings } = await import("./settings.server");
       const settings = await loadSettings();
       const defaultLocale = getDefaultLocale(settings);
-      const row = selectSeoPageRow(rows, resolvePageLocale(settings, data.locale), defaultLocale);
-      if (!row) return null;
       const alternateCanonicals = seoPageCanonicals(rows, defaultLocale);
-      return Object.keys(alternateCanonicals).length > 0 ? { ...row, alternateCanonicals } : row;
+      const withLocale = Object.keys(alternateCanonicals) as Locale[];
+      // نه این زبان ردیف دارد نه زبان پیش‌فرض، ولی زبان دیگری canonical سفارشی دارد: ردیف همان
+      // زبان فقط برای hreflang برمی‌گردد تا این صفحه هم به canonical آن نسخه لینک دهد. چون زبانش
+      // با زبان این صفحه فرق دارد، buildPageMeta و seoOverrideFor اعمالش نمی‌کنند.
+      const row =
+        selectSeoPageRow(rows, resolvePageLocale(settings, data.locale), defaultLocale) ??
+        (withLocale[0] ? selectSeoPageRow(rows, withLocale[0], defaultLocale) : null);
+      if (!row) return null;
+      return withLocale.length > 0 ? { ...row, alternateCanonicals } : row;
     } catch (error) {
       // دیتابیس در دسترس نیست — صفحه عمومی باید با متای پیش‌فرض رندر شود، نه با خطا
       console.error("getPublicSeoPage failed:", error);

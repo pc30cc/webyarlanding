@@ -11,12 +11,21 @@ export type AppPlatform = "ios" | "android" | "windows" | "mac";
 export interface AppLocaleOverride {
   downloadUrl: string;
   enabled: boolean;
+  /**
+   * نسخه انگلیسی قدیمی (فقط از ردیف apps_en، پیش از پنل زبان‌ها) با همان معنای قبلی: لینک خالی
+   * یعنی برنامه در آن زبان لینک ندارد («به‌زودی») و نمایش فقط به همین کلید بسته است، نه به
+   * apps.enabled. با ذخیره برنامه در پنل جدید این علامت حذف می‌شود.
+   */
+  legacy?: boolean;
 }
 
 export type AppLocaleOverrides = Partial<Record<Locale, AppLocaleOverride>>;
 
 export interface AppDto {
-  /** زبان‌هایی که برنامه در آن‌ها نمایش داده می‌شود (فقط در getPublicApp) */
+  /**
+   * زبان‌هایی که برنامه در آن‌ها نمایش داده می‌شود (فقط در getPublicApp و فقط در سایتی که بیش از
+   * یک زبان دارد؛ در سایت تک‌زبانه این فیلد نیست تا داده صفحه مثل قبل بماند)
+   */
   visibleLocales?: Locale[] | undefined;
   id: string;
   slug: string;

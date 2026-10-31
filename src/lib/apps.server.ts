@@ -2,7 +2,7 @@
 import { db, newId, nowIso, toBool, fromBool, parseJson, slugify } from "./db.server";
 import { loadSettings } from "./settings.server";
 import { getDefaultLocale, resolvePageLocale, getActiveLocales } from "./settings";
-import { isLocale, splitLocalePrefix, type Locale } from "./locales";
+import { isLocale, splitLocalePrefix, withLocalePrefix, type Locale } from "./locales";
 import type {
   AppDto,
   AppInput,
@@ -17,9 +17,12 @@ type Row = Record<string, unknown>;
 // جدول settings نگه داشته می‌شوند: { appId: { en?: {...}, tr?: {...}, ar?: {...} } } (بدون نیاز به
 // تغییر ساختار جدول apps) و هرگز مستقیم به کلاینت فرستاده نمی‌شوند. ردیف قدیمی apps_en
 // ({ appId: { downloadUrl, enabled } }) برای برنامه‌ای که هنوز در apps_locales نیست، همان نسخه
-// انگلیسی حساب می‌شود؛ با اولین ذخیره برنامه، apps_locales جای آن را می‌گیرد.
+// انگلیسی حساب می‌شود، با معنای قبلی خودش (legacy: لینک خالی = بدون لینک، نمایش مستقل از
+// apps.enabled)؛ با اولین ذخیره برنامه، apps_locales جای آن را می‌گیرد.
 const LOCALES_KEY = "apps_locales";
 const LEGACY_EN_KEY = "apps_en";
+/** تنها زبانی که نسخه قدیمی (apps_en) دارد */
+const LEGACY_LOCALE: Locale = "en";
 
 type StoredOverride = { downloadUrl?: unknown; enabled?: unknown };
 
@@ -87,15 +90,18 @@ function normalizeOverride(entry: StoredOverride): AppLocaleOverride {
 
 /**
  * نسخه هر زبان یک برنامه. ردیف apps_en قدیمی فقط وقتی خوانده می‌شود که برنامه هنوز در
- * apps_locales ثبت نشده باشد؛ زبان ناشناخته و مقدار خراب نادیده گرفته می‌شود.
+ * apps_locales ثبت نشده باشد (و با علامت legacy)؛ زبان ناشناخته و مقدار خراب نادیده گرفته می‌شود.
  */
 export function appLocaleOverrides(appId: string, store: AppLocaleStore): AppLocaleOverrides {
   const stored = store.locales[appId];
-  const legacy = store.legacyEn[appId];
-  const source: Record<string, unknown> =
-    stored !== undefined ? asObject(stored) : legacy !== undefined ? { en: legacy } : {};
+  if (stored === undefined) {
+    const legacy = store.legacyEn[appId];
+    return legacy && typeof legacy === "object"
+      ? { [LEGACY_LOCALE]: { ...normalizeOverride(legacy), legacy: true } }
+      : {};
+  }
   const result: AppLocaleOverrides = {};
-  for (const [locale, entry] of Object.entries(source)) {
+  for (const [locale, entry] of Object.entries(asObject<unknown>(stored))) {
     if (isLocale(locale) && entry && typeof entry === "object")
       result[locale] = normalizeOverride(entry as StoredOverride);
   }
@@ -104,10 +110,14 @@ export function appLocaleOverrides(appId: string, store: AppLocaleStore): AppLoc
 
 /**
  * نسخه‌ای که صفحه یک زبان می‌بیند: لینک همان زبان (خالی = لینک پایه) و نمایش فقط اگر برنامه
- * هم در کل سایت و هم در آن زبان روشن باشد. بدون نسخه زبان، همان مقادیر پایه.
+ * هم در کل سایت و هم در آن زبان روشن باشد. بدون نسخه زبان، همان مقادیر پایه. نسخه قدیمی
+ * apps_en (legacy) مثل قبل جای هر دو مقدار پایه می‌نشیند: لینک خالی یعنی بدون لینک، و برنامه
+ * خاموش در جدول apps با روشن بودن آن در انگلیسی نمایش داده می‌شود.
  */
 export function localizeApp(app: AppDto, override: AppLocaleOverride | undefined): AppDto {
   if (!override) return app;
+  if (override.legacy)
+    return { ...app, downloadUrl: override.downloadUrl, enabled: override.enabled };
   return {
     ...app,
     downloadUrl: override.downloadUrl || app.downloadUrl,
@@ -136,10 +146,15 @@ function withLocales(app: AppDto, overrides: AppLocaleOverrides): AppDto {
   };
 }
 
-/** زبان صفحه (زبان ناشناخته یا غیرفعال = زبان پیش‌فرض) و زبان پیش‌فرض سایت */
-async function pageLocales(
-  requested: Locale | null | undefined,
-): Promise<{ locale: Locale; defaultLocale: Locale; active: Locale[] }> {
+interface PageLocales {
+  /** زبان صفحه (زبان ناشناخته یا غیرفعال = زبان پیش‌فرض) */
+  locale: Locale;
+  defaultLocale: Locale;
+  /** زبان‌هایی که سایت سرو می‌کند (تک‌زبانه: فقط زبان پیش‌فرض) */
+  active: Locale[];
+}
+
+async function pageLocales(requested: Locale | null | undefined): Promise<PageLocales> {
   const settings = await loadSettings();
   return {
     locale: resolvePageLocale(settings, requested),
@@ -147,6 +162,23 @@ async function pageLocales(
     active: getActiveLocales(settings),
   };
 }
+
+/** سایت بیش از یک زبان سرو می‌کند (حالت چندزبانه با دست‌کم دو زبان فعال) */
+const isMultiLanguage = (page: PageLocales) => page.active.length > 1;
+
+/**
+ * نسخه‌های زبان (apps_locales/apps_en) فقط برای زبان‌های غیرفارسی ثبت می‌شوند؛ صفحه سایت
+ * تک‌زبانه فارسی همان مقادیر پایه جدول apps را نشان می‌دهد و آن‌ها را نمی‌خواند (بدون کوئری
+ * اضافه نسبت به قبل). سایت چندزبانه همیشه می‌خواند (visibleLocales و /go به آن نیاز دارند).
+ */
+function loadStoreFor(page: PageLocales): Promise<AppLocaleStore> {
+  return page.locale === "fa" && !isMultiLanguage(page)
+    ? Promise.resolve(emptyStore())
+    : loadLocaleStore();
+}
+
+/** فقط نسخه قدیمی انگلیسی (apps_en) می‌تواند برنامه خاموش در جدول apps را نمایش دهد. */
+const mayShowBaseDisabled = (locales: Locale[]) => locales.includes(LEGACY_LOCALE);
 
 function mapRow(r: Row): AppDto {
   return {
@@ -173,13 +205,15 @@ function mapRow(r: Row): AppDto {
 
 /**
  * برنامه‌های قابل نمایش در زبان یک صفحه. `locale` زبان آدرس صفحه است (خالی = زبان پیش‌فرض).
- * برنامه خاموش در جدول apps در هیچ زبانی نمایش داده نمی‌شود.
+ * برنامه خاموش در جدول apps فقط با نسخه قدیمی انگلیسی (apps_en) نمایش داده می‌شود.
  */
 export async function fetchPublicApps(locale?: Locale | null): Promise<AppDto[]> {
-  const [{ data, error }, store, page] = await Promise.all([
-    db.from("apps").select("*").eq("enabled", 1).order("sort_order"),
-    loadLocaleStore(),
-    pageLocales(locale),
+  const page = await pageLocales(locale);
+  let query = db.from("apps").select("*");
+  if (!mayShowBaseDisabled([page.locale])) query = query.eq("enabled", 1);
+  const [{ data, error }, store] = await Promise.all([
+    query.order("sort_order"),
+    loadStoreFor(page),
   ]);
   if (error) throw error;
   return (data ?? [])
@@ -190,27 +224,27 @@ export async function fetchPublicApps(locale?: Locale | null): Promise<AppDto[]>
     .filter((a) => a.enabled);
 }
 
-async function fetchEnabledApp(slug: string): Promise<AppDto | null> {
-  const { data, error } = await db
-    .from("apps")
-    .select("*")
-    .eq("slug", slug)
-    .eq("enabled", 1)
-    .maybeSingle();
+/** یک برنامه با slug؛ برنامه خاموش در جدول apps فقط با `includeDisabled` */
+async function fetchAppBySlug(slug: string, includeDisabled: boolean): Promise<AppDto | null> {
+  let query = db.from("apps").select("*").eq("slug", slug);
+  if (!includeDisabled) query = query.eq("enabled", 1);
+  const { data, error } = await query.maybeSingle();
   if (error) throw error;
   return data ? mapRow(data as Row) : null;
 }
 
 export async function fetchPublicApp(slug: string, locale?: Locale | null): Promise<AppDto | null> {
-  const [app, store, page] = await Promise.all([
-    fetchEnabledApp(slug),
-    loadLocaleStore(),
-    pageLocales(locale),
+  const page = await pageLocales(locale);
+  const [app, store] = await Promise.all([
+    fetchAppBySlug(slug, mayShowBaseDisabled([page.locale])),
+    loadStoreFor(page),
   ]);
   if (!app) return null;
   const overrides = appLocaleOverrides(app.id, store);
   const localized = localizeApp(app, overrides[page.locale]);
   if (!localized.enabled) return null;
+  // سایت تک‌زبانه hreflang ندارد؛ داده صفحه مثل قبل و بدون visibleLocales می‌ماند
+  if (!isMultiLanguage(page)) return localized;
   // زبان‌هایی که این برنامه در آن‌ها نمایش داده می‌شود (برای hreflang صفحه برنامه)
   const visibleLocales = page.active.filter(
     (locale) => localizeApp(app, overrides[locale]).enabled,
@@ -302,38 +336,61 @@ export function goLinkLocale(request: { url: string; headers: Headers }): Locale
   }
 }
 
-/** لینک فروشگاه برای یک کلیک: نسخه زبان صفحه، وگرنه نسخه زبان پیش‌فرض (اگر در آن زبان خاموش باشد). */
+/**
+ * لینک فروشگاه برای یک کلیک: نسخه زبان صفحه، وگرنه نسخه زبان پیش‌فرض (اگر در آن زبان خاموش
+ * باشد). نسخه قدیمی apps_en (legacy) مثل قبل جایگزینی ندارد: بدون لینک یا خاموش = بدون لینک.
+ */
 export function appDownloadTarget(
   app: AppDto,
   overrides: AppLocaleOverrides,
   locale: Locale,
   defaultLocale: Locale,
 ): string | null {
-  for (const candidate of [locale, defaultLocale]) {
+  const candidates = overrides[locale]?.legacy ? [locale] : [locale, defaultLocale];
+  for (const candidate of candidates) {
     const localized = localizeApp(app, overrides[candidate]);
     if (localized.enabled && localized.downloadUrl) return localized.downloadUrl;
   }
   return null;
 }
 
-/** ثبت کلیک و برگرداندن لینک مقصد (یا null اگر برنامه/لینک نباشد) */
+/**
+ * صفحه برنامه برای کلیکی که لینک فروشگاه ندارد، مستقیم و بدون ریدایرکت اضافه: در زبان صفحه اگر
+ * برنامه آن‌جا نمایش داده شود (پیشوند فقط برای زبان فعال غیرپیش‌فرض)، وگرنه صفحه بدون پیشوند
+ * زبان پیش‌فرض (مثل قبل).
+ */
+export function appFallbackPath(
+  slug: string,
+  app: AppDto | null,
+  overrides: AppLocaleOverrides,
+  page: Pick<PageLocales, "locale" | "defaultLocale">,
+): string {
+  const visible = !!app && localizeApp(app, overrides[page.locale]).enabled;
+  const prefix = visible && page.locale !== page.defaultLocale ? page.locale : null;
+  return withLocalePrefix(`/download/${slug}`, prefix);
+}
+
+export interface DownloadClick {
+  /** لینک فروشگاه (null = برنامه یا لینکی نیست و کلیک ثبت نشد) */
+  target: string | null;
+  /** صفحه برنامه برای وقتی که لینک فروشگاه نیست یا معتبر نیست */
+  fallback: string;
+}
+
+/** ثبت کلیک و برگرداندن لینک مقصد و صفحه جایگزین آن */
 export async function recordClick(
   slug: string,
   meta: { referrer?: string | null; userAgent?: string | null; locale?: Locale | null },
-): Promise<string | null> {
-  const [app, store, page] = await Promise.all([
-    fetchEnabledApp(slug),
-    loadLocaleStore(),
-    pageLocales(meta.locale),
+): Promise<DownloadClick> {
+  const page = await pageLocales(meta.locale);
+  const [app, store] = await Promise.all([
+    fetchAppBySlug(slug, mayShowBaseDisabled([page.locale, page.defaultLocale])),
+    loadStoreFor(page),
   ]);
-  if (!app) return null;
-  const target = appDownloadTarget(
-    app,
-    appLocaleOverrides(app.id, store),
-    page.locale,
-    page.defaultLocale,
-  );
-  if (!target) return null;
+  const overrides = app ? appLocaleOverrides(app.id, store) : {};
+  const fallback = appFallbackPath(slug, app, overrides, page);
+  const target = app ? appDownloadTarget(app, overrides, page.locale, page.defaultLocale) : null;
+  if (!app || !target) return { target: null, fallback };
   await db.from("app_download_clicks").insert({
     id: newId(),
     app_id: app.id,
@@ -342,7 +399,7 @@ export async function recordClick(
     user_agent: (meta.userAgent || "").slice(0, 400) || null,
     created_at: nowIso(),
   });
-  return target;
+  return { target, fallback };
 }
 
 export async function fetchAppStats(): Promise<AppStats> {

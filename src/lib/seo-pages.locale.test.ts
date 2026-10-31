@@ -322,6 +322,58 @@ describe("getPublicSeoPage", () => {
     expect((await getPublicSeoPage({ data: { path: "/about", locale: "en" } }))?.id).toBe("legacy");
   });
 
+  it("returns other languages' canonicals for hreflang when the page has no row of its own", async () => {
+    const settings = site();
+    fake.settings = settings;
+    fake.rows = [
+      dbRow("en", "en", {
+        title: "About Webyar",
+        canonical_url: "https://webyar.ai/en/about-us",
+        schema_json: '{"@type":"AboutPage"}',
+      }),
+    ];
+    const fa = await getPublicSeoPage({ data: { path: "/about", locale: null } });
+    const en = await getPublicSeoPage({ data: { path: "/about", locale: "en" } });
+    expect(fa?.alternateCanonicals).toEqual({ en: "https://webyar.ai/en/about-us" });
+    expect(en?.alternateCanonicals).toEqual({ en: "https://webyar.ai/en/about-us" });
+    // ردیف انگلیسی روی صفحه فارسی اعمال نمی‌شود (عنوان، canonical و اسکیما)
+    expect(seoOverrideFor(settings, "fa", fa)).toBeNull();
+    const meta = (override: SeoPageDto | null, locale: Locale) =>
+      buildPageMeta({
+        i18n: siteI18n(settings, locale, locale === "en" ? englishMessages : {}),
+        settings,
+        path: "/about",
+        override,
+        fallbackTitle: "درباره ما | وب‌یار",
+        fallbackDescription: "توضیح",
+      });
+    const faMeta = meta(fa, "fa");
+    const enMeta = meta(en, "en");
+    expect(faMeta.meta[0]).toEqual({ title: "درباره ما | وب‌یار" });
+    expect(faMeta.links.find((link) => link.rel === "canonical")?.href).toBe(
+      "https://webyar.ai/about",
+    );
+    expect(enMeta.meta[0]).toEqual({ title: "About Webyar" });
+    // hreflang دوطرفه: هر دو نسخه به canonical سفارشی نسخه انگلیسی لینک می‌دهند
+    const alternates = (result: ReturnType<typeof meta>) =>
+      result.links.filter((link) => link.rel === "alternate");
+    expect(alternates(faMeta)).toEqual([
+      { rel: "alternate", hrefLang: "fa", href: "https://webyar.ai/about" },
+      { rel: "alternate", hrefLang: "en", href: "https://webyar.ai/en/about-us" },
+      { rel: "alternate", hrefLang: "x-default", href: "https://webyar.ai/about" },
+    ]);
+    expect(alternates(enMeta)).toEqual(alternates(faMeta));
+    // بدون canonical سفارشی چیزی برای hreflang نیست و مثل قبل null برمی‌گردد
+    fake.rows = [dbRow("tr", "tr")];
+    expect(await getPublicSeoPage({ data: { path: "/about", locale: null } })).toBeNull();
+    // ردیف‌های مبهم یک زبان هم مثل قبل نادیده گرفته می‌شوند
+    fake.rows = [
+      dbRow("en", "en", { canonical_url: "https://webyar.ai/en/a" }),
+      dbRow("en-2", "en", { canonical_url: "https://webyar.ai/en/b" }),
+    ];
+    expect(await getPublicSeoPage({ data: { path: "/about", locale: "en" } })).toBeNull();
+  });
+
   it("returns null when the database fails", async () => {
     vi.spyOn(console, "error").mockImplementationOnce(() => undefined);
     fake.rows = null as unknown as Row[];

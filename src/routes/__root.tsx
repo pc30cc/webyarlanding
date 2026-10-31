@@ -24,13 +24,8 @@ import { SiteLayout } from "../components/site/SiteLayout";
 import { extractScriptTags } from "../lib/seo-meta";
 import { SiteLanguageProvider } from "@/components/site/SiteLanguage";
 import { cachedSiteMessages, loadAllSiteMessages, loadSiteMessages } from "@/lib/site-messages";
-import { fetchSiteTranslations } from "@/lib/site-translations.functions";
-import {
-  cachedSiteTranslations,
-  freshSiteTranslations,
-  primeSiteTranslations,
-  siteTranslationsRevision,
-} from "@/lib/site-i18n";
+import { loadPageTranslations } from "@/lib/site-translations.functions";
+import { primeHydratedSiteTranslations } from "@/lib/site-i18n";
 import { LOCALE_INFO, splitLocalePrefix, type Locale } from "@/lib/locales";
 import {
   mergeSettings,
@@ -41,27 +36,6 @@ import {
   getBrandNameEn,
   type SiteSettings,
 } from "../lib/settings";
-
-/**
- * ترجمه‌های محتوای ویرایشگر برای زبان صفحه (نه فارسی). از کش کوتاه همین فرایند خوانده
- * می‌شود تا هر ناوبری یا درخواست، دیتابیس را نخواند؛ کش برای head() صفحات هم پر می‌شود.
- * اگر خواندن ناموفق باشد آخرین نسخه موجود (یا هیچ) برمی‌گردد و صفحه بدون آن رندر می‌شود.
- */
-async function loadPageTranslations(
-  locale: Locale,
-): Promise<Record<string, string> | undefined> {
-  const fresh = freshSiteTranslations(locale);
-  if (fresh) return fresh;
-  const revision = siteTranslationsRevision();
-  try {
-    const translations = await fetchSiteTranslations({ data: { locale } });
-    primeSiteTranslations(locale, translations, revision);
-    return translations;
-  } catch (error) {
-    console.error("site translations load failed:", error);
-    return cachedSiteTranslations(locale);
-  }
-}
 
 interface RootLoaderData {
   settings: SiteSettings;
@@ -242,7 +216,8 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       // route فرستاده نمی‌شود تا داخل HTML هر صفحه تکرار نشود.
       await loadSiteMessages(locale);
       const data: RootLoaderData = { settings, productCatalog, solutionCatalog, locale };
-      // صفحات فارسی هیچ کلید اضافه‌ای در داده‌های route ندارند (HTML آن‌ها تغییر نمی‌کند).
+      // صفحات فارسی هیچ کلید اضافه‌ای در داده‌های route ندارند (HTML آن‌ها تغییر نمی‌کند)؛
+      // انگلیسیِ بدون ردیف ترجمه هم ندارد، چون ترجمه‌هایش همان localization.english تنظیمات است.
       if (locale !== "fa") {
         const overrides = await loadPageTranslations(locale);
         if (overrides) data.overrides = overrides;
@@ -397,8 +372,9 @@ function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   const { settings, locale, overrides } = Route.useLoaderData();
   const messages = cachedSiteMessages(locale);
-  // در مرورگر کش ترجمه‌ها از داده‌های hydrate‌شده پر می‌شود (برای head() و ناوبری‌های بعدی).
-  if (overrides) primeSiteTranslations(locale, overrides);
+  // فقط در مرورگر: کش ترجمه‌ها از داده‌های hydrate‌شده پر می‌شود (برای head() و ناوبری‌های
+  // بعدی). روی سرور loader کش را پر کرده و رندر نباید نسخه قدیمی‌تری را تازه حساب کند.
+  primeHydratedSiteTranslations(locale, overrides);
 
   return (
     <QueryClientProvider client={queryClient}>

@@ -188,12 +188,14 @@ function overridesKey(overrides: Record<string, string>): string {
  * می‌کند و head() صفحات روی سرور — که پیش از آماده شدن داده‌های route ریشه اجرا می‌شود — از
  * آن می‌خواند. ترجمه‌ها برای همه صفحات یکی است، پس کلید فقط زبان است. با هر ذخیره مدیر
  * (invalidateSiteTranslations) و پس از TTL کوتاه (برای چند نمونه سرور) کهنه حساب می‌شود.
+ * مقدار null یعنی ترجمه‌های انگلیسی هنوز ردیف خودشان را ندارند و از تنظیمات عمومی
+ * (localization.english) خوانده می‌شوند؛ siteI18n بدون overrides به همان برمی‌گردد.
  */
 export const SITE_TRANSLATIONS_TTL_MS = 30_000;
 let translationsRevision = 0;
 const translationsCache = new Map<
   Locale,
-  { map: Record<string, string>; at: number; revision: number }
+  { map: Record<string, string> | null; at: number; revision: number }
 >();
 
 /** نسخه فعلی کش؛ پیش از خواندن ترجمه‌ها بگیرید و به primeSiteTranslations بدهید. */
@@ -208,21 +210,40 @@ export function invalidateSiteTranslations(): void {
 
 export function primeSiteTranslations(
   locale: Locale,
-  map: Record<string, string>,
+  map: Record<string, string> | null,
   revision = translationsRevision,
   now = Date.now(),
 ): void {
   if (locale === "fa") return;
-  // همان شیء دوباره (مثلاً در هر رندر RootComponent) عمر کش را تمدید نمی‌کند.
-  if (translationsCache.get(locale)?.map === map) return;
+  // همان شیء دوباره عمر کش را تمدید نمی‌کند.
+  if (map && translationsCache.get(locale)?.map === map) return;
   translationsCache.set(locale, { map, at: now, revision });
 }
 
-/** ترجمه‌های تازه (کمتر از TTL و پس از آخرین ذخیره)؛ وگرنه undefined تا دوباره خوانده شود. */
+/**
+ * ترجمه‌های hydrate‌شده صفحه (داده‌های route ریشه) در کش مرورگر، برای head() و ناوبری‌های
+ * بعدی. فقط در مرورگر و فقط وقتی هنوز چیزی برای آن زبان در کش نیست (یعنی هنگام hydration):
+ * روی سرور loader کش را با نسخه درست پر کرده است و رندر دوباره نباید نقشه قدیمی‌تری را تازه
+ * حساب کند؛ در مرورگر هم پس از آن loader کش را به‌روز نگه می‌دارد.
+ */
+export function primeHydratedSiteTranslations(
+  locale: Locale,
+  overrides: Record<string, string> | undefined,
+  now = Date.now(),
+): void {
+  if (typeof window === "undefined" || !overrides || locale === "fa") return;
+  if (translationsCache.has(locale)) return;
+  translationsCache.set(locale, { map: overrides, at: now, revision: translationsRevision });
+}
+
+/**
+ * ترجمه‌های تازه (کمتر از TTL و پس از آخرین ذخیره)؛ وگرنه undefined تا دوباره خوانده شود.
+ * null: ترجمه‌های انگلیسی هنوز در تنظیمات عمومی است (چیزی جدا فرستاده نمی‌شود).
+ */
 export function freshSiteTranslations(
   locale: Locale,
   now = Date.now(),
-): Record<string, string> | undefined {
+): Record<string, string> | null | undefined {
   if (locale === "fa") return NO_MESSAGES;
   const entry = translationsCache.get(locale);
   if (!entry || entry.revision !== translationsRevision) return undefined;
@@ -231,7 +252,7 @@ export function freshSiteTranslations(
 
 /** آخرین ترجمه‌های بارگذاری‌شده یک زبان، هر قدر هم کهنه (برای head() که همگام اجرا می‌شود) */
 export function cachedSiteTranslations(locale: Locale): Record<string, string> | undefined {
-  return locale === "fa" ? undefined : translationsCache.get(locale)?.map;
+  return locale === "fa" ? undefined : (translationsCache.get(locale)?.map ?? undefined);
 }
 
 /** Root loader data that carries the page language (see routes/__root.tsx). */

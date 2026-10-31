@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useRef, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import { AlertTriangle, Languages, Loader2, Search } from "lucide-react";
@@ -7,6 +7,7 @@ import { adminTranslateSiteMessages } from "@/lib/site-translation.functions";
 import {
   adminGetSiteTranslations,
   adminSaveSiteTranslations,
+  type AdminSiteTranslations,
 } from "@/lib/site-translations.functions";
 import { buildTranslationBatches, isUntranslated } from "@/lib/site-translation-batches";
 import { adminListCatalogItems, adminListCatalogCategories } from "@/lib/catalog.functions";
@@ -30,6 +31,23 @@ type Messages = Record<string, string>;
 type TranslatedLocale = Exclude<Locale, "fa">;
 const TRANSLATED: readonly TranslatedLocale[] = ["en", "tr", "ar"];
 const EMPTY: Messages = {};
+/** کلید کش ترجمه‌های ذخیره‌شده همه زبان‌ها برای ویرایشگر */
+const TRANSLATIONS_QUERY_KEY = ["site-translations"];
+
+/** مسیر آدرس داخل متن راست‌به‌چپ (مثل /en/privacy) چپ‌به‌راست و درست نمایش داده می‌شود */
+function UrlPath({ children }: { children: string }) {
+  return <bdi dir="ltr">{children}</bdi>;
+}
+
+/** فهرست مسیرها با جداکننده فارسی: «/a، /b و /c» */
+function urlPaths(paths: string[]): ReactNode {
+  return paths.map((path, index) => (
+    <span key={path}>
+      {index === 0 ? "" : index === paths.length - 1 ? " و " : "، "}
+      <UrlPath>{path}</UrlPath>
+    </span>
+  ));
+}
 
 /** تنظیمات زبان‌ها که در این بخش ویرایش و با مسیر معمول تنظیمات ذخیره می‌شوند */
 interface LanguageChoice {
@@ -192,29 +210,58 @@ export function LanguageSection({
     }
   }
 
-  const warnings: string[] = [];
+  const warnings: { id: string; text: ReactNode }[] = [];
   if (choice.language !== saved.language)
-    warnings.push(
-      `تغییر زبان پیش‌فرض همه آدرس‌های سایت را تغییر می‌دهد: زبان پیش‌فرض (${LOCALE_INFO[choice.language].adminName}) بدون پیشوند روی ریشه سایت نمایش داده می‌شود (مثل /pricing)${
-        choice.mode === "multi"
-          ? ` و بقیه زبان‌ها با پیشوند (مثل /${saved.language}/pricing)`
-          : " و در حالت تک‌زبانه زبان دیگری سرو نمی‌شود"
-      }. صفحاتی که الان در گوگل ایندکس شده‌اند با زبان دیگری نمایش داده می‌شوند؛ لینک‌ها، تبلیغات و سرچ کنسول را هم به‌روز کنید.`,
-    );
+    warnings.push({
+      id: "default-language",
+      text: (
+        <>
+          تغییر زبان پیش‌فرض همه آدرس‌های سایت را تغییر می‌دهد: زبان پیش‌فرض (
+          {LOCALE_INFO[choice.language].adminName}) بدون پیشوند روی ریشه سایت نمایش داده می‌شود (مثل{" "}
+          <UrlPath>/pricing</UrlPath>)
+          {choice.mode === "multi" ? (
+            <>
+              {" "}
+              و بقیه زبان‌ها با پیشوند (مثل <UrlPath>{`/${saved.language}/pricing`}</UrlPath>)
+            </>
+          ) : (
+            " و در حالت تک‌زبانه زبان دیگری سرو نمی‌شود"
+          )}
+          . صفحاتی که الان در گوگل ایندکس شده‌اند با زبان دیگری نمایش داده می‌شوند؛ لینک‌ها، تبلیغات
+          و سرچ کنسول را هم به‌روز کنید.
+        </>
+      ),
+    });
   const legalMoves = choice.language === "fa" && saved.language === "fa";
+  const englishLegal = urlPaths(["/en/privacy", "/en/terms", "/en/help"]);
+  const persianLegal = urlPaths(["/privacy", "/terms", "/help"]);
   if (legalMoves && active.includes("en") && !savedActive.includes("en"))
-    warnings.push(
-      "با فعال شدن انگلیسی، صفحات حقوقی انگلیسی به /en/privacy، /en/terms و /en/help منتقل می‌شوند و /privacy، /terms و /help فارسی می‌شوند. پیش از ذخیره، لینک سیاست حریم خصوصی و پشتیبانی را در App Store و Google Play به آدرس‌های جدید تغییر دهید.",
-    );
+    warnings.push({
+      id: "legal-to-en",
+      text: (
+        <>
+          با فعال شدن انگلیسی، صفحات حقوقی انگلیسی به {englishLegal} منتقل می‌شوند و {persianLegal}{" "}
+          فارسی می‌شوند. پیش از ذخیره، لینک سیاست حریم خصوصی و پشتیبانی را در App Store و Google
+          Play به آدرس‌های جدید تغییر دهید.
+        </>
+      ),
+    });
   if (legalMoves && !active.includes("en") && savedActive.includes("en"))
-    warnings.push(
-      "با غیرفعال شدن انگلیسی، صفحات حقوقی انگلیسی از /en/privacy، /en/terms و /en/help دوباره به /privacy، /terms و /help برمی‌گردند. پیش از ذخیره، لینک‌های App Store و Google Play را به‌روز کنید.",
-    );
+    warnings.push({
+      id: "legal-from-en",
+      text: (
+        <>
+          با غیرفعال شدن انگلیسی، صفحات حقوقی انگلیسی از {englishLegal} دوباره به {persianLegal}{" "}
+          برمی‌گردند. پیش از ذخیره، لینک‌های App Store و Google Play را به‌روز کنید.
+        </>
+      ),
+    });
   const withoutDictionary = active.filter((locale) => !hasSiteMessages(locale));
   if (withoutDictionary.length)
-    warnings.push(
-      `${withoutDictionary.map((locale) => LOCALE_INFO[locale].adminName).join(" و ")} هنوز دیکشنری ترجمه رابط سایت ندارد؛ تا وقتی ترجمه آن آماده نشده، صفحاتش با متن‌های رابط فارسی و با noindex (بدون ایندکس در موتورهای جستجو) نمایش داده می‌شوند.`,
-    );
+    warnings.push({
+      id: "no-dictionary",
+      text: `${withoutDictionary.map((locale) => LOCALE_INFO[locale].adminName).join(" و ")} هنوز دیکشنری ترجمه رابط سایت ندارد؛ تا وقتی ترجمه آن آماده نشده، صفحاتش با متن‌های رابط فارسی و با noindex (بدون ایندکس در موتورهای جستجو) نمایش داده می‌شوند.`,
+    });
 
   // ---------- ترجمه محتوای ویرایشگر برای هر زبان ----------
   const [search, setSearch] = useState("");
@@ -257,8 +304,9 @@ export function LanguageSection({
         catalogCategories({ data: { type: "solution" } }),
       ]),
   });
+  const queryClient = useQueryClient();
   const stored = useQuery({
-    queryKey: ["site-translations"],
+    queryKey: TRANSLATIONS_QUERY_KEY,
     staleTime: 60_000,
     queryFn: () => getTranslations(),
   });
@@ -326,7 +374,7 @@ export function LanguageSection({
     for (const locale of TRANSLATED) {
       const translate = translators[locale];
       result[locale] = contentRows.filter(
-        (source) => !isUntranslated(translate(source), locale, source),
+        (source) => !isUntranslated(translate(source), locale),
       ).length;
     }
     return result;
@@ -354,9 +402,7 @@ export function LanguageSection({
       .sort((a, b) => a.localeCompare(b, "fa"));
   }, [allRows, search, translate]);
   const missing =
-    target && translate
-      ? rows.filter((text) => isUntranslated(translate(text), target, text)).length
-      : 0;
+    target && translate ? rows.filter((text) => isUntranslated(translate(text), target)).length : 0;
 
   function editTranslation(locale: TranslatedLocale, key: string, text: string) {
     editVersion.current[locale]++;
@@ -375,6 +421,19 @@ export function LanguageSection({
     const result = await saveTranslations({ data: { locale, translations } });
     // صفحات عمومی که در همین مرورگر باز شوند ترجمه تازه را می‌خوانند، نه کش ۳۰ ثانیه‌ای.
     invalidateSiteTranslations();
+    // داده کش‌شده همین ویرایشگر هم به‌روز می‌شود؛ وگرنه با برگشتن به این بخش (کش ۶۰ ثانیه‌ای)
+    // نسخه پیش از ذخیره نمایش داده می‌شد و ذخیره بعدی ترجمه‌های ذخیره‌شده را بازنویسی می‌کرد.
+    queryClient.setQueryData<AdminSiteTranslations>(TRANSLATIONS_QUERY_KEY, (current) =>
+      current
+        ? {
+            translations: { ...current.translations, [locale]: translations },
+            // پس از اولین ذخیره انگلیسی ترجمه‌ها از ردیف خودشان خوانده می‌شوند، نه تنظیمات قدیمی
+            legacyEnglish: locale === "en" ? false : current.legacyEnglish,
+          }
+        : current,
+    );
+    // نسخه سرور (با کلیدهای یکسان‌شده) دفعه بعد که این بخش باز شود در پس‌زمینه خوانده می‌شود
+    void queryClient.invalidateQueries({ queryKey: TRANSLATIONS_QUERY_KEY, refetchType: "none" });
     if (editVersion.current[locale] === version)
       setDirty((current) => {
         const next = { ...current };
@@ -404,13 +463,15 @@ export function LanguageSection({
       return;
     }
     const locale = target;
-    const sources = allRows.filter((source) => isUntranslated(translate(source), locale, source));
+    const sources = allRows.filter((source) => isUntranslated(translate(source), locale));
     if (!sources.length) {
       toast.success("همه متن‌ها ترجمه دارند.");
       return;
     }
     const working = { ...(maps[locale] ?? EMPTY) };
     const completed = new Map<string, string[]>();
+    // متن‌هایی که ترجمه (بخشی از) آن‌ها پذیرفته نشد؛ کنار گذاشته می‌شوند تا دسته‌های بعدی گیر نکنند
+    const rejected = new Set<string>();
     cancelled.current = false;
     setPreparing(true);
     try {
@@ -418,27 +479,45 @@ export function LanguageSection({
       setProgress({ done: 0, total: batches.length });
       for (let i = 0; i < batches.length; i++) {
         if (cancelled.current) return;
-        const batch = batches[i]!;
-        const translations = await translateBatch({
-          data: {
-            texts: batch.map((chunk) => chunk.text),
-            targetLocale: locale,
-          },
-        });
-        if (cancelled.current) return;
-        batch.forEach((chunk, index) => {
-          const parts = completed.get(chunk.source) ?? Array<string>(chunk.total).fill("");
-          parts[chunk.index] = translations[index]!;
-          completed.set(chunk.source, parts);
-          if (parts.every(Boolean)) working[normalizeMessage(chunk.source)] = parts.join("\n\n");
-        });
-        const snapshot = { ...working };
-        setMaps((current) => ({ ...current, [locale]: snapshot }));
-        // هر دسته بلافاصله ذخیره می‌شود تا با بستن صفحه، ترجمه‌های انجام‌شده از دست نروند.
-        await persist(locale, snapshot);
+        // بخش‌های بعدی متنی که یک بخشش رد شده دیگر فرستاده نمی‌شوند (کامل نمی‌شود)
+        const batch = batches[i]!.filter((chunk) => !rejected.has(chunk.source));
+        if (batch.length) {
+          const results = await translateBatch({
+            data: {
+              texts: batch.map((chunk) => chunk.text),
+              targetLocale: locale,
+            },
+          });
+          if (cancelled.current) return;
+          let added = false;
+          batch.forEach((chunk, index) => {
+            const result = results[index];
+            if (result?.status !== "accepted") {
+              rejected.add(chunk.source);
+              return;
+            }
+            const parts = completed.get(chunk.source) ?? Array<string>(chunk.total).fill("");
+            parts[chunk.index] = result.text;
+            completed.set(chunk.source, parts);
+            if (parts.every(Boolean)) {
+              working[normalizeMessage(chunk.source)] = parts.join("\n\n");
+              added = true;
+            }
+          });
+          if (added) {
+            const snapshot = { ...working };
+            setMaps((current) => ({ ...current, [locale]: snapshot }));
+            // هر دسته بلافاصله ذخیره می‌شود تا با بستن صفحه، ترجمه‌های انجام‌شده از دست نروند.
+            await persist(locale, snapshot);
+          }
+        }
         setProgress({ done: i + 1, total: batches.length });
       }
-      toast.success(`ترجمه ${LOCALE_INFO[locale].adminName} کامل و ذخیره شد`);
+      if (rejected.size)
+        toast.error(
+          `ترجمه ${rejected.size.toLocaleString("fa-IR")} متن پذیرفته نشد (ناقص بود یا هنوز فارسی بود) و ذخیره نشد؛ بقیه ترجمه و ذخیره شد. دوباره «ترجمه خودکار» را بزنید یا آن‌ها را دستی ترجمه کنید.`,
+        );
+      else toast.success(`ترجمه ${LOCALE_INFO[locale].adminName} کامل و ذخیره شد`);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "ترجمه ناموفق بود.");
     } finally {
@@ -458,9 +537,9 @@ export function LanguageSection({
         </h2>
         <p className="mt-2 text-sm text-muted-foreground">
           زبان پیش‌فرض بدون پیشوند روی ریشه سایت نمایش داده می‌شود. در حالت چندزبانه هر زبان فعال
-          دیگر نسخه جدای خودش را با پیشوند آدرس دارد (مثل /en/pricing). متن‌های رابط سایت از دیکشنری
-          هر زبان و متن‌های اختصاصی شما (محصولات، راه‌کارها، تنظیمات) از ترجمه‌های همین بخش خوانده
-          می‌شوند. وبلاگ فقط فارسی است.
+          دیگر نسخه جدای خودش را با پیشوند آدرس دارد (مثل <UrlPath>/en/pricing</UrlPath>). متن‌های
+          رابط سایت از دیکشنری هر زبان و متن‌های اختصاصی شما (محصولات، راه‌کارها، تنظیمات) از
+          ترجمه‌های همین بخش خوانده می‌شوند. وبلاگ فقط فارسی است.
         </p>
       </div>
 
@@ -535,9 +614,9 @@ export function LanguageSection({
           className="space-y-2 rounded-lg border border-amber-500/40 bg-amber-500/10 p-3 text-sm"
         >
           {warnings.map((warning) => (
-            <li key={warning} className="flex gap-2">
+            <li key={warning.id} className="flex gap-2">
               <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" />
-              <span>{warning}</span>
+              <span>{warning.text}</span>
             </li>
           ))}
         </ul>
@@ -733,8 +812,7 @@ export function LanguageSection({
                 const key = normalizeMessage(source);
                 const translated = translate(source);
                 const value =
-                  own(targetMap, key) ??
-                  (isUntranslated(translated, target, source) ? "" : translated);
+                  own(targetMap, key) ?? (isUntranslated(translated, target) ? "" : translated);
                 return (
                   <div
                     key={key}

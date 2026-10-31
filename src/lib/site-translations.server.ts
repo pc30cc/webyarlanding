@@ -36,13 +36,18 @@ export async function readSiteTranslations(
   return { translations: english, legacy: Object.keys(english).length > 0 };
 }
 
-/** ترجمه‌های یک زبان برای سایت عمومی، با کش کوتاه همین فرایند (site-i18n). */
-export async function loadSiteTranslations(locale: Locale): Promise<Record<string, string>> {
+/**
+ * ترجمه‌های یک زبان برای سایت عمومی، با کش کوتاه همین فرایند (site-i18n). null یعنی انگلیسی
+ * هنوز ردیف خودش را ندارد: ترجمه‌های قدیمی داخل تنظیمات عمومی (localization.english) است که
+ * هر صفحه همین حالا دارد و siteI18n از همان می‌خواند، پس دوباره فرستاده نمی‌شود.
+ */
+export async function loadSiteTranslations(locale: Locale): Promise<Record<string, string> | null> {
   const fresh = freshSiteTranslations(locale);
-  if (fresh) return fresh;
+  if (fresh !== undefined) return fresh;
   // نسخه پیش از خواندن: اگر مدیر در همین فاصله ذخیره کند، این نتیجه کهنه حساب می‌شود.
   const revision = siteTranslationsRevision();
-  const { translations } = await readSiteTranslations(locale);
+  const row = await loadSiteTranslationsRow(locale);
+  const translations = row ?? (locale === "en" ? null : {});
   primeSiteTranslations(locale, translations, revision);
   return translations;
 }

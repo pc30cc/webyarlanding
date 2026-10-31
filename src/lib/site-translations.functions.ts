@@ -1,7 +1,13 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { LOCALES, type Locale } from "./locales";
-import { normalizeMessage } from "./site-i18n";
+import {
+  cachedSiteTranslations,
+  freshSiteTranslations,
+  normalizeMessage,
+  primeSiteTranslations,
+  siteTranslationsRevision,
+} from "./site-i18n";
 
 type TranslatedLocale = Exclude<Locale, "fa">;
 const translatedLocaleSchema = z.enum(["en", "tr", "ar"]);
@@ -31,14 +37,41 @@ const saveSchema = z
     return { locale, translations: normalized };
   });
 
-/** ترجمه‌های محتوای ویرایشگر برای یک زبان (عمومی؛ برای فارسی خالی). */
+/**
+ * ترجمه‌های محتوای ویرایشگر برای یک زبان (عمومی؛ برای فارسی خالی). null: انگلیسی هنوز ردیف
+ * خودش را ندارد و ترجمه‌های قدیمی همان localization.english تنظیمات عمومی است.
+ */
 export const fetchSiteTranslations = createServerFn({ method: "GET" })
   .inputValidator((input: unknown) => z.object({ locale: localeSchema }).parse(input))
-  .handler(async ({ data }): Promise<Record<string, string>> => {
+  .handler(async ({ data }): Promise<Record<string, string> | null> => {
     if (data.locale === "fa") return {};
     const { loadSiteTranslations } = await import("./site-translations.server");
     return await loadSiteTranslations(data.locale);
   });
+
+/**
+ * ترجمه‌های محتوای ویرایشگر برای زبان صفحه، برای loader ریشه (سرور و مرورگر). از کش کوتاه
+ * همین فرایند خوانده می‌شود تا هر ناوبری یا درخواست، دیتابیس را نخواند؛ کش برای head() صفحات
+ * هم پر می‌شود. undefined یعنی چیزی در داده‌های route فرستاده نشود: فارسی، انگلیسی‌ای که
+ * ترجمه‌هایش هنوز داخل تنظیمات عمومی است (siteI18n از همان می‌خواند و دوباره فرستادنش آن را
+ * در HTML تکرار می‌کرد)، یا خواندن ناموفق بدون نسخه قبلی (صفحه بدون آن رندر می‌شود).
+ */
+export async function loadPageTranslations(
+  locale: Locale,
+): Promise<Record<string, string> | undefined> {
+  if (locale === "fa") return undefined;
+  const fresh = freshSiteTranslations(locale);
+  if (fresh !== undefined) return fresh ?? undefined;
+  const revision = siteTranslationsRevision();
+  try {
+    const translations = await fetchSiteTranslations({ data: { locale } });
+    primeSiteTranslations(locale, translations, revision);
+    return translations ?? undefined;
+  } catch (error) {
+    console.error("site translations load failed:", error);
+    return cachedSiteTranslations(locale);
+  }
+}
 
 export interface AdminSiteTranslations {
   translations: Record<TranslatedLocale, Record<string, string>>;

@@ -40,10 +40,17 @@ export function translationPrompt(
   ].join(" ");
 }
 
+/**
+ * نتیجه ترجمه هر متن یک دسته. متنِ ردشده (خالی، یا هنوز فارسی) ذخیره نمی‌شود، ولی بقیه دسته
+ * از دست نمی‌رود و پنل به دسته‌های بعدی ادامه می‌دهد.
+ */
+export type SiteTranslationResult =
+  { status: "accepted"; text: string } | { status: "rejected"; reason: string };
+
 /** Admin-only, one-time translation. Visitors never call an AI provider. */
 export const adminTranslateSiteMessages = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) => inputSchema.parse(input))
-  .handler(async ({ data }): Promise<string[]> => {
+  .handler(async ({ data }): Promise<SiteTranslationResult[]> => {
     const { requireAdmin } = await import("./auth.server");
     await requireAdmin();
     const { loadSettings } = await import("./settings.server");
@@ -57,14 +64,19 @@ export const adminTranslateSiteMessages = createServerFn({ method: "POST" })
       JSON.stringify({ texts: data.texts }),
       {},
     );
-    const translations = z.array(z.string().min(1)).safeParse(result.translations);
-    if (!translations.success || translations.data.length !== data.texts.length) {
-      throw new Error("ترجمه کامل دریافت نشد؛ دوباره تلاش کنید.");
+    const translations = result.translations;
+    // پاسخی که یک‌به‌یک با ورودی جفت نمی‌شود به هیچ متنی نسبت داده نمی‌شود
+    if (!Array.isArray(translations) || translations.length !== data.texts.length) {
+      return data.texts.map(() => ({
+        status: "rejected",
+        reason: "ترجمه کامل دریافت نشد.",
+      }));
     }
-    translations.data.forEach((text, index) => {
-      if (isUntranslated(text, data.targetLocale, data.texts[index])) {
-        throw new Error("بخشی از ترجمه هنوز فارسی است؛ دوباره تلاش کنید.");
-      }
+    return translations.map((text): SiteTranslationResult => {
+      if (typeof text !== "string" || !text.trim())
+        return { status: "rejected", reason: "ترجمه خالی دریافت شد." };
+      if (isUntranslated(text, data.targetLocale))
+        return { status: "rejected", reason: "ترجمه هنوز فارسی است." };
+      return { status: "accepted", text };
     });
-    return translations.data;
   });
