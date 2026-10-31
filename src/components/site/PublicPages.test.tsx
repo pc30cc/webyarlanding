@@ -101,86 +101,95 @@ const routes = [
   ["/tag/$slug", Tag],
 ] as const;
 
+type RouteEntry = (typeof routes)[number];
+
+/** Server-renders one public route component with the test fixtures. */
+function renderRoute([path, route]: RouteEntry, language: "fa" | "en") {
+  const settings = structuredClone(DEFAULT_SETTINGS);
+  settings.localization.language = language;
+  settings.brand.legalEnglishChrome = false;
+  settings.localization.english = {
+    "عنوان مقاله آزمایشی": "Sample article",
+    "# متن مقاله آزمایشی": "# Sample article content",
+  };
+  const item = {
+    id: "1",
+    title: "چت زنده",
+    shortDesc: "چت زنده",
+    description: "چت زنده",
+    bullets: ["چت زنده"],
+    slug: "chat",
+    icon: "MessageSquare",
+  };
+  const app = {
+    id: "1",
+    platform: "ios",
+    name: "وب‌یار برای آیفون",
+    subtitle: "صندوق گفتگو و تماس، در جیب شما",
+    shortDesc: "چت زنده",
+    description: "چت زنده",
+    features: ["چت زنده"],
+    screenshots: [],
+    downloadUrl: "",
+    slug: "ios",
+    version: "1.0",
+    size: "",
+    minOs: "",
+  };
+  const post = {
+    id: "1",
+    slug: "sample",
+    title: "عنوان مقاله آزمایشی",
+    excerpt: "چت زنده",
+    content: "# متن مقاله آزمایشی",
+    author: "سارا احمدی",
+    tags: [],
+    publishedAt: "2026-10-04T00:00:00Z",
+    createdAt: "2026-10-04T00:00:00Z",
+    updatedAt: "2026-10-04T00:00:00Z",
+    coverImage: "",
+  };
+  state.pathname = path;
+  state.data["root"] = {
+    settings,
+    productCatalog: [],
+    solutionCatalog: [],
+  };
+  state.data[path] = {
+    settings,
+    seoOverride: null,
+    apps: [app],
+    app,
+    others: [],
+    categories: [],
+    item,
+    categoryTitle: "محصولات",
+    related: [],
+    remotePlans: null,
+    page: { posts: [post], page: 1, total: 1, pageSize: 9 },
+    post,
+    posts: [post],
+    slug: "CRM",
+  };
+  const Component = route.options.component as ComponentType;
+  const html = renderToStaticMarkup(
+    <QueryClientProvider client={new QueryClient()}>
+      <SiteLanguageProvider settings={settings}>
+        <Component />
+      </SiteLanguageProvider>
+    </QueryClientProvider>,
+  );
+  const container = document.createElement("div");
+  container.innerHTML = html;
+  container.querySelectorAll("script,style").forEach((node) => node.remove());
+  return { container, post };
+}
+
 describe("public pages in English", () => {
-  for (const [path, route] of routes) {
+  for (const entry of routes) {
+    const path = entry[0];
     it("renders " + path + " without Persian UI text", () => {
-      const settings = structuredClone(DEFAULT_SETTINGS);
-      settings.localization.language = "en";
-      settings.brand.legalEnglishChrome = false;
-      settings.localization.english = {
-        "عنوان مقاله آزمایشی": "Sample article",
-        "# متن مقاله آزمایشی": "# Sample article content",
-      };
-      const item = {
-        id: "1",
-        title: "چت زنده",
-        shortDesc: "چت زنده",
-        description: "چت زنده",
-        bullets: ["چت زنده"],
-        slug: "chat",
-        icon: "MessageSquare",
-      };
-      const app = {
-        id: "1",
-        platform: "ios",
-        name: "وب‌یار برای آیفون",
-        subtitle: "صندوق گفتگو و تماس، در جیب شما",
-        shortDesc: "چت زنده",
-        description: "چت زنده",
-        features: ["چت زنده"],
-        screenshots: [],
-        downloadUrl: "",
-        slug: "ios",
-        version: "1.0",
-        size: "",
-        minOs: "",
-      };
-      const post = {
-        id: "1",
-        slug: "sample",
-        title: "عنوان مقاله آزمایشی",
-        excerpt: "چت زنده",
-        content: "# متن مقاله آزمایشی",
-        author: "سارا احمدی",
-        tags: [],
-        publishedAt: "2026-10-04T00:00:00Z",
-        createdAt: "2026-10-04T00:00:00Z",
-        updatedAt: "2026-10-04T00:00:00Z",
-        coverImage: "",
-      };
-      state.pathname = path;
-      state.data["root"] = {
-        settings,
-        productCatalog: [],
-        solutionCatalog: [],
-      };
-      state.data[path] = {
-        settings,
-        seoOverride: null,
-        apps: [app],
-        app,
-        others: [],
-        categories: [],
-        item,
-        categoryTitle: "محصولات",
-        related: [],
-        remotePlans: null,
-        page: { posts: [post], page: 1, total: 1, pageSize: 9 },
-        post,
-        posts: [post],
-        slug: "CRM",
-      };
-      const Component = route.options.component as ComponentType;
-      const html = renderToStaticMarkup(
-        <QueryClientProvider client={new QueryClient()}>
-          <SiteLanguageProvider settings={settings}>
-            <Component />
-          </SiteLanguageProvider>
-        </QueryClientProvider>,
-      );
-      const container = document.createElement("div");
-      container.innerHTML = html;
-      container.querySelectorAll("script,style").forEach((node) => node.remove());
+      const { container, post } = renderRoute(entry, "en");
       if (path.startsWith("/blog") || path.startsWith("/tag")) {
         expect(container.textContent).toContain(post.title);
         if (path === "/blog/$slug") expect(container.textContent).toContain("متن مقاله آزمایشی");
@@ -214,6 +223,15 @@ describe("public pages in English", () => {
         }
       }
       expect(container.querySelector(".site-theme")?.getAttribute("dir")).toBe("ltr");
+    });
+  }
+});
+
+describe("public pages in Persian", () => {
+  for (const entry of routes) {
+    it("keeps the Persian design for " + entry[0], () => {
+      const { container } = renderRoute(entry, "fa");
+      expect(container.querySelector(".site-theme")?.getAttribute("dir")).toBe("rtl");
     });
   }
 });

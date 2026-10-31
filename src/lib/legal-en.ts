@@ -143,7 +143,6 @@ export function termsSectionsEn(brand: string, email: string) {
       body: [
         "Paid plans are billed in advance on a recurring basis and renew automatically until cancelled. You can cancel at any time from your account settings or by contacting support; cancellation takes effect at the end of the current billing period.",
         "Purchases made through the Apple App Store or Google Play are billed by that store and are governed by the store's own billing, renewal and refund rules; manage or cancel those subscriptions in your store account settings.",
-        "Payments made on our website come with a 14-day money-back guarantee, described in our Refund Policy.",
       ],
     },
     {
