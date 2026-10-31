@@ -10,6 +10,7 @@ import {
   buildBreadcrumbJsonLd,
   localizedUrl,
   safeJsonLdHtml,
+  localizedSiteUrl,
 } from "@/lib/seo-meta";
 import { SiteLayout } from "@/components/site/SiteLayout";
 
@@ -84,7 +85,7 @@ function SLAPage() {
       isPartOf: {
         "@type": "WebSite",
         name: settings.brand.name,
-        url: base || undefined,
+        url: localizedSiteUrl(settings, i18n.locale, base || undefined),
       },
     },
     buildBreadcrumbJsonLd(i18n, settings, [

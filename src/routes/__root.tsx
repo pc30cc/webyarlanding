@@ -8,6 +8,7 @@ import {
   useRouterState,
   HeadContent,
   Scripts,
+  redirect,
 } from "@tanstack/react-router";
 import { motion } from "framer-motion";
 import { Compass, ChevronLeft } from "lucide-react";
@@ -22,12 +23,14 @@ import { VisitTracker } from "../components/site/VisitTracker";
 import { SiteLayout } from "../components/site/SiteLayout";
 import { extractScriptTags } from "../lib/seo-meta";
 import { SiteLanguageProvider } from "@/components/site/SiteLanguage";
-import { loadAllSiteMessages, loadSiteMessages, primeSiteMessages } from "@/lib/site-messages";
+import { cachedSiteMessages, loadAllSiteMessages, loadSiteMessages } from "@/lib/site-messages";
 import { LOCALE_INFO, splitLocalePrefix, type Locale } from "@/lib/locales";
 import {
   mergeSettings,
   pageContentLocale,
   resolvePageLocale,
+  getDefaultLocale,
+  isBlogAvailable,
   getBrandNameEn,
   type SiteSettings,
 } from "../lib/settings";
@@ -114,12 +117,14 @@ function NotFoundComponent() {
           {translateText("بازگشت به صفحه اصلی ")}
           <ChevronLeft className="h-4 w-4" />
         </Link>
-        <Link
-          to="/blog"
-          className="inline-flex items-center rounded-xl border border-border px-8 py-4 text-base font-semibold text-foreground transition-colors hover:bg-secondary"
-        >
-          {translateText("مشاهده وبلاگ")}
-        </Link>
+        {(!settings || isBlogAvailable(settings, loaderData.locale)) && (
+          <Link
+            to="/blog"
+            className="inline-flex items-center rounded-xl border border-border px-8 py-4 text-base font-semibold text-foreground transition-colors hover:bg-secondary"
+          >
+            {translateText("مشاهده وبلاگ")}
+          </Link>
+        )}
       </motion.div>
     </div>
   );
@@ -180,7 +185,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
           .locale,
       };
     },
-    loader: async ({ context }) => {
+    loader: async ({ context, location }) => {
       const [settings, productCatalog, solutionCatalog] = await Promise.all([
         fetchSettings().catch((error) => {
           console.error("root settings load failed, using defaults:", error);
@@ -190,8 +195,16 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         getPublicCatalog({ data: { type: "solution" } }).catch(() => []),
       ]);
       const locale = resolvePageLocale(settings, context.urlLocale);
-      const messages = await loadSiteMessages(locale);
-      return { settings, productCatalog, solutionCatalog, locale, messages };
+      // پیشوندی که زبان فعالِ غیرپیش‌فرض نیست (معمولاً server.ts زودتر ریدایرکت کرده است؛
+      // این برای پنجره کش تنظیمات و ناوبری سمت مرورگر است).
+      if (context.urlLocale && context.urlLocale !== locale)
+        throw redirect({ href: location.href, statusCode: 302, reloadDocument: true });
+      if (context.urlLocale && context.urlLocale === getDefaultLocale(settings))
+        throw redirect({ href: location.href, statusCode: 301, reloadDocument: true });
+      // دیکشنری در کش ماژول می‌ماند (مرورگر: src/client.tsx پیش از hydration) و در داده‌های
+      // route فرستاده نمی‌شود تا داخل HTML هر صفحه تکرار نشود.
+      await loadSiteMessages(locale);
+      return { settings, productCatalog, solutionCatalog, locale };
     },
     head: ({ loaderData }) => {
       const settings = loaderData?.settings;
@@ -318,7 +331,11 @@ function RootShell({ children }: { children: ReactNode }) {
       : pageContentLocale(loaderData.settings, loaderData.locale, pathname);
 
   return (
-    <html lang={contentLocale} dir={LOCALE_INFO[contentLocale].dir}>
+    <html
+      lang={contentLocale}
+      dir={LOCALE_INFO[contentLocale].dir}
+      data-locale={loaderData?.locale && loaderData.locale !== "fa" ? loaderData.locale : undefined}
+    >
       <head>
         <HeadContent />
       </head>
@@ -335,9 +352,8 @@ function RootShell({ children }: { children: ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
-  const { settings, locale, messages } = Route.useLoaderData();
-  // head() هنگام ناوبری سمت مرورگر دیکشنری را از کش می‌خواند
-  primeSiteMessages(locale, messages);
+  const { settings, locale } = Route.useLoaderData();
+  const messages = cachedSiteMessages(locale);
 
   return (
     <QueryClientProvider client={queryClient}>

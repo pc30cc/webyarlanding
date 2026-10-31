@@ -2,7 +2,8 @@ import "./lib/error-capture";
 
 import { consumeLastCapturedError } from "./lib/error-capture";
 import { renderErrorPage } from "./lib/error-page";
-import { isBlogPath, isLocalizablePath, splitLocalePrefix, withLocalePrefix } from "./lib/locales";
+import { isBlogPath, isLocalizablePath, splitLocalePrefix } from "./lib/locales";
+import { localeRedirectTarget } from "./lib/locale-routing";
 import type { SiteSettings } from "./lib/settings";
 
 type ServerEntry = {
@@ -92,15 +93,33 @@ function wwwToApexRedirect(request: Request): Response | null {
   });
 }
 
-// تنظیمات زبان برای ریدایرکت‌های زیر؛ ۳۰ ثانیه کش می‌شود تا هر درخواست یک کوئری اضافه نزند.
-let localeSettingsCache: { at: number; settings: SiteSettings } | undefined;
-async function localeSettings(): Promise<SiteSettings> {
-  if (localeSettingsCache && Date.now() - localeSettingsCache.at < 30_000)
-    return localeSettingsCache.settings;
-  const { loadSettings } = await import("./lib/settings.server");
-  const settings = await loadSettings();
-  localeSettingsCache = { at: Date.now(), settings };
-  return settings;
+// تنظیمات زبان برای ریدایرکت‌های زیر؛ ۳۰ ثانیه (یا تا ذخیره بعدی تنظیمات) کش می‌شود تا هر
+// درخواست یک کوئری اضافه نزند. اگر دیتابیس در دسترس نباشد آخرین مقدار سالم استفاده می‌شود،
+// نه تنظیمات پیش‌فرض، تا قطعی دیتابیس آدرس‌های زبان را به فارسی نفرستد.
+let localeSettingsCache:
+  | { at: number; revision: number; promise: Promise<SiteSettings> }
+  | undefined;
+let lastGoodLocaleSettings: SiteSettings | undefined;
+async function localeSettings(): Promise<SiteSettings | null> {
+  const settingsModule = await import("./lib/settings.server");
+  const revision = settingsModule.settingsRevision;
+  const cache = localeSettingsCache;
+  if (!cache || Date.now() - cache.at >= 30_000 || cache.revision !== revision) {
+    const promise = settingsModule.loadSettingsStrict().then((settings) => {
+      lastGoodLocaleSettings = settings;
+      return settings;
+    });
+    localeSettingsCache = { at: Date.now(), revision, promise };
+    promise.catch(() => {
+      if (localeSettingsCache?.promise === promise) localeSettingsCache = undefined;
+    });
+  }
+  try {
+    return await localeSettingsCache!.promise;
+  } catch (error) {
+    console.error("locale settings load failed:", error);
+    return lastGoodLocaleSettings ?? null;
+  }
 }
 
 function localeRedirect(location: string, status: 301 | 302): Response {
@@ -115,35 +134,16 @@ function localeRedirect(location: string, status: 301 | 302): Response {
   });
 }
 
-/**
- * آدرس‌های زبان: پیشوند زبان پیش‌فرض (/fa/… وقتی فارسی پیش‌فرض است) با 301 به آدرس بدون
- * پیشوند می‌رود؛ زبانِ غیرفعال با 302 به همان صفحه در زبان پیش‌فرض؛ و در سایت چندزبانه بلاگ
- * فقط در نسخه فارسی است، پس /en/blog/… با 301 به همان مطلب فارسی می‌رود.
- */
+/** ریدایرکت‌های زبان (src/lib/locale-routing.ts)؛ فقط آدرس‌های پیشونددار و بلاگ تنظیمات می‌خوانند. */
 async function localeRedirectFor(request: Request): Promise<Response | null> {
   const url = new URL(request.url);
   if (!isLocalizablePath(url.pathname)) return null;
   const { locale: prefix, path } = splitLocalePrefix(url.pathname);
   if (!prefix && !isBlogPath(path)) return null;
-  let settings: SiteSettings;
-  try {
-    settings = await localeSettings();
-  } catch (error) {
-    console.error("locale settings load failed:", error);
-    return null;
-  }
-  const { getActiveLocales, getDefaultLocale } = await import("./lib/settings");
-  const fallback = getDefaultLocale(settings);
-  const active = getActiveLocales(settings);
-  const to = (pathname: string) => pathname + url.search;
-  if (prefix === fallback) return localeRedirect(to(path), 301);
-  if (prefix && !active.includes(prefix)) return localeRedirect(to(path), 302);
-  const locale = prefix ?? fallback;
-  if (isBlogPath(path) && settings.localization?.mode === "multi" && locale !== "fa") {
-    if (!active.includes("fa")) return localeRedirect(to(withLocalePrefix("/", prefix)), 302);
-    return localeRedirect(to(withLocalePrefix(path, fallback === "fa" ? null : "fa")), 301);
-  }
-  return null;
+  const settings = await localeSettings();
+  if (!settings) return null;
+  const target = localeRedirectTarget(url.pathname, url.search, settings);
+  return target ? localeRedirect(target.location, target.status) : null;
 }
 
 // کرون داخلی (برای دیپلوی خودمیزبان روی Coolify) — فقط یک‌بار و بعد از اولین درخواست

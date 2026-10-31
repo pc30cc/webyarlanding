@@ -1,6 +1,6 @@
 import { i18nFromMatches, siteI18n } from "@/lib/site-i18n";
 import { localizeStructuredData } from "@/lib/site-i18n";
-import { useSiteI18n, useSiteTranslation } from "@/components/site/SiteLanguage";
+import { useSiteI18n, useSiteTranslation, useLocalizeHref } from "@/components/site/SiteLanguage";
 import operatorAvatar from "@/assets/operator-avatar.jpg";
 import { LoopVideo } from "@/components/site/LoopVideo";
 import { createFileRoute, Link } from "@tanstack/react-router";
@@ -486,6 +486,7 @@ function OperatorAvatar({ className }: { className?: string }) {
 
 function IndexPage() {
   const translateText = useSiteTranslation();
+  const localizeHref = useLocalizeHref();
 
   const i18n = useSiteI18n();
   const { settings, seoOverride, apps } = Route.useLoaderData();
@@ -611,7 +612,7 @@ function IndexPage() {
 
             <div className="flex flex-wrap items-center justify-center gap-4 lg:justify-start">
               <a
-                href={settings.auth.signupUrl || "/contact"}
+                href={localizeHref(settings.auth.signupUrl || "/contact")}
                 className="btn-shimmer inline-flex min-h-[52px] items-center gap-2 rounded-2xl px-8 py-4 text-base font-bold"
               >
                 {translateText("رایگان شروع کنید")}
@@ -1095,7 +1096,7 @@ function IndexPage() {
             {translateText("، همه از یک پنل")}
           </p>
           <a
-            href={settings.auth.signupUrl || "/contact"}
+            href={localizeHref(settings.auth.signupUrl || "/contact")}
             className="relative inline-block rounded-xl bg-card px-9 py-4 text-base font-bold text-primary"
           >
             {translateText(settings.auth.signupLabel || "شروع رایگان")}

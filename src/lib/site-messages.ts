@@ -11,15 +11,14 @@ const LOADERS: Partial<Record<Locale, () => Promise<Messages>>> = {
 const EMPTY: Messages = {};
 const loaded = new Map<Locale, Messages>();
 
+/** آیا برای این زبان دیکشنری ترجمه وجود دارد؟ (فارسی زبان مبدأ است) */
+export function hasSiteMessages(locale: Locale): boolean {
+  return locale === "fa" || locale in LOADERS;
+}
+
 /** دیکشنری یک زبان اگر قبلاً بارگذاری شده باشد (برای head() که همگام اجرا می‌شود) */
 export function cachedSiteMessages(locale: Locale): Messages {
   return locale === "fa" ? EMPTY : (loaded.get(locale) ?? EMPTY);
-}
-
-/** دیکشنری رسیده از داده‌های route ریشه (hydration) را در کش می‌گذارد. */
-export function primeSiteMessages(locale: Locale, messages: Messages): void {
-  if (locale !== "fa" && !loaded.has(locale) && Object.keys(messages).length > 0)
-    loaded.set(locale, messages);
 }
 
 /** همه دیکشنری‌ها را بارگذاری می‌کند؛ فقط روی سرور، پیش از اجرای head() صفحات. */

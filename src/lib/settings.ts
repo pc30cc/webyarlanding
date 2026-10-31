@@ -378,6 +378,9 @@ export function joinFa(
  * خاموش است و متن ذخیره‌شده به همان موضوع اشاره دارد، یک متن عمومی جایگزینش می‌شود؛ به‌محض
  * روشن‌شدن دوباره همان تگ‌لاین اصلی برمی‌گردد.
  */
+/** زبان‌هایی که متن صفحات حقوقی/پشتیبانی خودشان را دارند (src/lib/legal-en.ts و صفحات فارسی) */
+const LEGAL_TEXT_LOCALES: readonly Locale[] = ["fa", "en"];
+
 /** مسیرهای حقوقی/پشتیبانی که می‌توانند کاملاً انگلیسی نمایش داده شوند. */
 export const LEGAL_EN_PATHS = ["/privacy", "/terms", "/help"];
 
@@ -403,10 +406,18 @@ export function pageContentLocale(
   locale: Locale,
   pathname: string,
 ): Locale {
+  const clean = pathname.replace(/\/+$/, "") || "/";
+  const legal = LEGAL_EN_PATHS.includes(clean);
+  // زبانی که هنوز متن حقوقی خودش را ندارد، متن انگلیسی را نشان می‌دهد (نه فارسی).
+  if (legal && !LEGAL_TEXT_LOCALES.includes(locale)) return "en";
   if (locale !== "fa" || settings.brand.legalEnglishChrome === false) return locale;
   if (getActiveLocales(settings).includes("en")) return locale;
-  const clean = pathname.replace(/\/+$/, "") || "/";
-  return LEGAL_EN_PATHS.includes(clean) ? "en" : locale;
+  return legal ? "en" : locale;
+}
+
+/** بلاگ فقط فارسی است: در سایت چندزبانه فقط در نسخه فارسی وجود دارد. */
+export function isBlogAvailable(settings: SiteSettings, locale: Locale): boolean {
+  return settings.localization?.mode !== "multi" || locale === "fa";
 }
 
 /** زبان صفحه: پیشوند آدرس اگر آن زبان فعال باشد، وگرنه زبان پیش‌فرض سایت. */
@@ -469,7 +480,9 @@ export function mergeSettings(
   result.localization.language = language;
   result.localization.mode = storedLocalization?.mode === "multi" ? "multi" : "single";
   const enabled = new Set<Locale>([language]);
-  for (const locale of storedLocalization?.locales ?? []) if (isLocale(locale)) enabled.add(locale);
+  const storedLocales: unknown = storedLocalization?.locales;
+  if (Array.isArray(storedLocales))
+    for (const locale of storedLocales) if (isLocale(locale)) enabled.add(locale);
   result.localization.locales = LOCALES.filter((locale) => enabled.has(locale));
   result.localization.english = { ...storedLocalization?.english };
   // قالب سایت انگلیسی (Respok) حذف شده؛ مقدار قدیمی ذخیره‌شده دیگر به کلاینت فرستاده نشود

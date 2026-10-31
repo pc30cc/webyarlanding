@@ -1,4 +1,4 @@
-import { getBrandNameEn, getDefaultLocale, type SiteSettings } from "@/lib/settings";
+import { getBrandNameEn, getDefaultLocale, type SiteSettings, isBlogAvailable, resolvePageLocale } from "@/lib/settings";
 import { i18nFromMatches, siteI18n, type SiteI18n } from "@/lib/site-i18n";
 import type { Locale } from "@/lib/locales";
 import {
@@ -6,7 +6,8 @@ import {
   useSiteLocale,
   useSiteTranslation,
 } from "@/components/site/SiteLanguage";
-import { createFileRoute, Link, notFound } from "@tanstack/react-router";
+import { persianBlogPath } from "@/lib/locale-routing";
+import { createFileRoute, Link, notFound, redirect } from "@tanstack/react-router";
 import { motion } from "framer-motion";
 import ReactMarkdown from "react-markdown";
 import { ArrowRight, Calendar, User, Tag as TagIcon } from "lucide-react";
@@ -29,11 +30,17 @@ function articleI18n(settings: SiteSettings, locale: Locale): SiteI18n {
 }
 
 export const Route = createFileRoute("/blog/$slug")({
-  loader: async ({ params }) => {
+  loader: async ({ params, context, location }) => {
     const [settings, post] = await Promise.all([
       fetchSettings(),
       getPublishedPost({ data: { slug: params.slug } }),
     ]);
+    // در سایت چندزبانه بلاگ فقط فارسی است (ناوبری سمت مرورگر؛ درخواست مستقیم را server.ts ریدایرکت می‌کند)
+    if (!isBlogAvailable(settings, resolvePageLocale(settings, context.urlLocale)))
+      throw redirect({
+        href: persianBlogPath(settings, location.pathname) + location.searchStr,
+        reloadDocument: true,
+      });
     if (!post) throw notFound();
     const related = (
       await listPublishedPosts({

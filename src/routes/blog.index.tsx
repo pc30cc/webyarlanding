@@ -4,7 +4,9 @@ import {
   useSiteTranslation,
 } from "@/components/site/SiteLanguage";
 import { i18nFromMatches } from "@/lib/site-i18n";
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { isBlogAvailable, resolvePageLocale } from "@/lib/settings";
+import { persianBlogPath } from "@/lib/locale-routing";
+import { createFileRoute, Link, useNavigate, redirect } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { z } from "zod";
 import { motion } from "framer-motion";
@@ -36,7 +38,7 @@ export const Route = createFileRoute("/blog/")({
     category: search.category,
     q: search.q,
   }),
-  loader: async ({ deps }) => {
+  loader: async ({ deps, context, location }) => {
     const [settings, page, categories, seoOverride] = await Promise.all([
       fetchSettings(),
       listPublishedPostsPage({
@@ -45,6 +47,12 @@ export const Route = createFileRoute("/blog/")({
       listCategories(),
       getPublicSeoPage({ data: { path: "/blog" } }),
     ]);
+    // در سایت چندزبانه بلاگ فقط فارسی است (ناوبری سمت مرورگر؛ درخواست مستقیم را server.ts ریدایرکت می‌کند)
+    if (!isBlogAvailable(settings, resolvePageLocale(settings, context.urlLocale)))
+      throw redirect({
+        href: persianBlogPath(settings, location.pathname) + location.searchStr,
+        reloadDocument: true,
+      });
     return {
       settings,
       page,

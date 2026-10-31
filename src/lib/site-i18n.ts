@@ -115,6 +115,8 @@ export function createSiteTranslator(
     if (direct !== undefined || result !== localizeDigits(source, language)) {
       result = (source.match(/^\s+/)?.[0] ?? "") + result + (source.match(/\s+$/)?.[0] ?? "");
     }
+    // ورودی‌ها می‌توانند از آدرس بیایند (مثلاً شماره صفحه در عنوان)؛ کش سقف دارد.
+    if (cache.size >= 5000) cache.clear();
     cache.set(source, result);
     return result;
   }
@@ -144,33 +146,43 @@ export function siteI18n(
   locale: Locale,
   messages: Record<string, string> = NO_MESSAGES,
 ): SiteI18n {
-  const english = settings.localization?.english ?? NO_MESSAGES;
+  // ترجمه‌های ویرایشگر فقط برای انگلیسی اعمال می‌شوند، پس فقط همان‌جا در کلید کش می‌آیند.
+  const english =
+    locale === "en" ? (settings.localization?.english ?? NO_MESSAGES) : NO_MESSAGES;
   const brand = settings.brand.name;
   const brandEn = getBrandNameEn(settings);
-  const key = `${locale}\u0000${brand}\u0000${brandEn}`;
   let byOverrides = i18nCache.get(messages);
   if (!byOverrides) i18nCache.set(messages, (byOverrides = new Map()));
-  const cacheKey = `${key}\u0000${english === NO_MESSAGES ? "" : JSON.stringify(english)}`;
+  const cacheKey = `${locale}\u0000${brand}\u0000${brandEn}\u0000${overridesKey(english)}`;
   const cached = byOverrides.get(cacheKey);
   if (cached) return cached;
-  const overrides =
-    locale === "fa"
-      ? NO_MESSAGES
-      : { [brand]: brandEn, ...(locale === "en" ? english : NO_MESSAGES) };
+  const overrides = locale === "fa" ? NO_MESSAGES : { [brand]: brandEn, ...english };
   const i18n: SiteI18n = {
     locale,
     info: LOCALE_INFO[locale],
     translate: createSiteTranslator(locale, messages, overrides),
   };
+  // هر نسخه ذخیره‌شده از ترجمه‌ها یک کلید تازه است؛ نسخه‌های قدیمی نگه داشته نمی‌شوند.
+  if (byOverrides.size >= 32) byOverrides.clear();
   byOverrides.set(cacheKey, i18n);
   return i18n;
+}
+
+/** کلید کش برای ترجمه‌های ویرایشگر؛ برای هر شیء تنظیمات فقط یک‌بار محاسبه می‌شود. */
+const overridesKeys = new WeakMap<object, string>();
+function overridesKey(overrides: Record<string, string>): string {
+  if (overrides === NO_MESSAGES) return "";
+  let key = overridesKeys.get(overrides);
+  if (key === undefined) overridesKeys.set(overrides, (key = JSON.stringify(overrides)));
+  return key;
 }
 
 /** Root loader data that carries the page language (see routes/__root.tsx). */
 interface RootLocaleData {
   settings: SiteSettings;
   locale: Locale;
-  messages: Record<string, string>;
+  /** دیکشنری صریح (در تست‌ها)؛ در سایت از کش ماژول خوانده می‌شود */
+  messages?: Record<string, string>;
 }
 
 /**
@@ -185,7 +197,12 @@ export function i18nFromMatches(
 ): SiteI18n | null {
   const root = matches.find((m) => m.routeId === "__root__")?.loaderData as
     RootLocaleData | undefined;
-  if (root?.settings && root.locale) return siteI18n(root.settings, root.locale, root.messages);
+  if (root?.settings && root.locale)
+    return siteI18n(
+      root.settings,
+      root.locale,
+      root.messages ?? cachedSiteMessages(root.locale),
+    );
   const settings = (loaderData as { settings?: SiteSettings } | undefined)?.settings;
   if (!settings) return null;
   const urlLocale = (match?.context as { urlLocale?: Locale | null } | undefined)?.urlLocale;

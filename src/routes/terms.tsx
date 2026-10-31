@@ -11,6 +11,7 @@ import {
   buildBreadcrumbJsonLd,
   localizedUrl,
   safeJsonLdHtml,
+  localizedSiteUrl,
 } from "@/lib/seo-meta";
 import { SiteLayout } from "@/components/site/SiteLayout";
 import {
@@ -161,7 +162,11 @@ function TermsPage() {
       "@type": "WebPage",
       name: english ? "Terms of Use" : "قوانین و شرایط استفاده",
       url: localizedUrl(settings, i18n.locale, "/terms"),
-      isPartOf: { "@type": "WebSite", name: brand, url: base || undefined },
+      isPartOf: {
+        "@type": "WebSite",
+        name: brand,
+        url: localizedSiteUrl(settings, i18n.locale, base || undefined),
+      },
     },
     buildBreadcrumbJsonLd(i18n, settings, [
       { name: english ? "Home" : "خانه", path: "/" },

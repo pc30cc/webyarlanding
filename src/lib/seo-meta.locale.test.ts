@@ -145,7 +145,11 @@ describe("page meta per locale", () => {
       expect(other.links).toEqual([
         { rel: "canonical", href: `https://webyar.ai/${locale}/about` },
       ]);
-      expect(other.meta).toContainEqual({ name: "robots", content: "index,follow" });
+      // ترکی و عربی هنوز دیکشنری ندارند و تا آماده شدن ترجمه ایندکس نمی‌شوند
+      expect(other.meta).toContainEqual({
+        name: "robots",
+        content: locale === "en" ? "index,follow" : "noindex,follow",
+      });
       expect(other.meta[0]).not.toEqual({ title: override.title });
     }
     expect(meta(settings, "en", page).meta[0]).toEqual({ title: "About us | Webyar" });

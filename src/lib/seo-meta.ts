@@ -1,6 +1,7 @@
 import { siteI18n, type SiteI18n } from "./site-i18n";
 import { withLocalePrefix, type Locale } from "./locales";
 import { getDefaultLocale } from "./settings";
+import { hasSiteMessages } from "./site-messages";
 // ابزار مشترک برای ادغام تنظیمات عمومی سئو با override اختصاصی هر صفحه (seo_pages)
 // در loader/head صفحات مارکتینگ. خالص و بدون فراخوانی دیتابیس.
 import type { SiteSettings } from "./settings";
@@ -93,6 +94,20 @@ export function localizedUrl(
   return base ? `${base}${withLocalePrefix(path, localePrefix(settings, locale))}` : undefined;
 }
 
+/**
+ * آدرس ریشه سایت در یک زبان (برای WebSite در JSON-LD). برای زبان پیش‌فرض `fallback` را
+ * برمی‌گرداند تا خروجی آن زبان دقیقاً مثل قبل بماند.
+ */
+export function localizedSiteUrl(
+  settings: SiteSettings,
+  locale: Locale,
+  fallback: string | undefined,
+): string | undefined {
+  const prefix = localePrefix(settings, locale);
+  const base = (settings.brand.siteUrl || "").replace(/\/$/, "");
+  return prefix ? (base ? `${base}/${prefix}` : undefined) : fallback;
+}
+
 export function buildPageMeta(opts: {
   /** زبان صفحه (i18nFromMatches در head)؛ بدون آن زبان پیش‌فرض سایت فرض می‌شود */
   i18n: SiteI18n | null;
@@ -140,11 +155,12 @@ export function buildPageMeta(opts: {
     (base ? `${base}/og-image.png?v=2` : "/og-image.png?v=2");
   const canonical =
     override?.canonicalUrl || localizedUrl(settings, i18n.locale, path);
-  const robots =
-    override?.robots ||
-    (looksLikeMetaRobots(settings.seo.robots)
-      ? settings.seo.robots
-      : defaultRobots);
+  // زبانی که هنوز دیکشنری ترجمه ندارد متن فارسی نشان می‌دهد؛ تا ترجمه آماده نشده ایندکس نشود.
+  const untranslated = i18n.locale !== "fa" && !hasSiteMessages(i18n.locale);
+  const robots = untranslated
+    ? "noindex,follow"
+    : override?.robots ||
+      (looksLikeMetaRobots(settings.seo.robots) ? settings.seo.robots : defaultRobots);
 
   return {
     meta: [

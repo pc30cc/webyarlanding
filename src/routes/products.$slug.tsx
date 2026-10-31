@@ -1,5 +1,5 @@
 import { i18nFromMatches, localizeStructuredData } from "@/lib/site-i18n";
-import { useSiteI18n, useSiteTranslation } from "@/components/site/SiteLanguage";
+import { useSiteI18n, useSiteTranslation, useLocalizeHref } from "@/components/site/SiteLanguage";
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { motion } from "framer-motion";
 import ReactMarkdown from "react-markdown";
@@ -40,6 +40,7 @@ export const Route = createFileRoute("/products/$slug")({
 
 function ProductDetailPage() {
   const translateText = useSiteTranslation();
+  const localizeHref = useLocalizeHref();
   const i18n = useSiteI18n();
 
   const { settings, item, categoryTitle, related } = Route.useLoaderData();
@@ -175,7 +176,7 @@ function ProductDetailPage() {
 
           <ScrollReveal className="mt-12 flex flex-wrap items-center gap-4">
             <a
-              href={settings.auth.signupUrl || "/contact"}
+              href={localizeHref(settings.auth.signupUrl || "/contact")}
               className="inline-flex items-center gap-2 rounded-xl bg-brand px-8 py-4 text-base font-bold text-primary-foreground shadow-lg shadow-primary/30"
             >
               {translateText(settings.auth.signupLabel || "شروع رایگان")}{" "}

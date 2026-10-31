@@ -4,7 +4,9 @@ import {
   useSiteTranslation,
 } from "@/components/site/SiteLanguage";
 import { i18nFromMatches } from "@/lib/site-i18n";
-import { createFileRoute, Link, notFound } from "@tanstack/react-router";
+import { isBlogAvailable, resolvePageLocale } from "@/lib/settings";
+import { persianBlogPath } from "@/lib/locale-routing";
+import { createFileRoute, Link, notFound, redirect } from "@tanstack/react-router";
 import { motion } from "framer-motion";
 import {
   Calendar,
@@ -24,12 +26,18 @@ import { listPublishedPosts } from "@/lib/blog.functions";
 import { SiteLayout } from "@/components/site/SiteLayout";
 
 export const Route = createFileRoute("/tag/$slug")({
-  loader: async ({ params }) => {
+  loader: async ({ params, context, location }) => {
     const [settings, posts, seoOverride] = await Promise.all([
       fetchSettings(),
       listPublishedPosts({ data: { tagSlug: params.slug } }),
       getPublicSeoPage({ data: { path: `/tag/${params.slug}` } }),
     ]);
+    // در سایت چندزبانه بلاگ فقط فارسی است (ناوبری سمت مرورگر؛ درخواست مستقیم را server.ts ریدایرکت می‌کند)
+    if (!isBlogAvailable(settings, resolvePageLocale(settings, context.urlLocale)))
+      throw redirect({
+        href: persianBlogPath(settings, location.pathname) + location.searchStr,
+        reloadDocument: true,
+      });
     // برچسبی که هیچ مقاله‌ای ندارد نباید صفحه‌ی خالی با کد ۲۰۰ برگرداند (soft 404) —
     // چنین صفحه‌ای واقعاً وجود ندارد، پس باید ۴۰۴ واقعی بدهد.
     if (posts.length === 0) throw notFound();

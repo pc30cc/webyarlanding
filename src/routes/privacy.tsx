@@ -11,6 +11,7 @@ import {
   buildBreadcrumbJsonLd,
   localizedUrl,
   safeJsonLdHtml,
+  localizedSiteUrl,
 } from "@/lib/seo-meta";
 import { SiteLayout } from "@/components/site/SiteLayout";
 import {
@@ -166,7 +167,11 @@ function PrivacyPage() {
       "@type": "WebPage",
       name: english ? "Privacy Policy" : "سیاست حریم خصوصی",
       url: localizedUrl(settings, i18n.locale, "/privacy"),
-      isPartOf: { "@type": "WebSite", name: brand, url: base || undefined },
+      isPartOf: {
+        "@type": "WebSite",
+        name: brand,
+        url: localizedSiteUrl(settings, i18n.locale, base || undefined),
+      },
     },
     buildBreadcrumbJsonLd(i18n, settings, [
       { name: english ? "Home" : "خانه", path: "/" },

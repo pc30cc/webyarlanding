@@ -1,5 +1,5 @@
 import { i18nFromMatches, localizeStructuredData } from "@/lib/site-i18n";
-import { useSiteI18n, useSiteTranslation } from "@/components/site/SiteLanguage";
+import { useSiteI18n, useSiteTranslation, useLocalizeHref } from "@/components/site/SiteLanguage";
 import { LOCALE_INFO, type Locale } from "@/lib/locales";
 import { useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
@@ -200,14 +200,15 @@ function stripMentions(
 
 const faNumber = new Intl.NumberFormat("fa-IR");
 
-/** قیمت دلاری به قالب زبان صفحه (مثلاً $29 یا $24.17) */
+/**
+ * قیمت دلاری به شکل $29 یا $24.17 با جداکننده‌های زبان صفحه (ترکی: $24,17). بدون Intl تا
+ * خروجی سرور و مرورگر (با داده‌های ICU متفاوت) همیشه یکی باشد.
+ */
 function formatUsd(amount: number, locale: Locale): string {
-  return new Intl.NumberFormat(LOCALE_INFO[locale].intl, {
-    style: "currency",
-    currency: "USD",
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 2,
-  }).format(amount);
+  const { groupSeparator, decimalSeparator } = LOCALE_INFO[locale];
+  const [whole = "0", cents] = (Math.round(amount * 100) / 100).toFixed(2).split(".");
+  const grouped = whole.replace(/\B(?=(\d{3})+(?!\d))/g, groupSeparator);
+  return `$${grouped}${cents && cents !== "00" ? decimalSeparator + cents : ""}`;
 }
 
 /**
@@ -222,8 +223,9 @@ function mapRemotePlans(
   const english = locale === "en";
   const usd = LOCALE_INFO[locale].currency === "USD";
   return remote.map((plan, index) => {
-    const yearlyTotal = (usd ? plan.usdYearly : plan.yearly) ?? 0;
-    const amount = (period === "yearly" ? yearlyTotal : usd ? plan.usdMonthly : plan.monthly) ?? 0;
+    // null یعنی قیمت اعلام نشده (تماس بگیرید)؛ نباید به ۰ (رایگان) تبدیل شود.
+    const yearlyTotal = usd ? plan.usdYearly : plan.yearly;
+    const amount = period === "yearly" ? yearlyTotal : usd ? plan.usdMonthly : plan.monthly;
     const perMonth =
       period === "yearly" && amount
         ? usd
@@ -324,6 +326,7 @@ function ComparisonCell({ value }: { value: string | boolean }) {
 
 function PricingPage() {
   const translateText = useSiteTranslation();
+  const localizeHref = useLocalizeHref();
 
   const { settings, remotePlans } = Route.useLoaderData();
   const i18n = useSiteI18n();
@@ -578,15 +581,15 @@ function PricingPage() {
                   </button>
                 ) : (
                   <a
-                    href={
+                    href={localizeHref(
                       plan.slug === "enterprise"
                         ? "/contact"
                         : isUpgrade
                           ? settings.auth.panelUrl ||
                             settings.auth.signupUrl ||
                             "/contact"
-                          : settings.auth.signupUrl || "/contact"
-                    }
+                          : settings.auth.signupUrl || "/contact",
+                    )}
                     className={`flex w-full items-center justify-center gap-1 rounded-xl px-4 py-2.5 text-sm font-bold transition-colors ${
                       isUpgrade || (plan.popular && currentIndex < 0)
                         ? "bg-brand text-primary-foreground"

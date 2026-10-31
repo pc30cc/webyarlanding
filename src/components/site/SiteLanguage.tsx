@@ -1,6 +1,6 @@
 import { createContext, useContext, useMemo, type ReactNode } from "react";
-import type { SiteSettings } from "@/lib/settings";
-import { LOCALE_INFO, type Locale } from "@/lib/locales";
+import { getDefaultLocale, type SiteSettings } from "@/lib/settings";
+import { LOCALE_INFO, withLocalePrefix, type Locale } from "@/lib/locales";
 import { createSiteTranslator, siteI18n, type SiteI18n } from "@/lib/site-i18n";
 
 const defaultValue: SiteI18n = {
@@ -8,7 +8,12 @@ const defaultValue: SiteI18n = {
   info: LOCALE_INFO.fa,
   translate: createSiteTranslator("fa"),
 };
-const SiteLanguageContext = createContext<SiteI18n>(defaultValue);
+interface SiteLanguageValue extends SiteI18n {
+  /** پیشوند آدرس زبان صفحه؛ null برای زبان پیش‌فرض */
+  prefix: Locale | null;
+}
+
+const SiteLanguageContext = createContext<SiteLanguageValue>({ ...defaultValue, prefix: null });
 
 /**
  * زبان صفحه (از آدرس) و مترجم آن برای همه اجزای سایت عمومی. `messages` دیکشنری همان
@@ -25,7 +30,13 @@ export function SiteLanguageProvider({
   messages?: Record<string, string> | undefined;
   children: ReactNode;
 }) {
-  const value = useMemo(() => siteI18n(settings, locale, messages), [settings, locale, messages]);
+  const value = useMemo(
+    () => ({
+      ...siteI18n(settings, locale, messages),
+      prefix: locale === getDefaultLocale(settings) ? null : locale,
+    }),
+    [settings, locale, messages],
+  );
   return <SiteLanguageContext.Provider value={value}>{children}</SiteLanguageContext.Provider>;
 }
 
@@ -36,6 +47,16 @@ export function useSiteI18n(): SiteI18n {
 
 export function useSiteTranslation() {
   return useContext(SiteLanguageContext).translate;
+}
+
+/**
+ * آدرس داخلی (مثل /contact در تنظیمات ثبت‌نام) را به همان زبان صفحه برمی‌گرداند؛ لینک‌های
+ * <Link> خودشان پیشوند می‌گیرند ولی <a href> ساده نه. آدرس‌های بیرونی بدون تغییر می‌مانند.
+ */
+export function useLocalizeHref(): (href: string) => string {
+  const { prefix } = useContext(SiteLanguageContext);
+  return (href) =>
+    prefix && /^\/(?![\\/])/.test(href) ? withLocalePrefix(href, prefix) : href;
 }
 
 /** زبان صفحه: fa | en | tr | ar */

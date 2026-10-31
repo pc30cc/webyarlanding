@@ -11,12 +11,12 @@ import {
   pageContentLocale,
   type SiteSettings,
 } from "@/lib/settings";
-import { LOCALE_INFO } from "@/lib/locales";
+import { LOCALE_INFO, type Locale } from "@/lib/locales";
 import { useRouterState } from "@tanstack/react-router";
-import { safeJsonLdHtml } from "@/lib/seo-meta";
+import { localizedSiteUrl, safeJsonLdHtml } from "@/lib/seo-meta";
 
 /** JSON-LD سازمانی + وب‌سایت، سراسری برای همه صفحات (سئو). */
-export function buildSiteJsonLd(settings: SiteSettings): unknown[] {
+export function buildSiteJsonLd(settings: SiteSettings, locale: Locale): unknown[] {
   let organization: unknown | null = null;
   if (settings.seo.jsonLdOrganization) {
     try {
@@ -50,7 +50,7 @@ export function buildSiteJsonLd(settings: SiteSettings): unknown[] {
     "@context": "https://schema.org",
     "@type": "WebSite",
     name: settings.brand.name,
-    url: settings.brand.siteUrl || undefined,
+    url: localizedSiteUrl(settings, locale, settings.brand.siteUrl || undefined),
   };
 
   return [organization, website];
@@ -64,7 +64,7 @@ export function SiteLayout({
   children: ReactNode;
 }) {
   const i18n = useSiteI18n();
-  const siteJsonLd = buildSiteJsonLd(settings);
+  const siteJsonLd = buildSiteJsonLd(settings, i18n.locale);
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   // زبان محتوای صفحه (زبان آدرس؛ صفحات حقوقی سایت فارسی ممکن است انگلیسی باشند)
   const contentLocale = pageContentLocale(settings, i18n.locale, pathname);

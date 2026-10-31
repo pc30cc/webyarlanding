@@ -254,13 +254,16 @@ describe("locale settings", () => {
     expect(pageContentLocale(withTurkish, "fa", "/privacy")).toBe("en");
   });
 
-  it("leaves Turkish and Arabic pages in their own language", () => {
+  it("leaves Turkish and Arabic pages in their own language, legal pages in English", () => {
+    // متن حقوقی ترکی و عربی هنوز وجود ندارد؛ تا آن موقع متن انگلیسی نمایش داده می‌شود
     for (const settings of [siteWith("fa"), siteWith("fa", ["fa", "tr", "ar"])]) {
       for (const locale of ["tr", "ar"] as const) {
-        for (const path of ["/privacy", "/terms", "/help", "/about"]) {
-          expect(pageContentLocale(settings, locale, path)).toBe(locale);
-          expect(isEnglishChrome(settings, locale, path)).toBe(false);
+        for (const path of ["/privacy", "/terms", "/help"]) {
+          expect(pageContentLocale(settings, locale, path)).toBe("en");
+          expect(isEnglishChrome(settings, locale, path)).toBe(true);
         }
+        expect(pageContentLocale(settings, locale, "/about")).toBe(locale);
+        expect(isEnglishChrome(settings, locale, "/about")).toBe(false);
       }
     }
   });
