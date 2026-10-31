@@ -171,7 +171,7 @@ export default function BackupCenterSection() {
           <div className="flex flex-wrap items-center gap-2 text-xs">
             <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-muted-foreground">
               <Database className="h-3 w-3" />
-              دیتابیس: {data.backend === "postgres" ? "PostgreSQL سلف‌هاست" : "Supabase"}
+              دیتابیس: PostgreSQL سلف‌هاست
             </span>
             <span className="rounded-full bg-muted px-2 py-0.5 text-muted-foreground">
               مقصد: {data.storageProvider ? PROVIDER_LABEL[data.storageProvider] : "متصل نیست"}
@@ -210,8 +210,7 @@ export default function BackupCenterSection() {
 
       {error && (
         <p className="text-sm text-destructive">
-          خطا در دریافت اطلاعات بک‌آپ — اگر دیتابیس Supabase است، مایگریشن جدول backup_runs باید
-          اجرا شده باشد.
+          خطا در دریافت اطلاعات بک‌آپ — اتصال سرور به دیتابیس (DATABASE_URL) را بررسی کنید.
         </p>
       )}
 
@@ -300,8 +299,8 @@ export default function BackupCenterSection() {
           <div className="flex flex-col gap-0.5">
             <span className="text-sm text-foreground">ارسال فایل بک‌آپ روزانه در ربات تلگرام</span>
             <span className="text-xs text-muted-foreground">
-              فایل برای مدیران ربات (شناسه‌های چت در تنظیمات تلگرام) فرستاده می‌شود؛ از منوی خود ربات
-              هم قابل روشن/خاموش کردن است. سقف حجم تلگرام ۵۰ مگابایت است.
+              فایل برای مدیران ربات (شناسه‌های چت در تنظیمات تلگرام) فرستاده می‌شود؛ از منوی خود
+              ربات هم قابل روشن/خاموش کردن است. سقف حجم تلگرام ۵۰ مگابایت است.
             </span>
           </div>
           <Switch

@@ -14,7 +14,6 @@ const fake = vi.hoisted(() => {
     concurrentSave: null as null | (() => void),
   };
 });
-vi.mock("@/integrations/supabase/client.server", () => ({ supabaseAdmin: {} }));
 vi.mock("pg", () => {
   const TIMESTAMP = 1114;
   class Pool {

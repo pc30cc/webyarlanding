@@ -1,21 +1,19 @@
 // نسخه‌پشتیبان‌گیری دستی و روزانه از دیتابیس و نگه‌داری آن روی فضای ذخیره‌سازی/سی‌دی‌ان
 // متصل‌شده در تنظیمات (بانی سی‌دی‌ان یا ابر آروان). فقط سمت سرور.
 //
-// فرمت فایل: روی PostgreSQL سلف‌هاست یک dump واقعی pg_dump (.sql.gz، ساختار + داده، قابل
-// بازیابی با psql)؛ روی Supabase فرمت قبلی JSON فشرده (webyar-backup v1) — شامل همه جدول‌های TABLES، قابل
+// فرمت فایل: یک dump واقعی pg_dump (.sql.gz، ساختار + داده، قابل بازیابی با psql)؛ اگر ابزار
+// pg_dump/psql روی سرور نباشد، فرمت JSON فشرده (webyar-backup v1) — شامل همه جدول‌های TABLES، قابل
 // بازیابی مستقیم از همین پنل یا از فایل دانلودشده (بخش «بازیابی از فایل JSON» بعد از unzip).
 // تاریخچه هر اجرا در جدول backup_runs ثبت می‌شود؛ نسخه‌های قدیمی‌تر از مدت نگه‌داری
 // (پیش‌فرض ۱۴ روز) بعد از هر بک‌آپ روزانه از فضای ذخیره‌سازی و دیتابیس پاک می‌شوند.
-import { db, databaseBackend, newId, nowIso, parseJson } from "./db.server";
+import { db, newId, nowIso, parseJson } from "./db.server";
 import { TABLES, buildTableExport, performImport } from "./backup.functions";
 import { deleteStoredFile, downloadStoredFile, uploadPrivateFile } from "./storage.server";
 import { loadSettings } from "./settings.server";
 
 const SCHEDULE_KEY = "backup_schedule";
 
-// جدول backup_runs جدیدتر از types.ts تولیدشده Supabase است
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const runsTable = () => (db as any).from("backup_runs");
+const runsTable = () => db.from("backup_runs");
 const BACKUP_DIR = "backups";
 
 export interface BackupSchedule {
@@ -147,7 +145,7 @@ export async function buildBackupArchive(): Promise<{
     format: "webyar-backup",
     version: 1,
     generatedAt: nowIso(),
-    backend: databaseBackend(),
+    backend: "postgres",
     tables: TABLES.map((t) => t.name),
     rowCounts,
     data,
@@ -172,9 +170,8 @@ function backupFilename(ext: "sql.gz" | "json.gz"): string {
 
 export type BackupFormat = "sql" | "json";
 
-/** روی Postgres سلف‌هاست با pg_dump واقعی؛ روی Supabase (یا نبود pg_dump) فرمت JSON قبلی */
+/** با pg_dump واقعی؛ اگر ابزارهای pg_dump/psql روی سرور نباشند، فرمت JSON */
 export async function activeBackupFormat(): Promise<BackupFormat> {
-  if (databaseBackend() !== "postgres") return "json";
   const { hasPgTools } = await import("./pgdump.server");
   return (await hasPgTools()) ? "sql" : "json";
 }
@@ -315,9 +312,6 @@ export async function parseBackupArchive(bytes: ArrayBuffer): Promise<BackupFile
 export async function restoreBackupRun(id: string): Promise<{ totalInserted: number }> {
   const { run, bytes } = await fetchBackupBytes(id);
   if (formatOfFilename(run.filename) === "sql") {
-    if (databaseBackend() !== "postgres") {
-      throw new Error("فایل dump فقط روی PostgreSQL سلف‌هاست قابل بازیابی است");
-    }
     const { restoreDump } = await import("./pgdump.server");
     await restoreDump(bytes);
     return { totalInserted: run.row_count };
@@ -356,12 +350,11 @@ export async function pruneOldBackups(): Promise<number> {
   return removed;
 }
 
-/** وضعیت کلی برای پنل: فضای ذخیره‌سازی متصل + نوع دیتابیس فعلی */
+/** وضعیت کلی برای پنل: فضای ذخیره‌سازی متصل + فرمت بک‌آپ */
 export async function backupOverview() {
   const [settings, schedule] = await Promise.all([loadSettings(), loadBackupSchedule()]);
   const provider = settings.media.provider;
   return {
-    backend: databaseBackend(),
     storageProvider: provider === "bunny" || provider === "arvan" ? provider : null,
     format: await activeBackupFormat(),
     schedule,

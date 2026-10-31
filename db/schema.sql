@@ -1,11 +1,9 @@
 -- اسکیمای کامل دیتابیس WEBYAR برای PostgreSQL سلف‌هاست (کانتینر Coolify).
--- معادل تجمیعی همه فایل‌های supabase/migrations بدون بخش‌های مخصوص Supabase
--- (RLS، GRANT به service_role). کاملاً idempotent است: اجرای چندباره هیچ داده‌ای را
--- حذف یا تغییر نمی‌دهد. سرور در حالت DATABASE_URL هنگام بالا آمدن خودکار اجرایش می‌کند.
---
--- نکته: انتقال اصلی با scripts/db/migrate-from-supabase.sh و pg_dump انجام می‌شود که
--- ساختار واقعی دیتابیس Supabase را عیناً منتقل می‌کند؛ این فایل برای نصب تازه و تضمین
--- وجود جدول‌های جدیدتر (مثل backup_runs) است.
+-- تنها منبع ساختار دیتابیس است و کاملاً idempotent: اجرای چندباره هیچ داده‌ای را حذف یا
+-- تغییر نمی‌دهد. سرور هنگام بالا آمدن خودکار اجرایش می‌کند (ensureSchema در
+-- src/lib/pg-db.server.ts؛ با DATABASE_AUTO_MIGRATE=false غیرفعال می‌شود)، پس هر جدول یا
+-- ستون تازه‌ای که این‌جا اضافه شود در دیپلوی بعدی ساخته می‌شود.
+-- تغییر ساختار را در src/lib/db-types.ts (تایپ ردیف‌ها) هم اعمال کنید.
 
 -- ============ USERS ============
 CREATE TABLE IF NOT EXISTS public.users (
@@ -118,7 +116,7 @@ CREATE INDEX IF NOT EXISTS blog_post_tags_tag_idx ON public.blog_post_tags(tag_i
 -- ============ MEDIA ============
 CREATE TABLE IF NOT EXISTS public.media_assets (
   id          varchar(36) NOT NULL PRIMARY KEY,
-  provider    varchar(40) NOT NULL DEFAULT 'supabase',
+  provider    varchar(40) NOT NULL,
   path        text NOT NULL,
   url         text NOT NULL,
   filename    varchar(255) NOT NULL,
@@ -132,6 +130,17 @@ CREATE TABLE IF NOT EXISTS public.media_assets (
   updated_at  timestamp NOT NULL DEFAULT now()
 );
 CREATE INDEX IF NOT EXISTS media_assets_created_idx ON public.media_assets(created_at);
+-- مقدار پیش‌فرض قدیمی ستون provider (هر درج، provider را صریحاً تعیین می‌کند)
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT 1 FROM information_schema.columns
+     WHERE table_schema = 'public' AND table_name = 'media_assets'
+       AND column_name = 'provider' AND column_default IS NOT NULL
+  ) THEN
+    ALTER TABLE public.media_assets ALTER COLUMN provider DROP DEFAULT;
+  END IF;
+END $$;
 
 -- ============ SEO PAGES ============
 CREATE TABLE IF NOT EXISTS public.seo_pages (

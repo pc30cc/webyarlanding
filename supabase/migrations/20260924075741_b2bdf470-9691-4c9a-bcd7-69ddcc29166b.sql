@@ -1,1 +1,0 @@
-DELETE FROM public.catalog_items WHERE id='3f9934e5-0e82-4860-b846-42730ab63280';

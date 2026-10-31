@@ -8,7 +8,7 @@ function timingSafeMatch(a: string, b: string): boolean {
 }
 
 async function handle(request: Request): Promise<Response> {
-  const secret = process.env["LOVABLE_CRON_SECRET"];
+  const secret = process.env["CRON_SECRET"];
   if (!secret) {
     return new Response(JSON.stringify({ ok: false, error: "cron_secret_not_configured" }), {
       status: 500,

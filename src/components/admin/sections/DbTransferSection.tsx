@@ -49,8 +49,7 @@ export default function DbTransferSection() {
   });
 
   const runMutation = useMutation({
-    mutationFn: () =>
-      runFn({ data: { connectionString, includeSchema, truncateTarget } }),
+    mutationFn: () => runFn({ data: { connectionString, includeSchema, truncateTarget } }),
     onSuccess: (res) => {
       setConfirmOpen(false);
       const failed = res.tables.filter((t) => t.error).length;
@@ -76,9 +75,8 @@ export default function DbTransferSection() {
         <h3 className="font-semibold text-foreground">انتقال دیتابیس به دیتابیس</h3>
       </div>
       <p className="text-sm text-muted-foreground">
-        رشته اتصال مستقیم PostgreSQL دیتابیس مقصد (سرور شخصی، Supabase سلف‌هاست یا هر
-        PostgreSQL دیگری) را وارد کنید. ساختار جدول‌ها و تمام داده‌ها با یک کلیک به مقصد منتقل
-        می‌شود.
+        رشته اتصال مستقیم PostgreSQL دیتابیس مقصد (سرور شخصی، Coolify یا هر PostgreSQL دیگری) را
+        وارد کنید. ساختار جدول‌ها و تمام داده‌ها با یک کلیک به مقصد منتقل می‌شود.
       </p>
 
       <div className="flex flex-col gap-1.5">
@@ -222,8 +220,7 @@ export default function DbTransferSection() {
             .filter((t) => t.error || t.skipped)
             .map((t) => (
               <p key={t.name} dir="ltr" className="text-muted-foreground">
-                <span className="font-bold text-foreground">{t.name}</span>:{" "}
-                {t.error ?? t.skipped}
+                <span className="font-bold text-foreground">{t.name}</span>: {t.error ?? t.skipped}
               </p>
             ))}
           {run.warnings.map((w, i) => (
@@ -240,8 +237,8 @@ export default function DbTransferSection() {
             <AlertDialogTitle>شروع انتقال دیتابیس</AlertDialogTitle>
             <AlertDialogDescription>
               تمام داده‌های دیتابیس فعلی سایت به دیتابیس مقصد نوشته می‌شود
-              {truncateTarget && " و داده‌های فعلی مقصد ابتدا حذف می‌شوند"}. این عملیات
-              بازگشت‌پذیر نیست.
+              {truncateTarget && " و داده‌های فعلی مقصد ابتدا حذف می‌شوند"}. این عملیات بازگشت‌پذیر
+              نیست.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
