@@ -124,7 +124,7 @@ import {
   deleteApp,
   type AppLocaleStore,
 } from "./apps.server";
-import { appDownloadHref, getPublicApp, getPublicApps } from "./apps.functions";
+import { adminSaveApp, appDownloadHref, getPublicApp, getPublicApps } from "./apps.functions";
 import { Route as GoRoute } from "@/routes/go.$slug";
 
 type GoHandler = (ctx: { request: Request; params: { slug: string } }) => Promise<Response>;
@@ -219,11 +219,22 @@ describe("app language overrides", () => {
     expect(appLocaleOverrides("ios", legacy)).toEqual({
       en: { downloadUrl: "https://en.example", enabled: false, legacy: true },
     });
-    // apps_locales برای این برنامه (حتی خالی) بر apps_en مقدم است
+    // نسخه انگلیسی apps_locales بر apps_en مقدم است؛ زبان‌های دیگر نسخه قدیمی را کنار نمی‌زنند
+    expect(
+      appLocaleOverrides("ios", {
+        ...legacy,
+        locales: { ios: { en: { downloadUrl: "y" }, tr: { downloadUrl: "x" } } },
+      }),
+    ).toEqual({ en: { downloadUrl: "y", enabled: true }, tr: { downloadUrl: "x", enabled: true } });
     expect(
       appLocaleOverrides("ios", { ...legacy, locales: { ios: { tr: { downloadUrl: "x" } } } }),
-    ).toEqual({ tr: { downloadUrl: "x", enabled: true } });
-    expect(appLocaleOverrides("ios", { ...legacy, locales: { ios: {} } })).toEqual({});
+    ).toEqual({
+      tr: { downloadUrl: "x", enabled: true },
+      en: { downloadUrl: "https://en.example", enabled: false, legacy: true },
+    });
+    expect(appLocaleOverrides("ios", { ...legacy, locales: { ios: {} } })).toEqual({
+      en: { downloadUrl: "https://en.example", enabled: false, legacy: true },
+    });
     expect(appLocaleOverrides("android", legacy)).toEqual({});
   });
 
@@ -639,9 +650,10 @@ describe("legacy apps_en keeps its old meaning on English pages", () => {
   it("sends English clicks without a link to the app page, never to another language's link", async () => {
     fake.settings = site("en", ["en"]);
     expect(await recordClick("ios", {})).toEqual({ target: null, fallback: "/download/ios" });
+    // در انگلیسی (زبان پیش‌فرض) خاموش است و صفحه‌ای ندارد: فهرست برنامه‌ها، نه ۴۰۴
     expect(await recordClick("android", {})).toEqual({
       target: null,
-      fallback: "/download/android",
+      fallback: "/download",
     });
     expect(await recordClick("windows", {})).toEqual({
       target: "https://en.example/windows",
@@ -768,5 +780,192 @@ describe("/go fallback page language", () => {
     const error = vi.spyOn(console, "error").mockImplementation(() => {});
     expect(await goLocation("https://webyar.ai/go/ios?l=en")).toBe("/download/ios");
     error.mockRestore();
+  });
+});
+
+describe("saving keeps untouched legacy English entries", () => {
+  // بازبینی: ذخیره هر فیلد بی‌ربط، نسخه قدیمی apps_en را بی‌خبر به قاعده جدید تبدیل می‌کرد
+  // (لینک خالی = لینک فارسی، و برنامه خاموش در جدول apps از /en حذف می‌شد)
+  const setting = (key: string) => {
+    const row = fake.tables["settings"]?.find((r) => r["setting_key"] === key);
+    return row ? JSON.parse(String(row["setting_value"])) : undefined;
+  };
+  /** فهرست /en: [slug، لینک] */
+  const englishList = async () => (await fetchPublicApps("en")).map((a) => [a.slug, a.downloadUrl]);
+  /** همان داده‌ای که پنل برای ذخیره می‌فرستد (برنامه از adminListApps با نسخه‌های زبان) */
+  const formOf = async (id: string) => {
+    const app = (await adminFetchApps()).find((a) => a.id === id)!;
+    const { visibleLocales: _visible, ...rest } = app;
+    return { ...rest, locales: { ...app.locales } };
+  };
+  const legacyEn = {
+    a1: { downloadUrl: "", enabled: true },
+    a2: { downloadUrl: "", enabled: true },
+    a3: { downloadUrl: "https://en.example/a3", enabled: false },
+  };
+
+  beforeEach(() => {
+    fake.settings = site("fa", ["fa", "en", "tr"]);
+    fake.tables["apps"] = [
+      appRow("a1", { sort_order: 1 }),
+      appRow("a2", { sort_order: 2, enabled: 0 }),
+      appRow("a3", { sort_order: 3 }),
+    ];
+    fake.tables["settings"] = [settingRow("apps_en", legacyEn)];
+  });
+
+  it("leaves the legacy entry in apps_en when only other fields change", async () => {
+    const before = await englishList();
+    expect(before).toEqual([
+      ["a1", ""],
+      ["a2", ""],
+    ]);
+    for (const id of ["a1", "a2", "a3"]) {
+      const form = await formOf(id);
+      expect(form.locales.en).toMatchObject({ legacy: true });
+      await adminSaveApp({ data: { ...form, description: "توضیح تازه" } });
+    }
+    expect(setting("apps_en")).toEqual(legacyEn);
+    expect(setting("apps_locales")).toEqual({ a1: {}, a2: {}, a3: {} });
+    expect(await englishList()).toEqual(before);
+    expect((await adminFetchApps()).map((a) => a.locales)).toEqual([
+      { en: { ...legacyEn.a1, legacy: true } },
+      { en: { ...legacyEn.a2, legacy: true } },
+      { en: { ...legacyEn.a3, legacy: true } },
+    ]);
+    // لینک خالی قدیمی همچنان «بدون لینک» است، نه لینک فارسی
+    expect(await recordClick("a1", { locale: "en" })).toEqual({
+      target: null,
+      fallback: "/en/download/a1",
+    });
+  });
+
+  it("keeps the legacy entry next to another language's new entry", async () => {
+    const form = await formOf("a2");
+    await adminSaveApp({
+      data: {
+        ...form,
+        locales: { ...form.locales, tr: { downloadUrl: "https://tr.example", enabled: true } },
+      },
+    });
+    expect(setting("apps_locales")).toEqual({
+      a2: { tr: { downloadUrl: "https://tr.example", enabled: true } },
+    });
+    expect(setting("apps_en")).toEqual(legacyEn);
+    // a2 در جدول apps خاموش است ولی با نسخه قدیمی در /en نمایش داده می‌شود
+    expect(await englishList()).toEqual([
+      ["a1", ""],
+      ["a2", ""],
+    ]);
+    // بدون کلید en هم نسخه قدیمی دست نمی‌خورد
+    await saveApp({ ...(await formOf("a1")), locales: {} });
+    expect(setting("apps_en")).toEqual(legacyEn);
+  });
+
+  it("converts the entry to the new rules only when English is edited", async () => {
+    const form = await formOf("a1");
+    await adminSaveApp({
+      data: {
+        ...form,
+        locales: { ...form.locales, en: { downloadUrl: "https://en.example/a1", enabled: true } },
+      },
+    });
+    expect(setting("apps_locales")).toEqual({
+      a1: { en: { downloadUrl: "https://en.example/a1", enabled: true } },
+    });
+    // نسخه قدیمی a1 پاک شد؛ بقیه دست نخوردند
+    expect(setting("apps_en")).toEqual({ a2: legacyEn.a2, a3: legacyEn.a3 });
+    expect(await englishList()).toEqual([
+      ["a1", "https://en.example/a1"],
+      ["a2", ""],
+    ]);
+
+    // تبدیل به «همان لینک زبان پیش‌فرض» هم با پاک شدن نسخه قدیمی ماندگار است
+    const a3 = await formOf("a3");
+    await adminSaveApp({ data: { ...a3, locales: { en: { downloadUrl: "", enabled: true } } } });
+    expect(setting("apps_locales").a3).toEqual({});
+    expect(setting("apps_en")).toEqual({ a2: legacyEn.a2 });
+    expect((await fetchPublicApp("a3", "en"))?.downloadUrl).toBe("https://store.example/a3");
+  });
+
+  it("removes a stale legacy entry when the new English entry is removed", async () => {
+    fake.tables["settings"]?.push(
+      settingRow("apps_locales", {
+        a1: { en: { downloadUrl: "https://en.example/new", enabled: true } },
+      }),
+    );
+    const form = await formOf("a1");
+    expect(form.locales.en).toEqual({ downloadUrl: "https://en.example/new", enabled: true });
+    await saveApp({ ...form, locales: {} });
+    // apps_en قدیمی دوباره جای نسخه پاک‌شده خوانده نمی‌شود
+    expect(setting("apps_en")).toEqual({ a2: legacyEn.a2, a3: legacyEn.a3 });
+    expect((await fetchPublicApp("a1", "en"))?.downloadUrl).toBe("https://store.example/a1");
+  });
+
+  it("treats unchanged old English fields as untouched", async () => {
+    const { locales: _locales, ...form } = await formOf("a3");
+    expect(form).toMatchObject({ downloadUrlEn: "https://en.example/a3", enabledEn: false });
+    await saveApp(form);
+    expect(setting("apps_en")).toEqual(legacyEn);
+    await saveApp({ ...form, enabledEn: true });
+    expect(setting("apps_locales").a3).toEqual({
+      en: { downloadUrl: "https://en.example/a3", enabled: true },
+    });
+    expect(setting("apps_en")).toEqual({ a1: legacyEn.a1, a2: legacyEn.a2 });
+  });
+
+  it("accepts the legacy flag only for English", async () => {
+    const form = await formOf("a1");
+    await adminSaveApp({
+      data: {
+        ...form,
+        locales: { ...form.locales, tr: { downloadUrl: "", enabled: false, legacy: true } },
+      },
+    });
+    expect(setting("apps_locales").a1).toEqual({ tr: { downloadUrl: "", enabled: false } });
+  });
+});
+
+describe("/go fallback when the app has no page in either language", () => {
+  // بازبینی: برنامه‌ای که فقط با نسخه قدیمی انگلیسی نمایش داده می‌شود، از زبان‌های دیگر به ۴۰۴ می‌رفت
+  beforeEach(() => {
+    fake.tables["apps"] = [
+      appRow("mac", { enabled: 0 }),
+      appRow("off", { enabled: 0 }),
+      appRow("ios"),
+    ];
+    fake.tables["settings"] = [settingRow("apps_en", { mac: { downloadUrl: "", enabled: true } })];
+  });
+
+  it("goes to the app list of the resolved language, without an extra hop", async () => {
+    fake.settings = site("fa", ["fa", "en", "tr"]);
+    expect(await goLocation("https://webyar.ai/go/mac")).toBe("/download");
+    expect(await goLocation("https://webyar.ai/go/mac?l=fa")).toBe("/download");
+    expect(await goLocation("https://webyar.ai/go/mac?l=tr")).toBe("/tr/download");
+    expect(
+      await goLocation("https://webyar.ai/go/mac", {
+        referer: "https://webyar.ai/tr/download/mac",
+      }),
+    ).toBe("/tr/download");
+    // زبان غیرفعال: فهرست زبان پیش‌فرض (نه /ar/download که ریدایرکت اضافه دارد)
+    expect(await goLocation("https://webyar.ai/go/mac?l=ar")).toBe("/download");
+    // جایی که نمایش داده می‌شود، همان صفحه برنامه
+    expect(await goLocation("https://webyar.ai/go/mac?l=en")).toBe("/en/download/mac");
+    expect(await goLocation("https://webyar.ai/go/off?l=en")).toBe("/en/download");
+    // slug ناشناخته مثل قبل
+    expect(await goLocation("https://webyar.ai/go/missing?l=tr")).toBe("/download/missing");
+    expect(fake.tables["app_download_clicks"] ?? []).toHaveLength(0);
+    expect(
+      appFallbackPath("x", app({ enabled: false }), {}, { locale: "en", defaultLocale: "fa" }),
+    ).toBe("/en/download");
+  });
+
+  it("does not change the single-language Persian site", async () => {
+    fake.settings = site();
+    expect(await goLocation("https://webyar.ai/go/off")).toBe("/download/off");
+    expect(await goLocation("https://webyar.ai/go/mac?l=tr")).toBe("/download/mac");
+    for (const query of queriesOf("apps"))
+      expect(query.filters).toContainEqual(["enabled", "eq", 1]);
+    expect(queriesOf("settings")).toEqual([]);
   });
 });

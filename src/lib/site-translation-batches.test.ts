@@ -40,6 +40,41 @@ describe("untranslated text detection", () => {
     expect(isUntranslated("API", "ar")).toBe(false);
   });
 
+  it("detects Persian left in Arabic that has no Persian-only letters by comparing with the source", () => {
+    // بازبینی: «درباره ما» و مانند آن حرف مخصوص فارسی ندارند و بدون مقایسه با مبدأ ترجمه‌شده حساب می‌شدند
+    for (const text of ["درباره ما", "تماس با ما", "سوالات متداول", "ثبت نام", "راه‌حل‌ها"]) {
+      expect(isUntranslated(text, "ar", text)).toBe(true);
+    }
+    // ارقام، فاصله و نیم‌فاصله در مقایسه یکسان‌اند
+    expect(isUntranslated("صفحه 2  از 3", "ar", "صفحه ۲ از ۳")).toBe(true);
+    expect(
+      isUntranslated(
+        "درباره ما [link](https://example.com/ar)",
+        "ar",
+        "درباره ما [link](https://example.com/fa)",
+      ),
+    ).toBe(true);
+    // ترجمه عربی واقعی (متفاوت با مبدأ) پذیرفته می‌شود
+    expect(isUntranslated("من نحن", "ar", "درباره ما")).toBe(false);
+    expect(isUntranslated("اتصل بنا", "ar", "تماس با ما")).toBe(false);
+  });
+
+  it("still accepts a single word spelled like the Persian source", () => {
+    for (const name of ["سارا", "محمد", "حسن", "واتساب", "تماس"]) {
+      expect(isUntranslated(name, "ar", name)).toBe(false);
+    }
+    // رقم یا واژه لاتین کنار نام، واژه فارسی/عربی دوم حساب نمی‌شود
+    expect(isUntranslated("سارا ۲", "ar", "سارا ۲")).toBe(false);
+    expect(isUntranslated("واتساب Business", "ar", "واتساب Business")).toBe(false);
+    expect(isUntranslated("API v2", "ar", "API v2")).toBe(false);
+  });
+
+  it("uses the source only for Arabic", () => {
+    expect(isUntranslated("Live chat", "en", "Live chat")).toBe(false);
+    expect(isUntranslated("درباره ما", "tr", "درباره ما")).toBe(true);
+    expect(isUntranslated("درباره ما", "fa", "درباره ما")).toBe(false);
+  });
+
   it("never flags Persian itself", () => {
     expect(isUntranslated("چت زنده", "fa")).toBe(false);
   });

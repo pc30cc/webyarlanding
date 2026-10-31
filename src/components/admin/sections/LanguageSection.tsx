@@ -374,7 +374,7 @@ export function LanguageSection({
     for (const locale of TRANSLATED) {
       const translate = translators[locale];
       result[locale] = contentRows.filter(
-        (source) => !isUntranslated(translate(source), locale),
+        (source) => !isUntranslated(translate(source), locale, source),
       ).length;
     }
     return result;
@@ -402,7 +402,9 @@ export function LanguageSection({
       .sort((a, b) => a.localeCompare(b, "fa"));
   }, [allRows, search, translate]);
   const missing =
-    target && translate ? rows.filter((text) => isUntranslated(translate(text), target)).length : 0;
+    target && translate
+      ? rows.filter((text) => isUntranslated(translate(text), target, text)).length
+      : 0;
 
   function editTranslation(locale: TranslatedLocale, key: string, text: string) {
     editVersion.current[locale]++;
@@ -463,7 +465,7 @@ export function LanguageSection({
       return;
     }
     const locale = target;
-    const sources = allRows.filter((source) => isUntranslated(translate(source), locale));
+    const sources = allRows.filter((source) => isUntranslated(translate(source), locale, source));
     if (!sources.length) {
       toast.success("همه متن‌ها ترجمه دارند.");
       return;
@@ -812,7 +814,8 @@ export function LanguageSection({
                 const key = normalizeMessage(source);
                 const translated = translate(source);
                 const value =
-                  own(targetMap, key) ?? (isUntranslated(translated, target) ? "" : translated);
+                  own(targetMap, key) ??
+                  (isUntranslated(translated, target, source) ? "" : translated);
                 return (
                   <div
                     key={key}

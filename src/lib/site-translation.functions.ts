@@ -72,10 +72,11 @@ export const adminTranslateSiteMessages = createServerFn({ method: "POST" })
         reason: "ترجمه کامل دریافت نشد.",
       }));
     }
-    return translations.map((text): SiteTranslationResult => {
+    return translations.map((text, index): SiteTranslationResult => {
       if (typeof text !== "string" || !text.trim())
         return { status: "rejected", reason: "ترجمه خالی دریافت شد." };
-      if (isUntranslated(text, data.targetLocale))
+      // متن مبدأ هم سنجیده می‌شود: عربیِ عیناً همان فارسیِ چندواژه‌ای ترجمه نیست
+      if (isUntranslated(text, data.targetLocale, data.texts[index]))
         return { status: "rejected", reason: "ترجمه هنوز فارسی است." };
       return { status: "accepted", text };
     });

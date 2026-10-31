@@ -1,7 +1,12 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { LOCALES, isLocale, type Locale } from "./locales";
-import { seoPageCanonicals, selectSeoPageRow, type SeoCanonicals } from "./seo-meta";
+import {
+  seoPageCanonicals,
+  seoPageNoindexLocales,
+  selectSeoPageRow,
+  type SeoCanonicals,
+} from "./seo-meta";
 import { getDefaultLocale, resolvePageLocale } from "./settings";
 
 export interface SeoPageDto {
@@ -23,6 +28,11 @@ export interface SeoPageDto {
    * زبان برای hreflang (حتی وقتی ردیف برگشتی متعلق به زبان دیگری است و اعمال نمی‌شود)
    */
   alternateCanonicals?: SeoCanonicals;
+  /**
+   * فقط در getPublicSeoPage و وقتی این مسیر ردیف زبان‌دار هم دارد: نسخه‌های زبانی که ردیف
+   * خودشان noindex است و در hreflang هیچ نسخه‌ای نمی‌آیند
+   */
+  noindexLocales?: Locale[];
 }
 
 interface SeoPageRow {
@@ -77,6 +87,14 @@ function toDto(row: SeoPageRow): SeoPageDto {
   // ردیف زبان پیش‌فرض بدون فیلد locale می‌ماند تا خروجی صفحات زبان پیش‌فرض مثل قبل باشد
   if (isLocale(row.locale)) dto.locale = row.locale;
   return dto;
+}
+
+/**
+ * ردیف seo_pages زبان دیگری که روی این صفحه اعمال نمی‌شود: فقط زبان، canonical و robots
+ * (برای hreflang) می‌ماند تا عنوان، توضیحات، تصویر و اسکیمای آن زبان در داده صفحه نیاید.
+ */
+function hreflangOnly(row: SeoPageDto): SeoPageDto {
+  return { ...row, title: null, description: null, ogImage: null, schemaJson: null };
 }
 
 export const listSeoPages = createServerFn({ method: "GET" }).handler(
@@ -184,8 +202,9 @@ export const deleteSeoPage = createServerFn({ method: "POST" })
 /**
  * خواندن عمومی (بدون نیاز به ورود مدیر) تنظیمات سئوی یک صفحه، برای رندر متا/کنونیکال/JSON-LD.
  * `locale` زبان آدرس صفحه است (پیشوند /en و…؛ خالی = زبان پیش‌فرض). ردیف همان زبان برمی‌گردد،
- * وگرنه ردیف زبان پیش‌فرض (selectSeoPageRow)، وگرنه ردیف زبانی که canonical سفارشی دارد (برای
- * hreflang)؛ buildPageMeta هر ردیف را فقط روی زبان خودش اعمال می‌کند.
+ * وگرنه ردیف زبان پیش‌فرض (selectSeoPageRow)، وگرنه ردیف زبانی که canonical سفارشی دارد یا
+ * noindex است (برای hreflang)؛ buildPageMeta هر ردیف را فقط روی زبان خودش اعمال می‌کند و ردیف
+ * زبان دیگر فقط اطلاعات hreflang را دارد (hreflangOnly).
  * تنظیمات سایت فقط وقتی خوانده می‌شود که این مسیر ردیف زبان‌دار داشته باشد؛ سایت تک‌زبانه
  * مثل قبل با یک کوئری جواب می‌گیرد.
  */
@@ -213,16 +232,27 @@ export const getPublicSeoPage = createServerFn({ method: "GET" })
       const { loadSettings } = await import("./settings.server");
       const settings = await loadSettings();
       const defaultLocale = getDefaultLocale(settings);
+      const pageLocale = resolvePageLocale(settings, data.locale);
       const alternateCanonicals = seoPageCanonicals(rows, defaultLocale);
-      const withLocale = Object.keys(alternateCanonicals) as Locale[];
-      // نه این زبان ردیف دارد نه زبان پیش‌فرض، ولی زبان دیگری canonical سفارشی دارد: ردیف همان
-      // زبان فقط برای hreflang برمی‌گردد تا این صفحه هم به canonical آن نسخه لینک دهد. چون زبانش
-      // با زبان این صفحه فرق دارد، buildPageMeta و seoOverrideFor اعمالش نمی‌کنند.
+      const withCanonical = Object.keys(alternateCanonicals) as Locale[];
+      const noindexLocales = seoPageNoindexLocales(rows, defaultLocale);
+      // زبان‌هایی که ردیفشان روی hreflang اثر دارد (canonical سفارشی یا noindex)
+      const forHreflang = [...new Set([...withCanonical, ...noindexLocales])];
+      // نه این زبان ردیف دارد نه زبان پیش‌فرض، ولی ردیف زبان دیگری روی hreflang اثر دارد: ردیف همان
+      // زبان فقط برای hreflang برمی‌گردد تا این صفحه هم به canonical آن نسخه لینک دهد و نسخه noindex
+      // را کنار بگذارد. چون زبانش با زبان این صفحه فرق دارد، buildPageMeta و seoOverrideFor
+      // اعمالش نمی‌کنند.
       const row =
-        selectSeoPageRow(rows, resolvePageLocale(settings, data.locale), defaultLocale) ??
-        (withLocale[0] ? selectSeoPageRow(rows, withLocale[0], defaultLocale) : null);
+        selectSeoPageRow(rows, pageLocale, defaultLocale) ??
+        (forHreflang[0] ? selectSeoPageRow(rows, forHreflang[0], defaultLocale) : null);
       if (!row) return null;
-      return withLocale.length > 0 ? { ...row, alternateCanonicals } : row;
+      // ردیف زبان دیگر فقط همان چیزی را می‌برد که hreflang لازم دارد، نه عنوان و محتوای آن زبان
+      const result = (row.locale ?? defaultLocale) === pageLocale ? row : hreflangOnly(row);
+      return {
+        ...result,
+        ...(withCanonical.length > 0 ? { alternateCanonicals } : {}),
+        ...(noindexLocales.length > 0 ? { noindexLocales } : {}),
+      };
     } catch (error) {
       // دیتابیس در دسترس نیست — صفحه عمومی باید با متای پیش‌فرض رندر شود، نه با خطا
       console.error("getPublicSeoPage failed:", error);

@@ -14,7 +14,8 @@ export interface AppLocaleOverride {
   /**
    * نسخه انگلیسی قدیمی (فقط از ردیف apps_en، پیش از پنل زبان‌ها) با همان معنای قبلی: لینک خالی
    * یعنی برنامه در آن زبان لینک ندارد («به‌زودی») و نمایش فقط به همین کلید بسته است، نه به
-   * apps.enabled. با ذخیره برنامه در پنل جدید این علامت حذف می‌شود.
+   * apps.enabled. پنل این علامت را تا وقتی فیلدهای انگلیسی دست نخورده‌اند پس می‌فرستد و ذخیره
+   * نسخه قدیمی را همان‌طور نگه می‌دارد؛ نسخه en بدون این علامت یعنی تبدیل به قاعده جدید.
    */
   legacy?: boolean;
 }
@@ -77,7 +78,8 @@ const appSchema = z.object({
   downloadUrlEn: z.string().optional().default(""),
   enabledEn: z.boolean().optional().default(true),
   /**
-   * لینک و نمایش هر زبان. اگر فرستاده شود جای همه زبان‌های این برنامه می‌نشیند (en هم)؛
+   * لینک و نمایش هر زبان. اگر فرستاده شود جای همه زبان‌های این برنامه می‌نشیند (en هم)، جز
+   * نسخه انگلیسی قدیمی (apps_en) که با علامت legacy (یا بدون کلید en) دست نخورده می‌ماند؛
    * کلید زبان ناشناخته نادیده گرفته می‌شود.
    */
   locales: z
@@ -86,14 +88,18 @@ const appSchema = z.object({
       z.object({
         downloadUrl: z.string().trim().max(2000, "لینک طولانی است").optional().default(""),
         enabled: z.boolean().optional().default(true),
+        legacy: z.boolean().optional(),
       }),
     )
     .optional()
     .transform((value): AppLocaleOverrides | undefined => {
       if (!value) return undefined;
       const result: AppLocaleOverrides = {};
-      for (const [locale, entry] of Object.entries(value))
-        if (isLocale(locale)) result[locale] = entry;
+      for (const [locale, { legacy, ...entry }] of Object.entries(value)) {
+        if (!isLocale(locale)) continue;
+        // فقط نسخه انگلیسی نسخه قدیمی دارد
+        result[locale] = legacy && locale === "en" ? { ...entry, legacy } : entry;
+      }
       return result;
     }),
 });

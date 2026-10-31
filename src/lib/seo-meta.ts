@@ -19,17 +19,11 @@ export function looksLikeRobotsTxt(value: string | null | undefined): boolean {
 
 /** آیا مقدار ذخیره‌شده شبیه مقدار متای robots (index,follow و…) است؟ */
 export function looksLikeMetaRobots(value: string | null | undefined): boolean {
-  return (
-    !!value &&
-    META_ROBOTS_PATTERN.test(value) &&
-    !ROBOTS_TXT_PATTERN.test(value)
-  );
+  return !!value && META_ROBOTS_PATTERN.test(value) && !ROBOTS_TXT_PATTERN.test(value);
 }
 
 /** پارس امن schemaJson اختصاصی صفحه؛ در صورت نامعتبر بودن null برمی‌گرداند. */
-export function parseSchemaJson(
-  raw: string | null | undefined,
-): unknown | null {
+export function parseSchemaJson(raw: string | null | undefined): unknown | null {
   if (!raw) return null;
   try {
     return JSON.parse(raw);
@@ -117,9 +111,38 @@ export function indexableLocales(settings: SiteSettings): Locale[] {
 export type SeoCanonicals = Partial<Record<Locale, string>>;
 
 /**
+ * canonical سفارشی (seo_pages) فقط وقتی در hreflang و سایت‌مپ می‌آید که آدرس کامل http(s) روی
+ * همان دامنه‌ی سایت (brand.siteUrl) باشد؛ فیلد canonical پنل آزاد است و آدرس نسبی یا دامنه‌ی
+ * دیگر آنجا نامعتبر است. در این حالت undefined برمی‌گردد تا آدرس پیش‌فرض همان زبان به‌کار رود.
+ */
+export function sameSiteCanonical(
+  settings: SiteSettings,
+  value: string | null | undefined,
+): string | undefined {
+  const trimmed = value?.trim();
+  if (!trimmed) return undefined;
+  try {
+    const url = new URL(trimmed);
+    const site = new URL(settings.brand.siteUrl || "");
+    return (url.protocol === "https:" || url.protocol === "http:") && url.origin === site.origin
+      ? trimmed
+      : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+/** آیا مقدار robots صفحه را از ایندکس خارج می‌کند؟ (همان شرط hreflang در buildPageMeta) */
+export function isNoindexRobots(robots: string | null | undefined): boolean {
+  // "none" همان noindex,nofollow است
+  return !!robots && /\b(noindex|none)\b/i.test(robots);
+}
+
+/**
  * hreflang یک مسیر: نسخه آن در همه زبان‌های قابل ایندکس به‌علاوه x-default (زبان پیش‌فرض).
  * در سایت تک‌زبانه یا با کمتر از دو زبان قابل ایندکس خالی است. `canonicals` آدرس canonical
- * سفارشی نسخه‌های زبان (seo_pages) است؛ یک رشته یعنی canonical نسخه زبان پیش‌فرض.
+ * سفارشی نسخه‌های زبان (seo_pages) است؛ یک رشته یعنی canonical نسخه زبان پیش‌فرض. فقط canonical
+ * هم‌دامنه با سایت به‌کار می‌رود (sameSiteCanonical)، مثل سایت‌مپ.
  */
 export function hreflangAlternates(
   settings: SiteSettings,
@@ -136,7 +159,8 @@ export function hreflangAlternates(
   const fallback = getDefaultLocale(settings);
   const custom: SeoCanonicals =
     typeof canonicals === "string" ? { [fallback]: canonicals } : (canonicals ?? {});
-  const urlFor = (locale: Locale) => custom[locale] || localizedUrl(settings, locale, path);
+  const urlFor = (locale: Locale) =>
+    sameSiteCanonical(settings, custom[locale]) || localizedUrl(settings, locale, path);
   const links = locales.flatMap((locale) => {
     const href = urlFor(locale);
     return href ? [{ hrefLang: locale, href }] : [];
@@ -180,6 +204,18 @@ export function selectSeoPageRow<T extends SeoLocaleRow>(
   return (pageLocale ? onlySeoRow(rows, pageLocale) : null) ?? defaultSeoRow(rows, defaultLocale);
 }
 
+/**
+ * ردیفی که buildPageMeta روی نسخه یک زبان اعمال می‌کند: زبان پیش‌فرض ردیف خودش یا ردیف بدون
+ * زبان، بقیه فقط ردیف یکتای همان زبان.
+ */
+function seoRowOfLocale<T extends SeoLocaleRow>(
+  rows: readonly T[],
+  locale: Locale,
+  defaultLocale: Locale,
+): T | null {
+  return locale === defaultLocale ? defaultSeoRow(rows, defaultLocale) : onlySeoRow(rows, locale);
+}
+
 /** canonical سفارشی هر نسخه زبان یک مسیر، از همه ردیف‌های seo_pages آن مسیر (برای hreflang) */
 export function seoPageCanonicals(
   rows: readonly (SeoLocaleRow & { canonicalUrl?: string | null })[],
@@ -187,11 +223,23 @@ export function seoPageCanonicals(
 ): SeoCanonicals {
   const result: SeoCanonicals = {};
   for (const locale of LOCALES) {
-    const row =
-      locale === defaultLocale ? defaultSeoRow(rows, defaultLocale) : onlySeoRow(rows, locale);
+    const row = seoRowOfLocale(rows, locale, defaultLocale);
     if (row?.canonicalUrl) result[locale] = row.canonicalUrl;
   }
   return result;
+}
+
+/**
+ * زبان‌هایی که ردیف seo_pages خود نسخه‌شان noindex است؛ این نسخه‌ها از hreflang همه نسخه‌های
+ * همان مسیر و از سایت‌مپ کنار گذاشته می‌شوند.
+ */
+export function seoPageNoindexLocales(
+  rows: readonly (SeoLocaleRow & { robots?: string | null })[],
+  defaultLocale: Locale,
+): Locale[] {
+  return LOCALES.filter((locale) =>
+    isNoindexRobots(seoRowOfLocale(rows, locale, defaultLocale)?.robots),
+  );
 }
 
 /**
@@ -217,6 +265,28 @@ function overrideCanonicals(
   return override.canonicalUrl
     ? { [override.locale ?? getDefaultLocale(settings)]: override.canonicalUrl }
     : null;
+}
+
+/**
+ * نسخه‌های noindex این مسیر برای hreflang، از خروجی getPublicSeoPage. بدون noindexLocales
+ * (مسیر بدون ردیف زبان‌دار، مثل همه ردیف‌های قدیمی) فقط robots خود ردیف برای زبان خودش معناست.
+ */
+function overrideNoindexLocales(
+  settings: SiteSettings,
+  override: SeoPageDto | null,
+): readonly Locale[] {
+  if (!override) return [];
+  if (override.noindexLocales) return override.noindexLocales;
+  return isNoindexRobots(override.robots) ? [override.locale ?? getDefaultLocale(settings)] : [];
+}
+
+/** زبان‌های hreflang صفحه: زبان‌های موجود صفحه منهای نسخه‌هایی که ردیف سئوی خودشان noindex است */
+function hreflangLocales(
+  available: readonly Locale[] | undefined,
+  noindex: readonly Locale[],
+): readonly Locale[] | undefined {
+  if (noindex.length === 0) return available;
+  return (available ?? LOCALES).filter((locale) => !noindex.includes(locale));
 }
 
 export function buildPageMeta(opts: {
@@ -259,17 +329,14 @@ export function buildPageMeta(opts: {
   const translate = i18n.translate;
   const title = translate(override?.title || fallbackTitle);
   const description = translate(
-    override?.description ||
-      fallbackDescription ||
-      settings.seo.metaDescription,
+    override?.description || fallbackDescription || settings.seo.metaDescription,
   );
   const ogImage =
     override?.ogImage ||
     fallbackOgImage ||
     settings.seo.ogImage ||
     (base ? `${base}/og-image.png?v=2` : "/og-image.png?v=2");
-  const canonical =
-    override?.canonicalUrl || localizedUrl(settings, i18n.locale, path);
+  const canonical = override?.canonicalUrl || localizedUrl(settings, i18n.locale, path);
   // زبانی که هنوز دیکشنری ترجمه ندارد متن فارسی نشان می‌دهد؛ تا ترجمه آماده نشده ایندکس نشود.
   const untranslated = i18n.locale !== "fa" && !hasSiteMessages(i18n.locale);
   const robots = untranslated
@@ -300,20 +367,21 @@ export function buildPageMeta(opts: {
     links: [
       ...(canonical ? [{ rel: "canonical", href: canonical }] : []),
       // hreflang فقط برای صفحه قابل ایندکس؛ نسخه زبان پیش‌فرض همان canonical خودش را دارد
-      ...(opts.alternates === false || /noindex/i.test(robots)
+      ...(opts.alternates === false || isNoindexRobots(robots)
         ? []
         : hreflangAlternates(
             settings,
             path,
             overrideCanonicals(settings, storedOverride),
-            opts.alternateLocales,
-          ).map(
-            (link) => ({
-              rel: "alternate",
-              hrefLang: link.hrefLang,
-              href: link.href,
-            }),
-          )),
+            hreflangLocales(
+              opts.alternateLocales,
+              overrideNoindexLocales(settings, storedOverride),
+            ),
+          ).map((link) => ({
+            rel: "alternate",
+            hrefLang: link.hrefLang,
+            href: link.href,
+          }))),
     ],
   };
 }

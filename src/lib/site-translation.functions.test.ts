@@ -132,6 +132,26 @@ describe("translation into other languages", () => {
       await adminTranslateSiteMessages({ data: { texts: names, targetLocale: "ar" } }),
     ).toEqual(names.map((text) => ({ status: "accepted", text })));
   });
+  it("rejects an Arabic echo of a multi-word Persian source, item by item", async () => {
+    // «درباره ما» حرف مخصوص فارسی ندارد؛ پاسخی که همان متن را برگرداند ترجمه نیست
+    mocks.aiJson.mockResolvedValue({
+      translations: ["درباره ما", arabic, "سارا", "تماس با ما"],
+    });
+    expect(
+      await adminTranslateSiteMessages({
+        data: {
+          texts: ["درباره ما", "چت زنده در سایت شما", "سارا", "تماس  با ما"],
+          targetLocale: "ar",
+        },
+      }),
+    ).toEqual([
+      { status: "rejected", reason: expect.stringContaining("هنوز فارسی") },
+      { status: "accepted", text: arabic },
+      // یک واژه (نام) با همان املا پذیرفته می‌شود
+      { status: "accepted", text: "سارا" },
+      { status: "rejected", reason: expect.stringContaining("هنوز فارسی") },
+    ]);
+  });
   it("translates into Turkish and rejects Persian left in it", async () => {
     mocks.aiJson.mockResolvedValue({ translations: ["Canlı sohbet"] });
     expect(

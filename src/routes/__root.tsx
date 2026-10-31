@@ -220,7 +220,10 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       // انگلیسیِ بدون ردیف ترجمه هم ندارد، چون ترجمه‌هایش همان localization.english تنظیمات است.
       if (locale !== "fa") {
         const overrides = await loadPageTranslations(locale);
-        if (overrides) data.overrides = overrides;
+        // نقشه خالی (ترکی/عربی بدون ترجمه) فرستاده نمی‌شود؛ برای انگلیسی نقشه خالی یعنی ردیف
+        // ترجمه هست و جای localization.english قدیمی را می‌گیرد، پس همان فرستاده می‌شود
+        if (overrides && (locale === "en" || Object.keys(overrides).length > 0))
+          data.overrides = overrides;
       }
       return data;
     },

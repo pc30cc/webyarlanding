@@ -81,9 +81,11 @@ vi.mock("@tanstack/react-start", () => ({
 import {
   buildPageMeta,
   hreflangAlternates,
+  sameSiteCanonical,
   selectSeoPageRow,
   seoOverrideFor,
   seoPageCanonicals,
+  seoPageNoindexLocales,
 } from "./seo-meta";
 import {
   getPublicSeoPage,
@@ -189,6 +191,142 @@ describe("selectSeoPageRow", () => {
     });
     // زبان پیش‌فرض انگلیسی: ردیف بدون زبان به انگلیسی تعلق دارد و ردیف en صریح مقدم است
     expect(seoPageCanonicals(rows, "en")).toEqual({ en: "https://webyar.ai/en/about-us" });
+  });
+});
+
+describe("custom canonical validation", () => {
+  const settings = site();
+
+  it("accepts only absolute URLs on the site's origin (scheme, host and port)", () => {
+    expect(sameSiteCanonical(settings, "https://webyar.ai/en/about-us")).toBe(
+      "https://webyar.ai/en/about-us",
+    );
+    expect(sameSiteCanonical(settings, " https://webyar.ai/about-us ")).toBe(
+      "https://webyar.ai/about-us",
+    );
+    expect(sameSiteCanonical(settings, "http://webyar.ai/about-us")).toBeUndefined();
+    expect(sameSiteCanonical(settings, "/en/about-us")).toBeUndefined();
+    expect(sameSiteCanonical(settings, "about-us")).toBeUndefined();
+    expect(sameSiteCanonical(settings, "https://webyar.com/about")).toBeUndefined();
+    expect(sameSiteCanonical(settings, "https://blog.webyar.ai/about")).toBeUndefined();
+    expect(sameSiteCanonical(settings, "ftp://webyar.ai/about")).toBeUndefined();
+    expect(sameSiteCanonical(settings, "")).toBeUndefined();
+    expect(sameSiteCanonical(settings, null)).toBeUndefined();
+    const noSiteUrl = site();
+    noSiteUrl.brand.siteUrl = "";
+    expect(sameSiteCanonical(noSiteUrl, "https://webyar.ai/about")).toBeUndefined();
+  });
+
+  it("uses the default localized URL in hreflang for invalid canonicals", () => {
+    expect(
+      hreflangAlternates(settings, "/about", {
+        fa: "about-us",
+        en: "https://webyar.com/en/about",
+      }),
+    ).toEqual([
+      { hrefLang: "fa", href: "https://webyar.ai/about" },
+      { hrefLang: "en", href: "https://webyar.ai/en/about" },
+      { hrefLang: "x-default", href: "https://webyar.ai/about" },
+    ]);
+    // صفحه: canonical خود صفحه مثل قبل همان مقدار ذخیره‌شده است، ولی hreflang آدرس معتبر می‌گیرد
+    const en = dto("en", "en", {
+      canonicalUrl: "/en/about-us",
+      alternateCanonicals: { en: "/en/about-us" },
+    });
+    const meta = buildPageMeta({
+      i18n: siteI18n(settings, "en", englishMessages),
+      settings,
+      path: "/about",
+      override: en,
+      fallbackTitle: "درباره ما | وب‌یار",
+      fallbackDescription: "توضیح",
+    });
+    expect(meta.links.find((link) => link.rel === "canonical")?.href).toBe("/en/about-us");
+    expect(meta.links.filter((link) => link.rel === "alternate").map((link) => link.href)).toEqual([
+      "https://webyar.ai/about",
+      "https://webyar.ai/en/about",
+      "https://webyar.ai/about",
+    ]);
+  });
+});
+
+describe("per-language noindex", () => {
+  const settings = site();
+  const meta = (override: SeoPageDto | null, locale: Locale) =>
+    buildPageMeta({
+      i18n: siteI18n(settings, locale, locale === "en" ? englishMessages : {}),
+      settings,
+      path: "/help",
+      override,
+      fallbackTitle: "راهنما | وب‌یار",
+      fallbackDescription: "توضیح",
+    });
+  const robots = (result: ReturnType<typeof meta>) =>
+    result.meta.find((entry) => "name" in entry && entry.name === "robots");
+  const alternates = (result: ReturnType<typeof meta>) =>
+    result.links.filter((link) => link.rel === "alternate");
+
+  it("collects the languages whose own row is noindex", () => {
+    const rows = [
+      dto("legacy", undefined, { robots: "noindex,follow" }),
+      dto("en", "en", { robots: "NOINDEX" }),
+      dto("tr", "tr"),
+    ];
+    expect(seoPageNoindexLocales(rows, "fa")).toEqual(["fa", "en"]);
+    // زبان پیش‌فرض انگلیسی: ردیف en صریح مقدم است و ردیف بدون زبان دیگر به کسی تعلق ندارد
+    expect(seoPageNoindexLocales(rows, "en")).toEqual(["en"]);
+    expect(seoPageNoindexLocales([dto("en", "en", { robots: "index,follow" })], "fa")).toEqual([]);
+  });
+
+  it("removes a noindex language version from every version's hreflang", async () => {
+    fake.settings = settings;
+    fake.rows = [
+      dbRow("en", "en", { path: "/help", page_key: "help@en", robots: "noindex,follow" }),
+    ];
+    const fa = await getPublicSeoPage({ data: { path: "/help", locale: null } });
+    const en = await getPublicSeoPage({ data: { path: "/help", locale: "en" } });
+    expect(fa).toMatchObject({ id: "en", locale: "en", noindexLocales: ["en"] });
+    expect(fa && "alternateCanonicals" in fa).toBe(false);
+    expect(en).toMatchObject({ id: "en", noindexLocales: ["en"] });
+    // صفحه فارسی ایندکس می‌شود ولی به نسخه noindex انگلیسی لینک نمی‌دهد
+    expect(robots(meta(fa, "fa"))).toEqual({ name: "robots", content: "index,follow" });
+    expect(alternates(meta(fa, "fa"))).toEqual([]);
+    expect(robots(meta(en, "en"))).toEqual({ name: "robots", content: "noindex,follow" });
+    expect(alternates(meta(en, "en"))).toEqual([]);
+    // بدون ردیف noindex همان hreflang دوطرفه
+    expect(alternates(meta(null, "fa")).map((link) => link.href)).toEqual([
+      "https://webyar.ai/help",
+      "https://webyar.ai/en/help",
+      "https://webyar.ai/help",
+    ]);
+  });
+
+  it("drops a noindex default-language row (legacy) from other versions' hreflang", async () => {
+    fake.settings = settings;
+    fake.rows = [dbRow("legacy", null, { path: "/help", robots: "noindex" })];
+    const en = await getPublicSeoPage({ data: { path: "/help", locale: "en" } });
+    // مسیر بدون ردیف زبان‌دار: مثل قبل یک کوئری، بدون تنظیمات و بدون فیلد اضافه
+    expect(fake.loadSettings).not.toHaveBeenCalled();
+    expect(en && "noindexLocales" in en).toBe(false);
+    expect(alternates(meta(en, "en"))).toEqual([]);
+    expect(robots(meta(en, "en"))).toEqual({ name: "robots", content: "index,follow" });
+    expect(robots(meta(en, "fa"))).toEqual({ name: "robots", content: "noindex" });
+  });
+
+  it("keeps hreflang between the versions that are still indexable", () => {
+    // نسخه ترکی noindex است؛ فارسی و انگلیسی همچنان به هم لینک می‌دهند
+    const legacy = dto("legacy", undefined, {
+      path: "/help",
+      robots: "index,follow",
+      noindexLocales: ["tr"],
+    });
+    expect(alternates(meta(legacy, "fa"))).toEqual([
+      { rel: "alternate", hrefLang: "fa", href: "https://webyar.ai/help" },
+      { rel: "alternate", hrefLang: "en", href: "https://webyar.ai/en/help" },
+      { rel: "alternate", hrefLang: "x-default", href: "https://webyar.ai/help" },
+    ]);
+    // نسخه فارسی (پیش‌فرض) noindex: فقط نسخه انگلیسی می‌ماند و hreflang ندارد
+    expect(alternates(meta({ ...legacy, noindexLocales: ["fa"] }, "en"))).toEqual([]);
   });
 });
 
@@ -315,7 +453,14 @@ describe("getPublicSeoPage", () => {
     expect(fa?.id).toBe("legacy");
     expect(fa && "locale" in fa).toBe(false);
     // زبان بدون ردیف خودش: ردیف زبان پیش‌فرض (اعمال نمی‌شود، فقط canonical برای hreflang)
-    expect((await getPublicSeoPage({ data: { path: "/about", locale: "tr" } }))?.id).toBe("legacy");
+    const tr = await getPublicSeoPage({ data: { path: "/about", locale: "tr" } });
+    expect(tr).toMatchObject({
+      id: "legacy",
+      canonicalUrl: "https://webyar.ai/about-us",
+      title: null,
+      description: null,
+    });
+    expect(fa?.title).toBe("title legacy");
     // زبان نامعتبر یا غیرفعال = زبان پیش‌فرض
     expect((await getPublicSeoPage({ data: { path: "/about", locale: "de" } }))?.id).toBe("legacy");
     fake.settings = site("fa", "single");
@@ -332,10 +477,28 @@ describe("getPublicSeoPage", () => {
         schema_json: '{"@type":"AboutPage"}',
       }),
     ];
+    fake.rows[0]!["og_image"] = "https://webyar.ai/en-og.png";
+    fake.rows[0]!["description"] = "About Webyar in English";
     const fa = await getPublicSeoPage({ data: { path: "/about", locale: null } });
     const en = await getPublicSeoPage({ data: { path: "/about", locale: "en" } });
     expect(fa?.alternateCanonicals).toEqual({ en: "https://webyar.ai/en/about-us" });
     expect(en?.alternateCanonicals).toEqual({ en: "https://webyar.ai/en/about-us" });
+    // صفحه فارسی فقط اطلاعات hreflang ردیف انگلیسی را می‌گیرد، نه عنوان و محتوای آن
+    expect(fa).toMatchObject({
+      locale: "en",
+      canonicalUrl: "https://webyar.ai/en/about-us",
+      robots: "index,follow",
+      title: null,
+      description: null,
+      ogImage: null,
+      schemaJson: null,
+    });
+    expect(en).toMatchObject({
+      title: "About Webyar",
+      description: "About Webyar in English",
+      ogImage: "https://webyar.ai/en-og.png",
+      schemaJson: '{"@type":"AboutPage"}',
+    });
     // ردیف انگلیسی روی صفحه فارسی اعمال نمی‌شود (عنوان، canonical و اسکیما)
     expect(seoOverrideFor(settings, "fa", fa)).toBeNull();
     const meta = (override: SeoPageDto | null, locale: Locale) =>

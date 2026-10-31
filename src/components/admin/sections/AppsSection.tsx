@@ -9,11 +9,12 @@ import {
   type AppDto,
   type AppInput,
   type AppLocaleOverride,
+  type AppLocaleOverrides,
   type AppStats,
 } from "@/lib/apps.functions";
 import { fetchSettings } from "@/lib/settings.functions";
 import { getActiveLocales, getDefaultLocale, type SiteSettings } from "@/lib/settings";
-import { LOCALES, LOCALE_INFO, type Locale } from "@/lib/locales";
+import { LOCALES, LOCALE_INFO, withLocalePrefix, type Locale } from "@/lib/locales";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -51,8 +52,15 @@ const hasOverride = (entry: AppLocaleOverride | undefined) =>
   !!entry && (!!entry.downloadUrl.trim() || !entry.enabled);
 
 /**
- * زبان‌هایی که برای یک برنامه فیلد جدا دارند: هر زبان فعال غیرپیش‌فرض، به‌علاوه هر زبانی که از
- * قبل مقدار ذخیره‌شده دارد (مثل نسخه انگلیسی قدیمی) تا دیده و ویرایش شود.
+ * نسخه انگلیسی قدیمی (apps_en) با معنای قبلی‌اش: لینک خالی = بدون لینک («به‌زودی») و نمایش
+ * مستقل از کلید «نمایش در سایت». تا فیلدهایش ویرایش نشود، ذخیره آن را همان‌طور نگه می‌دارد.
+ */
+const isLegacy = (entry: AppLocaleOverride | undefined) => entry?.legacy === true;
+
+/**
+ * زبان‌هایی که برای یک برنامه فیلد جدا دارند: هر زبان فعال غیرپیش‌فرض، نسخه قدیمی هر زبان
+ * فعال (حتی زبان پیش‌فرض، که صفحاتش از آن پیروی می‌کنند)، به‌علاوه هر زبانی که از قبل مقدار
+ * ذخیره‌شده دارد تا دیده و ویرایش شود.
  */
 function overrideLocales(
   settings: SiteSettings | null,
@@ -60,10 +68,12 @@ function overrideLocales(
 ): Locale[] {
   const active = settings ? getActiveLocales(settings) : [];
   const fallback = settings ? getDefaultLocale(settings) : "fa";
-  return LOCALES.filter(
-    (locale) =>
-      (active.includes(locale) && locale !== fallback) || hasOverride(locales?.[locale]),
-  );
+  return LOCALES.filter((locale) => {
+    const entry = locales?.[locale];
+    return (
+      (active.includes(locale) && (locale !== fallback || isLegacy(entry))) || hasOverride(entry)
+    );
+  });
 }
 
 export default function AppsSection() {
@@ -77,6 +87,8 @@ export default function AppsSection() {
   const [form, setForm] = useState<AppInput | null>(null);
   // زبان‌هایی که هنگام باز شدن فرم فیلد داشتند؛ با پاک کردن لینک، فیلدشان وسط ویرایش پنهان نشود
   const [pinnedLocales, setPinnedLocales] = useState<Locale[]>([]);
+  // نسخه‌های قدیمی هنگام باز شدن فرم، برای بازگرداندن اگر مدیر از تبدیلشان منصرف شود
+  const [openedLegacy, setOpenedLegacy] = useState<AppLocaleOverrides>({});
   const [busy, setBusy] = useState(false);
 
   async function load() {
@@ -132,6 +144,11 @@ export default function AppsSection() {
     setForm((f) => (f ? { ...f, [k]: v } : f));
   const openForm = (next: AppInput) => {
     setPinnedLocales(overrideLocales(settings, next.locales));
+    setOpenedLegacy(
+      Object.fromEntries(
+        Object.entries(next.locales ?? {}).filter(([, entry]) => isLegacy(entry)),
+      ) as AppLocaleOverrides,
+    );
     setForm(next);
   };
   const formLocales = form
@@ -141,12 +158,21 @@ export default function AppsSection() {
           overrideLocales(settings, form.locales).includes(locale),
       )
     : [];
+  // ویرایش نسخه قدیمی آن را به قاعده جدید تبدیل می‌کند (علامت legacy برداشته می‌شود)
   const setLocale = (locale: Locale, patch: Partial<AppLocaleOverride>) =>
     setForm((f) => {
       if (!f) return f;
-      const current = f.locales?.[locale] ?? NO_OVERRIDE;
+      const { legacy: _legacy, ...current } = f.locales?.[locale] ?? NO_OVERRIDE;
       return { ...f, locales: { ...f.locales, [locale]: { ...current, ...patch } } };
     });
+  const restoreLegacy = (locale: Locale) =>
+    setForm((f) => {
+      const entry = openedLegacy[locale];
+      return f && entry ? { ...f, locales: { ...f.locales, [locale]: entry } } : f;
+    });
+  /** صفحه فهرست دانلود یک زبان (برای توضیح نسخه قدیمی) */
+  const downloadPath = (locale: Locale) =>
+    withLocalePrefix("/download", locale === defaultLocale ? null : locale);
 
   return (
     <div className="space-y-6">
@@ -226,6 +252,21 @@ export default function AppsSection() {
                         خاموش در {LOCALE_INFO[locale].adminName}
                       </span>
                     ))}
+                  {/* نسخه قدیمی روشن، برنامه خاموش در جدول را در همان زبان نمایش می‌دهد */}
+                  {!a.enabled &&
+                    overrideLocales(settings, a.locales)
+                      .filter((locale) => {
+                        const entry = a.locales?.[locale];
+                        return isLegacy(entry) && entry?.enabled && activeLocales.includes(locale);
+                      })
+                      .map((locale) => (
+                        <span
+                          key={`shown-${locale}`}
+                          className="rounded bg-muted px-1.5 text-xs text-muted-foreground"
+                        >
+                          نمایش در {LOCALE_INFO[locale].adminName}
+                        </span>
+                      ))}
                 </div>
                 <div className="text-xs text-muted-foreground">
                   {PLATFORM_LABEL[a.platform]} · نسخه {a.version || "—"}
@@ -233,16 +274,21 @@ export default function AppsSection() {
                 <div dir="ltr" className="mt-1 truncate text-start text-xs text-muted-foreground">
                   {a.downloadUrl || "لینک تنظیم نشده"}
                 </div>
-                {overrideLocales(settings, a.locales).map((locale) => (
-                  <div
-                    key={locale}
-                    dir="ltr"
-                    className="truncate text-start text-xs text-muted-foreground"
-                  >
-                    {locale.toUpperCase()}:{" "}
-                    {a.locales?.[locale]?.downloadUrl || "همان لینک زبان پیش‌فرض"}
-                  </div>
-                ))}
+                {overrideLocales(settings, a.locales).map((locale) => {
+                  const entry = a.locales?.[locale];
+                  return (
+                    <div
+                      key={locale}
+                      dir="ltr"
+                      className="truncate text-start text-xs text-muted-foreground"
+                    >
+                      {locale.toUpperCase()}:{" "}
+                      {entry?.downloadUrl ||
+                        (isLegacy(entry) ? "بدون لینک («به‌زودی»)" : "همان لینک زبان پیش‌فرض")}
+                      {isLegacy(entry) && " · تنظیم قدیمی"}
+                    </div>
+                  );
+                })}
                 <div className="mt-3 flex gap-2">
                   <Button
                     size="sm"
@@ -299,6 +345,9 @@ export default function AppsSection() {
             </div>
             {formLocales.map((locale) => {
               const entry = form.locales?.[locale] ?? NO_OVERRIDE;
+              const legacy = isLegacy(entry);
+              const converted = !legacy && isLegacy(openedLegacy[locale]);
+              const name = LOCALE_INFO[locale].adminName;
               return (
                 <div
                   key={locale}
@@ -309,18 +358,45 @@ export default function AppsSection() {
                     dir="ltr"
                     value={entry.downloadUrl}
                     onChange={(e) => setLocale(locale, { downloadUrl: e.target.value })}
-                    placeholder={form.downloadUrl || "https://..."}
+                    placeholder={legacy ? "https://..." : form.downloadUrl || "https://..."}
                   />
                   <p className="text-xs text-muted-foreground">
-                    خالی بماند، همان لینک بالا (زبان پیش‌فرض) استفاده می‌شود.
+                    {legacy
+                      ? "خالی بماند، برنامه در این نسخه لینک ندارد و «به‌زودی» نمایش داده می‌شود."
+                      : "خالی بماند، همان لینک بالا (زبان پیش‌فرض) استفاده می‌شود."}
                   </p>
                   <div className="flex items-center gap-3">
                     <Switch
                       checked={entry.enabled}
                       onCheckedChange={(v) => setLocale(locale, { enabled: v })}
                     />
-                    <Label>نمایش در نسخه {LOCALE_INFO[locale].adminName}</Label>
+                    <Label>نمایش در نسخه {name}</Label>
                   </div>
+                  {legacy && (
+                    <p className="rounded-md bg-muted p-2 text-xs text-muted-foreground">
+                      تنظیم قدیمی {name}: لینک خالی یعنی بدون لینک، و نمایش در صفحات{" "}
+                      <bdi dir="ltr">{downloadPath(locale)}</bdi> فقط به همین کلید بسته است، نه به
+                      «نمایش در سایت (همه زبان‌ها)». ذخیره بقیه فیلدها آن را تغییر نمی‌دهد؛ ویرایش
+                      لینک یا کلید این بخش آن را به قاعده جدید تبدیل می‌کند.
+                    </p>
+                  )}
+                  {converted && (
+                    <div className="flex flex-wrap items-center gap-2 rounded-md bg-muted p-2 text-xs text-muted-foreground">
+                      <span>
+                        با ذخیره، تنظیم قدیمی {name} به قاعده جدید تبدیل می‌شود: لینک خالی یعنی همان
+                        لینک زبان پیش‌فرض، و خاموش کردن «نمایش در سایت (همه زبان‌ها)» برنامه را در{" "}
+                        <bdi dir="ltr">{downloadPath(locale)}</bdi> هم پنهان می‌کند.
+                      </span>
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        onClick={() => restoreLegacy(locale)}
+                      >
+                        بازگرداندن تنظیم قدیمی
+                      </Button>
+                    </div>
+                  )}
                 </div>
               );
             })}
