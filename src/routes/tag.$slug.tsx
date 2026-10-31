@@ -1,8 +1,12 @@
 import {
+  useSiteI18n,
   useSiteLocale,
   useSiteTranslation,
 } from "@/components/site/SiteLanguage";
-import { createFileRoute, Link, notFound } from "@tanstack/react-router";
+import { i18nFromMatches } from "@/lib/site-i18n";
+import { isBlogAvailable, resolvePageLocale } from "@/lib/settings";
+import { persianBlogPath } from "@/lib/locale-routing";
+import { createFileRoute, Link, notFound, redirect } from "@tanstack/react-router";
 import { motion } from "framer-motion";
 import {
   Calendar,
@@ -15,26 +19,34 @@ import { getPublicSeoPage } from "@/lib/seo.functions";
 import {
   buildPageMeta,
   buildBreadcrumbJsonLd,
+  localizedUrl,
   safeJsonLdHtml,
 } from "@/lib/seo-meta";
 import { listPublishedPosts } from "@/lib/blog.functions";
 import { SiteLayout } from "@/components/site/SiteLayout";
 
 export const Route = createFileRoute("/tag/$slug")({
-  loader: async ({ params }) => {
+  loader: async ({ params, context, location }) => {
     const [settings, posts, seoOverride] = await Promise.all([
       fetchSettings(),
       listPublishedPosts({ data: { tagSlug: params.slug } }),
       getPublicSeoPage({ data: { path: `/tag/${params.slug}` } }),
     ]);
+    // در سایت چندزبانه بلاگ فقط فارسی است (ناوبری سمت مرورگر؛ درخواست مستقیم را server.ts ریدایرکت می‌کند)
+    if (!isBlogAvailable(settings, resolvePageLocale(settings, context.urlLocale)))
+      throw redirect({
+        href: persianBlogPath(settings, location.pathname) + location.searchStr,
+        reloadDocument: true,
+      });
     // برچسبی که هیچ مقاله‌ای ندارد نباید صفحه‌ی خالی با کد ۲۰۰ برگرداند (soft 404) —
     // چنین صفحه‌ای واقعاً وجود ندارد، پس باید ۴۰۴ واقعی بدهد.
     if (posts.length === 0) throw notFound();
     return { settings, posts, slug: params.slug, seoOverride };
   },
-  head: ({ params, loaderData }) => {
+  head: ({ params, loaderData, matches, match }) => {
     if (!loaderData) return {};
     return buildPageMeta({
+      i18n: i18nFromMatches(matches, match, loaderData),
       settings: loaderData.settings,
       path: `/tag/${params.slug}`,
       override: loaderData.seoOverride,
@@ -52,26 +64,26 @@ export const Route = createFileRoute("/tag/$slug")({
 function TagPage() {
   const translateText = useSiteTranslation();
   const locale = useSiteLocale();
+  const i18n = useSiteI18n();
 
   const { settings, posts, slug } = Route.useLoaderData();
-  const base = (settings.brand.siteUrl || "").replace(/\/$/, "");
   const jsonLd = [
     {
       "@context": "https://schema.org",
       "@type": "CollectionPage",
       name: `برچسب: ${slug}`,
-      url: base ? `${base}/tag/${slug}` : undefined,
+      url: localizedUrl(settings, i18n.locale, `/tag/${slug}`),
       mainEntity: {
         "@type": "ItemList",
         itemListElement: posts.slice(0, 20).map((p, i) => ({
           "@type": "ListItem",
           position: i + 1,
-          url: base ? `${base}/blog/${p.slug}` : undefined,
+          url: localizedUrl(settings, i18n.locale, `/blog/${p.slug}`),
           name: p.title,
         })),
       },
     },
-    buildBreadcrumbJsonLd(settings, [
+    buildBreadcrumbJsonLd(i18n, settings, [
       { name: "خانه", path: "/" },
       { name: "بلاگ", path: "/blog" },
       { name: slug, path: `/tag/${slug}` },

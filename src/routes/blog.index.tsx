@@ -1,8 +1,12 @@
 import {
+  useSiteI18n,
   useSiteLocale,
   useSiteTranslation,
 } from "@/components/site/SiteLanguage";
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { i18nFromMatches } from "@/lib/site-i18n";
+import { isBlogAvailable, resolvePageLocale } from "@/lib/settings";
+import { persianBlogPath } from "@/lib/locale-routing";
+import { createFileRoute, Link, useNavigate, redirect } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { z } from "zod";
 import { motion } from "framer-motion";
@@ -12,6 +16,7 @@ import { getPublicSeoPage } from "@/lib/seo.functions";
 import {
   buildPageMeta,
   buildBreadcrumbJsonLd,
+  localizedUrl,
   safeJsonLdHtml,
 } from "@/lib/seo-meta";
 import { listPublishedPostsPage, listCategories } from "@/lib/blog.functions";
@@ -33,7 +38,7 @@ export const Route = createFileRoute("/blog/")({
     category: search.category,
     q: search.q,
   }),
-  loader: async ({ deps }) => {
+  loader: async ({ deps, context, location }) => {
     const [settings, page, categories, seoOverride] = await Promise.all([
       fetchSettings(),
       listPublishedPostsPage({
@@ -42,6 +47,12 @@ export const Route = createFileRoute("/blog/")({
       listCategories(),
       getPublicSeoPage({ data: { path: "/blog" } }),
     ]);
+    // در سایت چندزبانه بلاگ فقط فارسی است (ناوبری سمت مرورگر؛ درخواست مستقیم را server.ts ریدایرکت می‌کند)
+    if (!isBlogAvailable(settings, resolvePageLocale(settings, context.urlLocale)))
+      throw redirect({
+        href: persianBlogPath(settings, location.pathname) + location.searchStr,
+        reloadDocument: true,
+      });
     return {
       settings,
       page,
@@ -51,7 +62,7 @@ export const Route = createFileRoute("/blog/")({
       q: deps.q,
     };
   },
-  head: ({ loaderData }) => {
+  head: ({ loaderData, matches, match }) => {
     if (!loaderData) return {};
     const { settings, seoOverride, page, category, q } = loaderData;
     // صفحات بعدی/فیلترشده باید به آدرس واقعی خودشان کنونیکال شوند، نه صفحه‌ی اول؛
@@ -62,6 +73,7 @@ export const Route = createFileRoute("/blog/")({
     const qs = params.toString();
     const path = qs ? `/blog?${qs}` : "/blog";
     return buildPageMeta({
+      i18n: i18nFromMatches(matches, match, loaderData),
       settings,
       path,
       override: seoOverride,
@@ -78,6 +90,7 @@ export const Route = createFileRoute("/blog/")({
 function BlogIndexPage() {
   const translateText = useSiteTranslation();
   const locale = useSiteLocale();
+  const i18n = useSiteI18n();
 
   const { settings, page, categories } = Route.useLoaderData();
   const search = Route.useSearch();
@@ -105,21 +118,20 @@ function BlogIndexPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchInput]);
 
-  const base = (settings.brand.siteUrl || "").replace(/\/$/, "");
   const jsonLd = [
     {
       "@context": "https://schema.org",
       "@type": "Blog",
       name: `بلاگ ${settings.brand.name}`,
-      url: base ? `${base}/blog` : undefined,
+      url: localizedUrl(settings, i18n.locale, "/blog"),
       blogPost: posts.map((p) => ({
         "@type": "BlogPosting",
         headline: p.title,
-        url: base ? `${base}/blog/${p.slug}` : undefined,
+        url: localizedUrl(settings, i18n.locale, `/blog/${p.slug}`),
         datePublished: p.publishedAt || p.createdAt,
       })),
     },
-    buildBreadcrumbJsonLd(settings, [
+    buildBreadcrumbJsonLd(i18n, settings, [
       { name: "خانه", path: "/" },
       { name: "بلاگ", path: "/blog" },
     ]),

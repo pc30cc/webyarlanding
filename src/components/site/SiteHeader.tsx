@@ -1,4 +1,4 @@
-import { useSiteTranslation } from "@/components/site/SiteLanguage";
+import { useSiteTranslation, useLocalizeHref, useSiteLanguage } from "@/components/site/SiteLanguage";
 import { useState } from "react";
 import { Link, getRouteApi, useRouterState } from "@tanstack/react-router";
 import { motion, AnimatePresence } from "framer-motion";
@@ -8,7 +8,7 @@ import { MegaMenu } from "@/components/site/MegaMenu";
 import { getIcon } from "@/lib/icon-registry";
 import { useAppSession } from "@/lib/useAppSession";
 import type { CatalogCategoryDto } from "@/lib/catalog.functions";
-import { getBrandNameEn, type SiteSettings } from "@/lib/settings";
+import { isBlogAvailable, getBrandNameEn, type SiteSettings } from "@/lib/settings";
 
 const rootRoute = getRouteApi("__root__");
 
@@ -29,6 +29,7 @@ export function SiteHeader({
   english?: boolean;
 }) {
   const translateText = useSiteTranslation();
+  const localizeHref = useLocalizeHref();
 
   const [open, setOpen] = useState(false);
   const [mobileExpanded, setMobileExpanded] = useState<string | null>(null);
@@ -62,7 +63,9 @@ export function SiteHeader({
     void session.logout();
   };
 
-  const NAV_LINKS: NavLink[] = english
+  // در سایت چندزبانه بلاگ فقط در نسخه فارسی است
+  const blogAvailable = isBlogAvailable(settings, useSiteLanguage());
+  const allNavLinks: NavLink[] = english
     ? [
         {
           type: "mega",
@@ -99,6 +102,7 @@ export function SiteHeader({
         { type: "link", to: "/blog", label: "بلاگ" },
         { type: "link", to: "/download", label: "دانلود برنامه" },
       ];
+  const NAV_LINKS = allNavLinks.filter((link) => blogAvailable || link.to !== "/blog");
 
   return (
     <motion.header
@@ -159,7 +163,7 @@ export function SiteHeader({
                 {translateText(welcomeText)}
               </span>
               {auth.panelUrl && (
-                <a href={auth.panelUrl}>
+                <a href={localizeHref(auth.panelUrl)}>
                   <Button className="h-10 px-5 text-sm font-medium shadow-sm shadow-primary/20">
                     {translateText(label.panel)}
                   </Button>
@@ -178,7 +182,7 @@ export function SiteHeader({
           {auth.enabled && !isLoggedIn && (
             <div className="hidden sm:flex items-center gap-2">
               {auth.loginUrl && (
-                <a href={auth.loginUrl}>
+                <a href={localizeHref(auth.loginUrl)}>
                   <Button
                     variant="ghost"
                     className="h-10 px-4 text-sm font-medium"
@@ -188,7 +192,7 @@ export function SiteHeader({
                 </a>
               )}
               {auth.signupUrl && (
-                <a href={auth.signupUrl}>
+                <a href={localizeHref(auth.signupUrl)}>
                   <Button className="h-10 px-5 text-sm font-medium btn-shimmer">
                     {translateText(label.signup)}
                   </Button>
@@ -304,7 +308,7 @@ export function SiteHeader({
                     {translateText(welcomeText)}
                   </p>
                   {auth.panelUrl && (
-                    <a href={auth.panelUrl} className="block">
+                    <a href={localizeHref(auth.panelUrl)} className="block">
                       <Button className="h-10 w-full">
                         {translateText(label.panel)}
                       </Button>
@@ -323,14 +327,14 @@ export function SiteHeader({
               {auth.enabled && !isLoggedIn && (
                 <div className="mt-3 space-y-2 border-t border-border pt-3">
                   {auth.signupUrl && (
-                    <a href={auth.signupUrl} className="block">
+                    <a href={localizeHref(auth.signupUrl)} className="block">
                       <Button className="h-10 w-full">
                         {translateText(label.signup)}
                       </Button>
                     </a>
                   )}
                   {auth.loginUrl && (
-                    <a href={auth.loginUrl} className="block">
+                    <a href={localizeHref(auth.loginUrl)} className="block">
                       <Button variant="outline" className="h-10 w-full">
                         {translateText(label.login)}
                       </Button>

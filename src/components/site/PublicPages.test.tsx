@@ -4,6 +4,8 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import type { ComponentType, ReactNode } from "react";
 import { SiteLanguageProvider } from "./SiteLanguage";
 import { DEFAULT_SETTINGS } from "@/lib/settings";
+import type { Locale } from "@/lib/locales";
+import englishMessages from "@/lib/site-translations.en.json";
 
 const state = vi.hoisted(() => ({
   data: {} as Record<string, unknown>,
@@ -104,7 +106,11 @@ const routes = [
 type RouteEntry = (typeof routes)[number];
 
 /** Server-renders one public route component with the test fixtures. */
-function renderRoute([path, route]: RouteEntry, language: "fa" | "en") {
+function renderRoute(
+  [path, route]: RouteEntry,
+  language: Locale,
+  data: Record<string, unknown> = {},
+) {
   const settings = structuredClone(DEFAULT_SETTINGS);
   settings.localization.language = language;
   settings.brand.legalEnglishChrome = false;
@@ -149,11 +155,15 @@ function renderRoute([path, route]: RouteEntry, language: "fa" | "en") {
     updatedAt: "2026-10-04T00:00:00Z",
     coverImage: "",
   };
+  // دیکشنری همان زبان، مثل loader ریشه (فقط انگلیسی دیکشنری داخلی دارد)
+  const messages: Record<string, string> = language === "en" ? englishMessages : {};
   state.pathname = path;
   state.data["root"] = {
     settings,
     productCatalog: [],
     solutionCatalog: [],
+    locale: language,
+    messages,
   };
   state.data[path] = {
     settings,
@@ -166,6 +176,7 @@ function renderRoute([path, route]: RouteEntry, language: "fa" | "en") {
     categoryTitle: "محصولات",
     related: [],
     remotePlans: null,
+    ...data,
     page: { posts: [post], page: 1, total: 1, pageSize: 9 },
     post,
     posts: [post],
@@ -174,7 +185,7 @@ function renderRoute([path, route]: RouteEntry, language: "fa" | "en") {
   const Component = route.options.component as ComponentType;
   const html = renderToStaticMarkup(
     <QueryClientProvider client={new QueryClient()}>
-      <SiteLanguageProvider settings={settings}>
+      <SiteLanguageProvider settings={settings} locale={language} messages={messages}>
         <Component />
       </SiteLanguageProvider>
     </QueryClientProvider>,
@@ -182,7 +193,7 @@ function renderRoute([path, route]: RouteEntry, language: "fa" | "en") {
   const container = document.createElement("div");
   container.innerHTML = html;
   container.querySelectorAll("script,style").forEach((node) => node.remove());
-  return { container, post };
+  return { container, post, html };
 }
 
 describe("public pages in English", () => {
@@ -223,6 +234,7 @@ describe("public pages in English", () => {
         }
       }
       expect(container.querySelector(".site-theme")?.getAttribute("dir")).toBe("ltr");
+      expect(container.querySelector(".site-theme")?.getAttribute("lang")).toBe("en");
     });
   }
 });
@@ -232,6 +244,91 @@ describe("public pages in Persian", () => {
     it("keeps the Persian design for " + entry[0], () => {
       const { container } = renderRoute(entry, "fa");
       expect(container.querySelector(".site-theme")?.getAttribute("dir")).toBe("rtl");
+      expect(container.querySelector(".site-theme")?.getAttribute("lang")).toBe("fa");
     });
   }
+});
+
+describe("public pages in other languages", () => {
+  for (const [locale, dir] of [
+    ["tr", "ltr"],
+    ["ar", "rtl"],
+  ] as const) {
+    for (const entry of routes) {
+      it("uses the " + locale + " direction for " + entry[0], () => {
+        const { container } = renderRoute(entry, locale);
+        // صفحات حقوقی تا آماده شدن متن ترکی/عربی متن انگلیسی (چپ‌به‌راست) دارند
+        const legal = ["/help", "/terms", "/privacy"].includes(entry[0]);
+        expect(container.querySelector(".site-theme")?.getAttribute("dir")).toBe(
+          legal ? "ltr" : dir,
+        );
+        expect(container.querySelector(".site-theme")?.getAttribute("lang")).toBe(
+          legal ? "en" : locale,
+        );
+      });
+    }
+  }
+});
+
+describe("pricing with plans from the app API", () => {
+  const plan = (slug: string, extra: Record<string, unknown>) => ({
+    slug,
+    name: slug,
+    description: "",
+    isFree: false,
+    monthly: null,
+    yearly: null,
+    usdMonthly: null,
+    usdYearly: null,
+    features: [],
+    limits: [],
+    popular: false,
+    ...extra,
+  });
+  const remotePlans = {
+    plans: [
+      plan("free", { isFree: true, monthly: 0, yearly: 0, usdMonthly: 0, usdYearly: 0 }),
+      plan("pro", { monthly: 399000, yearly: 3990000, usdMonthly: 29, usdYearly: 290 }),
+      // قیمت اعلام نشده: «تماس بگیرید»، نه رایگان
+      plan("enterprise", {}),
+    ],
+    comparison: { columns: [], rows: [] },
+  };
+  const pricing = routes.find(([path]) => path === "/pricing")!;
+  const offers = (html: string) =>
+    [...html.matchAll(/"price":"([0-9.]+)","priceCurrency":"([A-Z]+)"/g)].map((m) => [m[1], m[2]]);
+
+  it("shows toman on the Persian site and keeps unannounced prices as contact", () => {
+    const { container } = renderRoute(pricing, "fa", { remotePlans });
+    const text = container.textContent ?? "";
+    expect(text).toContain("۳۹۹٬۰۰۰");
+    expect(text).toContain("تومان / ماه");
+    expect(text).toContain("تماس بگیرید");
+    expect(text).not.toContain("$");
+  });
+
+  it("shows dollars in every other language", () => {
+    for (const locale of ["en", "tr", "ar"] as const) {
+      const { container } = renderRoute(pricing, locale, { remotePlans });
+      const text = container.textContent ?? "";
+      expect(text, locale).toContain("$29");
+      expect(text, locale).not.toContain("399");
+    }
+    const { container } = renderRoute(pricing, "en", { remotePlans });
+    expect(container.textContent).toContain("Contact us");
+  });
+
+  it("uses the page currency in the offers structured data", () => {
+    const fa = renderRoute(pricing, "fa", { remotePlans });
+    const en = renderRoute(pricing, "en", { remotePlans });
+    // JSON-LD scripts are removed from container; read them from the raw markup instead
+    expect(offers(fa.html)).toEqual([
+      ["0", "IRR"],
+      ["3990000", "IRR"],
+    ]);
+    expect(offers(en.html)).toEqual([
+      ["0", "USD"],
+      ["29", "USD"],
+    ]);
+  });
 });

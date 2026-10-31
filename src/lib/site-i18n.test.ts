@@ -3,9 +3,10 @@ import {
   createSiteTranslator,
   getSiteLanguage,
   localizeStructuredData,
-  translatorForSettings,
+  siteI18n,
 } from "./site-i18n";
-import { DEFAULT_SETTINGS, isEnglishChrome, mergeSettings } from "./settings";
+import messages from "./site-translations.en.json";
+import { DEFAULT_SETTINGS, isEnglishChrome, mergeSettings, resolvePageLocale } from "./settings";
 import { buildPageMeta } from "./seo-meta";
 
 describe("site language", () => {
@@ -31,6 +32,8 @@ describe("site language", () => {
     const settings = structuredClone(DEFAULT_SETTINGS);
     settings.localization.language = "en";
     settings.brand.legalEnglishChrome = false;
+    // آدرس بدون پیشوند در سایتی که زبان پیش‌فرضش انگلیسی است
+    const locale = resolvePageLocale(settings, null);
     for (const path of [
       "/",
       "/about",
@@ -45,30 +48,31 @@ describe("site language", () => {
       "/privacy",
       "/help",
     ]) {
-      expect(isEnglishChrome(settings, path)).toBe(true);
+      expect(isEnglishChrome(settings, locale, path)).toBe(true);
     }
   });
   it("preserves the separate legacy legal-page setting in Persian mode", () => {
-    expect(isEnglishChrome(DEFAULT_SETTINGS, "/terms/")).toBe(true);
-    expect(isEnglishChrome(DEFAULT_SETTINGS, "/about")).toBe(false);
+    expect(isEnglishChrome(DEFAULT_SETTINGS, "fa", "/terms/")).toBe(true);
+    expect(isEnglishChrome(DEFAULT_SETTINGS, "fa", "/about")).toBe(false);
     expect(
       isEnglishChrome(
         {
           ...DEFAULT_SETTINGS,
           brand: { ...DEFAULT_SETTINGS.brand, legalEnglishChrome: false },
         },
+        "fa",
         "/terms",
       ),
     ).toBe(false);
   });
   it("does not mutate source content when switching back", () => {
     const source = "چت زنده";
-    expect(createSiteTranslator("en")(source)).toBe("Live chat");
+    expect(createSiteTranslator("en", messages)(source)).toBe("Live chat");
     expect(createSiteTranslator("fa")(source)).toBe(source);
     expect(DEFAULT_SETTINGS.localization.language).toBe("fa");
   });
   it("translates interpolation and generated lists", () => {
-    const t = createSiteTranslator("en");
+    const t = createSiteTranslator("en", messages);
     expect(t("بلاگ، صفحه ۲ | وب‌یار")).toBe("Blog, page 2 | Webyar");
     expect(t("مجموع سالانه ۴۹۰٬۰۰۰ تومان")).toBe("Annual total: 490,000 Toman");
     expect(t("چت زنده، ایجنت هوش مصنوعی و پایگاه دانش")).toBe(
@@ -76,7 +80,7 @@ describe("site language", () => {
     );
   });
   it("preserves spaces between text and inline elements", () => {
-    const t = createSiteTranslator("en");
+    const t = createSiteTranslator("en", messages);
     expect(t("داستان ")).toBe("Our story ");
     expect(t(" داستان")).toBe(" Our story");
     expect(t("داستان")).toBe("Our story");
@@ -89,10 +93,11 @@ describe("site language", () => {
     };
     settings.brand.name = "نام ویژه";
     settings.brand.nameEn = "Example Brand";
-    const t = translatorForSettings(settings);
+    const i18n = siteI18n(settings, resolvePageLocale(settings, null), messages);
+    const t = i18n.translate;
     expect(t("متن سفارشی")).toBe("Custom content");
     expect(t("نام ویژه")).toBe("Example Brand");
-    const schema = localizeStructuredData(settings, {
+    const schema = localizeStructuredData(i18n, {
       name: "متن سفارشی",
       url: "/blog/متن-سفارشی",
       inLanguage: "fa-IR",
@@ -109,6 +114,7 @@ describe("site language", () => {
     const settings = structuredClone(DEFAULT_SETTINGS);
     settings.localization.language = "en";
     const meta = buildPageMeta({
+      i18n: siteI18n(settings, resolvePageLocale(settings, null), messages),
       settings,
       path: "/about",
       override: null,
@@ -128,11 +134,11 @@ describe("site language", () => {
   });
   it("leaves arbitrary article content intact until its translation is provided", () => {
     const source = "مقاله جدید با محتوای اختصاصی";
-    expect(createSiteTranslator("en")(source)).toBe(source);
+    expect(createSiteTranslator("en", messages)(source)).toBe(source);
     expect(
-      createSiteTranslator("en", { [source]: "A newly translated article" })(
-        source,
-      ),
+      createSiteTranslator("en", messages, {
+        [source]: "A newly translated article",
+      })(source),
     ).toBe("A newly translated article");
   });
 });

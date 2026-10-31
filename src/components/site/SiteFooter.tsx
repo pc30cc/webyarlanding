@@ -1,11 +1,7 @@
 import { TrustBadge } from "./TrustBadge";
-import { useSiteTranslation } from "@/components/site/SiteLanguage";
+import { useSiteTranslation, useSiteLanguage } from "@/components/site/SiteLanguage";
 import { Link, useRouterState } from "@tanstack/react-router";
-import {
-  getBrandNameEn,
-  getPublicTagline,
-  type SiteSettings,
-} from "@/lib/settings";
+import { isBlogAvailable, getBrandNameEn, getPublicTagline, type SiteSettings } from "@/lib/settings";
 
 /** نماد اعتماد بعد از بارگذاری بقیه صفحه تزریق می‌شود تا تصویر کند اینماد
  *  جلوی بارگذاری ابزارک‌ها و رویداد load صفحه را نگیرد. کد اینماد بدون تغییر می‌ماند. */
@@ -53,6 +49,7 @@ export function SiteFooter({
   english?: boolean;
 }) {
   const translateText = useSiteTranslation();
+  const locale = useSiteLanguage();
 
   const t = english ? EN : FA;
   const pathname = useRouterState({ select: (s) => s.location.pathname });
@@ -131,12 +128,14 @@ export function SiteFooter({
               >
                 {translateText(t.about)}
               </Link>
-              <Link
-                to="/blog"
-                className="block transition-colors hover:text-foreground"
-              >
-                {translateText(t.blog)}
-              </Link>
+              {isBlogAvailable(settings, locale) && (
+                <Link
+                  to="/blog"
+                  className="block transition-colors hover:text-foreground"
+                >
+                  {translateText(t.blog)}
+                </Link>
+              )}
               <Link
                 to="/contact"
                 className="block transition-colors hover:text-foreground"

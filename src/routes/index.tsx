@@ -1,6 +1,6 @@
-import { getSiteLanguage } from "@/lib/site-i18n";
+import { i18nFromMatches, siteI18n } from "@/lib/site-i18n";
 import { localizeStructuredData } from "@/lib/site-i18n";
-import { useSiteTranslation } from "@/components/site/SiteLanguage";
+import { useSiteI18n, useSiteTranslation, useLocalizeHref } from "@/components/site/SiteLanguage";
 import operatorAvatar from "@/assets/operator-avatar.jpg";
 import { LoopVideo } from "@/components/site/LoopVideo";
 import { createFileRoute, Link } from "@tanstack/react-router";
@@ -30,7 +30,8 @@ import {
   ShieldCheck,
 } from "lucide-react";
 import { fetchSettings } from "@/lib/settings.functions";
-import { joinFa, mergeSettings } from "@/lib/settings";
+import { getDefaultLocale, joinFa, mergeSettings } from "@/lib/settings";
+import { LOCALE_INFO } from "@/lib/locales";
 import { getPublicSeoPage } from "@/lib/seo.functions";
 import { buildPageMeta, parseSchemaJson, safeJsonLdHtml } from "@/lib/seo-meta";
 import { SiteLayout } from "@/components/site/SiteLayout";
@@ -86,10 +87,14 @@ export const Route = createFileRoute("/")({
     ]);
     return { settings, seoOverride, apps };
   },
-  head: ({ loaderData }) => {
+  head: ({ loaderData, matches, match }) => {
     if (!loaderData) return {};
+    const i18n =
+      i18nFromMatches(matches, match, loaderData) ??
+      siteI18n(loaderData.settings, getDefaultLocale(loaderData.settings));
     const callEnabled = loaderData.settings.videoCall.enabled;
     const meta = buildPageMeta({
+      i18n,
       settings: loaderData.settings,
       path: "/",
       override: loaderData.seoOverride,
@@ -117,13 +122,13 @@ export const Route = createFileRoute("/")({
       ...meta,
       scripts: [
         ...((meta as { scripts?: unknown[] }).scripts ?? []),
-        // ویدیوی تماس تصویری فقط وقتی تماس تصویری روشن است و در سایت فارسی
-        ...(callEnabled && getSiteLanguage(loaderData.settings) !== "en"
+        // ویدیوی تماس تصویری فقط وقتی تماس تصویری روشن است و در صفحه فارسی
+        ...(callEnabled && i18n.locale === "fa"
           ? [
               {
                 type: "application/ld+json",
                 children: safeJsonLdHtml(
-                  localizeStructuredData(loaderData.settings, videoLd),
+                  localizeStructuredData(i18n, videoLd),
                 ).__html,
               },
             ]
@@ -481,7 +486,9 @@ function OperatorAvatar({ className }: { className?: string }) {
 
 function IndexPage() {
   const translateText = useSiteTranslation();
+  const localizeHref = useLocalizeHref();
 
+  const i18n = useSiteI18n();
   const { settings, seoOverride, apps } = Route.useLoaderData();
   const callEnabled = settings.videoCall.enabled;
   const aiEnabled = settings.aiMarketing.enabled;
@@ -520,7 +527,13 @@ function IndexPage() {
         "سئو",
       )}، همه در وب‌یار`,
       offers: [
-        { "@type": "Offer", price: "0", priceCurrency: "IRR", name: "شروع" },
+        {
+          "@type": "Offer",
+          price: "0",
+          // سایت فارسی به ریال، زبان‌های دیگر به دلار (همان ارز صفحه قیمت‌ها)
+          priceCurrency: LOCALE_INFO[i18n.locale].currency === "USD" ? "USD" : "IRR",
+          name: "شروع",
+        },
       ],
     },
     // بازتاب همان سوالات و پاسخ‌های واقعی که در بخش FAQ همین صفحه نمایش داده می‌شود
@@ -534,14 +547,17 @@ function IndexPage() {
       })),
     },
   ];
-  const jsonLd = parseSchemaJson(seoOverride?.schemaJson) ?? defaultJsonLd;
+  // schema اختصاصی صفحه (seo_pages) برای زبان پیش‌فرض نوشته شده است
+  const schemaOverride =
+    i18n.locale === getDefaultLocale(settings) ? seoOverride?.schemaJson : null;
+  const jsonLd = parseSchemaJson(schemaOverride) ?? defaultJsonLd;
 
   return (
     <SiteLayout settings={settings}>
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={safeJsonLdHtml(
-          localizeStructuredData(settings, jsonLd),
+          localizeStructuredData(i18n, jsonLd),
         )}
       />
 
@@ -596,7 +612,7 @@ function IndexPage() {
 
             <div className="flex flex-wrap items-center justify-center gap-4 lg:justify-start">
               <a
-                href={settings.auth.signupUrl || "/contact"}
+                href={localizeHref(settings.auth.signupUrl || "/contact")}
                 className="btn-shimmer inline-flex min-h-[52px] items-center gap-2 rounded-2xl px-8 py-4 text-base font-bold"
               >
                 {translateText("رایگان شروع کنید")}
@@ -1080,7 +1096,7 @@ function IndexPage() {
             {translateText("، همه از یک پنل")}
           </p>
           <a
-            href={settings.auth.signupUrl || "/contact"}
+            href={localizeHref(settings.auth.signupUrl || "/contact")}
             className="relative inline-block rounded-xl bg-card px-9 py-4 text-base font-bold text-primary"
           >
             {translateText(settings.auth.signupLabel || "شروع رایگان")}

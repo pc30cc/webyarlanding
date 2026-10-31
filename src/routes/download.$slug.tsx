@@ -1,13 +1,14 @@
-import { getSiteLanguage } from "@/lib/site-i18n";
-import { localizeStructuredData } from "@/lib/site-i18n";
+import { i18nFromMatches, localizeStructuredData } from "@/lib/site-i18n";
 import {
+  useSiteDir,
+  useSiteI18n,
   useSiteTranslation,
-  useSiteLocale,
 } from "@/components/site/SiteLanguage";
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { motion } from "framer-motion";
 import { Check, ChevronLeft, HardDrive, Smartphone, Tag } from "lucide-react";
 import { fetchSettings } from "@/lib/settings.functions";
+import { resolvePageLocale } from "@/lib/settings";
 import { getPublicApp, getPublicApps } from "@/lib/apps.functions";
 import {
   buildPageMeta,
@@ -29,18 +30,21 @@ import {
 } from "@/components/site/devices";
 
 export const Route = createFileRoute("/download/$slug")({
-  loader: async ({ params }) => {
+  loader: async ({ params, context }) => {
     const [settings, app, apps] = await Promise.all([
       fetchSettings(),
       getPublicApp({ data: { slug: params.slug } }),
       getPublicApps(),
     ]);
-    if (!app) throw notFound({ data: { language: getSiteLanguage(settings) } });
+    if (!app)
+      throw notFound({
+        data: { language: resolvePageLocale(settings, context.urlLocale) },
+      });
     return { settings, app, others: apps.filter((a) => a.id !== app.id) };
   },
-  head: ({ loaderData, match }) => {
+  head: ({ loaderData, match, matches }) => {
     if (!loaderData) {
-      // notFound() carries the site language so the title matches the page.
+      // notFound() carries the page language so the title matches the page.
       const english =
         (match.error as { data?: { language?: string } } | undefined)?.data
           ?.language === "en";
@@ -53,6 +57,7 @@ export const Route = createFileRoute("/download/$slug")({
     }
     const { app, settings } = loaderData;
     return buildPageMeta({
+      i18n: i18nFromMatches(matches, match, loaderData),
       settings,
       path: `/download/${app.slug}`,
       override: null,
@@ -67,12 +72,12 @@ export const Route = createFileRoute("/download/$slug")({
 
 function AppNotFound() {
   const translateText = useSiteTranslation();
-  const locale = useSiteLocale();
+  const dir = useSiteDir();
 
   return (
     <div
       className="flex min-h-[60vh] flex-col items-center justify-center gap-4 p-8 text-center"
-      dir={locale === "en-US" ? "ltr" : "rtl"}
+      dir={dir}
     >
       <h1 className="text-2xl font-bold">
         {translateText("این برنامه پیدا نشد")}
@@ -87,6 +92,7 @@ function AppNotFound() {
 function AppPage() {
   const translateText = useSiteTranslation();
 
+  const i18n = useSiteI18n();
   const { settings, app, others } = Route.useLoaderData();
   const m = PLATFORM_META[app.platform] ?? PLATFORM_META.ios;
   const customShots = app.screenshots.filter(Boolean);
@@ -100,7 +106,7 @@ function AppPage() {
       softwareVersion: app.version || undefined,
       description: app.description || app.shortDesc,
     },
-    buildBreadcrumbJsonLd(settings, [
+    buildBreadcrumbJsonLd(i18n, settings, [
       { name: "خانه", path: "/" },
       { name: "دانلود برنامه", path: "/download" },
       { name: app.name, path: `/download/${app.slug}` },
@@ -112,7 +118,7 @@ function AppPage() {
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={safeJsonLdHtml(
-          localizeStructuredData(settings, jsonLd),
+          localizeStructuredData(i18n, jsonLd),
         )}
       />
 

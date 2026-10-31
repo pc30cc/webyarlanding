@@ -1,4 +1,7 @@
-import { translatorForSettings, getSiteLanguage } from "./site-i18n";
+import { siteI18n, type SiteI18n } from "./site-i18n";
+import { withLocalePrefix, type Locale } from "./locales";
+import { getDefaultLocale } from "./settings";
+import { hasSiteMessages } from "./site-messages";
 // ابزار مشترک برای ادغام تنظیمات عمومی سئو با override اختصاصی هر صفحه (seo_pages)
 // در loader/head صفحات مارکتینگ. خالص و بدون فراخوانی دیتابیس.
 import type { SiteSettings } from "./settings";
@@ -76,7 +79,38 @@ export function extractScriptTags(html: string): ParsedScriptTag[] {
   return results;
 }
 
+/** پیشوند آدرس یک زبان: زبان پیش‌فرض بدون پیشوند روی ریشه است. */
+export function localePrefix(settings: SiteSettings, locale: Locale): Locale | null {
+  return locale === getDefaultLocale(settings) ? null : locale;
+}
+
+/** آدرس کامل یک مسیر در یک زبان (برای canonical، hreflang و JSON-LD) */
+export function localizedUrl(
+  settings: SiteSettings,
+  locale: Locale,
+  path: string,
+): string | undefined {
+  const base = (settings.brand.siteUrl || "").replace(/\/$/, "");
+  return base ? `${base}${withLocalePrefix(path, localePrefix(settings, locale))}` : undefined;
+}
+
+/**
+ * آدرس ریشه سایت در یک زبان (برای WebSite در JSON-LD). برای زبان پیش‌فرض `fallback` را
+ * برمی‌گرداند تا خروجی آن زبان دقیقاً مثل قبل بماند.
+ */
+export function localizedSiteUrl(
+  settings: SiteSettings,
+  locale: Locale,
+  fallback: string | undefined,
+): string | undefined {
+  const prefix = localePrefix(settings, locale);
+  const base = (settings.brand.siteUrl || "").replace(/\/$/, "");
+  return prefix ? (base ? `${base}/${prefix}` : undefined) : fallback;
+}
+
 export function buildPageMeta(opts: {
+  /** زبان صفحه (i18nFromMatches در head)؛ بدون آن زبان پیش‌فرض سایت فرض می‌شود */
+  i18n: SiteI18n | null;
   settings: SiteSettings;
   path: string; // مثل "/about" (بدون اسلش پایانی، جز مسیر ریشه "/")
   override: SeoPageDto | null; // خروجی getPublicSeoPage یا null
@@ -93,7 +127,7 @@ export function buildPageMeta(opts: {
   const {
     settings,
     path,
-    override,
+    override: storedOverride,
     fallbackTitle,
     fallbackDescription,
     fallbackOgImage,
@@ -102,8 +136,12 @@ export function buildPageMeta(opts: {
     defaultRobots = "index,follow",
   } = opts;
   const base = (settings.brand.siteUrl || "").replace(/\/$/, "");
+  const i18n = opts.i18n ?? siteI18n(settings, getDefaultLocale(settings));
+  // override صفحه (seo_pages) برای زبان پیش‌فرض نوشته شده و canonical آن به آدرس همان زبان
+  // اشاره می‌کند؛ روی نسخه‌های دیگر زبان اعمال نمی‌شود.
+  const override = i18n.locale === getDefaultLocale(settings) ? storedOverride : null;
 
-  const translate = translatorForSettings(settings);
+  const translate = i18n.translate;
   const title = translate(override?.title || fallbackTitle);
   const description = translate(
     override?.description ||
@@ -116,12 +154,13 @@ export function buildPageMeta(opts: {
     settings.seo.ogImage ||
     (base ? `${base}/og-image.png?v=2` : "/og-image.png?v=2");
   const canonical =
-    override?.canonicalUrl || (base ? `${base}${path}` : undefined);
-  const robots =
-    override?.robots ||
-    (looksLikeMetaRobots(settings.seo.robots)
-      ? settings.seo.robots
-      : defaultRobots);
+    override?.canonicalUrl || localizedUrl(settings, i18n.locale, path);
+  // زبانی که هنوز دیکشنری ترجمه ندارد متن فارسی نشان می‌دهد؛ تا ترجمه آماده نشده ایندکس نشود.
+  const untranslated = i18n.locale !== "fa" && !hasSiteMessages(i18n.locale);
+  const robots = untranslated
+    ? "noindex,follow"
+    : override?.robots ||
+      (looksLikeMetaRobots(settings.seo.robots) ? settings.seo.robots : defaultRobots);
 
   return {
     meta: [
@@ -136,10 +175,7 @@ export function buildPageMeta(opts: {
       { name: "twitter:description", content: description },
       { name: "twitter:image", content: ogImage },
       ...(canonical ? [{ property: "og:url", content: canonical }] : []),
-      {
-        property: "og:locale",
-        content: getSiteLanguage(settings) === "en" ? "en_US" : "fa_IR",
-      },
+      { property: "og:locale", content: i18n.info.ogLocale },
       ...extraMeta.map((entry) =>
         /article:(tag|author)/.test(entry.property || "")
           ? { ...entry, content: translate(entry.content) }
@@ -152,18 +188,18 @@ export function buildPageMeta(opts: {
 
 /** JSON-LD مسیر ناوبری (Breadcrumb) — برای صفحات داخلی، سازگار با Google Rich Results */
 export function buildBreadcrumbJsonLd(
+  i18n: SiteI18n,
   settings: SiteSettings,
   items: { name: string; path?: string }[],
 ) {
-  const base = (settings.brand.siteUrl || "").replace(/\/$/, "");
   return {
     "@context": "https://schema.org",
     "@type": "BreadcrumbList",
     itemListElement: items.map((item, i) => ({
       "@type": "ListItem",
       position: i + 1,
-      name: translatorForSettings(settings)(item.name),
-      item: item.path ? (base ? `${base}${item.path}` : undefined) : undefined,
+      name: i18n.translate(item.name),
+      item: item.path ? localizedUrl(settings, i18n.locale, item.path) : undefined,
     })),
   };
 }

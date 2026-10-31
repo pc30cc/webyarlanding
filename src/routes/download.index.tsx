@@ -1,5 +1,5 @@
-import { localizeStructuredData } from "@/lib/site-i18n";
-import { useSiteTranslation } from "@/components/site/SiteLanguage";
+import { i18nFromMatches, localizeStructuredData } from "@/lib/site-i18n";
+import { useSiteI18n, useSiteTranslation } from "@/components/site/SiteLanguage";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { motion } from "framer-motion";
 import { Bell, ChevronLeft, Lock, Zap, Wifi } from "lucide-react";
@@ -41,9 +41,10 @@ export const Route = createFileRoute("/download/")({
     ]);
     return { settings, seoOverride, apps };
   },
-  head: ({ loaderData }) => {
+  head: ({ loaderData, matches, match }) => {
     if (!loaderData) return {};
     return buildPageMeta({
+      i18n: i18nFromMatches(matches, match, loaderData),
       settings: loaderData.settings,
       path: "/download",
       override: loaderData.seoOverride,
@@ -81,6 +82,7 @@ const perks = [
 function DownloadPage() {
   const translateText = useSiteTranslation();
 
+  const i18n = useSiteI18n();
   const { settings, apps } = Route.useLoaderData();
   const byPlatform = (p: string) => apps.find((a) => a.platform === p);
   const jsonLd = [
@@ -98,7 +100,7 @@ function DownloadPage() {
       softwareVersion: a.version || undefined,
       description: a.shortDesc,
     })),
-    buildBreadcrumbJsonLd(settings, [
+    buildBreadcrumbJsonLd(i18n, settings, [
       { name: "خانه", path: "/" },
       { name: "دانلود برنامه", path: "/download" },
     ]),
@@ -109,7 +111,7 @@ function DownloadPage() {
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={safeJsonLdHtml(
-          localizeStructuredData(settings, jsonLd),
+          localizeStructuredData(i18n, jsonLd),
         )}
       />
 

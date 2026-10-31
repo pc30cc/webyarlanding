@@ -4,6 +4,23 @@ import { mergeSettings, type SiteSettings } from "./settings";
 const SITE_KEY = "site_settings";
 const PRIVATE_KEY = "private_settings";
 
+/**
+ * با هر ذخیره تنظیمات عمومی یکی زیاد می‌شود تا کش‌های همین فرایند (ریدایرکت‌های زبان در
+ * server.ts) بلافاصله تازه شوند.
+ */
+export let settingsRevision = 0;
+
+/** مثل loadSettings، ولی اگر دیتابیس در دسترس نباشد خطا می‌دهد (برای تصمیم‌های ریدایرکت). */
+export async function loadSettingsStrict(): Promise<SiteSettings> {
+  const { data, error } = await db
+    .from("settings")
+    .select("setting_value")
+    .eq("setting_key", SITE_KEY)
+    .maybeSingle();
+  if (error) throw error;
+  return mergeSettings(parseJson<Partial<SiteSettings>>(data?.setting_value, {}));
+}
+
 /** تنظیمات عمومی سایت (قابل نمایش به بازدیدکننده) */
 export async function loadSettings(): Promise<SiteSettings> {
   try {
@@ -47,6 +64,7 @@ export async function saveSettings(next: SiteSettings): Promise<void> {
       .insert({ id: newId(), ...payload });
     if (error) throw error;
   }
+  settingsRevision++;
 }
 
 /** تنظیمات محرمانه (اتصال FTP/رسانه و مانند آن) — هرگز به کلاینت ارسال نمی‌شود */

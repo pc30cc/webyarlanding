@@ -1,5 +1,5 @@
-import { localizeStructuredData } from "@/lib/site-i18n";
-import { useSiteTranslation } from "@/components/site/SiteLanguage";
+import { i18nFromMatches, localizeStructuredData } from "@/lib/site-i18n";
+import { useSiteI18n, useSiteTranslation } from "@/components/site/SiteLanguage";
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { motion } from "framer-motion";
 import ReactMarkdown from "react-markdown";
@@ -7,7 +7,7 @@ import { ArrowRight, Check, ChevronLeft } from "lucide-react";
 import { fetchSettings } from "@/lib/settings.functions";
 import { getPublicSeoPage } from "@/lib/seo.functions";
 import { getPublicCatalogItem } from "@/lib/catalog.functions";
-import { buildPageMeta, safeJsonLdHtml } from "@/lib/seo-meta";
+import { buildPageMeta, localePrefix, safeJsonLdHtml } from "@/lib/seo-meta";
 import { getIcon } from "@/lib/icon-registry";
 import { SiteLayout } from "@/components/site/SiteLayout";
 import { ScrollReveal } from "@/components/site/animations";
@@ -22,10 +22,11 @@ export const Route = createFileRoute("/solutions/$slug")({
     if (!result) throw notFound();
     return { settings, ...result, seoOverride };
   },
-  head: ({ loaderData, params }) => {
+  head: ({ loaderData, params, matches, match }) => {
     if (!loaderData) return {};
     const { settings, item, seoOverride } = loaderData;
     return buildPageMeta({
+      i18n: i18nFromMatches(matches, match, loaderData),
       settings,
       path: `/solutions/${params.slug}`,
       override: seoOverride,
@@ -39,11 +40,15 @@ export const Route = createFileRoute("/solutions/$slug")({
 
 function SolutionDetailPage() {
   const translateText = useSiteTranslation();
+  const i18n = useSiteI18n();
 
   const { settings, item, categoryTitle, related } = Route.useLoaderData();
   const Icon = getIcon(item.icon);
   const base = (settings.brand.siteUrl || "").replace(/\/$/, "");
-  const url = `${base}/solutions/${item.slug}`;
+  // ریشه آدرس‌های همین زبان (زبان پیش‌فرض بدون پیشوند)
+  const prefix = localePrefix(settings, i18n.locale);
+  const localeBase = prefix ? `${base}/${prefix}` : base;
+  const url = `${localeBase}/solutions/${item.slug}`;
 
   const jsonLd = [
     {
@@ -66,13 +71,13 @@ function SolutionDetailPage() {
           "@type": "ListItem",
           position: 1,
           name: "خانه",
-          item: base || undefined,
+          item: base ? localeBase : undefined,
         },
         {
           "@type": "ListItem",
           position: 2,
           name: "راه‌کارها",
-          item: base ? `${base}/solutions` : undefined,
+          item: base ? `${localeBase}/solutions` : undefined,
         },
         { "@type": "ListItem", position: 3, name: item.title, item: url },
       ],
@@ -84,7 +89,7 @@ function SolutionDetailPage() {
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={safeJsonLdHtml(
-          localizeStructuredData(settings, jsonLd),
+          localizeStructuredData(i18n, jsonLd),
         )}
       />
 
