@@ -322,7 +322,9 @@ function PricingPage() {
           return {
             "@type": "Offer",
             name: plan.name,
-            price,
+            // قیمت‌ها به تومان نمایش داده می‌شوند ولی تومان کد ارز استاندارد ندارد؛ برای
+            // داده ساختاریافته به ریال (×۱۰) تبدیل می‌شود تا موتور جستجو قیمت درست را ببیند.
+            price: String(Number(price) * 10),
             priceCurrency: "IRR",
             url: base ? `${base}/pricing` : undefined,
           };
