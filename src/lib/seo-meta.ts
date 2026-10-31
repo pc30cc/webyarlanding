@@ -1,6 +1,6 @@
 import { siteI18n, type SiteI18n } from "./site-i18n";
 import { withLocalePrefix, type Locale } from "./locales";
-import { getDefaultLocale } from "./settings";
+import { getActiveLocales, getDefaultLocale } from "./settings";
 import { hasSiteMessages } from "./site-messages";
 // ابزار مشترک برای ادغام تنظیمات عمومی سئو با override اختصاصی هر صفحه (seo_pages)
 // در loader/head صفحات مارکتینگ. خالص و بدون فراخوانی دیتابیس.
@@ -108,6 +108,36 @@ export function localizedSiteUrl(
   return prefix ? (base ? `${base}/${prefix}` : undefined) : fallback;
 }
 
+/** زبان‌هایی که نسخه قابل ایندکس دارند: فعال و دارای دیکشنری ترجمه */
+export function indexableLocales(settings: SiteSettings): Locale[] {
+  return getActiveLocales(settings).filter((locale) => hasSiteMessages(locale));
+}
+
+/**
+ * hreflang یک مسیر: نسخه آن در همه زبان‌های قابل ایندکس به‌علاوه x-default (زبان پیش‌فرض).
+ * در سایت تک‌زبانه یا با کمتر از دو زبان قابل ایندکس خالی است. `defaultCanonical` آدرس
+ * canonical سفارشی نسخه زبان پیش‌فرض (seo_pages) است، اگر تنظیم شده باشد.
+ */
+export function hreflangAlternates(
+  settings: SiteSettings,
+  path: string,
+  defaultCanonical?: string | null,
+): { hrefLang: string; href: string }[] {
+  if (settings.localization?.mode !== "multi") return [];
+  const locales = indexableLocales(settings);
+  if (locales.length < 2) return [];
+  const fallback = getDefaultLocale(settings);
+  const urlFor = (locale: Locale) =>
+    (locale === fallback && defaultCanonical) || localizedUrl(settings, locale, path);
+  const links = locales.flatMap((locale) => {
+    const href = urlFor(locale);
+    return href ? [{ hrefLang: locale, href }] : [];
+  });
+  if (links.length < 2) return [];
+  const xDefault = urlFor(locales.includes(fallback) ? fallback : (locales[0] as Locale));
+  return xDefault ? [...links, { hrefLang: "x-default", href: xDefault }] : links;
+}
+
 export function buildPageMeta(opts: {
   /** زبان صفحه (i18nFromMatches در head)؛ بدون آن زبان پیش‌فرض سایت فرض می‌شود */
   i18n: SiteI18n | null;
@@ -123,6 +153,8 @@ export function buildPageMeta(opts: {
   extraMeta?: { property?: string; name?: string; content: string }[];
   /** پیش‌فرض robots وقتی نه override اختصاصی صفحه و نه تنظیمات عمومی سئو مقداری دارند (پیش‌فرض: "index,follow") — برای صفحات کم‌محتوا (مثل برچسب‌های تک‌مقاله‌ای) "noindex,follow" بدهید */
   defaultRobots?: string;
+  /** لینک‌های hreflang به نسخه‌های دیگر زبان؛ برای بلاگ (فقط فارسی) false بدهید */
+  alternates?: boolean;
 }) {
   const {
     settings,
@@ -182,7 +214,17 @@ export function buildPageMeta(opts: {
           : entry,
       ),
     ],
-    links: canonical ? [{ rel: "canonical", href: canonical }] : [],
+    links: [
+      ...(canonical ? [{ rel: "canonical", href: canonical }] : []),
+      // hreflang فقط برای صفحه قابل ایندکس؛ نسخه زبان پیش‌فرض همان canonical خودش را دارد
+      ...(opts.alternates === false || /noindex/i.test(robots)
+        ? []
+        : hreflangAlternates(settings, path, storedOverride?.canonicalUrl).map((link) => ({
+            rel: "alternate",
+            hrefLang: link.hrefLang,
+            href: link.href,
+          }))),
+    ],
   };
 }
 

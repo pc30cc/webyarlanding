@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { buildBreadcrumbJsonLd, buildPageMeta, localePrefix, localizedUrl } from "./seo-meta";
+import {
+  buildBreadcrumbJsonLd,
+  buildPageMeta,
+  hreflangAlternates,
+  localePrefix,
+  localizedUrl,
+} from "./seo-meta";
 import type { SeoPageDto } from "./seo.functions";
 import { DEFAULT_SETTINGS, type SiteSettings } from "./settings";
 import { i18nFromMatches, siteI18n } from "./site-i18n";
@@ -50,6 +56,11 @@ function meta(settings: SiteSettings, locale: Locale | null, page: PageInput = a
   });
 }
 
+/** فقط لینک canonical (لینک‌های hreflang جدا تست می‌شوند) */
+function canonicalOf(result: ReturnType<typeof buildPageMeta>) {
+  return result.links.filter((link) => link.rel === "canonical");
+}
+
 function find(result: ReturnType<typeof buildPageMeta>, property: string) {
   return result.meta.find((entry) => "property" in entry && entry.property === property);
 }
@@ -87,11 +98,20 @@ describe("page meta per locale", () => {
         { property: "og:url", content: "https://webyar.ai/about" },
         { property: "og:locale", content: "fa_IR" },
       ],
-      links: [{ rel: "canonical", href: "https://webyar.ai/about" }],
+      links: [
+        { rel: "canonical", href: "https://webyar.ai/about" },
+        { rel: "alternate", hrefLang: "fa", href: "https://webyar.ai/about" },
+        { rel: "alternate", hrefLang: "en", href: "https://webyar.ai/en/about" },
+        { rel: "alternate", hrefLang: "x-default", href: "https://webyar.ai/about" },
+      ],
     });
     // بدون داده‌های route ریشه همان زبان پیش‌فرض سایت
     expect(meta(settings, null)).toEqual(result);
-    expect(meta(structuredClone(DEFAULT_SETTINGS), "fa")).toEqual(result);
+    // سایت تک‌زبانه: همان خروجی، بدون hreflang
+    expect(meta(structuredClone(DEFAULT_SETTINGS), "fa")).toEqual({
+      ...result,
+      links: canonicalOf(result),
+    });
   });
 
   it("prefixes the canonical URL and sets og:locale for other locales", () => {
@@ -104,12 +124,12 @@ describe("page meta per locale", () => {
     for (const [locale, ogLocale] of Object.entries(expected) as [Locale, string][]) {
       const result = meta(settings, locale);
       const url = `https://webyar.ai/${locale}/about`;
-      expect(result.links).toEqual([{ rel: "canonical", href: url }]);
+      expect(canonicalOf(result)).toEqual([{ rel: "canonical", href: url }]);
       expect(find(result, "og:url")).toEqual({ property: "og:url", content: url });
       expect(find(result, "og:locale")).toEqual({ property: "og:locale", content: ogLocale });
     }
     const home = meta(settings, "tr", { ...aboutPage, path: "/" });
-    expect(home.links).toEqual([{ rel: "canonical", href: "https://webyar.ai/tr" }]);
+    expect(canonicalOf(home)).toEqual([{ rel: "canonical", href: "https://webyar.ai/tr" }]);
   });
 
   it("translates the English page", () => {
@@ -123,11 +143,11 @@ describe("page meta per locale", () => {
 
   it("prefixes Persian when English is the default language", () => {
     const settings = multiSite("en");
-    expect(meta(settings, "en").links).toEqual([
+    expect(canonicalOf(meta(settings, "en"))).toEqual([
       { rel: "canonical", href: "https://webyar.ai/about" },
     ]);
     const fa = meta(settings, "fa");
-    expect(fa.links).toEqual([{ rel: "canonical", href: "https://webyar.ai/fa/about" }]);
+    expect(canonicalOf(fa)).toEqual([{ rel: "canonical", href: "https://webyar.ai/fa/about" }]);
     expect(find(fa, "og:locale")).toEqual({ property: "og:locale", content: "fa_IR" });
   });
 
@@ -138,11 +158,11 @@ describe("page meta per locale", () => {
     expect(fa.meta[0]).toEqual({ title: override.title });
     expect(fa.meta).toContainEqual({ name: "robots", content: "noindex,follow" });
     expect(fa.meta).toContainEqual({ property: "og:image", content: override.ogImage });
-    expect(fa.links).toEqual([{ rel: "canonical", href: override.canonicalUrl }]);
+    expect(canonicalOf(fa)).toEqual([{ rel: "canonical", href: override.canonicalUrl }]);
 
     for (const locale of ["en", "tr", "ar"] as const) {
       const other = meta(settings, locale, page);
-      expect(other.links).toEqual([
+      expect(canonicalOf(other)).toEqual([
         { rel: "canonical", href: `https://webyar.ai/${locale}/about` },
       ]);
       // ترکی و عربی هنوز دیکشنری ندارند و تا آماده شدن ترجمه ایندکس نمی‌شوند
@@ -160,7 +180,7 @@ describe("page meta per locale", () => {
     settings.brand.siteUrl = "";
     for (const locale of ["fa", "en", "tr", "ar"] as const) {
       const result = meta(settings, locale);
-      expect(result.links).toEqual([]);
+      expect(canonicalOf(result)).toEqual([]);
       expect(find(result, "og:url")).toBeUndefined();
     }
   });
@@ -208,5 +228,58 @@ describe("localized URLs", () => {
       "https://webyar.ai/tr",
       "https://webyar.ai/tr/about",
     ]);
+  });
+});
+
+describe("hreflang alternates", () => {
+  const alternates = (result: ReturnType<typeof buildPageMeta>) =>
+    result.links.filter((link) => link.rel === "alternate");
+
+  it("is empty on a single-language site", () => {
+    const settings = structuredClone(DEFAULT_SETTINGS);
+    expect(hreflangAlternates(settings, "/about")).toEqual([]);
+    expect(alternates(meta(settings, "fa"))).toEqual([]);
+  });
+
+  it("lists translated languages and x-default, from every language version", () => {
+    // ترکی و عربی دیکشنری ندارند و noindex هستند، پس در hreflang نمی‌آیند
+    const expected = [
+      { rel: "alternate", hrefLang: "fa", href: "https://webyar.ai/about" },
+      { rel: "alternate", hrefLang: "en", href: "https://webyar.ai/en/about" },
+      { rel: "alternate", hrefLang: "x-default", href: "https://webyar.ai/about" },
+    ];
+    expect(alternates(meta(multiSite(), "fa"))).toEqual(expected);
+    expect(alternates(meta(multiSite(), "en"))).toEqual(expected);
+    expect(alternates(meta(multiSite(), "tr"))).toEqual([]);
+  });
+
+  it("points x-default at the default language", () => {
+    expect(hreflangAlternates(multiSite("en"), "/")).toEqual([
+      { hrefLang: "fa", href: "https://webyar.ai/fa" },
+      { hrefLang: "en", href: "https://webyar.ai/" },
+      { hrefLang: "x-default", href: "https://webyar.ai/" },
+    ]);
+  });
+
+  it("uses the default language's custom canonical and skips noindex pages", () => {
+    const page = { ...aboutPage, override: { ...override, robots: "index,follow" } };
+    expect(alternates(meta(multiSite(), "en", page))[0]).toEqual({
+      rel: "alternate",
+      hrefLang: "fa",
+      href: override.canonicalUrl,
+    });
+    expect(alternates(meta(multiSite(), "fa", { ...aboutPage, override }))).toEqual([]);
+  });
+
+  it("can be turned off for Persian-only pages", () => {
+    const settings = multiSite();
+    const result = buildPageMeta({
+      i18n: i18nFromMatches(headMatches(settings, "fa")),
+      settings,
+      ...aboutPage,
+      path: "/blog",
+      alternates: false,
+    });
+    expect(alternates(result)).toEqual([]);
   });
 });

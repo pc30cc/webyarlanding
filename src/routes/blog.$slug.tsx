@@ -62,6 +62,8 @@ export const Route = createFileRoute("/blog/$slug")({
     return buildPageMeta({
       i18n: articleI18n(settings, locale),
       settings,
+      // بلاگ فقط فارسی است و نسخه زبان دیگری ندارد
+      alternates: false,
       path: `/blog/${params.slug}`,
       override: null, // یک ردیف seo_pages سراسری برای این مسیر معنا ندارد؛ عنوان/توضیحات/تصویر پست همیشه اولویت دارند
       fallbackTitle: title,

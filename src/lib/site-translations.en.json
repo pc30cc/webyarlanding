@@ -763,5 +763,6 @@
   "افزونه‌های آماده برای ووکامرس، اوپن‌کارت و WHMCS و راهنمای نصب برای وردپرس، شاپیفای و پرستاشاپ در پنل موجود است. تلگرام، واتس‌اپ، اینستاگرام و بله به صندوق گفتگو وصل می‌شوند و ایمیل‌های جیمیل و یاهو در صندوق ایمیل پنل مدیریت می‌شوند.": "Plugins for WooCommerce, OpenCart and WHMCS and install guides for WordPress, Shopify and PrestaShop are available in the dashboard. Telegram, WhatsApp, Instagram and Bale connect to the shared inbox, and Gmail and Yahoo emails are managed in the dashboard's email inbox.",
   "در ماه": "/ month",
   "در ماه، پرداخت سالانه": "/ month, billed annually",
-  "مجموع سالانه {0}": "Annual total: {0}"
+  "مجموع سالانه {0}": "Annual total: {0}",
+  "زبان": "Language"
 }

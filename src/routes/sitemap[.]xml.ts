@@ -2,6 +2,10 @@ import { createFileRoute } from "@tanstack/react-router";
 import { fetchSettings } from "@/lib/settings.functions";
 import { listPublishedPosts, listTags } from "@/lib/blog.functions";
 import { getPublicCatalog } from "@/lib/catalog.functions";
+import { getPublicApps } from "@/lib/apps.functions";
+import { getActiveLocales } from "@/lib/settings";
+import { hreflangAlternates, indexableLocales, localizedUrl } from "@/lib/seo-meta";
+import { persianBlogPath } from "@/lib/locale-routing";
 
 const staticPaths = [
   "/",
@@ -14,12 +18,22 @@ const staticPaths = [
   "/terms",
   "/privacy",
   "/sla",
+  "/help",
   "/download",
 ];
 
 interface SitemapUrl {
   loc: string;
   lastmod?: string | null;
+  /** نسخه‌های همین صفحه در زبان‌های دیگر (xhtml:link) */
+  alternates?: { hrefLang: string; href: string }[];
+}
+
+/** مسیر داخلی یک صفحه به‌همراه تاریخ آخرین تغییر؛ بلاگ و برچسب‌ها فقط فارسی‌اند */
+interface SitemapPage {
+  path: string;
+  lastmod?: string | null;
+  blog?: boolean;
 }
 
 /** حداقل کاراکترهای ویژه‌ی XML را در آدرس escape می‌کند تا سایت‌مپ همیشه معتبر بماند */
@@ -30,6 +44,11 @@ function escapeXml(value: string): string {
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&apos;");
+}
+
+/** آدرس کامل یک مسیر بدون پیشوند زبان (سایت تک‌زبانه؛ مثل قبل) */
+function localUrl(settings: { brand: { siteUrl?: string } }, path: string): string {
+  return `${(settings.brand.siteUrl || "").replace(/\/$/, "")}${path}`;
 }
 
 /** تاریخ آخرین تغییر به فرمت YYYY-MM-DD (استاندارد lastmod در پروتکل سایت‌مپ) */
@@ -43,19 +62,20 @@ export const Route = createFileRoute("/sitemap.xml")({
   server: {
     handlers: {
       GET: async () => {
-        const [settings, posts, tags, productCatalog, solutionCatalog] = await Promise.all([
+        const [settings, posts, tags, productCatalog, solutionCatalog, apps] = await Promise.all([
           fetchSettings(),
           listPublishedPosts({ data: {} }),
           listTags(),
           getPublicCatalog({ data: { type: "product" } }),
           getPublicCatalog({ data: { type: "solution" } }),
+          getPublicApps().catch(() => []),
         ]);
-        const base = (settings.brand.siteUrl || "").replace(/\/$/, "");
-        const urls: SitemapUrl[] = [
-          ...staticPaths.map((p): SitemapUrl => ({ loc: `${base}${p}` })),
-          ...posts.map((p): SitemapUrl => ({
-            loc: `${base}/blog/${p.slug}`,
+        const pages: SitemapPage[] = [
+          ...staticPaths.map((path): SitemapPage => ({ path, blog: path === "/blog" })),
+          ...posts.map((p): SitemapPage => ({
+            path: `/blog/${p.slug}`,
             lastmod: toLastmod(p.updatedAt),
+            blog: true,
           })),
           // دسته‌بندی‌های بلاگ صفحه‌ی مستقل ندارند — فیلترشان فقط سمت کلاینت است و
           // /blog?category=... همان محتوای /blog را رندر می‌کند، پس در سایت‌مپ نمی‌آید.
@@ -63,24 +83,54 @@ export const Route = createFileRoute("/sitemap.xml")({
           // پس در سایت‌مپ هم نمی‌آیند تا سیگنال سایت‌مپ با متای robots همان صفحه یکی باشد.
           ...tags
             .filter((t) => (t.postCount ?? 0) >= 2)
-            .map((t): SitemapUrl => ({ loc: `${base}/tag/${t.slug}` })),
+            .map((t): SitemapPage => ({ path: `/tag/${t.slug}`, blog: true })),
           ...productCatalog
             .flatMap((c) => c.items)
-            .map((p): SitemapUrl => ({
-              loc: `${base}/products/${p.slug}`,
+            .map((p): SitemapPage => ({
+              path: `/products/${p.slug}`,
               lastmod: toLastmod(p.updatedAt),
             })),
           ...solutionCatalog
             .flatMap((c) => c.items)
-            .map((s): SitemapUrl => ({
-              loc: `${base}/solutions/${s.slug}`,
+            .map((s): SitemapPage => ({
+              path: `/solutions/${s.slug}`,
               lastmod: toLastmod(s.updatedAt),
             })),
+          ...apps.map((a): SitemapPage => ({ path: `/download/${a.slug}` })),
         ];
-        const xml = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls
+        // سایت چندزبانه: هر صفحه یک‌بار برای هر زبان قابل ایندکس، با نسخه‌های دیگر به‌صورت
+        // xhtml:link؛ بلاگ فقط نسخه فارسی دارد. سایت تک‌زبانه: هر صفحه یک‌بار.
+        const multi = settings.localization?.mode === "multi";
+        const locales = multi ? indexableLocales(settings) : [];
+        const urls: SitemapUrl[] = pages.flatMap((page): SitemapUrl[] => {
+          if (page.blog) {
+            if (multi && !getActiveLocales(settings).includes("fa")) return [];
+            const path = multi ? persianBlogPath(settings, page.path) : page.path;
+            return [{ loc: localUrl(settings, path), lastmod: page.lastmod ?? null }];
+          }
+          if (locales.length < 2)
+            return [{ loc: localUrl(settings, page.path), lastmod: page.lastmod ?? null }];
+          const alternates = hreflangAlternates(settings, page.path);
+          return locales.map((locale) => ({
+            loc: localizedUrl(settings, locale, page.path) ?? "",
+            lastmod: page.lastmod ?? null,
+            alternates,
+          }));
+        });
+        const hasAlternates = urls.some((u) => u.alternates?.length);
+        const xml = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"${
+          hasAlternates ? ' xmlns:xhtml="http://www.w3.org/1999/xhtml"' : ""
+        }>\n${urls
           .map(
             (u) =>
-              `  <url><loc>${escapeXml(u.loc)}</loc>${u.lastmod ? `<lastmod>${u.lastmod}</lastmod>` : ""}</url>`,
+              `  <url><loc>${escapeXml(u.loc)}</loc>${u.lastmod ? `<lastmod>${u.lastmod}</lastmod>` : ""}${(
+                u.alternates ?? []
+              )
+                .map(
+                  (a) =>
+                    `<xhtml:link rel="alternate" hreflang="${escapeXml(a.hrefLang)}" href="${escapeXml(a.href)}"/>`,
+                )
+                .join("")}</url>`,
           )
           .join("\n")}\n</urlset>`;
         return new Response(xml, { headers: { "Content-Type": "application/xml; charset=UTF-8" } });

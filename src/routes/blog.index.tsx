@@ -75,6 +75,8 @@ export const Route = createFileRoute("/blog/")({
     return buildPageMeta({
       i18n: i18nFromMatches(matches, match, loaderData),
       settings,
+      // بلاگ فقط فارسی است و نسخه زبان دیگری ندارد
+      alternates: false,
       path,
       override: seoOverride,
       fallbackTitle:
