@@ -3,6 +3,7 @@ import { useState } from "react";
 import { Link, getRouteApi, useRouterState } from "@tanstack/react-router";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronDown, Menu, X } from "lucide-react";
+import { LanguageSwitcher } from "./LanguageSwitcher";
 import { Button } from "@/components/ui/button";
 import { MegaMenu } from "@/components/site/MegaMenu";
 import { getIcon } from "@/lib/icon-registry";
@@ -157,6 +158,7 @@ export function SiteHeader({
         </nav>
 
         <div className="flex items-center gap-2">
+          <LanguageSwitcher settings={settings} variant="desktop" />
           {auth.enabled && isLoggedIn && (
             <div className="hidden sm:flex items-center gap-3">
               <span className="text-sm text-muted-foreground">
@@ -342,6 +344,7 @@ export function SiteHeader({
                   )}
                 </div>
               )}
+              <LanguageSwitcher settings={settings} variant="mobile" />
             </div>
           </motion.div>
         )}

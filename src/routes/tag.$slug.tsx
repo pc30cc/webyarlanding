@@ -48,6 +48,8 @@ export const Route = createFileRoute("/tag/$slug")({
     return buildPageMeta({
       i18n: i18nFromMatches(matches, match, loaderData),
       settings: loaderData.settings,
+      // بلاگ فقط فارسی است و نسخه زبان دیگری ندارد
+      alternates: false,
       path: `/tag/${params.slug}`,
       override: loaderData.seoOverride,
       fallbackTitle: `برچسب: ${params.slug} | وب‌یار`,
