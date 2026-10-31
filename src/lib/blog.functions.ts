@@ -1,3 +1,5 @@
+// توابع عمومی بلاگ. محتوای بلاگ فقط فارسی است؛ در سایت چندزبانه فقط نسخه فارسی آن وجود دارد
+// (src/lib/locale-routing.ts).
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 

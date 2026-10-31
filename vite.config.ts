@@ -8,6 +8,7 @@ import { defineConfig } from "@lovable.dev/vite-tanstack-config";
 
 // Self-hosted deploys (Coolify/Nixpacks) set NITRO_PRESET=node-server so the build
 // emits a plain Node server. Inside Lovable the platform preset still wins.
+// src/client.tsx (custom client entry) and src/server.ts are picked up by convention.
 const selfHostPreset = process.env["NITRO_PRESET"];
 
 export default defineConfig({

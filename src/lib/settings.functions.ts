@@ -2,10 +2,12 @@ import { createServerFn } from "@tanstack/react-start";
 import type { SiteSettings } from "./settings";
 
 /** تنظیمات عمومی سایت — برای رندر سرور و کلاینت */
-export const fetchSettings = createServerFn({ method: "GET" }).handler(async (): Promise<SiteSettings> => {
-  const { loadSettings } = await import("./settings.server");
-  return await loadSettings();
-});
+export const fetchSettings = createServerFn({ method: "GET" }).handler(
+  async (): Promise<SiteSettings> => {
+    const { loadSettings } = await import("./settings.server");
+    return await loadSettings();
+  },
+);
 
 /** ذخیره تنظیمات — فقط مدیر */
 export const updateSettings = createServerFn({ method: "POST" })
