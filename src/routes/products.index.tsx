@@ -31,12 +31,12 @@ export const Route = createFileRoute("/products/")({
     ]);
     return { settings, seoOverride, categories };
   },
-  head: ({ loaderData, matches }) => {
+  head: ({ loaderData, matches, match }) => {
     if (!loaderData) return {};
     const callEnabled = loaderData.settings.videoCall.enabled;
     const aiEnabled = loaderData.settings.aiMarketing.enabled;
     return buildPageMeta({
-      i18n: i18nFromMatches(matches),
+      i18n: i18nFromMatches(matches, match, loaderData),
       settings: loaderData.settings,
       path: "/products",
       override: loaderData.seoOverride,

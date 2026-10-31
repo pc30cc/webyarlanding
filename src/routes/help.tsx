@@ -29,9 +29,9 @@ export const Route = createFileRoute("/help")({
     ]);
     return { settings, seoOverride };
   },
-  head: ({ loaderData, matches }) => {
+  head: ({ loaderData, matches, match }) => {
     if (!loaderData) return {};
-    const i18n = i18nFromMatches(matches);
+    const i18n = i18nFromMatches(matches, match, loaderData);
     const english = isEnglishChrome(
       loaderData.settings,
       i18n?.locale ?? getDefaultLocale(loaderData.settings),

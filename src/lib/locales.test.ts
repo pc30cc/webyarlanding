@@ -53,6 +53,11 @@ describe("locale URLs", () => {
     expect(LOCALE_INFO.en.dir).toBe("ltr");
     expect(LOCALE_INFO.tr.dir).toBe("ltr");
     expect(LOCALE_INFO.ar.dir).toBe("rtl");
+    // قیمت‌ها فقط در فارسی به تومان، در بقیه زبان‌ها به دلار
+    expect(LOCALE_INFO.fa.currency).toBe("IRT");
+    for (const locale of ["en", "tr", "ar"] as const) {
+      expect(LOCALE_INFO[locale].currency).toBe("USD");
+    }
   });
 
   it("splits the locale prefix off public paths", () => {

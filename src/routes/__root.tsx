@@ -22,7 +22,7 @@ import { VisitTracker } from "../components/site/VisitTracker";
 import { SiteLayout } from "../components/site/SiteLayout";
 import { extractScriptTags } from "../lib/seo-meta";
 import { SiteLanguageProvider } from "@/components/site/SiteLanguage";
-import { loadSiteMessages } from "@/lib/site-messages";
+import { loadAllSiteMessages, loadSiteMessages, primeSiteMessages } from "@/lib/site-messages";
 import { LOCALE_INFO, splitLocalePrefix, type Locale } from "@/lib/locales";
 import {
   mergeSettings,
@@ -172,10 +172,14 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
 export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
   {
     // پیشوند زبان آدرس عمومی (پیش از rewrite روتر؛ src/router.tsx)
-    beforeLoad: ({ location }) => ({
-      urlLocale: splitLocalePrefix(new URL(location.publicHref, "http://local").pathname)
-        .locale,
-    }),
+    beforeLoad: async ({ location }) => {
+      // روی سرور head() صفحات دیکشنری را از کش می‌خواند (site-i18n: i18nFromMatches)
+      if (typeof window === "undefined") await loadAllSiteMessages();
+      return {
+        urlLocale: splitLocalePrefix(new URL(location.publicHref, "http://local").pathname)
+          .locale,
+      };
+    },
     loader: async ({ context }) => {
       const [settings, productCatalog, solutionCatalog] = await Promise.all([
         fetchSettings().catch((error) => {
@@ -332,6 +336,8 @@ function RootShell({ children }: { children: ReactNode }) {
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   const { settings, locale, messages } = Route.useLoaderData();
+  // head() هنگام ناوبری سمت مرورگر دیکشنری را از کش می‌خواند
+  primeSiteMessages(locale, messages);
 
   return (
     <QueryClientProvider client={queryClient}>

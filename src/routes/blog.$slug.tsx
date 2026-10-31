@@ -44,10 +44,10 @@ export const Route = createFileRoute("/blog/$slug")({
       .slice(0, 3);
     return { settings, post, related };
   },
-  head: ({ loaderData, params, matches }) => {
+  head: ({ loaderData, params, matches, match }) => {
     if (!loaderData) return {};
     const { settings, post } = loaderData;
-    const locale = i18nFromMatches(matches)?.locale ?? getDefaultLocale(settings);
+    const locale = i18nFromMatches(matches, match, loaderData)?.locale ?? getDefaultLocale(settings);
     // مقاله به زبان اصلی خودش نمایش داده می‌شود؛ در صفحه غیرفارسی فقط نام برند انگلیسی است.
     const title =
       post.seoTitle || `${post.title} | ${locale !== "fa" ? getBrandNameEn(settings) : "وب‌یار"}`;

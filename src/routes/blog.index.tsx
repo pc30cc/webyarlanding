@@ -54,7 +54,7 @@ export const Route = createFileRoute("/blog/")({
       q: deps.q,
     };
   },
-  head: ({ loaderData, matches }) => {
+  head: ({ loaderData, matches, match }) => {
     if (!loaderData) return {};
     const { settings, seoOverride, page, category, q } = loaderData;
     // صفحات بعدی/فیلترشده باید به آدرس واقعی خودشان کنونیکال شوند، نه صفحه‌ی اول؛
@@ -65,7 +65,7 @@ export const Route = createFileRoute("/blog/")({
     const qs = params.toString();
     const path = qs ? `/blog?${qs}` : "/blog";
     return buildPageMeta({
-      i18n: i18nFromMatches(matches),
+      i18n: i18nFromMatches(matches, match, loaderData),
       settings,
       path,
       override: seoOverride,

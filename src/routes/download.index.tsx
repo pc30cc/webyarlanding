@@ -41,10 +41,10 @@ export const Route = createFileRoute("/download/")({
     ]);
     return { settings, seoOverride, apps };
   },
-  head: ({ loaderData, matches }) => {
+  head: ({ loaderData, matches, match }) => {
     if (!loaderData) return {};
     return buildPageMeta({
-      i18n: i18nFromMatches(matches),
+      i18n: i18nFromMatches(matches, match, loaderData),
       settings: loaderData.settings,
       path: "/download",
       override: loaderData.seoOverride,

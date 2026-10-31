@@ -31,6 +31,7 @@ import {
 } from "lucide-react";
 import { fetchSettings } from "@/lib/settings.functions";
 import { getDefaultLocale, joinFa, mergeSettings } from "@/lib/settings";
+import { LOCALE_INFO } from "@/lib/locales";
 import { getPublicSeoPage } from "@/lib/seo.functions";
 import { buildPageMeta, parseSchemaJson, safeJsonLdHtml } from "@/lib/seo-meta";
 import { SiteLayout } from "@/components/site/SiteLayout";
@@ -86,10 +87,10 @@ export const Route = createFileRoute("/")({
     ]);
     return { settings, seoOverride, apps };
   },
-  head: ({ loaderData, matches }) => {
+  head: ({ loaderData, matches, match }) => {
     if (!loaderData) return {};
     const i18n =
-      i18nFromMatches(matches) ??
+      i18nFromMatches(matches, match, loaderData) ??
       siteI18n(loaderData.settings, getDefaultLocale(loaderData.settings));
     const callEnabled = loaderData.settings.videoCall.enabled;
     const meta = buildPageMeta({
@@ -525,7 +526,13 @@ function IndexPage() {
         "سئو",
       )}، همه در وب‌یار`,
       offers: [
-        { "@type": "Offer", price: "0", priceCurrency: "IRR", name: "شروع" },
+        {
+          "@type": "Offer",
+          price: "0",
+          // سایت فارسی به ریال، زبان‌های دیگر به دلار (همان ارز صفحه قیمت‌ها)
+          priceCurrency: LOCALE_INFO[i18n.locale].currency === "USD" ? "USD" : "IRR",
+          name: "شروع",
+        },
       ],
     },
     // بازتاب همان سوالات و پاسخ‌های واقعی که در بخش FAQ همین صفحه نمایش داده می‌شود
@@ -539,7 +546,10 @@ function IndexPage() {
       })),
     },
   ];
-  const jsonLd = parseSchemaJson(seoOverride?.schemaJson) ?? defaultJsonLd;
+  // schema اختصاصی صفحه (seo_pages) برای زبان پیش‌فرض نوشته شده است
+  const schemaOverride =
+    i18n.locale === getDefaultLocale(settings) ? seoOverride?.schemaJson : null;
+  const jsonLd = parseSchemaJson(schemaOverride) ?? defaultJsonLd;
 
   return (
     <SiteLayout settings={settings}>

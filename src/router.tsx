@@ -1,12 +1,7 @@
 import { QueryClient } from "@tanstack/react-query";
 import { createRouter } from "@tanstack/react-router";
 import { routeTree } from "./routeTree.gen";
-import {
-  isLocalizablePath,
-  splitLocalePrefix,
-  withLocalePrefix,
-  type Locale,
-} from "./lib/locales";
+import { isLocalizablePath, splitLocalePrefix, withLocalePrefix, type Locale } from "./lib/locales";
 
 export const getRouter = () => {
   const queryClient = new QueryClient();

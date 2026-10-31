@@ -57,7 +57,7 @@ export const Route = createFileRoute("/download/$slug")({
     }
     const { app, settings } = loaderData;
     return buildPageMeta({
-      i18n: i18nFromMatches(matches),
+      i18n: i18nFromMatches(matches, match, loaderData),
       settings,
       path: `/download/${app.slug}`,
       override: null,

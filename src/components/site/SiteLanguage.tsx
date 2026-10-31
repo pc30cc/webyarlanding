@@ -25,15 +25,8 @@ export function SiteLanguageProvider({
   messages?: Record<string, string> | undefined;
   children: ReactNode;
 }) {
-  const value = useMemo(
-    () => siteI18n(settings, locale, messages),
-    [settings, locale, messages],
-  );
-  return (
-    <SiteLanguageContext.Provider value={value}>
-      {children}
-    </SiteLanguageContext.Provider>
-  );
+  const value = useMemo(() => siteI18n(settings, locale, messages), [settings, locale, messages]);
+  return <SiteLanguageContext.Provider value={value}>{children}</SiteLanguageContext.Provider>;
 }
 
 /** زبان، اطلاعات زبان و مترجم صفحه */

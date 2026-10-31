@@ -35,10 +35,10 @@ export const Route = createFileRoute("/tag/$slug")({
     if (posts.length === 0) throw notFound();
     return { settings, posts, slug: params.slug, seoOverride };
   },
-  head: ({ params, loaderData, matches }) => {
+  head: ({ params, loaderData, matches, match }) => {
     if (!loaderData) return {};
     return buildPageMeta({
-      i18n: i18nFromMatches(matches),
+      i18n: i18nFromMatches(matches, match, loaderData),
       settings: loaderData.settings,
       path: `/tag/${params.slug}`,
       override: loaderData.seoOverride,

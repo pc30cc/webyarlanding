@@ -1,11 +1,11 @@
-import { getBrandNameEn, getDefaultLocale, type SiteSettings } from "./settings";
+import { getBrandNameEn, getDefaultLocale, resolvePageLocale, type SiteSettings } from "./settings";
+import { cachedSiteMessages } from "./site-messages";
 import { LOCALE_INFO, type Locale, type LocaleInfo } from "./locales";
 
 /** زبان صفحه؛ همان Locale (نام قدیمی برای سازگاری) */
 export type SiteLanguage = Locale;
 export type Translate = <T>(value: T) => T;
-export const normalizeMessage = (text: string) =>
-  text.replace(/\s+/g, " ").trim();
+export const normalizeMessage = (text: string) => text.replace(/\s+/g, " ").trim();
 const own = (object: Record<string, string>, key: string) =>
   Object.prototype.hasOwnProperty.call(object, key) ? object[key] : undefined;
 
@@ -56,10 +56,7 @@ export function createSiteTranslator(
   const dictionary = { ...messages, ...overrides };
   const templates = Object.entries(dictionary)
     .filter(([key]) => /\{\d+\}/.test(key))
-    .sort(
-      ([a], [b]) =>
-        b.replace(/\{\d+\}/g, "").length - a.replace(/\{\d+\}/g, "").length,
-    )
+    .sort(([a], [b]) => b.replace(/\{\d+\}/g, "").length - a.replace(/\{\d+\}/g, "").length)
     .map(([key, value]) => {
       const slots: string[] = [];
       const pattern = key
@@ -105,25 +102,18 @@ export function createSiteTranslator(
                   part !== localizeDigits(parts[i] ?? "", language) ||
                   !/[\u0600-\u06ff]/.test(parts[i] ?? ""),
               )
-            : translated.every(
-                (part) => !/[\u0600-\u06ff]/.test(localizeDigits(part, language)),
-              );
+            : translated.every((part) => !/[\u0600-\u06ff]/.test(localizeDigits(part, language)));
         if (complete) {
           result =
             translated.length > 1
-              ? translated.slice(0, -1).join(info.listSeparator) +
-                info.listAnd +
-                translated.at(-1)
+              ? translated.slice(0, -1).join(info.listSeparator) + info.listAnd + translated.at(-1)
               : translated[0];
         }
       }
     }
     result = localizeDigits(result ?? source, language);
     if (direct !== undefined || result !== localizeDigits(source, language)) {
-      result =
-        (source.match(/^\s+/)?.[0] ?? "") +
-        result +
-        (source.match(/\s+$/)?.[0] ?? "");
+      result = (source.match(/^\s+/)?.[0] ?? "") + result + (source.match(/\s+$/)?.[0] ?? "");
     }
     cache.set(source, result);
     return result;
@@ -183,40 +173,39 @@ interface RootLocaleData {
   messages: Record<string, string>;
 }
 
-/** زبان و مترجم صفحه داخل head() یک route، از داده‌های route ریشه. */
+/**
+ * زبان و مترجم صفحه داخل head() یک route. در مرورگر از داده‌های route ریشه خوانده می‌شود؛
+ * روی سرور head() پیش از آماده شدن آن داده‌ها با تصویری از matchها اجرا می‌شود، پس زبان
+ * از پیشوند آدرس (context.urlLocale) و تنظیمات خود صفحه، و دیکشنری از کش ساخته می‌شود.
+ */
 export function i18nFromMatches(
   matches: ReadonlyArray<{ routeId?: string; loaderData?: unknown }>,
+  match?: { context?: unknown },
+  loaderData?: unknown,
 ): SiteI18n | null {
-  const root = matches.find((match) => match.routeId === "__root__")?.loaderData as
-    | RootLocaleData
-    | undefined;
-  if (!root?.settings || !root.locale) return null;
-  return siteI18n(root.settings, root.locale, root.messages);
+  const root = matches.find((m) => m.routeId === "__root__")?.loaderData as
+    RootLocaleData | undefined;
+  if (root?.settings && root.locale) return siteI18n(root.settings, root.locale, root.messages);
+  const settings = (loaderData as { settings?: SiteSettings } | undefined)?.settings;
+  if (!settings) return null;
+  const urlLocale = (match?.context as { urlLocale?: Locale | null } | undefined)?.urlLocale;
+  const locale = resolvePageLocale(settings, urlLocale);
+  return siteI18n(settings, locale, cachedSiteMessages(locale));
 }
 
 /** Translate schema text without changing identifiers, canonical URLs or dates. */
 export function localizeStructuredData<T>(i18n: SiteI18n, data: T): T {
   const { translate, locale } = i18n;
-  const textKeys = new Set([
-    "name",
-    "description",
-    "headline",
-    "text",
-    "keywords",
-  ]);
+  const textKeys = new Set(["name", "description", "headline", "text", "keywords"]);
   function visit(value: unknown, key = ""): unknown {
     if (typeof value === "string") {
-      if (key === "inLanguage" && locale !== "fa")
-        return locale === "en" ? "en-US" : locale;
+      if (key === "inLanguage" && locale !== "fa") return locale === "en" ? "en-US" : locale;
       return textKeys.has(key) ? translate(value) : value;
     }
     if (Array.isArray(value)) return value.map((item) => visit(item, key));
     if (value && typeof value === "object")
       return Object.fromEntries(
-        Object.entries(value).map(([childKey, child]) => [
-          childKey,
-          visit(child, childKey),
-        ]),
+        Object.entries(value).map(([childKey, child]) => [childKey, visit(child, childKey)]),
       );
     return value;
   }

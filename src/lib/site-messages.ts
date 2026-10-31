@@ -11,6 +11,22 @@ const LOADERS: Partial<Record<Locale, () => Promise<Messages>>> = {
 const EMPTY: Messages = {};
 const loaded = new Map<Locale, Messages>();
 
+/** دیکشنری یک زبان اگر قبلاً بارگذاری شده باشد (برای head() که همگام اجرا می‌شود) */
+export function cachedSiteMessages(locale: Locale): Messages {
+  return locale === "fa" ? EMPTY : (loaded.get(locale) ?? EMPTY);
+}
+
+/** دیکشنری رسیده از داده‌های route ریشه (hydration) را در کش می‌گذارد. */
+export function primeSiteMessages(locale: Locale, messages: Messages): void {
+  if (locale !== "fa" && !loaded.has(locale) && Object.keys(messages).length > 0)
+    loaded.set(locale, messages);
+}
+
+/** همه دیکشنری‌ها را بارگذاری می‌کند؛ فقط روی سرور، پیش از اجرای head() صفحات. */
+export async function loadAllSiteMessages(): Promise<void> {
+  await Promise.all((Object.keys(LOADERS) as Locale[]).map((locale) => loadSiteMessages(locale)));
+}
+
 export async function loadSiteMessages(locale: Locale): Promise<Messages> {
   const cached = loaded.get(locale);
   if (cached) return cached;

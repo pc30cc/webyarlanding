@@ -22,11 +22,11 @@ export const Route = createFileRoute("/solutions/$slug")({
     if (!result) throw notFound();
     return { settings, ...result, seoOverride };
   },
-  head: ({ loaderData, params, matches }) => {
+  head: ({ loaderData, params, matches, match }) => {
     if (!loaderData) return {};
     const { settings, item, seoOverride } = loaderData;
     return buildPageMeta({
-      i18n: i18nFromMatches(matches),
+      i18n: i18nFromMatches(matches, match, loaderData),
       settings,
       path: `/solutions/${params.slug}`,
       override: seoOverride,
