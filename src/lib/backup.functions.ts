@@ -1,6 +1,5 @@
 // نسخه‌پشتیبان‌گیری کامل پایگاه‌داده — فقط برای مدیران. خروجی JSON و SQL قابل‌حمل (سازگار با PostgreSQL و MySQL/phpMyAdmin).
 import { createServerFn } from "@tanstack/react-start";
-import { LEGACY_SLUG_PREFIX } from "./brand-scrub";
 import { z } from "zod";
 
 export interface ColumnDef {
@@ -516,9 +515,7 @@ export const importBackup = createServerFn({ method: "POST" })
 
 const META_SETTING_KEY = "_destination_backup_meta";
 const CHUNK_SIZE = 500;
-// Fixed database function name, derived at runtime so the respok.app build's brand rewrite of
-// the browser bundle leaves it identical to what the server calls.
-const EXEC_SQL_FN = `${LEGACY_SLUG_PREFIX.slice(0, -1)}_exec_sql`;
+const EXEC_SQL_FN = "webyar_exec_sql";
 
 /** یک‌بار در SQL Editor پروژه Supabase مقصد اجرا شود تا بک‌آپ خودکار (با ساخت خودکار جدول‌ها) فعال شود */
 export const DESTINATION_BOOTSTRAP_SQL = `create or replace function public.${EXEC_SQL_FN}(query text)

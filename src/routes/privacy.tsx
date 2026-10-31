@@ -1,6 +1,4 @@
 import { LEGAL_EFFECTIVE_DATE_EN, privacySectionsEn } from "@/lib/legal-en";
-import { RespokPage } from "@/components/respok/RespokPage";
-import { getSiteLanguage } from "@/lib/site-i18n";
 import { localizeStructuredData } from "@/lib/site-i18n";
 import { createFileRoute } from "@tanstack/react-router";
 import { motion } from "framer-motion";
@@ -137,7 +135,7 @@ function sectionsFa(brand: string, email: string, address: string) {
   ];
 }
 
-function PersianPrivacyPage() {
+function PrivacyPage() {
   const { settings } = Route.useLoaderData();
   const english = isEnglishChrome(settings, "/privacy");
   const base = (settings.brand.siteUrl || "").replace(/\/$/, "");
@@ -215,12 +213,4 @@ function PersianPrivacyPage() {
       </div>
     </SiteLayout>
   );
-}
-
-/** English site: the active Respok template; Persian site: the page above. */
-function PrivacyPage() {
-  const data = Route.useLoaderData();
-  if (getSiteLanguage(data.settings) === "en")
-    return <RespokPage page="privacy" data={data} />;
-  return <PersianPrivacyPage />;
 }

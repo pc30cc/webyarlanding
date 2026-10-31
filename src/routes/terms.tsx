@@ -1,6 +1,4 @@
 import { LEGAL_EFFECTIVE_DATE_EN, termsSectionsEn } from "@/lib/legal-en";
-import { RespokPage } from "@/components/respok/RespokPage";
-import { getSiteLanguage } from "@/lib/site-i18n";
 import { localizeStructuredData } from "@/lib/site-i18n";
 import { createFileRoute } from "@tanstack/react-router";
 import { motion } from "framer-motion";
@@ -132,7 +130,7 @@ function sectionsFa(brand: string, email: string) {
   ];
 }
 
-function PersianTermsPage() {
+function TermsPage() {
   const { settings } = Route.useLoaderData();
   const english = isEnglishChrome(settings, "/terms");
   const base = (settings.brand.siteUrl || "").replace(/\/$/, "");
@@ -208,12 +206,4 @@ function PersianTermsPage() {
       </div>
     </SiteLayout>
   );
-}
-
-/** English site: the active Respok template; Persian site: the page above. */
-function TermsPage() {
-  const data = Route.useLoaderData();
-  if (getSiteLanguage(data.settings) === "en")
-    return <RespokPage page="terms" data={data} />;
-  return <PersianTermsPage />;
 }

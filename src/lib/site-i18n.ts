@@ -1,6 +1,5 @@
 import englishMessages from "./site-translations.en.json";
-import { getEnglishBrandName, type SiteSettings } from "./settings";
-import { LEGACY_BRAND_EN, RESPOK_BUILD, scrubBrandText } from "./brand-scrub";
+import { getBrandNameEn, type SiteSettings } from "./settings";
 
 export type SiteLanguage = "fa" | "en";
 export const normalizeMessage = (text: string) =>
@@ -29,30 +28,8 @@ export function latinDigits(text: string): string {
 export function createSiteTranslator(
   language: SiteLanguage,
   overrides: Record<string, string> = {},
-  /** English brand that replaces the legacy "Webyar" name in translated text. */
-  brand?: string,
 ) {
-  // Built at runtime so server and browser match the same names in the respok.app build,
-  // where the browser bundle (and the public data) already read "Respok".
-  const legacyName = new RegExp(
-    RESPOK_BUILD ? `\\b(?:${LEGACY_BRAND_EN}|Respok)\\b` : `\\b${LEGACY_BRAND_EN}\\b`,
-    "g",
-  );
-  const rebrand =
-    brand && brand !== LEGACY_BRAND_EN
-      ? (text: string) => text.replace(legacyName, brand)
-      : (text: string) => text;
-  // respok.app build: the browser bundle already has brand-free text, so keys, lookups and
-  // results go through the same rewrite here and server and client always agree.
-  const scrub = RESPOK_BUILD ? scrubBrandText : (value: string) => value;
-  const dictionary: Record<string, string> = RESPOK_BUILD
-    ? Object.fromEntries(
-        Object.entries({ ...messages, ...overrides }).map(([key, value]) => [
-          scrub(normalizeMessage(key)),
-          scrub(value),
-        ]),
-      )
-    : { ...messages, ...overrides };
+  const dictionary = { ...messages, ...overrides };
   const templates = Object.entries(dictionary)
     .filter(([key]) => /\{\d+\}/.test(key))
     .sort(
@@ -76,7 +53,7 @@ export function createSiteTranslator(
   const cache = new Map<string, string>();
   function text(source: string, depth = 0): string {
     if (language !== "en" || !source) return source;
-    const key = scrub(normalizeMessage(source));
+    const key = normalizeMessage(source);
     const cached = cache.get(source);
     if (cached !== undefined) return cached;
     const direct = own(dictionary, key);
@@ -105,7 +82,7 @@ export function createSiteTranslator(
         }
       }
     }
-    result = scrub(rebrand(latinDigits(result ?? source)));
+    result = latinDigits(result ?? source);
     if (direct !== undefined || result !== latinDigits(source)) {
       result =
         (source.match(/^\s+/)?.[0] ?? "") +
@@ -123,15 +100,10 @@ export function createSiteTranslator(
 }
 
 export function translatorForSettings(settings: SiteSettings) {
-  const brand = getEnglishBrandName(settings);
-  return createSiteTranslator(
-    getSiteLanguage(settings),
-    {
-      [settings.brand.name]: brand,
-      ...settings.localization?.english,
-    },
-    brand,
-  );
+  return createSiteTranslator(getSiteLanguage(settings), {
+    [settings.brand.name]: getBrandNameEn(settings),
+    ...settings.localization?.english,
+  });
 }
 
 /** Translate schema text without changing identifiers, canonical URLs or dates. */

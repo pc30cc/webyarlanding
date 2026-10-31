@@ -1,5 +1,4 @@
 import { createServerFn } from "@tanstack/react-start";
-import { brandSafe } from "./brand-scrub";
 import { z } from "zod";
 
 export type CatalogType = "product" | "solution";
@@ -35,7 +34,7 @@ export const getPublicCatalog = createServerFn({ method: "GET" })
   .handler(async ({ data }): Promise<CatalogCategoryDto[]> => {
     try {
       const { fetchPublicCatalog } = await import("./catalog.server");
-      return brandSafe(await fetchPublicCatalog(data.type));
+      return await fetchPublicCatalog(data.type);
     } catch (error) {
       console.error("getPublicCatalog failed:", error);
       return [];
@@ -48,7 +47,7 @@ export const getPublicCatalogItem = createServerFn({ method: "GET" })
   .handler(async ({ data }) => {
     try {
       const { fetchPublicCatalogItem } = await import("./catalog.server");
-      return brandSafe(await fetchPublicCatalogItem(data.type, data.slug));
+      return await fetchPublicCatalogItem(data.type, data.slug);
     } catch (error) {
       console.error("getPublicCatalogItem failed:", error);
       return null;

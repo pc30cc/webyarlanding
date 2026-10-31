@@ -218,7 +218,7 @@ export default function AppsSection() {
               <Input dir="ltr" value={form.downloadUrl} onChange={(e) => set("downloadUrl", e.target.value)} placeholder="https://..." />
             </div>
             <div className="space-y-1.5 md:col-span-2">
-              <Label>لینک دانلود سایت انگلیسی (Respok)</Label>
+              <Label>لینک دانلود سایت انگلیسی</Label>
               <Input dir="ltr" value={form.downloadUrlEn} onChange={(e) => set("downloadUrlEn", e.target.value)} placeholder="https://..." />
               <p className="text-xs text-muted-foreground">
                 جدا از لینک فارسی است. خالی بماند، در سایت انگلیسی «به‌زودی» نمایش داده می‌شود.
@@ -274,7 +274,7 @@ export default function AppsSection() {
             </div>
             <div className="flex items-center gap-3">
               <Switch checked={form.enabledEn} onCheckedChange={(v) => set("enabledEn", v)} />
-              <Label>نمایش در سایت انگلیسی (Respok)</Label>
+              <Label>نمایش در سایت انگلیسی</Label>
             </div>
             <div className="flex gap-2 md:col-span-2">
               <Button onClick={onSave} disabled={busy}>ذخیره</Button>

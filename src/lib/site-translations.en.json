@@ -745,5 +745,20 @@
   "پلن مناسب کسب‌وکار خود را از میان پلن‌های وب‌یار انتخاب کنید.": "Choose the Webyar plan that fits your business.",
   "رایگان شروع کنید": "Start free",
   "آیفون": "iPhone",
-  "نشست رمزنگاری‌شده، مدیریت دستگاه‌های واردشده و حذف حساب از داخل اپ آیفون.": "Encrypted sessions, a list of your signed-in devices, and account deletion from the iPhone app."
+  "نشست رمزنگاری‌شده، مدیریت دستگاه‌های واردشده و حذف حساب از داخل اپ آیفون.": "Encrypted sessions, a list of your signed-in devices, and account deletion from the iPhone app.",
+  "نصب با یک قطعه کد · افزونه آماده برای ووکامرس، اوپن‌کارت و WHMCS": "Install with a code snippet · Plugins for WooCommerce, OpenCart and WHMCS",
+  "پیام‌های تلگرام، واتس‌اپ، اینستاگرام و بله، همه یک‌جا کنار چت زنده‌ی سایت؛ ایمیل‌های جیمیل و یاهو هم در بخش صندوق ایمیل همان پنل. بدون جابه‌جایی بین چند برنامه.": "Telegram, WhatsApp, Instagram and Bale messages, all alongside your website's live chat, with Gmail and Yahoo emails in the email inbox of the same dashboard. No switching between apps.",
+  "تماس‌ها را با رضایت مشتری ضبط کنید و بعداً بازپخش یا دانلود کنید.": "Record calls with the customer's consent, then play them back or download them later.",
+  "گفتگوهای ابزارک سایت و کانال‌های پیام‌رسان در یک صندوق مشترک و ایمیل‌های جیمیل و یاهو در صندوق ایمیل همان پنل؛ با پاسخ‌های آماده، گفتگوی تیمی و ارجاع به دپارتمان مناسب.": "Website chats and messaging channels in one shared inbox, and Gmail and Yahoo emails in the email inbox of the same dashboard, with saved replies, team chat and routing to the right department.",
+  "تماس صوتی و تصویری، صف زنده تماس، درخواست تماس مجدد، ضبط مکالمه و انتقال تماس؛ همه در پنل مرکز تماس.": "Voice and video calls, a live call queue, callback requests, call recording and call transfer, all in the call center dashboard.",
+  "آموزش ایجنت با محتوای سایت، فایل‌ها، پرسش و پاسخ و پایگاه دانش، محیط آزمایش (Playground)، تعیین رفتار و زمان تحویل گفتگو به اپراتور، و گزارش پرسش‌های بی‌پاسخ و موضوعات پرتکرار.": "Train your agent with website content, files, Q&A and your knowledge base. Test responses in the playground, set how it behaves and when it hands the conversation to an operator, and see reports on unanswered questions and common topics.",
+  "پیش‌نویس پاسخ با یک کلیک و با لحن دلخواه، و راهنمایی خصوصی ایجنت برای پاسخ به مشتری؛ همراه با تحلیل اینکه چقدر این پیشنهادها استفاده شده‌اند.": "One-click reply drafts in the tone you choose and private guidance from the agent on how to answer the customer, with reports showing how often operators use these suggestions.",
+  "اتصال جیمیل یا یاهو، و خواندن و پاسخ به ایمیل‌ها در بخش صندوق ایمیل همان پنل.": "Connect Gmail or Yahoo, then read and reply to emails in the email inbox of the same dashboard.",
+  "افزونه آماده برای ووکامرس، اوپن‌کارت و WHMCS، راهنمای نصب برای وردپرس، شاپیفای و پرستاشاپ، اتصال کانال‌های پیام‌رسان و مدیریت دامنه‌های مجاز ابزارک.": "Plugins for WooCommerce, OpenCart and WHMCS, install guides for WordPress, Shopify and PrestaShop, messaging channel connections and allowed widget domains.",
+  "حجم گفتگوها، فعالیت هر اپراتور و آمار بازدید وب‌سایت در نمودارهای شفاف.": "Track conversation volume, operator activity and website visits with clear charts.",
+  "محیط آزمایش پاسخ‌ها (Playground)": "Response playground",
+  "رفتار، لحن و قوانین تحویل به اپراتور": "Behavior, tone and operator handoff rules",
+  "افزونه ووکامرس، اوپن‌کارت و WHMCS": "WooCommerce, OpenCart and WHMCS plugins",
+  "تماس صوتی و تصویری HD": "HD voice and video calls",
+  "افزونه‌های آماده برای ووکامرس، اوپن‌کارت و WHMCS و راهنمای نصب برای وردپرس، شاپیفای و پرستاشاپ در پنل موجود است. تلگرام، واتس‌اپ، اینستاگرام و بله به صندوق گفتگو وصل می‌شوند و ایمیل‌های جیمیل و یاهو در صندوق ایمیل پنل مدیریت می‌شوند.": "Plugins for WooCommerce, OpenCart and WHMCS and install guides for WordPress, Shopify and PrestaShop are available in the dashboard. Telegram, WhatsApp, Instagram and Bale connect to the shared inbox, and Gmail and Yahoo emails are managed in the dashboard's email inbox."
 }

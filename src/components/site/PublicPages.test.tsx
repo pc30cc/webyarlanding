@@ -1,10 +1,9 @@
-import { beforeAll, describe, it, expect, vi } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import { renderToStaticMarkup } from "react-dom/server";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import type { ComponentType, ReactNode } from "react";
 import { SiteLanguageProvider } from "./SiteLanguage";
-import { DEFAULT_SETTINGS, type EnglishTemplate } from "@/lib/settings";
-import { loadRespokTemplate } from "@/components/respok/registry";
+import { DEFAULT_SETTINGS } from "@/lib/settings";
 
 const state = vi.hoisted(() => ({
   data: {} as Record<string, unknown>,
@@ -23,30 +22,17 @@ vi.mock("@tanstack/react-router", () => ({
     to,
     params: _params,
     hash: _hash,
-    search: _search,
-    activeProps: _activeProps,
-    inactiveProps: _inactiveProps,
-    activeOptions: _activeOptions,
-    preload: _preload,
-    resetScroll: _resetScroll,
     ...props
   }: {
     children: ReactNode;
     to: string;
     params?: unknown;
     hash?: unknown;
-    search?: unknown;
-    activeProps?: unknown;
-    inactiveProps?: unknown;
-    activeOptions?: unknown;
-    preload?: unknown;
-    resetScroll?: unknown;
   }) => (
     <a href={to} {...props}>
       {children}
     </a>
   ),
-  useLocation: () => ({ pathname: state.pathname, hash: "", search: {} }),
   useRouterState: ({ select }: { select: (s: unknown) => unknown }) =>
     select({ location: { pathname: state.pathname } }),
   useNavigate: () => vi.fn(),
@@ -118,14 +104,9 @@ const routes = [
 type RouteEntry = (typeof routes)[number];
 
 /** Server-renders one public route component with the test fixtures. */
-function renderRoute(
-  [path, route]: RouteEntry,
-  language: "fa" | "en",
-  template: EnglishTemplate = "open",
-) {
+function renderRoute([path, route]: RouteEntry, language: "fa" | "en") {
   const settings = structuredClone(DEFAULT_SETTINGS);
   settings.localization.language = language;
-  settings.localization.englishTemplate = template;
   settings.brand.legalEnglishChrome = false;
   settings.localization.english = {
     "عنوان مقاله آزمایشی": "Sample article",
@@ -204,78 +185,53 @@ function renderRoute(
   return { container, post };
 }
 
-/** Blog content keeps its original language; strip it before checking the UI. */
-function stripPostContent(
-  container: HTMLElement,
-  path: string,
-  post: { title: string; excerpt: string; author: string },
-) {
-  if (!path.startsWith("/blog") && !path.startsWith("/tag")) return;
-  expect(container.textContent).toContain(post.title);
-  if (path === "/blog/$slug")
-    expect(container.textContent).toContain("متن مقاله آزمایشی");
-  for (const element of container.querySelectorAll("*")) {
-    for (const attr of ["alt", "aria-label", "title"]) {
-      const value = element.getAttribute(attr);
-      if (value) element.setAttribute(attr, value.replace(post.title, ""));
-    }
-  }
-  for (const node of container.querySelectorAll("*")) {
-    for (const child of node.childNodes) {
-      if (child.nodeType === 3)
-        child.textContent =
-          child.textContent
-            ?.replace(post.title, "")
-            .replace(post.excerpt, "")
-            .replace(post.author, "")
-            .replace("متن مقاله آزمایشی", "") ?? "";
-    }
-  }
-}
-
-for (const template of ["open", "thread"] as const) {
-  describe(`public pages in English (${template} template)`, () => {
-    beforeAll(async () => {
-      await loadRespokTemplate(template);
-    });
-    for (const entry of routes) {
-      const [path] = entry;
-      it("renders " + path + " without Persian UI text", () => {
-        const { container, post } = renderRoute(entry, "en", template);
-        const root = container.querySelector(".respok");
-        expect(root?.getAttribute("dir")).toBe("ltr");
-        expect(root?.getAttribute("data-template")).toBe(template);
-        expect(container.querySelector(".site-theme")).toBeNull();
-        expect(container.querySelectorAll("h1").length).toBe(1);
-        stripPostContent(container, path, post);
-        const persian = container.textContent?.match(
-          /[\u0600-\u06ff][\u0600-\u06ff\s،]*/g,
-        );
-        expect(persian, path + ": " + persian?.join(" | ")).toBeNull();
-        for (const element of container.querySelectorAll(
-          "[alt],[title],[placeholder],[aria-label]",
-        )) {
-          for (const attribute of ["alt", "title", "placeholder", "aria-label"]) {
-            expect(
-              element.getAttribute(attribute) || "",
-              path + " " + attribute,
-            ).not.toMatch(/[\u0600-\u06ff]/);
+describe("public pages in English", () => {
+  for (const entry of routes) {
+    const path = entry[0];
+    it("renders " + path + " without Persian UI text", () => {
+      const { container, post } = renderRoute(entry, "en");
+      if (path.startsWith("/blog") || path.startsWith("/tag")) {
+        expect(container.textContent).toContain(post.title);
+        if (path === "/blog/$slug") expect(container.textContent).toContain("متن مقاله آزمایشی");
+        for (const element of container.querySelectorAll("*")) {
+          for (const attr of ["alt", "aria-label"]) {
+            const value = element.getAttribute(attr);
+            if (value) element.setAttribute(attr, value.replace(post.title, ""));
           }
         }
-        expect(container.textContent).not.toMatch(/\bWebyar\b/);
-      });
-    }
-  });
-}
+        for (const node of container.querySelectorAll("*")) {
+          for (const child of node.childNodes) {
+            if (child.nodeType === 3)
+              child.textContent =
+                child.textContent
+                  ?.replace(post.title, "")
+                  .replace(post.excerpt, "")
+                  .replace(post.author, "")
+                  .replace("متن مقاله آزمایشی", "") ?? "";
+          }
+        }
+      }
+      const persian = container.textContent?.match(/[\u0600-\u06ff][\u0600-\u06ff\s،]*/g);
+      expect(persian, path + ": " + persian?.join(" | ")).toBeNull();
+      for (const element of container.querySelectorAll(
+        "[alt],[title],[placeholder],[aria-label]",
+      )) {
+        for (const attribute of ["alt", "title", "placeholder", "aria-label"]) {
+          expect(element.getAttribute(attribute) || "", path + " " + attribute).not.toMatch(
+            /[\u0600-\u06ff]/,
+          );
+        }
+      }
+      expect(container.querySelector(".site-theme")?.getAttribute("dir")).toBe("ltr");
+    });
+  }
+});
 
 describe("public pages in Persian", () => {
   for (const entry of routes) {
     it("keeps the Persian design for " + entry[0], () => {
       const { container } = renderRoute(entry, "fa");
-      expect(container.querySelector(".respok")).toBeNull();
-      expect(container.querySelector(".site-theme")?.getAttribute("dir")).toBe(
-        "rtl",
-      );
+      expect(container.querySelector(".site-theme")?.getAttribute("dir")).toBe("rtl");
     });
   }
 });

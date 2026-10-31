@@ -1,6 +1,4 @@
-import { getEnglishBrandName } from "@/lib/settings";
-import { RespokNotFoundSwitch } from "@/components/respok/RespokNotFound";
-import { RespokPage } from "@/components/respok/RespokPage";
+import { getBrandNameEn } from "@/lib/settings";
 import { getSiteLanguage } from "@/lib/site-i18n";
 import {
   useSiteLocale,
@@ -38,10 +36,10 @@ export const Route = createFileRoute("/blog/$slug")({
   head: ({ loaderData, params }) => {
     if (!loaderData) return {};
     const { settings, post } = loaderData;
-    // مقاله به زبان اصلی خودش نمایش داده می‌شود؛ فقط نام برند در سایت انگلیسی Respok است.
+    // مقاله به زبان اصلی خودش نمایش داده می‌شود؛ در سایت انگلیسی فقط نام برند انگلیسی است.
     const title =
       post.seoTitle ||
-      `${post.title} | ${getSiteLanguage(settings) === "en" ? getEnglishBrandName(settings) : "وب‌یار"}`;
+      `${post.title} | ${getSiteLanguage(settings) === "en" ? getBrandNameEn(settings) : "وب‌یار"}`;
     const desc = post.seoDescription || post.excerpt || post.title;
     return buildPageMeta({
       settings: {
@@ -67,7 +65,7 @@ export const Route = createFileRoute("/blog/$slug")({
       ],
     });
   },
-  notFoundComponent: BlogNotFoundSwitch,
+  notFoundComponent: BlogNotFound,
   errorComponent: BlogError,
   component: BlogPostPage,
 });
@@ -81,7 +79,7 @@ function tagSlug(input: string): string {
     .replace(/^-|-$/g, "");
 }
 
-function PersianBlogPostPage() {
+function BlogPostPage() {
   const translateText = useSiteTranslation();
   const locale = useSiteLocale();
 
@@ -254,21 +252,5 @@ function BlogFallback({ title }: { title: string }) {
         {translateText("بازگشت به بلاگ")}
       </Link>
     </div>
-  );
-}
-
-/** English site: the active Respok template; Persian site: the page above. */
-function BlogPostPage() {
-  const data = Route.useLoaderData();
-  if (getSiteLanguage(data.settings) === "en")
-    return <RespokPage page="blogPost" data={data} />;
-  return <PersianBlogPostPage />;
-}
-
-function BlogNotFoundSwitch() {
-  return (
-    <RespokNotFoundSwitch kind="post">
-      <BlogNotFound />
-    </RespokNotFoundSwitch>
   );
 }

@@ -1,9 +1,6 @@
-import { RESPOK_BUILD } from './brand-scrub';
-
 // Public campaign identifiers, scoped to the owner's production domains.
-// The English site has no ad measurement: the account belongs to the Persian site.
-export const GOOGLE_ADS_ID = RESPOK_BUILD ? '' : 'AW-11183167040';
-export const SIGNUP_SEND_TO = RESPOK_BUILD ? '' : `${GOOGLE_ADS_ID}/_HRMCLijlJIdEMCsxtQp`;
+export const GOOGLE_ADS_ID = 'AW-11183167040';
+export const SIGNUP_SEND_TO = `${GOOGLE_ADS_ID}/_HRMCLijlJIdEMCsxtQp`;
 const CONSENT_COOKIE = 'webyar_ads_measurement';
 type Consent = 'granted' | 'denied' | null;
 type Tag = (...args: unknown[]) => void;
@@ -13,7 +10,7 @@ const sent = new Set<string>();
 const pending = new Set<string>();
 
 export function isAdsProduction(): boolean {
-  return !RESPOK_BUILD && typeof window !== 'undefined' && window.location.protocol === 'https:' &&
+  return typeof window !== 'undefined' && window.location.protocol === 'https:' &&
     ['webyar.ai', 'www.webyar.ai', 'app.webyar.ai'].includes(window.location.hostname);
 }
 

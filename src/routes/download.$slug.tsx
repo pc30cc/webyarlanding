@@ -1,13 +1,10 @@
-import { RespokNotFoundSwitch } from "@/components/respok/RespokNotFound";
-import { RespokPage } from "@/components/respok/RespokPage";
 import { getSiteLanguage } from "@/lib/site-i18n";
-import { LEGACY_SLUG_PREFIX } from "@/lib/brand-scrub";
 import { localizeStructuredData } from "@/lib/site-i18n";
 import {
   useSiteTranslation,
   useSiteLocale,
 } from "@/components/site/SiteLanguage";
-import { createFileRoute, Link, notFound, redirect } from "@tanstack/react-router";
+import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { motion } from "framer-motion";
 import { Check, ChevronLeft, HardDrive, Smartphone, Tag } from "lucide-react";
 import { fetchSettings } from "@/lib/settings.functions";
@@ -38,16 +35,7 @@ export const Route = createFileRoute("/download/$slug")({
       getPublicApp({ data: { slug: params.slug } }),
       getPublicApps(),
     ]);
-    if (!app) {
-      // English site: apps used to be published under a legacy slug prefix; send old links to respok-*.
-      if (getSiteLanguage(settings) === "en" && params.slug.startsWith(LEGACY_SLUG_PREFIX))
-        throw redirect({
-          to: "/download/$slug",
-          params: { slug: `respok-${params.slug.slice(LEGACY_SLUG_PREFIX.length)}` },
-          statusCode: 301,
-        });
-      throw notFound({ data: { language: getSiteLanguage(settings) } });
-    }
+    if (!app) throw notFound({ data: { language: getSiteLanguage(settings) } });
     return { settings, app, others: apps.filter((a) => a.id !== app.id) };
   },
   head: ({ loaderData, match }) => {
@@ -72,7 +60,7 @@ export const Route = createFileRoute("/download/$slug")({
       fallbackDescription: app.shortDesc,
     });
   },
-  notFoundComponent: AppNotFoundSwitch,
+  notFoundComponent: AppNotFound,
   errorComponent: AppNotFound,
   component: AppPage,
 });
@@ -96,7 +84,7 @@ function AppNotFound() {
   );
 }
 
-function PersianAppPage() {
+function AppPage() {
   const translateText = useSiteTranslation();
 
   const { settings, app, others } = Route.useLoaderData();
@@ -303,21 +291,5 @@ function PersianAppPage() {
         </section>
       )}
     </SiteLayout>
-  );
-}
-
-/** English site: the active Respok template; Persian site: the page above. */
-function AppPage() {
-  const data = Route.useLoaderData();
-  if (getSiteLanguage(data.settings) === "en")
-    return <RespokPage page="downloadApp" data={data} />;
-  return <PersianAppPage />;
-}
-
-function AppNotFoundSwitch() {
-  return (
-    <RespokNotFoundSwitch kind="app">
-      <AppNotFound />
-    </RespokNotFoundSwitch>
   );
 }

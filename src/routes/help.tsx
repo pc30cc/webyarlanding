@@ -1,6 +1,4 @@
 import { HELP_FAQS_EN } from "@/lib/legal-en";
-import { RespokPage } from "@/components/respok/RespokPage";
-import { getSiteLanguage } from "@/lib/site-i18n";
 import { localizeStructuredData } from "@/lib/site-i18n";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { motion } from "framer-motion";
@@ -68,7 +66,7 @@ const FAQS_FA = [
   },
 ];
 
-function PersianHelpPage() {
+function HelpPage() {
   const { settings } = Route.useLoaderData();
   const english = isEnglishChrome(settings, "/help");
   const base = (settings.brand.siteUrl || "").replace(/\/$/, "");
@@ -289,12 +287,4 @@ function PersianHelpPage() {
       </div>
     </SiteLayout>
   );
-}
-
-/** English site: the active Respok template; Persian site: the page above. */
-function HelpPage() {
-  const data = Route.useLoaderData();
-  if (getSiteLanguage(data.settings) === "en")
-    return <RespokPage page="help" data={data} />;
-  return <PersianHelpPage />;
 }
