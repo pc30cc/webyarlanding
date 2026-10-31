@@ -4,8 +4,14 @@ import { listPublishedPosts, listTags } from "@/lib/blog.functions";
 import { getPublicCatalog } from "@/lib/catalog.functions";
 import { getPublicApps } from "@/lib/apps.functions";
 import { getActiveLocales, getDefaultLocale } from "@/lib/settings";
-import type { Locale } from "@/lib/locales";
-import { hreflangAlternates, indexableLocales, localizedUrl } from "@/lib/seo-meta";
+import { isLocale, type Locale } from "@/lib/locales";
+import {
+  hreflangAlternates,
+  indexableLocales,
+  localizedUrl,
+  seoPageCanonicals,
+  type SeoCanonicals,
+} from "@/lib/seo-meta";
 import { persianBlogPath } from "@/lib/locale-routing";
 
 const staticPaths = [
@@ -61,6 +67,41 @@ function toLastmod(iso: string | null | undefined): string | null {
   return Number.isNaN(d.getTime()) ? null : d.toISOString().slice(0, 10);
 }
 
+/**
+ * canonical سفارشی نسخه‌های زبان هر مسیر (seo_pages)، تا آدرس‌ها و hreflang سایت‌مپ با
+ * canonical و hreflang خود صفحه یکی باشد. فقط در سایت چندزبانه خوانده می‌شود؛ خطای
+ * دیتابیس یعنی آدرس‌های پیش‌فرض.
+ */
+async function loadSeoCanonicals(defaultLocale: Locale): Promise<Map<string, SeoCanonicals>> {
+  const result = new Map<string, SeoCanonicals>();
+  try {
+    const { db } = await import("@/lib/db.server");
+    const { data } = await db.from("seo_pages").select("path, locale, canonical_url");
+    const byPath = new Map<string, { locale: Locale | null; canonicalUrl: string | null }[]>();
+    for (const row of (data ?? []) as {
+      path: string;
+      locale: string | null;
+      canonical_url: string | null;
+    }[]) {
+      // ردیف با زبان ناشناخته نادیده گرفته می‌شود (مثل getPublicSeoPage)
+      if (row.locale && !isLocale(row.locale)) continue;
+      const list = byPath.get(row.path) ?? [];
+      list.push({
+        locale: isLocale(row.locale) ? row.locale : null,
+        canonicalUrl: row.canonical_url,
+      });
+      byPath.set(row.path, list);
+    }
+    for (const [path, rows] of byPath) {
+      const canonicals = seoPageCanonicals(rows, defaultLocale);
+      if (Object.keys(canonicals).length > 0) result.set(path, canonicals);
+    }
+  } catch (error) {
+    console.error("sitemap seo canonicals failed:", error);
+  }
+  return result;
+}
+
 export const Route = createFileRoute("/sitemap.xml")({
   server: {
     handlers: {
@@ -106,15 +147,20 @@ export const Route = createFileRoute("/sitemap.xml")({
         const locales = multi ? indexableLocales(settings) : [];
         // برنامه‌ها ممکن است فقط در بعضی زبان‌ها نمایش داده شوند
         const appLocales = new Map<string, Locale[]>();
+        let canonicals = new Map<string, SeoCanonicals>();
         if (locales.length >= 2) {
           const fallback = getDefaultLocale(settings);
-          const perLocale = await Promise.all(
-            locales.map((locale) =>
-              getPublicApps({ data: { locale: locale === fallback ? null : locale } }).catch(
-                () => [],
+          const [perLocale, seoCanonicals] = await Promise.all([
+            Promise.all(
+              locales.map((locale) =>
+                getPublicApps({ data: { locale: locale === fallback ? null : locale } }).catch(
+                  () => [],
+                ),
               ),
             ),
-          );
+            loadSeoCanonicals(fallback),
+          ]);
+          canonicals = seoCanonicals;
           perLocale.forEach((list, i) => {
             for (const app of list)
               appLocales.set(app.slug, [...(appLocales.get(app.slug) ?? []), locales[i] as Locale]);
@@ -128,7 +174,7 @@ export const Route = createFileRoute("/sitemap.xml")({
               }))
             : apps.map((a): SitemapPage => ({ path: `/download/${a.slug}` }))),
         );
-        const urls: SitemapUrl[] = pages.flatMap((page): SitemapUrl[] => {
+        let urls: SitemapUrl[] = pages.flatMap((page): SitemapUrl[] => {
           if (page.blog) {
             if (multi && !getActiveLocales(settings).includes("fa")) return [];
             const path = multi ? persianBlogPath(settings, page.path) : page.path;
@@ -137,13 +183,19 @@ export const Route = createFileRoute("/sitemap.xml")({
           if (locales.length < 2)
             return [{ loc: localUrl(settings, page.path), lastmod: page.lastmod ?? null }];
           const available = page.locales ?? locales;
-          const alternates = hreflangAlternates(settings, page.path, null, available);
+          const custom = canonicals.get(page.path) ?? null;
+          const alternates = hreflangAlternates(settings, page.path, custom, available);
           return available.map((locale) => ({
-            loc: localizedUrl(settings, locale, page.path) ?? "",
+            loc: custom?.[locale] || (localizedUrl(settings, locale, page.path) ?? ""),
             lastmod: page.lastmod ?? null,
             alternates,
           }));
         });
+        // canonical سفارشی ممکن است به آدرس صفحه‌ی دیگری اشاره کند؛ هر آدرس یک‌بار می‌آید
+        if (locales.length >= 2) {
+          const seen = new Set<string>();
+          urls = urls.filter((u) => !seen.has(u.loc) && Boolean(seen.add(u.loc)));
+        }
         const hasAlternates = urls.some((u) => u.alternates?.length);
         const xml = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"${
           hasAlternates ? ' xmlns:xhtml="http://www.w3.org/1999/xhtml"' : ""
