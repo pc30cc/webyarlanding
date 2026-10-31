@@ -116,7 +116,7 @@ export function LanguageSection({
       ]),
   });
   const translate = useMemo(
-    () => createSiteTranslator("en", settings.localization.english),
+    () => createSiteTranslator("en", messages, settings.localization.english),
     [settings.localization.english],
   );
   const allRows = useMemo(() => {

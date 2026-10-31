@@ -1,16 +1,17 @@
-import { localizeStructuredData } from "@/lib/site-i18n";
-import { useSiteTranslation } from "@/components/site/SiteLanguage";
+import { i18nFromMatches, localizeStructuredData } from "@/lib/site-i18n";
+import { useSiteI18n, useSiteTranslation } from "@/components/site/SiteLanguage";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { motion } from "framer-motion";
 import { Check, ChevronLeft } from "lucide-react";
 import { fetchSettings } from "@/lib/settings.functions";
-import { joinFa } from "@/lib/settings";
+import { getDefaultLocale, joinFa } from "@/lib/settings";
 import { getPublicSeoPage } from "@/lib/seo.functions";
 import { getPublicCatalog } from "@/lib/catalog.functions";
 import {
   buildPageMeta,
   parseSchemaJson,
   buildBreadcrumbJsonLd,
+  localizedUrl,
   safeJsonLdHtml,
 } from "@/lib/seo-meta";
 import { getIcon } from "@/lib/icon-registry";
@@ -30,11 +31,12 @@ export const Route = createFileRoute("/products/")({
     ]);
     return { settings, seoOverride, categories };
   },
-  head: ({ loaderData }) => {
+  head: ({ loaderData, matches }) => {
     if (!loaderData) return {};
     const callEnabled = loaderData.settings.videoCall.enabled;
     const aiEnabled = loaderData.settings.aiMarketing.enabled;
     return buildPageMeta({
+      i18n: i18nFromMatches(matches),
       settings: loaderData.settings,
       path: "/products",
       override: loaderData.seoOverride,
@@ -82,6 +84,7 @@ function mentionsAny(
 
 function ProductsPage() {
   const translateText = useSiteTranslation();
+  const i18n = useSiteI18n();
 
   const {
     settings,
@@ -100,10 +103,12 @@ function ProductsPage() {
       ),
     }))
     .filter((c) => c.items.length > 0);
-  const base = (settings.brand.siteUrl || "").replace(/\/$/, "");
   const allProducts = categories.flatMap((c) => c.items);
 
-  const jsonLd = parseSchemaJson(seoOverride?.schemaJson) ?? [
+  // schemaJson اختصاصی صفحه مثل بقیه override سئو برای زبان پیش‌فرض نوشته شده است
+  const schemaOverride =
+    i18n.locale === getDefaultLocale(settings) ? seoOverride?.schemaJson : null;
+  const jsonLd = parseSchemaJson(schemaOverride) ?? [
     {
       "@context": "https://schema.org",
       "@type": "ItemList",
@@ -115,12 +120,12 @@ function ProductsPage() {
           "@type": "Service",
           name: p.title,
           description: p.shortDesc,
-          url: base ? `${base}/products/${p.slug}` : undefined,
+          url: localizedUrl(settings, i18n.locale, `/products/${p.slug}`),
           provider: { "@type": "Organization", name: settings.brand.name },
         },
       })),
     },
-    buildBreadcrumbJsonLd(settings, [
+    buildBreadcrumbJsonLd(i18n, settings, [
       { name: "خانه", path: "/" },
       { name: "محصولات", path: "/products" },
     ]),
@@ -131,7 +136,7 @@ function ProductsPage() {
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={safeJsonLdHtml(
-          localizeStructuredData(settings, jsonLd),
+          localizeStructuredData(i18n, jsonLd),
         )}
       />
 

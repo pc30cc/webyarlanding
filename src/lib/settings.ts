@@ -1,5 +1,6 @@
 // تنظیمات چندزبانه سایت — ساختار مشترک بین کلاینت و سرور.
 // در دیتابیس به صورت key/value متنی ذخیره می‌شود تا انتقال به MySQL ساده باشد.
+import { LOCALES, isLocale, type Locale } from "./locales";
 
 export interface BrandSettings {
   name: string;
@@ -194,7 +195,12 @@ export interface SearchConsoleSettings {
 }
 
 export interface LocalizationSettings {
-  language: "fa" | "en";
+  /** زبان پیش‌فرض سایت؛ بدون پیشوند روی ریشه نمایش داده می‌شود. */
+  language: Locale;
+  /** تک‌زبانه: فقط زبان پیش‌فرض. چندزبانه: همه زبان‌های فعال، بقیه با پیشوند /en و… */
+  mode?: "single" | "multi" | undefined;
+  /** زبان‌های فعال در حالت چندزبانه (همیشه شامل زبان پیش‌فرض) */
+  locales?: Locale[] | undefined;
   /** English versions of editor-managed content, keyed by the original text. */
   english: Record<string, string>;
 }
@@ -219,7 +225,7 @@ export interface SiteSettings {
 }
 
 export const DEFAULT_SETTINGS: SiteSettings = {
-  localization: { language: "fa", english: {} },
+  localization: { language: "fa", mode: "single", locales: ["fa"], english: {} },
   brand: {
     name: "وب‌یار",
     nameEn: "Webyar",
@@ -375,15 +381,51 @@ export function joinFa(
 /** مسیرهای حقوقی/پشتیبانی که می‌توانند کاملاً انگلیسی نمایش داده شوند. */
 export const LEGAL_EN_PATHS = ["/privacy", "/terms", "/help"];
 
-/** آیا این مسیر باید با پوسته انگلیسی (منو، دکمه‌ها، فوتر) نمایش داده شود؟ */
+/** زبان پیش‌فرض سایت (بدون پیشوند روی ریشه) */
+export function getDefaultLocale(settings: SiteSettings): Locale {
+  return settings.localization?.language ?? "fa";
+}
+
+/** زبان‌هایی که سایت الان سرو می‌کند؛ در حالت تک‌زبانه فقط زبان پیش‌فرض. */
+export function getActiveLocales(settings: SiteSettings): Locale[] {
+  const fallback = getDefaultLocale(settings);
+  if (settings.localization?.mode !== "multi") return [fallback];
+  const locales = settings.localization.locales ?? [];
+  return locales.includes(fallback) ? locales : [fallback, ...locales];
+}
+
+/**
+ * زبان محتوای یک صفحه. در سایت فارسی، صفحات حقوقی/پشتیبانی (LEGAL_EN_PATHS) برای بررسی
+ * اپ‌استور و گوگل‌پلی انگلیسی نمایش داده می‌شوند، مگر نسخه انگلیسی سایت (/en) فعال باشد.
+ */
+export function pageContentLocale(
+  settings: SiteSettings,
+  locale: Locale,
+  pathname: string,
+): Locale {
+  if (locale !== "fa" || settings.brand.legalEnglishChrome === false) return locale;
+  if (getActiveLocales(settings).includes("en")) return locale;
+  const clean = pathname.replace(/\/+$/, "") || "/";
+  return LEGAL_EN_PATHS.includes(clean) ? "en" : locale;
+}
+
+/** زبان صفحه: پیشوند آدرس اگر آن زبان فعال باشد، وگرنه زبان پیش‌فرض سایت. */
+export function resolvePageLocale(
+  settings: SiteSettings,
+  urlLocale: Locale | null | undefined,
+): Locale {
+  return urlLocale && getActiveLocales(settings).includes(urlLocale)
+    ? urlLocale
+    : getDefaultLocale(settings);
+}
+
+/** آیا این مسیر در این زبان با پوسته و متن انگلیسی (منو، دکمه‌ها، فوتر) نمایش داده شود؟ */
 export function isEnglishChrome(
   settings: SiteSettings,
+  locale: Locale,
   pathname: string,
 ): boolean {
-  if (settings.localization?.language === "en") return true;
-  if (settings.brand.legalEnglishChrome === false) return false;
-  const clean = pathname.replace(/\/+$/, "") || "/";
-  return LEGAL_EN_PATHS.includes(clean);
+  return pageContentLocale(settings, locale, pathname) === "en";
 }
 
 /** نام برند برای صفحات انگلیسی؛ اگر تنظیم نشده باشد به Webyar برمی‌گردد. */
@@ -420,9 +462,16 @@ export function mergeSettings(
       Object.assign(result[key] as object, section);
     }
   }
-  result.localization.language =
-    stored.localization?.language === "en" ? "en" : "fa";
-  result.localization.english = { ...stored.localization?.english };
+  const storedLocalization = stored.localization;
+  const language = isLocale(storedLocalization?.language)
+    ? storedLocalization.language
+    : "fa";
+  result.localization.language = language;
+  result.localization.mode = storedLocalization?.mode === "multi" ? "multi" : "single";
+  const enabled = new Set<Locale>([language]);
+  for (const locale of storedLocalization?.locales ?? []) if (isLocale(locale)) enabled.add(locale);
+  result.localization.locales = LOCALES.filter((locale) => enabled.has(locale));
+  result.localization.english = { ...storedLocalization?.english };
   // قالب سایت انگلیسی (Respok) حذف شده؛ مقدار قدیمی ذخیره‌شده دیگر به کلاینت فرستاده نشود
   // و در ذخیره بعدی تنظیمات پاک شود.
   delete (result.localization as { englishTemplate?: unknown }).englishTemplate;

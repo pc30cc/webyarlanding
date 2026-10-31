@@ -1,5 +1,7 @@
 import { LEGAL_EFFECTIVE_DATE_EN, termsSectionsEn } from "@/lib/legal-en";
-import { localizeStructuredData } from "@/lib/site-i18n";
+import { i18nFromMatches, localizeStructuredData } from "@/lib/site-i18n";
+import { useSiteI18n } from "@/components/site/SiteLanguage";
+import { LOCALE_INFO } from "@/lib/locales";
 import { createFileRoute } from "@tanstack/react-router";
 import { motion } from "framer-motion";
 import { fetchSettings } from "@/lib/settings.functions";
@@ -7,10 +9,16 @@ import { getPublicSeoPage } from "@/lib/seo.functions";
 import {
   buildPageMeta,
   buildBreadcrumbJsonLd,
+  localizedUrl,
   safeJsonLdHtml,
 } from "@/lib/seo-meta";
 import { SiteLayout } from "@/components/site/SiteLayout";
-import { getBrandNameEn, isEnglishChrome } from "@/lib/settings";
+import {
+  getBrandNameEn,
+  getDefaultLocale,
+  isEnglishChrome,
+  pageContentLocale,
+} from "@/lib/settings";
 
 export const Route = createFileRoute("/terms")({
   loader: async () => {
@@ -20,10 +28,16 @@ export const Route = createFileRoute("/terms")({
     ]);
     return { settings, seoOverride };
   },
-  head: ({ loaderData }) => {
+  head: ({ loaderData, matches }) => {
     if (!loaderData) return {};
-    const english = isEnglishChrome(loaderData.settings, "/terms");
+    const i18n = i18nFromMatches(matches);
+    const english = isEnglishChrome(
+      loaderData.settings,
+      i18n?.locale ?? getDefaultLocale(loaderData.settings),
+      "/terms",
+    );
     return buildPageMeta({
+      i18n,
       settings: loaderData.settings,
       path: "/terms",
       override: loaderData.seoOverride,
@@ -132,7 +146,11 @@ function sectionsFa(brand: string, email: string) {
 
 function TermsPage() {
   const { settings } = Route.useLoaderData();
-  const english = isEnglishChrome(settings, "/terms");
+  const i18n = useSiteI18n();
+  // زبان محتوای صفحه (در سایت فارسی این صفحه ممکن است انگلیسی نمایش داده شود)
+  const contentLocale = pageContentLocale(settings, i18n.locale, "/terms");
+  const english = contentLocale === "en";
+  const dir = LOCALE_INFO[contentLocale].dir;
   const base = (settings.brand.siteUrl || "").replace(/\/$/, "");
   const brandEn = getBrandNameEn(settings);
   const brand = english ? brandEn : settings.brand.name || brandEn;
@@ -142,10 +160,10 @@ function TermsPage() {
       "@context": "https://schema.org",
       "@type": "WebPage",
       name: english ? "Terms of Use" : "قوانین و شرایط استفاده",
-      url: base ? `${base}/terms` : undefined,
+      url: localizedUrl(settings, i18n.locale, "/terms"),
       isPartOf: { "@type": "WebSite", name: brand, url: base || undefined },
     },
-    buildBreadcrumbJsonLd(settings, [
+    buildBreadcrumbJsonLd(i18n, settings, [
       { name: english ? "Home" : "خانه", path: "/" },
       {
         name: english ? "Terms of Use" : "قوانین و شرایط استفاده",
@@ -159,12 +177,12 @@ function TermsPage() {
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={safeJsonLdHtml(
-          localizeStructuredData(settings, jsonLd),
+          localizeStructuredData(i18n, jsonLd),
         )}
       />
       <div
-        dir={english ? "ltr" : "rtl"}
-        className={`container-page max-w-3xl py-16 sm:py-24 ${english ? "text-left" : "text-right"}`}
+        dir={dir}
+        className={`container-page max-w-3xl py-16 sm:py-24 ${dir === "ltr" ? "text-left" : "text-right"}`}
       >
         <motion.div
           initial={{ opacity: 0, y: 20 }}

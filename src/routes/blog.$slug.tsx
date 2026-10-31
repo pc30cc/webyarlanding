@@ -1,6 +1,8 @@
-import { getBrandNameEn } from "@/lib/settings";
-import { getSiteLanguage } from "@/lib/site-i18n";
+import { getBrandNameEn, getDefaultLocale, type SiteSettings } from "@/lib/settings";
+import { i18nFromMatches, siteI18n, type SiteI18n } from "@/lib/site-i18n";
+import type { Locale } from "@/lib/locales";
 import {
+  useSiteLanguage,
   useSiteLocale,
   useSiteTranslation,
 } from "@/components/site/SiteLanguage";
@@ -12,10 +14,19 @@ import { fetchSettings } from "@/lib/settings.functions";
 import {
   buildPageMeta,
   buildBreadcrumbJsonLd,
+  localizedUrl,
   safeJsonLdHtml,
 } from "@/lib/seo-meta";
 import { getPublishedPost, listPublishedPosts } from "@/lib/blog.functions";
 import { SiteLayout } from "@/components/site/SiteLayout";
+
+/**
+ * مقاله به زبان اصلی خودش (فارسی) است: متن متا و JSON-LD ترجمه نمی‌شود و og:locale فارسی
+ * می‌ماند، ولی آدرس‌ها (canonical و breadcrumb) با زبان آدرس همین صفحه ساخته می‌شوند.
+ */
+function articleI18n(settings: SiteSettings, locale: Locale): SiteI18n {
+  return { ...siteI18n(settings, "fa"), locale };
+}
 
 export const Route = createFileRoute("/blog/$slug")({
   loader: async ({ params }) => {
@@ -33,19 +44,17 @@ export const Route = createFileRoute("/blog/$slug")({
       .slice(0, 3);
     return { settings, post, related };
   },
-  head: ({ loaderData, params }) => {
+  head: ({ loaderData, params, matches }) => {
     if (!loaderData) return {};
     const { settings, post } = loaderData;
-    // مقاله به زبان اصلی خودش نمایش داده می‌شود؛ در سایت انگلیسی فقط نام برند انگلیسی است.
+    const locale = i18nFromMatches(matches)?.locale ?? getDefaultLocale(settings);
+    // مقاله به زبان اصلی خودش نمایش داده می‌شود؛ در صفحه غیرفارسی فقط نام برند انگلیسی است.
     const title =
-      post.seoTitle ||
-      `${post.title} | ${getSiteLanguage(settings) === "en" ? getBrandNameEn(settings) : "وب‌یار"}`;
+      post.seoTitle || `${post.title} | ${locale !== "fa" ? getBrandNameEn(settings) : "وب‌یار"}`;
     const desc = post.seoDescription || post.excerpt || post.title;
     return buildPageMeta({
-      settings: {
-        ...settings,
-        localization: { ...settings.localization, language: "fa" },
-      },
+      i18n: articleI18n(settings, locale),
+      settings,
       path: `/blog/${params.slug}`,
       override: null, // یک ردیف seo_pages سراسری برای این مسیر معنا ندارد؛ عنوان/توضیحات/تصویر پست همیشه اولویت دارند
       fallbackTitle: title,
@@ -82,11 +91,11 @@ function tagSlug(input: string): string {
 function BlogPostPage() {
   const translateText = useSiteTranslation();
   const locale = useSiteLocale();
+  const language = useSiteLanguage();
 
   const { settings, post, related } = Route.useLoaderData();
 
-  const base = (settings.brand.siteUrl || "").replace(/\/$/, "");
-  const url = base ? `${base}/blog/${post.slug}` : undefined;
+  const url = localizedUrl(settings, language, `/blog/${post.slug}`);
   const jsonLd = [
     {
       "@context": "https://schema.org",
@@ -107,17 +116,11 @@ function BlogPostPage() {
       datePublished: post.publishedAt || post.createdAt,
       dateModified: post.updatedAt,
     },
-    buildBreadcrumbJsonLd(
-      {
-        ...settings,
-        localization: { ...settings.localization, language: "fa" },
-      },
-      [
-        { name: "خانه", path: "/" },
-        { name: "بلاگ", path: "/blog" },
-        { name: post.title, path: `/blog/${post.slug}` },
-      ],
-    ),
+    buildBreadcrumbJsonLd(articleI18n(settings, language), settings, [
+      { name: "خانه", path: "/" },
+      { name: "بلاگ", path: "/blog" },
+      { name: post.title, path: `/blog/${post.slug}` },
+    ]),
   ];
 
   return (

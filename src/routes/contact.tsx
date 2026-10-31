@@ -1,5 +1,5 @@
-import { localizeStructuredData } from "@/lib/site-i18n";
-import { useSiteTranslation } from "@/components/site/SiteLanguage";
+import { i18nFromMatches, localizeStructuredData } from "@/lib/site-i18n";
+import { useSiteI18n, useSiteTranslation } from "@/components/site/SiteLanguage";
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -12,6 +12,7 @@ import { getPublicSeoPage } from "@/lib/seo.functions";
 import {
   buildPageMeta,
   buildBreadcrumbJsonLd,
+  localizedUrl,
   safeJsonLdHtml,
 } from "@/lib/seo-meta";
 import { submitContactMessage } from "@/lib/contact.functions";
@@ -30,9 +31,10 @@ export const Route = createFileRoute("/contact")({
     ]);
     return { settings, seoOverride };
   },
-  head: ({ loaderData }) => {
+  head: ({ loaderData, matches }) => {
     if (!loaderData) return {};
     return buildPageMeta({
+      i18n: i18nFromMatches(matches),
       settings: loaderData.settings,
       path: "/contact",
       override: loaderData.seoOverride,
@@ -46,6 +48,7 @@ export const Route = createFileRoute("/contact")({
 
 function ContactPage() {
   const translateText = useSiteTranslation();
+  const i18n = useSiteI18n();
 
   const { settings } = Route.useLoaderData();
   const [sending, setSending] = useState(false);
@@ -121,13 +124,12 @@ function ContactPage() {
     }
   }
 
-  const base = (settings.brand.siteUrl || "").replace(/\/$/, "");
   const jsonLd = [
     {
       "@context": "https://schema.org",
       "@type": "ContactPage",
       name: `تماس با ${settings.brand.name}`,
-      url: base ? `${base}/contact` : undefined,
+      url: localizedUrl(settings, i18n.locale, "/contact"),
       ...(settings.brand.phone
         ? {
             mainEntity: {
@@ -138,7 +140,7 @@ function ContactPage() {
           }
         : {}),
     },
-    buildBreadcrumbJsonLd(settings, [
+    buildBreadcrumbJsonLd(i18n, settings, [
       { name: "خانه", path: "/" },
       { name: "تماس با ما", path: "/contact" },
     ]),
@@ -149,7 +151,7 @@ function ContactPage() {
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={safeJsonLdHtml(
-          localizeStructuredData(settings, jsonLd),
+          localizeStructuredData(i18n, jsonLd),
         )}
       />
       <div className="container-page max-w-5xl py-16 sm:py-24">

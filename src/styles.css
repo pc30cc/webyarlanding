@@ -684,9 +684,12 @@ body {
   transform: scaleX(-1);
 }
 
-/* English pages use the local variable font; Persian content falls back to IRANSans. */
+/* English and Turkish pages use the local variable font; Persian and Arabic content falls
+   back to IRANSans. */
 html[lang="en"],
-.site-theme[lang="en"] {
+html[lang="tr"],
+.site-theme[lang="en"],
+.site-theme[lang="tr"] {
   font-family: "InterWeb", "IRANSansWeb", system-ui, sans-serif;
   font-optical-sizing: auto;
 }

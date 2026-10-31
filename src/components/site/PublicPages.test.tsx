@@ -4,6 +4,8 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import type { ComponentType, ReactNode } from "react";
 import { SiteLanguageProvider } from "./SiteLanguage";
 import { DEFAULT_SETTINGS } from "@/lib/settings";
+import type { Locale } from "@/lib/locales";
+import englishMessages from "@/lib/site-translations.en.json";
 
 const state = vi.hoisted(() => ({
   data: {} as Record<string, unknown>,
@@ -104,7 +106,7 @@ const routes = [
 type RouteEntry = (typeof routes)[number];
 
 /** Server-renders one public route component with the test fixtures. */
-function renderRoute([path, route]: RouteEntry, language: "fa" | "en") {
+function renderRoute([path, route]: RouteEntry, language: Locale) {
   const settings = structuredClone(DEFAULT_SETTINGS);
   settings.localization.language = language;
   settings.brand.legalEnglishChrome = false;
@@ -149,11 +151,15 @@ function renderRoute([path, route]: RouteEntry, language: "fa" | "en") {
     updatedAt: "2026-10-04T00:00:00Z",
     coverImage: "",
   };
+  // دیکشنری همان زبان، مثل loader ریشه (فقط انگلیسی دیکشنری داخلی دارد)
+  const messages: Record<string, string> = language === "en" ? englishMessages : {};
   state.pathname = path;
   state.data["root"] = {
     settings,
     productCatalog: [],
     solutionCatalog: [],
+    locale: language,
+    messages,
   };
   state.data[path] = {
     settings,
@@ -174,7 +180,7 @@ function renderRoute([path, route]: RouteEntry, language: "fa" | "en") {
   const Component = route.options.component as ComponentType;
   const html = renderToStaticMarkup(
     <QueryClientProvider client={new QueryClient()}>
-      <SiteLanguageProvider settings={settings}>
+      <SiteLanguageProvider settings={settings} locale={language} messages={messages}>
         <Component />
       </SiteLanguageProvider>
     </QueryClientProvider>,
@@ -223,6 +229,7 @@ describe("public pages in English", () => {
         }
       }
       expect(container.querySelector(".site-theme")?.getAttribute("dir")).toBe("ltr");
+      expect(container.querySelector(".site-theme")?.getAttribute("lang")).toBe("en");
     });
   }
 });
@@ -232,6 +239,22 @@ describe("public pages in Persian", () => {
     it("keeps the Persian design for " + entry[0], () => {
       const { container } = renderRoute(entry, "fa");
       expect(container.querySelector(".site-theme")?.getAttribute("dir")).toBe("rtl");
+      expect(container.querySelector(".site-theme")?.getAttribute("lang")).toBe("fa");
     });
+  }
+});
+
+describe("public pages in other languages", () => {
+  for (const [locale, dir] of [
+    ["tr", "ltr"],
+    ["ar", "rtl"],
+  ] as const) {
+    for (const entry of routes) {
+      it("uses the " + locale + " direction for " + entry[0], () => {
+        const { container } = renderRoute(entry, locale);
+        expect(container.querySelector(".site-theme")?.getAttribute("dir")).toBe(dir);
+        expect(container.querySelector(".site-theme")?.getAttribute("lang")).toBe(locale);
+      });
+    }
   }
 });

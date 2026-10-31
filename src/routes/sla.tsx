@@ -1,5 +1,5 @@
-import { localizeStructuredData } from "@/lib/site-i18n";
-import { useSiteTranslation } from "@/components/site/SiteLanguage";
+import { i18nFromMatches, localizeStructuredData } from "@/lib/site-i18n";
+import { useSiteI18n, useSiteTranslation } from "@/components/site/SiteLanguage";
 import { createFileRoute } from "@tanstack/react-router";
 import { motion } from "framer-motion";
 import { CheckCircle2, Clock, Shield, Zap } from "lucide-react";
@@ -8,6 +8,7 @@ import { getPublicSeoPage } from "@/lib/seo.functions";
 import {
   buildPageMeta,
   buildBreadcrumbJsonLd,
+  localizedUrl,
   safeJsonLdHtml,
 } from "@/lib/seo-meta";
 import { SiteLayout } from "@/components/site/SiteLayout";
@@ -20,9 +21,10 @@ export const Route = createFileRoute("/sla")({
     ]);
     return { settings, seoOverride };
   },
-  head: ({ loaderData }) => {
+  head: ({ loaderData, matches }) => {
     if (!loaderData) return {};
     return buildPageMeta({
+      i18n: i18nFromMatches(matches),
       settings: loaderData.settings,
       path: "/sla",
       override: loaderData.seoOverride,
@@ -69,6 +71,7 @@ const compensationTable = [
 
 function SLAPage() {
   const translateText = useSiteTranslation();
+  const i18n = useSiteI18n();
 
   const { settings } = Route.useLoaderData();
   const base = (settings.brand.siteUrl || "").replace(/\/$/, "");
@@ -77,14 +80,14 @@ function SLAPage() {
       "@context": "https://schema.org",
       "@type": "WebPage",
       name: "توافقنامه سطح خدمات (SLA)",
-      url: base ? `${base}/sla` : undefined,
+      url: localizedUrl(settings, i18n.locale, "/sla"),
       isPartOf: {
         "@type": "WebSite",
         name: settings.brand.name,
         url: base || undefined,
       },
     },
-    buildBreadcrumbJsonLd(settings, [
+    buildBreadcrumbJsonLd(i18n, settings, [
       { name: "خانه", path: "/" },
       { name: "SLA", path: "/sla" },
     ]),
@@ -94,7 +97,7 @@ function SLAPage() {
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={safeJsonLdHtml(
-          localizeStructuredData(settings, jsonLd),
+          localizeStructuredData(i18n, jsonLd),
         )}
       />
       <div className="container-page max-w-4xl py-16 sm:py-24">

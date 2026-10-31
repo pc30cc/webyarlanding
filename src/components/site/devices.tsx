@@ -1,4 +1,5 @@
 import {
+  useSiteDir,
   useSiteLocale,
   useSiteTranslation,
 } from "@/components/site/SiteLanguage";
@@ -400,10 +401,10 @@ function TabBar({
 
 export function InboxScreen({ android }: { android?: boolean | undefined }) {
   const translateText = useSiteTranslation();
-  const locale = useSiteLocale();
+  const dir = useSiteDir();
 
   return (
-    <div className="relative h-full" dir={locale === "en-US" ? "ltr" : "rtl"}>
+    <div className="relative h-full" dir={dir}>
       <MobileHeader title={translateText("صندوق گفتگو")} android={android} />
       <div className="flex gap-1.5 px-4 pb-2">
         {["همه", "در انتظار", "من", "هوش مصنوعی"].map((f, i) => (
@@ -427,12 +428,12 @@ export function InboxScreen({ android }: { android?: boolean | undefined }) {
 
 export function ChatScreen(_props: { android?: boolean | undefined } = {}) {
   const translateText = useSiteTranslation();
-  const locale = useSiteLocale();
+  const dir = useSiteDir();
 
   return (
     <div
       className="flex h-full flex-col"
-      dir={locale === "en-US" ? "ltr" : "rtl"}
+      dir={dir}
     >
       <div className="flex items-center gap-2 border-b border-border px-3 py-2">
         <ChevronRight className="h-4 w-4 text-primary" />
@@ -460,12 +461,12 @@ export function ChatScreen(_props: { android?: boolean | undefined } = {}) {
 
 export function CallScreen(_props: { android?: boolean | undefined } = {}) {
   const translateText = useSiteTranslation();
-  const locale = useSiteLocale();
+  const dir = useSiteDir();
 
   return (
     <div
       className="relative h-full overflow-hidden bg-gradient-to-b from-secondary to-background"
-      dir={locale === "en-US" ? "ltr" : "rtl"}
+      dir={dir}
     >
       <LoopVideo
         src="/videos/caller-woman.mp4"
@@ -509,10 +510,10 @@ export function CallScreen(_props: { android?: boolean | undefined } = {}) {
 
 export function ContactScreen(_props: { android?: boolean | undefined } = {}) {
   const translateText = useSiteTranslation();
-  const locale = useSiteLocale();
+  const dir = useSiteDir();
 
   return (
-    <div className="h-full" dir={locale === "en-US" ? "ltr" : "rtl"}>
+    <div className="h-full" dir={dir}>
       <div className="flex flex-col items-center gap-1.5 border-b border-border px-4 pt-4 pb-3">
         <Avatar name="رضا احمدی" size={56} />
         <div className="text-[13px] font-bold text-foreground">
@@ -561,7 +562,7 @@ export function ContactScreen(_props: { android?: boolean | undefined } = {}) {
 
 export function EmailScreen({ android }: { android?: boolean | undefined }) {
   const translateText = useSiteTranslation();
-  const locale = useSiteLocale();
+  const dir = useSiteDir();
 
   const mails = [
     {
@@ -574,7 +575,7 @@ export function EmailScreen({ android }: { android?: boolean | undefined }) {
     { n: "لیلا مرادی", s: "تشکر", p: "پشتیبانی عالی بود ممنون" },
   ];
   return (
-    <div className="relative h-full" dir={locale === "en-US" ? "ltr" : "rtl"}>
+    <div className="relative h-full" dir={dir}>
       <MobileHeader title={translateText("ایمیل")} android={android} />
       <div className="divide-y divide-border">
         {mails.map((m) => (
@@ -611,12 +612,12 @@ export const MOBILE_SCREENS = [
 
 export function WindowsScreen() {
   const translateText = useSiteTranslation();
-  const locale = useSiteLocale();
+  const dir = useSiteDir();
 
   return (
     <div
       className="flex h-full text-foreground"
-      dir={locale === "en-US" ? "ltr" : "rtl"}
+      dir={dir}
     >
       <div className="flex w-12 flex-col items-center gap-3 border-e border-border bg-secondary/40 py-3">
         {[Inbox, Mail, Phone, Users, MessageCircle, Settings].map((I, i) => (

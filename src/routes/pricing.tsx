@@ -1,5 +1,6 @@
-import { localizeStructuredData } from "@/lib/site-i18n";
-import { useSiteTranslation } from "@/components/site/SiteLanguage";
+import { i18nFromMatches, localizeStructuredData } from "@/lib/site-i18n";
+import { useSiteI18n, useSiteTranslation } from "@/components/site/SiteLanguage";
+import { LOCALE_INFO, type Locale } from "@/lib/locales";
 import { useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { motion } from "framer-motion";
@@ -19,6 +20,7 @@ import { getPublicSeoPage } from "@/lib/seo.functions";
 import {
   buildPageMeta,
   buildBreadcrumbJsonLd,
+  localizedUrl,
   safeJsonLdHtml,
 } from "@/lib/seo-meta";
 import { SiteLayout } from "@/components/site/SiteLayout";
@@ -33,9 +35,10 @@ export const Route = createFileRoute("/pricing")({
     ]);
     return { settings, seoOverride, remotePlans };
   },
-  head: ({ loaderData }) => {
+  head: ({ loaderData, matches }) => {
     if (!loaderData) return {};
     return buildPageMeta({
+      i18n: i18nFromMatches(matches),
       settings: loaderData.settings,
       path: "/pricing",
       override: loaderData.seoOverride,
@@ -56,12 +59,28 @@ interface DisplayPlan {
   unit: string;
   cta: string;
   note?: string | undefined;
+  /** قیمت ماهانه برای داده ساختاریافته (Offer) */
+  offer?: { price: number; currency: "IRR" | "USD" } | undefined;
   popular?: boolean;
   limits: { label: string; value: string }[];
   features: string[];
 }
 
-function getPlans(period: "monthly" | "yearly"): DisplayPlan[] {
+/**
+ * پلن‌های پیش‌فرض وقتی API پلن‌ها در دسترس نیست. قیمت‌های پیش‌فرض تومانی‌اند؛ زبان‌های
+ * دیگر که قیمت دلاری نشان می‌دهند، به‌جای قیمت قدیمی «تماس بگیرید» می‌بینند.
+ */
+function getPlans(period: "monthly" | "yearly", locale: Locale): DisplayPlan[] {
+  const plans = defaultPlans(period);
+  if (LOCALE_INFO[locale].currency === "IRT") return plans;
+  return plans.map((plan) =>
+    plan.price === "رایگان"
+      ? plan
+      : { ...plan, price: "تماس بگیرید", unit: "", cta: "تماس با فروش" },
+  );
+}
+
+function defaultPlans(period: "monthly" | "yearly"): DisplayPlan[] {
   return [
     {
       slug: "starter",
@@ -181,22 +200,44 @@ function stripMentions(
 
 const faNumber = new Intl.NumberFormat("fa-IR");
 
-/** تبدیل پلن‌های همگام‌شده اپلیکیشن به مدل نمایش صفحه قیمت‌گذاری */
+/** قیمت دلاری به قالب زبان صفحه (مثلاً $29 یا $24.17) */
+function formatUsd(amount: number, locale: Locale): string {
+  return new Intl.NumberFormat(LOCALE_INFO[locale].intl, {
+    style: "currency",
+    currency: "USD",
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 2,
+  }).format(amount);
+}
+
+/**
+ * تبدیل پلن‌های همگام‌شده اپلیکیشن به مدل نمایش صفحه قیمت‌گذاری. سایت فارسی قیمت تومانی
+ * و بقیه زبان‌ها قیمت دلاری همان پلن‌ها را از API اپلیکیشن نشان می‌دهند.
+ */
 function mapRemotePlans(
   remote: PublicPlan[],
   period: "monthly" | "yearly",
-  english = false,
+  locale: Locale,
 ): DisplayPlan[] {
+  const english = locale === "en";
+  const usd = LOCALE_INFO[locale].currency === "USD";
   return remote.map((plan, index) => {
-    const yearlyTotal = plan.yearly;
-    const amount = period === "yearly" ? yearlyTotal : plan.monthly;
+    const yearlyTotal = (usd ? plan.usdYearly : plan.yearly) ?? 0;
+    const amount = (period === "yearly" ? yearlyTotal : usd ? plan.usdMonthly : plan.monthly) ?? 0;
     const perMonth =
-      period === "yearly" && amount ? Math.round(amount / 12) : amount;
+      period === "yearly" && amount
+        ? usd
+          ? Math.round((amount / 12) * 100) / 100
+          : Math.round(amount / 12)
+        : amount;
     const isFree = plan.isFree || perMonth === 0;
+    const format = (value: number) => (usd ? formatUsd(value, locale) : faNumber.format(value));
     return {
       note:
         period === "yearly" && !isFree && yearlyTotal
-          ? `مجموع سالانه ${faNumber.format(yearlyTotal)} تومان`
+          ? usd
+            ? `مجموع سالانه ${format(yearlyTotal)}`
+            : `مجموع سالانه ${format(yearlyTotal)} تومان`
           : undefined,
       slug: plan.slug,
       icon: PLAN_ICONS[Math.min(index, PLAN_ICONS.length - 1)] ?? Star,
@@ -206,14 +247,25 @@ function mapRemotePlans(
       price: isFree
         ? "رایگان"
         : perMonth
-          ? faNumber.format(perMonth)
+          ? format(perMonth)
           : "تماس بگیرید",
       unit:
         isFree || !perMonth
           ? ""
-          : period === "yearly"
-            ? "تومان / ماه، سالانه"
-            : "تومان / ماه",
+          : usd
+            ? period === "yearly"
+              ? "در ماه، پرداخت سالانه"
+              : "در ماه"
+            : period === "yearly"
+              ? "تومان / ماه، سالانه"
+              : "تومان / ماه",
+      offer: isFree
+        ? { price: 0, currency: usd ? "USD" : "IRR" }
+        : perMonth
+          ? usd
+            ? { price: perMonth, currency: "USD" }
+            : { price: perMonth * 10, currency: "IRR" }
+          : undefined,
       cta: isFree ? "شروع کنید" : perMonth ? "شروع رایگان" : "تماس با فروش",
       popular: plan.popular,
       limits: plan.limits,
@@ -274,6 +326,7 @@ function PricingPage() {
   const translateText = useSiteTranslation();
 
   const { settings, remotePlans } = Route.useLoaderData();
+  const i18n = useSiteI18n();
   const [period, setPeriod] = useState<"monthly" | "yearly">("monthly");
   // نمایش همه امکانات برای همه پلن‌ها به‌صورت هم‌زمان تا ارتفاع کارت‌ها هماهنگ بماند
   const [expanded, setExpanded] = useState(false);
@@ -283,12 +336,8 @@ function PricingPage() {
   const callEnabled = settings.videoCall.enabled;
   const aiEnabled = settings.aiMarketing.enabled;
   const rawPlans = remotePlans
-    ? mapRemotePlans(
-        remotePlans.plans,
-        activePeriod,
-        settings.localization.language === "en",
-      )
-    : getPlans(activePeriod);
+    ? mapRemotePlans(remotePlans.plans, activePeriod, i18n.locale)
+    : getPlans(activePeriod, i18n.locale);
   const plans = stripMentions(rawPlans, { call: callEnabled, ai: aiEnabled });
   const currentIndex = currentSlug
     ? plans.findIndex((p) => p.slug === currentSlug)
@@ -304,7 +353,7 @@ function PricingPage() {
         (aiEnabled || !mentionsAi(r.label)),
     ),
   };
-  const base = (settings.brand.siteUrl || "").replace(/\/$/, "");
+  const pricingUrl = localizedUrl(settings, i18n.locale, "/pricing");
 
   const jsonLd = [
     {
@@ -313,25 +362,31 @@ function PricingPage() {
       name: settings.brand.name,
       applicationCategory: "BusinessApplication",
       operatingSystem: "Web",
-      url: base ? `${base}/pricing` : undefined,
+      url: pricingUrl,
       offers: plans
         .map((plan) => {
-          const price =
+          // قیمت‌ها به تومان نمایش داده می‌شوند ولی تومان کد ارز استاندارد ندارد؛ برای
+          // داده ساختاریافته به ریال (×۱۰) تبدیل می‌شود تا موتور جستجو قیمت درست را ببیند.
+          // زبان‌های دیگر قیمت دلاری دارند.
+          const fallback =
             plan.price === "رایگان" ? "0" : toAsciiNumber(plan.price);
-          if (!price) return null;
+          const offer =
+            plan.offer ??
+            (fallback && LOCALE_INFO[i18n.locale].currency === "IRT"
+              ? { price: Number(fallback) * 10, currency: "IRR" as const }
+              : undefined);
+          if (!offer) return null;
           return {
             "@type": "Offer",
             name: plan.name,
-            // قیمت‌ها به تومان نمایش داده می‌شوند ولی تومان کد ارز استاندارد ندارد؛ برای
-            // داده ساختاریافته به ریال (×۱۰) تبدیل می‌شود تا موتور جستجو قیمت درست را ببیند.
-            price: String(Number(price) * 10),
-            priceCurrency: "IRR",
-            url: base ? `${base}/pricing` : undefined,
+            price: String(offer.price),
+            priceCurrency: offer.currency,
+            url: pricingUrl,
           };
         })
         .filter(Boolean),
     },
-    buildBreadcrumbJsonLd(settings, [
+    buildBreadcrumbJsonLd(i18n, settings, [
       { name: "خانه", path: "/" },
       { name: "قیمت‌گذاری", path: "/pricing" },
     ]),
@@ -342,7 +397,7 @@ function PricingPage() {
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={safeJsonLdHtml(
-          localizeStructuredData(settings, jsonLd),
+          localizeStructuredData(i18n, jsonLd),
         )}
       />
       <div className="container-page max-w-7xl py-16 sm:py-24">
@@ -359,7 +414,7 @@ function PricingPage() {
               pricingIntro(
                 callEnabled,
                 aiEnabled,
-                settings.localization.language === "en",
+                i18n.locale === "en",
               ),
             )}
           </p>

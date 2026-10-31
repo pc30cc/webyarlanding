@@ -1,6 +1,6 @@
-import { getSiteLanguage } from "@/lib/site-i18n";
+import { i18nFromMatches, siteI18n } from "@/lib/site-i18n";
 import { localizeStructuredData } from "@/lib/site-i18n";
-import { useSiteTranslation } from "@/components/site/SiteLanguage";
+import { useSiteI18n, useSiteTranslation } from "@/components/site/SiteLanguage";
 import operatorAvatar from "@/assets/operator-avatar.jpg";
 import { LoopVideo } from "@/components/site/LoopVideo";
 import { createFileRoute, Link } from "@tanstack/react-router";
@@ -30,7 +30,7 @@ import {
   ShieldCheck,
 } from "lucide-react";
 import { fetchSettings } from "@/lib/settings.functions";
-import { joinFa, mergeSettings } from "@/lib/settings";
+import { getDefaultLocale, joinFa, mergeSettings } from "@/lib/settings";
 import { getPublicSeoPage } from "@/lib/seo.functions";
 import { buildPageMeta, parseSchemaJson, safeJsonLdHtml } from "@/lib/seo-meta";
 import { SiteLayout } from "@/components/site/SiteLayout";
@@ -86,10 +86,14 @@ export const Route = createFileRoute("/")({
     ]);
     return { settings, seoOverride, apps };
   },
-  head: ({ loaderData }) => {
+  head: ({ loaderData, matches }) => {
     if (!loaderData) return {};
+    const i18n =
+      i18nFromMatches(matches) ??
+      siteI18n(loaderData.settings, getDefaultLocale(loaderData.settings));
     const callEnabled = loaderData.settings.videoCall.enabled;
     const meta = buildPageMeta({
+      i18n,
       settings: loaderData.settings,
       path: "/",
       override: loaderData.seoOverride,
@@ -117,13 +121,13 @@ export const Route = createFileRoute("/")({
       ...meta,
       scripts: [
         ...((meta as { scripts?: unknown[] }).scripts ?? []),
-        // ویدیوی تماس تصویری فقط وقتی تماس تصویری روشن است و در سایت فارسی
-        ...(callEnabled && getSiteLanguage(loaderData.settings) !== "en"
+        // ویدیوی تماس تصویری فقط وقتی تماس تصویری روشن است و در صفحه فارسی
+        ...(callEnabled && i18n.locale === "fa"
           ? [
               {
                 type: "application/ld+json",
                 children: safeJsonLdHtml(
-                  localizeStructuredData(loaderData.settings, videoLd),
+                  localizeStructuredData(i18n, videoLd),
                 ).__html,
               },
             ]
@@ -482,6 +486,7 @@ function OperatorAvatar({ className }: { className?: string }) {
 function IndexPage() {
   const translateText = useSiteTranslation();
 
+  const i18n = useSiteI18n();
   const { settings, seoOverride, apps } = Route.useLoaderData();
   const callEnabled = settings.videoCall.enabled;
   const aiEnabled = settings.aiMarketing.enabled;
@@ -541,7 +546,7 @@ function IndexPage() {
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={safeJsonLdHtml(
-          localizeStructuredData(settings, jsonLd),
+          localizeStructuredData(i18n, jsonLd),
         )}
       />
 

@@ -1,5 +1,5 @@
-import { localizeStructuredData } from "@/lib/site-i18n";
-import { useSiteTranslation } from "@/components/site/SiteLanguage";
+import { i18nFromMatches, localizeStructuredData } from "@/lib/site-i18n";
+import { useSiteI18n, useSiteTranslation } from "@/components/site/SiteLanguage";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { motion } from "framer-motion";
 import { Target, Award, Heart, ChevronLeft } from "lucide-react";
@@ -9,6 +9,7 @@ import { getPublicSeoPage } from "@/lib/seo.functions";
 import {
   buildPageMeta,
   buildBreadcrumbJsonLd,
+  localizedUrl,
   safeJsonLdHtml,
 } from "@/lib/seo-meta";
 import { SiteLayout } from "@/components/site/SiteLayout";
@@ -26,9 +27,10 @@ export const Route = createFileRoute("/about")({
     ]);
     return { settings, seoOverride };
   },
-  head: ({ loaderData }) => {
+  head: ({ loaderData, matches }) => {
     if (!loaderData) return {};
     return buildPageMeta({
+      i18n: i18nFromMatches(matches),
       settings: loaderData.settings,
       path: "/about",
       override: loaderData.seoOverride,
@@ -60,6 +62,7 @@ const values = [
 
 function AboutPage() {
   const translateText = useSiteTranslation();
+  const i18n = useSiteI18n();
 
   const { settings } = Route.useLoaderData();
   const callEnabled = settings.videoCall.enabled;
@@ -75,14 +78,14 @@ function AboutPage() {
       "@context": "https://schema.org",
       "@type": "AboutPage",
       name: `درباره ${settings.brand.name}`,
-      url: base ? `${base}/about` : undefined,
+      url: localizedUrl(settings, i18n.locale, "/about"),
       isPartOf: {
         "@type": "WebSite",
         name: settings.brand.name,
         url: base || undefined,
       },
     },
-    buildBreadcrumbJsonLd(settings, [
+    buildBreadcrumbJsonLd(i18n, settings, [
       { name: "خانه", path: "/" },
       { name: "درباره ما", path: "/about" },
     ]),
@@ -93,7 +96,7 @@ function AboutPage() {
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={safeJsonLdHtml(
-          localizeStructuredData(settings, jsonLd),
+          localizeStructuredData(i18n, jsonLd),
         )}
       />
       <div className="container-page max-w-4xl py-16 text-center sm:py-24">

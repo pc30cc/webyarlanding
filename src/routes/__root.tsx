@@ -22,10 +22,12 @@ import { VisitTracker } from "../components/site/VisitTracker";
 import { SiteLayout } from "../components/site/SiteLayout";
 import { extractScriptTags } from "../lib/seo-meta";
 import { SiteLanguageProvider } from "@/components/site/SiteLanguage";
-import { getSiteLanguage } from "@/lib/site-i18n";
+import { loadSiteMessages } from "@/lib/site-messages";
+import { LOCALE_INFO, splitLocalePrefix, type Locale } from "@/lib/locales";
 import {
   mergeSettings,
-  isEnglishChrome,
+  pageContentLocale,
+  resolvePageLocale,
   getBrandNameEn,
   type SiteSettings,
 } from "../lib/settings";
@@ -169,7 +171,12 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
 
 export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
   {
-    loader: async () => {
+    // پیشوند زبان آدرس عمومی (پیش از rewrite روتر؛ src/router.tsx)
+    beforeLoad: ({ location }) => ({
+      urlLocale: splitLocalePrefix(new URL(location.publicHref, "http://local").pathname)
+        .locale,
+    }),
+    loader: async ({ context }) => {
       const [settings, productCatalog, solutionCatalog] = await Promise.all([
         fetchSettings().catch((error) => {
           console.error("root settings load failed, using defaults:", error);
@@ -178,12 +185,15 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         getPublicCatalog({ data: { type: "product" } }).catch(() => []),
         getPublicCatalog({ data: { type: "solution" } }).catch(() => []),
       ]);
-      return { settings, productCatalog, solutionCatalog };
+      const locale = resolvePageLocale(settings, context.urlLocale);
+      const messages = await loadSiteMessages(locale);
+      return { settings, productCatalog, solutionCatalog, locale, messages };
     },
     head: ({ loaderData }) => {
       const settings = loaderData?.settings;
       const base = (settings?.brand.siteUrl || "").replace(/\/$/, "");
-      const englishSite = !!settings && getSiteLanguage(settings) === "en";
+      const locale = loaderData?.locale ?? "fa";
+      const info = LOCALE_INFO[locale];
       const twitterHandle = settings?.seo.twitterHandle
         ? settings.seo.twitterHandle.startsWith("@")
           ? settings.seo.twitterHandle
@@ -201,22 +211,16 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
           {
             name: "author",
             content:
-              settings && getSiteLanguage(settings) === "en"
+              settings && locale !== "fa"
                 ? getBrandNameEn(settings)
                 : settings?.brand.name || "وب‌یار",
           },
           { property: "og:type", content: "website" },
-          {
-            property: "og:locale",
-            content:
-              settings && getSiteLanguage(settings) === "en"
-                ? "en_US"
-                : "fa_IR",
-          },
+          { property: "og:locale", content: info.ogLocale },
           {
             property: "og:site_name",
             content:
-              settings && getSiteLanguage(settings) === "en"
+              settings && locale !== "fa"
                 ? getBrandNameEn(settings)
                 : settings?.brand.name || "وب‌یار",
           },
@@ -240,7 +244,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         links: [
           // پیش‌بارگذاری فونت خودمیزبان‌شده (public/fonts) تا قبل از رندر اول دانلود شود
           // و فلش فونت پیش‌فرض مرورگر (FOUT) به حداقل برسد.
-          ...(englishSite
+          ...(info.dir === "ltr"
             ? [
                 {
                   rel: "preload",
@@ -304,13 +308,13 @@ function RootShell({ children }: { children: ReactNode }) {
     select: (state) => state.location.pathname,
   });
   const admin = pathname.startsWith("/admin");
-  const english =
-    !admin &&
-    !!loaderData?.settings &&
-    isEnglishChrome(loaderData.settings, pathname);
+  const contentLocale: Locale =
+    admin || !loaderData?.settings
+      ? "fa"
+      : pageContentLocale(loaderData.settings, loaderData.locale, pathname);
 
   return (
-    <html lang={english ? "en" : "fa"} dir={english ? "ltr" : "rtl"}>
+    <html lang={contentLocale} dir={LOCALE_INFO[contentLocale].dir}>
       <head>
         <HeadContent />
       </head>
@@ -327,15 +331,15 @@ function RootShell({ children }: { children: ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
-  const { settings } = Route.useLoaderData();
+  const { settings, locale, messages } = Route.useLoaderData();
 
   return (
     <QueryClientProvider client={queryClient}>
-      <SiteLanguageProvider settings={settings}>
+      <SiteLanguageProvider settings={settings} locale={locale} messages={messages}>
         <Toaster
           position="top-center"
           richColors
-          dir={getSiteLanguage(settings) === "en" ? "ltr" : "rtl"}
+          dir={LOCALE_INFO[locale].dir}
         />
         <VisitTracker />
         {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}

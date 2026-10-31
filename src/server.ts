@@ -2,6 +2,8 @@ import "./lib/error-capture";
 
 import { consumeLastCapturedError } from "./lib/error-capture";
 import { renderErrorPage } from "./lib/error-page";
+import { isBlogPath, isLocalizablePath, splitLocalePrefix, withLocalePrefix } from "./lib/locales";
+import type { SiteSettings } from "./lib/settings";
 
 type ServerEntry = {
   fetch: (request: Request, env: unknown, ctx: unknown) => Promise<Response> | Response;
@@ -90,6 +92,60 @@ function wwwToApexRedirect(request: Request): Response | null {
   });
 }
 
+// تنظیمات زبان برای ریدایرکت‌های زیر؛ ۳۰ ثانیه کش می‌شود تا هر درخواست یک کوئری اضافه نزند.
+let localeSettingsCache: { at: number; settings: SiteSettings } | undefined;
+async function localeSettings(): Promise<SiteSettings> {
+  if (localeSettingsCache && Date.now() - localeSettingsCache.at < 30_000)
+    return localeSettingsCache.settings;
+  const { loadSettings } = await import("./lib/settings.server");
+  const settings = await loadSettings();
+  localeSettingsCache = { at: Date.now(), settings };
+  return settings;
+}
+
+function localeRedirect(location: string, status: 301 | 302): Response {
+  return new Response(null, {
+    status,
+    headers: {
+      Location: location,
+      // ریدایرکت دائمی کوتاه‌مدت کش می‌شود تا تغییر تنظیمات زبان بعداً هم اعمال شود؛
+      // ریدایرکت زبانِ غیرفعال اصلاً کش نمی‌شود.
+      "Cache-Control": status === 301 ? "public, max-age=3600" : "no-store",
+    },
+  });
+}
+
+/**
+ * آدرس‌های زبان: پیشوند زبان پیش‌فرض (/fa/… وقتی فارسی پیش‌فرض است) با 301 به آدرس بدون
+ * پیشوند می‌رود؛ زبانِ غیرفعال با 302 به همان صفحه در زبان پیش‌فرض؛ و در سایت چندزبانه بلاگ
+ * فقط در نسخه فارسی است، پس /en/blog/… با 301 به همان مطلب فارسی می‌رود.
+ */
+async function localeRedirectFor(request: Request): Promise<Response | null> {
+  const url = new URL(request.url);
+  if (!isLocalizablePath(url.pathname)) return null;
+  const { locale: prefix, path } = splitLocalePrefix(url.pathname);
+  if (!prefix && !isBlogPath(path)) return null;
+  let settings: SiteSettings;
+  try {
+    settings = await localeSettings();
+  } catch (error) {
+    console.error("locale settings load failed:", error);
+    return null;
+  }
+  const { getActiveLocales, getDefaultLocale } = await import("./lib/settings");
+  const fallback = getDefaultLocale(settings);
+  const active = getActiveLocales(settings);
+  const to = (pathname: string) => pathname + url.search;
+  if (prefix === fallback) return localeRedirect(to(path), 301);
+  if (prefix && !active.includes(prefix)) return localeRedirect(to(path), 302);
+  const locale = prefix ?? fallback;
+  if (isBlogPath(path) && settings.localization?.mode === "multi" && locale !== "fa") {
+    if (!active.includes("fa")) return localeRedirect(to(withLocalePrefix("/", prefix)), 302);
+    return localeRedirect(to(withLocalePrefix(path, fallback === "fa" ? null : "fa")), 301);
+  }
+  return null;
+}
+
 // کرون داخلی (برای دیپلوی خودمیزبان روی Coolify) — فقط یک‌بار و بعد از اولین درخواست
 // راه‌اندازی می‌شود تا در محیط‌های بدون پروسه‌ی ماندگار هزینه‌ای نداشته باشد.
 let schedulerBooted = false;
@@ -104,7 +160,7 @@ function bootScheduler(): void {
 export default {
   async fetch(request: Request, env: unknown, ctx: unknown) {
     bootScheduler();
-    const redirect = wwwToApexRedirect(request);
+    const redirect = wwwToApexRedirect(request) ?? (await localeRedirectFor(request));
     if (redirect) return withSecurityHeaders(redirect, request);
 
 

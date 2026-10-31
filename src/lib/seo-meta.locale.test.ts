@@ -1,0 +1,208 @@
+import { describe, expect, it } from "vitest";
+import { buildBreadcrumbJsonLd, buildPageMeta, localePrefix, localizedUrl } from "./seo-meta";
+import type { SeoPageDto } from "./seo.functions";
+import { DEFAULT_SETTINGS, type SiteSettings } from "./settings";
+import { i18nFromMatches, siteI18n } from "./site-i18n";
+import type { Locale } from "./locales";
+import englishMessages from "./site-translations.en.json";
+
+/** سایت فارسی با نسخه‌های انگلیسی، ترکی و عربی */
+function multiSite(language: Locale = "fa"): SiteSettings {
+  const settings = structuredClone(DEFAULT_SETTINGS);
+  settings.localization.language = language;
+  settings.localization.mode = "multi";
+  settings.localization.locales = ["fa", "en", "tr", "ar"];
+  return settings;
+}
+
+function messagesFor(locale: Locale): Record<string, string> {
+  return locale === "en" ? englishMessages : {};
+}
+
+/** مثل head() یک route: زبان از داده‌های route ریشه */
+function headMatches(settings: SiteSettings, locale: Locale) {
+  return [
+    {
+      routeId: "__root__",
+      loaderData: { settings, locale, messages: messagesFor(locale) },
+    },
+  ];
+}
+
+type PageInput = Pick<
+  Parameters<typeof buildPageMeta>[0],
+  "path" | "override" | "fallbackTitle" | "fallbackDescription"
+>;
+
+const aboutPage: PageInput = {
+  path: "/about",
+  override: null,
+  fallbackTitle: "درباره ما | وب‌یار",
+  fallbackDescription:
+    "وب‌یار پلتفرم جامع مدیریت ارتباط با مشتری برای توانمندسازی کسب‌وکارهای ایرانی.",
+};
+
+function meta(settings: SiteSettings, locale: Locale | null, page: PageInput = aboutPage) {
+  return buildPageMeta({
+    i18n: locale ? i18nFromMatches(headMatches(settings, locale)) : null,
+    settings,
+    ...page,
+  });
+}
+
+function find(result: ReturnType<typeof buildPageMeta>, property: string) {
+  return result.meta.find((entry) => "property" in entry && entry.property === property);
+}
+
+const override: SeoPageDto = {
+  id: "1",
+  pageKey: "about",
+  path: "/about",
+  title: "عنوان سفارشی درباره ما",
+  description: "توضیحات سفارشی",
+  ogImage: "https://cdn.example.com/about.png",
+  canonicalUrl: "https://webyar.ai/about-us",
+  robots: "noindex,follow",
+  schemaJson: null,
+  createdAt: "2026-10-04T00:00:00Z",
+  updatedAt: "2026-10-04T00:00:00Z",
+};
+
+describe("page meta per locale", () => {
+  it("keeps the default-locale output unchanged", () => {
+    const settings = multiSite();
+    const result = meta(settings, "fa");
+    expect(result).toEqual({
+      meta: [
+        { title: "درباره ما | وب‌یار" },
+        { name: "description", content: aboutPage.fallbackDescription },
+        { name: "robots", content: "index,follow" },
+        { property: "og:type", content: "website" },
+        { property: "og:title", content: "درباره ما | وب‌یار" },
+        { property: "og:description", content: aboutPage.fallbackDescription },
+        { property: "og:image", content: "https://webyar.ai/og-image.png?v=2" },
+        { name: "twitter:title", content: "درباره ما | وب‌یار" },
+        { name: "twitter:description", content: aboutPage.fallbackDescription },
+        { name: "twitter:image", content: "https://webyar.ai/og-image.png?v=2" },
+        { property: "og:url", content: "https://webyar.ai/about" },
+        { property: "og:locale", content: "fa_IR" },
+      ],
+      links: [{ rel: "canonical", href: "https://webyar.ai/about" }],
+    });
+    // بدون داده‌های route ریشه همان زبان پیش‌فرض سایت
+    expect(meta(settings, null)).toEqual(result);
+    expect(meta(structuredClone(DEFAULT_SETTINGS), "fa")).toEqual(result);
+  });
+
+  it("prefixes the canonical URL and sets og:locale for other locales", () => {
+    const settings = multiSite();
+    const expected: Record<Exclude<Locale, "fa">, string> = {
+      en: "en_US",
+      tr: "tr_TR",
+      ar: "ar_AR",
+    };
+    for (const [locale, ogLocale] of Object.entries(expected) as [Locale, string][]) {
+      const result = meta(settings, locale);
+      const url = `https://webyar.ai/${locale}/about`;
+      expect(result.links).toEqual([{ rel: "canonical", href: url }]);
+      expect(find(result, "og:url")).toEqual({ property: "og:url", content: url });
+      expect(find(result, "og:locale")).toEqual({ property: "og:locale", content: ogLocale });
+    }
+    const home = meta(settings, "tr", { ...aboutPage, path: "/" });
+    expect(home.links).toEqual([{ rel: "canonical", href: "https://webyar.ai/tr" }]);
+  });
+
+  it("translates the English page", () => {
+    const result = meta(multiSite(), "en");
+    expect(result.meta[0]).toEqual({ title: "About us | Webyar" });
+    expect(find(result, "og:title")).toEqual({
+      property: "og:title",
+      content: "About us | Webyar",
+    });
+  });
+
+  it("prefixes Persian when English is the default language", () => {
+    const settings = multiSite("en");
+    expect(meta(settings, "en").links).toEqual([
+      { rel: "canonical", href: "https://webyar.ai/about" },
+    ]);
+    const fa = meta(settings, "fa");
+    expect(fa.links).toEqual([{ rel: "canonical", href: "https://webyar.ai/fa/about" }]);
+    expect(find(fa, "og:locale")).toEqual({ property: "og:locale", content: "fa_IR" });
+  });
+
+  it("applies the admin page override only to the default locale", () => {
+    const settings = multiSite();
+    const page = { ...aboutPage, override };
+    const fa = meta(settings, "fa", page);
+    expect(fa.meta[0]).toEqual({ title: override.title });
+    expect(fa.meta).toContainEqual({ name: "robots", content: "noindex,follow" });
+    expect(fa.meta).toContainEqual({ property: "og:image", content: override.ogImage });
+    expect(fa.links).toEqual([{ rel: "canonical", href: override.canonicalUrl }]);
+
+    for (const locale of ["en", "tr", "ar"] as const) {
+      const other = meta(settings, locale, page);
+      expect(other.links).toEqual([
+        { rel: "canonical", href: `https://webyar.ai/${locale}/about` },
+      ]);
+      expect(other.meta).toContainEqual({ name: "robots", content: "index,follow" });
+      expect(other.meta[0]).not.toEqual({ title: override.title });
+    }
+    expect(meta(settings, "en", page).meta[0]).toEqual({ title: "About us | Webyar" });
+  });
+
+  it("omits canonical links without a site URL", () => {
+    const settings = multiSite();
+    settings.brand.siteUrl = "";
+    for (const locale of ["fa", "en", "tr", "ar"] as const) {
+      const result = meta(settings, locale);
+      expect(result.links).toEqual([]);
+      expect(find(result, "og:url")).toBeUndefined();
+    }
+  });
+});
+
+describe("localized URLs", () => {
+  it("prefixes every locale except the default", () => {
+    const settings = multiSite();
+    settings.brand.siteUrl = "https://webyar.ai/";
+    expect(localePrefix(settings, "fa")).toBeNull();
+    expect(localePrefix(settings, "ar")).toBe("ar");
+    expect(localizedUrl(settings, "fa", "/")).toBe("https://webyar.ai/");
+    expect(localizedUrl(settings, "fa", "/pricing")).toBe("https://webyar.ai/pricing");
+    expect(localizedUrl(settings, "en", "/")).toBe("https://webyar.ai/en");
+    expect(localizedUrl(settings, "en", "/pricing")).toBe("https://webyar.ai/en/pricing");
+    expect(localizedUrl(settings, "ar", "/products/chat")).toBe(
+      "https://webyar.ai/ar/products/chat",
+    );
+    settings.brand.siteUrl = "";
+    expect(localizedUrl(settings, "en", "/pricing")).toBeUndefined();
+  });
+
+  it("builds breadcrumbs in the page language", () => {
+    const settings = multiSite();
+    const items = [
+      { name: "صفحه اصلی", path: "/" },
+      { name: "درباره ما", path: "/about" },
+    ];
+    expect(buildBreadcrumbJsonLd(siteI18n(settings, "fa"), settings, items)).toEqual({
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      itemListElement: [
+        { "@type": "ListItem", position: 1, name: "صفحه اصلی", item: "https://webyar.ai/" },
+        { "@type": "ListItem", position: 2, name: "درباره ما", item: "https://webyar.ai/about" },
+      ],
+    });
+    const en = buildBreadcrumbJsonLd(siteI18n(settings, "en", englishMessages), settings, items);
+    expect(en.itemListElement.map((item) => item.item)).toEqual([
+      "https://webyar.ai/en",
+      "https://webyar.ai/en/about",
+    ]);
+    expect(en.itemListElement[1]?.name).toBe("About us");
+    const tr = buildBreadcrumbJsonLd(siteI18n(settings, "tr"), settings, items);
+    expect(tr.itemListElement.map((item) => item.item)).toEqual([
+      "https://webyar.ai/tr",
+      "https://webyar.ai/tr/about",
+    ]);
+  });
+});

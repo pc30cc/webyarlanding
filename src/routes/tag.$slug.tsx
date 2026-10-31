@@ -1,7 +1,9 @@
 import {
+  useSiteI18n,
   useSiteLocale,
   useSiteTranslation,
 } from "@/components/site/SiteLanguage";
+import { i18nFromMatches } from "@/lib/site-i18n";
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { motion } from "framer-motion";
 import {
@@ -15,6 +17,7 @@ import { getPublicSeoPage } from "@/lib/seo.functions";
 import {
   buildPageMeta,
   buildBreadcrumbJsonLd,
+  localizedUrl,
   safeJsonLdHtml,
 } from "@/lib/seo-meta";
 import { listPublishedPosts } from "@/lib/blog.functions";
@@ -32,9 +35,10 @@ export const Route = createFileRoute("/tag/$slug")({
     if (posts.length === 0) throw notFound();
     return { settings, posts, slug: params.slug, seoOverride };
   },
-  head: ({ params, loaderData }) => {
+  head: ({ params, loaderData, matches }) => {
     if (!loaderData) return {};
     return buildPageMeta({
+      i18n: i18nFromMatches(matches),
       settings: loaderData.settings,
       path: `/tag/${params.slug}`,
       override: loaderData.seoOverride,
@@ -52,26 +56,26 @@ export const Route = createFileRoute("/tag/$slug")({
 function TagPage() {
   const translateText = useSiteTranslation();
   const locale = useSiteLocale();
+  const i18n = useSiteI18n();
 
   const { settings, posts, slug } = Route.useLoaderData();
-  const base = (settings.brand.siteUrl || "").replace(/\/$/, "");
   const jsonLd = [
     {
       "@context": "https://schema.org",
       "@type": "CollectionPage",
       name: `برچسب: ${slug}`,
-      url: base ? `${base}/tag/${slug}` : undefined,
+      url: localizedUrl(settings, i18n.locale, `/tag/${slug}`),
       mainEntity: {
         "@type": "ItemList",
         itemListElement: posts.slice(0, 20).map((p, i) => ({
           "@type": "ListItem",
           position: i + 1,
-          url: base ? `${base}/blog/${p.slug}` : undefined,
+          url: localizedUrl(settings, i18n.locale, `/blog/${p.slug}`),
           name: p.title,
         })),
       },
     },
-    buildBreadcrumbJsonLd(settings, [
+    buildBreadcrumbJsonLd(i18n, settings, [
       { name: "خانه", path: "/" },
       { name: "بلاگ", path: "/blog" },
       { name: slug, path: `/tag/${slug}` },

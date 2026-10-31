@@ -1,4 +1,5 @@
 import { localizeStructuredData } from "@/lib/site-i18n";
+import { useSiteI18n } from "@/components/site/SiteLanguage";
 import type { ReactNode } from "react";
 import { AdsMeasurementConsent } from "../AdsMeasurementConsent";
 import { SiteHeader } from "./SiteHeader";
@@ -7,9 +8,10 @@ import { ChatWidget } from "./ChatWidget";
 import { CallCenterWidget } from "./CallCenterWidget";
 import {
   getPublicTagline,
-  isEnglishChrome,
+  pageContentLocale,
   type SiteSettings,
 } from "@/lib/settings";
+import { LOCALE_INFO } from "@/lib/locales";
 import { useRouterState } from "@tanstack/react-router";
 import { safeJsonLdHtml } from "@/lib/seo-meta";
 
@@ -61,13 +63,16 @@ export function SiteLayout({
   settings: SiteSettings;
   children: ReactNode;
 }) {
+  const i18n = useSiteI18n();
   const siteJsonLd = buildSiteJsonLd(settings);
   const pathname = useRouterState({ select: (s) => s.location.pathname });
-  const english = isEnglishChrome(settings, pathname);
+  // زبان محتوای صفحه (زبان آدرس؛ صفحات حقوقی سایت فارسی ممکن است انگلیسی باشند)
+  const contentLocale = pageContentLocale(settings, i18n.locale, pathname);
+  const english = contentLocale === "en";
   return (
     <div
-      dir={english ? "ltr" : "rtl"}
-      lang={english ? "en" : "fa"}
+      dir={LOCALE_INFO[contentLocale].dir}
+      lang={contentLocale}
       className={`site-theme ${settings.brand.siteTheme === "light" ? "site-light" : ""} relative flex min-h-dvh flex-col overflow-x-clip bg-background text-foreground antialiased`}
     >
       {/* گرادیان‌های ملایم برند در گوشه‌های صفحه — پس‌زمینه یکدست در تمام صفحات، حتی در نمایش خیلی عریض */}
@@ -82,7 +87,7 @@ export function SiteLayout({
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={safeJsonLdHtml(
-          localizeStructuredData(settings, siteJsonLd),
+          localizeStructuredData(i18n, siteJsonLd),
         )}
       />
       <AdsMeasurementConsent english={english} />
