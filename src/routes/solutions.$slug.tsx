@@ -227,13 +227,14 @@ function SolutionDetailPage() {
 }
 
 function SolutionNotFound() {
+  const translateText = useSiteTranslation();
   return (
     <div className="container-page flex min-h-[50vh] flex-col items-center justify-center gap-4 py-24 text-center">
       <h1 className="text-2xl font-extrabold text-foreground">
-        راه‌کار یافت نشد
+        {translateText("راه‌کار یافت نشد")}
       </h1>
       <Link to="/solutions" className="text-sm text-brand hover:underline">
-        بازگشت به راه‌کارها
+        {translateText("بازگشت به راه‌کارها")}
       </Link>
     </div>
   );

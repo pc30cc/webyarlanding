@@ -171,13 +171,14 @@ function TagPage() {
 }
 
 function TagNotFound() {
+  const translateText = useSiteTranslation();
   return (
     <div className="container-page flex min-h-[50vh] flex-col items-center justify-center gap-4 py-24 text-center">
       <h1 className="text-2xl font-extrabold text-foreground">
-        برچسبی یافت نشد
+        {translateText("برچسبی یافت نشد")}
       </h1>
       <Link to="/blog" className="text-sm text-brand hover:underline">
-        بازگشت به بلاگ
+        {translateText("بازگشت به بلاگ")}
       </Link>
     </div>
   );

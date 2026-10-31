@@ -227,13 +227,14 @@ function ProductDetailPage() {
 }
 
 function ProductNotFound() {
+  const translateText = useSiteTranslation();
   return (
     <div className="container-page flex min-h-[50vh] flex-col items-center justify-center gap-4 py-24 text-center">
       <h1 className="text-2xl font-extrabold text-foreground">
-        محصول یافت نشد
+        {translateText("محصول یافت نشد")}
       </h1>
       <Link to="/products" className="text-sm text-brand hover:underline">
-        بازگشت به محصولات
+        {translateText("بازگشت به محصولات")}
       </Link>
     </div>
   );
