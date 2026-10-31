@@ -148,6 +148,9 @@ CREATE TABLE IF NOT EXISTS public.seo_pages (
   updated_at       timestamp NOT NULL DEFAULT now()
 );
 CREATE UNIQUE INDEX IF NOT EXISTS seo_pages_key_idx ON public.seo_pages(page_key);
+-- زبان ردیف سئو؛ NULL یعنی زبان پیش‌فرض سایت (همه ردیف‌های قدیمی). ردیف زبان‌های دیگر
+-- کلید «<کلید صفحه>@<زبان>» دارد تا page_key یکتا بماند.
+ALTER TABLE public.seo_pages ADD COLUMN IF NOT EXISTS locale varchar(5);
 
 -- ============ AUTOBLOG ============
 CREATE TABLE IF NOT EXISTS public.autoblog_settings (

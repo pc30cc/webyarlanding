@@ -3,7 +3,8 @@ import { fetchSettings } from "@/lib/settings.functions";
 import { listPublishedPosts, listTags } from "@/lib/blog.functions";
 import { getPublicCatalog } from "@/lib/catalog.functions";
 import { getPublicApps } from "@/lib/apps.functions";
-import { getActiveLocales } from "@/lib/settings";
+import { getActiveLocales, getDefaultLocale } from "@/lib/settings";
+import type { Locale } from "@/lib/locales";
 import { hreflangAlternates, indexableLocales, localizedUrl } from "@/lib/seo-meta";
 import { persianBlogPath } from "@/lib/locale-routing";
 
@@ -34,6 +35,8 @@ interface SitemapPage {
   path: string;
   lastmod?: string | null;
   blog?: boolean;
+  /** زبان‌هایی که صفحه در آن‌ها وجود دارد (برنامه‌ها)؛ نبودنش یعنی همه زبان‌ها */
+  locales?: Locale[];
 }
 
 /** حداقل کاراکترهای ویژه‌ی XML را در آدرس escape می‌کند تا سایت‌مپ همیشه معتبر بماند */
@@ -96,12 +99,35 @@ export const Route = createFileRoute("/sitemap.xml")({
               path: `/solutions/${s.slug}`,
               lastmod: toLastmod(s.updatedAt),
             })),
-          ...apps.map((a): SitemapPage => ({ path: `/download/${a.slug}` })),
         ];
         // سایت چندزبانه: هر صفحه یک‌بار برای هر زبان قابل ایندکس، با نسخه‌های دیگر به‌صورت
         // xhtml:link؛ بلاگ فقط نسخه فارسی دارد. سایت تک‌زبانه: هر صفحه یک‌بار.
         const multi = settings.localization?.mode === "multi";
         const locales = multi ? indexableLocales(settings) : [];
+        // برنامه‌ها ممکن است فقط در بعضی زبان‌ها نمایش داده شوند
+        const appLocales = new Map<string, Locale[]>();
+        if (locales.length >= 2) {
+          const fallback = getDefaultLocale(settings);
+          const perLocale = await Promise.all(
+            locales.map((locale) =>
+              getPublicApps({ data: { locale: locale === fallback ? null : locale } }).catch(
+                () => [],
+              ),
+            ),
+          );
+          perLocale.forEach((list, i) => {
+            for (const app of list)
+              appLocales.set(app.slug, [...(appLocales.get(app.slug) ?? []), locales[i] as Locale]);
+          });
+        }
+        pages.push(
+          ...(locales.length >= 2
+            ? [...appLocales].map(([slug, available]): SitemapPage => ({
+                path: `/download/${slug}`,
+                locales: available,
+              }))
+            : apps.map((a): SitemapPage => ({ path: `/download/${a.slug}` }))),
+        );
         const urls: SitemapUrl[] = pages.flatMap((page): SitemapUrl[] => {
           if (page.blog) {
             if (multi && !getActiveLocales(settings).includes("fa")) return [];
@@ -110,8 +136,9 @@ export const Route = createFileRoute("/sitemap.xml")({
           }
           if (locales.length < 2)
             return [{ loc: localUrl(settings, page.path), lastmod: page.lastmod ?? null }];
-          const alternates = hreflangAlternates(settings, page.path);
-          return locales.map((locale) => ({
+          const available = page.locales ?? locales;
+          const alternates = hreflangAlternates(settings, page.path, null, available);
+          return available.map((locale) => ({
             loc: localizedUrl(settings, locale, page.path) ?? "",
             lastmod: page.lastmod ?? null,
             alternates,

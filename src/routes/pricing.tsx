@@ -27,10 +27,10 @@ import { SiteLayout } from "@/components/site/SiteLayout";
 import { StaggerChildren, childVariant } from "@/components/site/animations";
 
 export const Route = createFileRoute("/pricing")({
-  loader: async () => {
+  loader: async ({ context }) => {
     const [settings, seoOverride, remotePlans] = await Promise.all([
       fetchSettings(),
-      getPublicSeoPage({ data: { path: "/pricing" } }),
+      getPublicSeoPage({ data: { path: "/pricing", locale: context.urlLocale } }),
       fetchPublicPlans(),
     ]);
     return { settings, seoOverride, remotePlans };

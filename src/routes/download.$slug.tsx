@@ -33,8 +33,8 @@ export const Route = createFileRoute("/download/$slug")({
   loader: async ({ params, context }) => {
     const [settings, app, apps] = await Promise.all([
       fetchSettings(),
-      getPublicApp({ data: { slug: params.slug } }),
-      getPublicApps(),
+      getPublicApp({ data: { slug: params.slug, locale: context.urlLocale } }),
+      getPublicApps({ data: { locale: context.urlLocale } }),
     ]);
     if (!app)
       throw notFound({
@@ -63,6 +63,8 @@ export const Route = createFileRoute("/download/$slug")({
       override: null,
       fallbackTitle: `${app.name} | دانلود و تصاویر`,
       fallbackDescription: app.shortDesc,
+      // برنامه ممکن است فقط در بعضی زبان‌ها نمایش داده شود
+      alternateLocales: app.visibleLocales,
     });
   },
   notFoundComponent: AppNotFound,

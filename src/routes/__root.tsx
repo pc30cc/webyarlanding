@@ -24,6 +24,13 @@ import { SiteLayout } from "../components/site/SiteLayout";
 import { extractScriptTags } from "../lib/seo-meta";
 import { SiteLanguageProvider } from "@/components/site/SiteLanguage";
 import { cachedSiteMessages, loadAllSiteMessages, loadSiteMessages } from "@/lib/site-messages";
+import { fetchSiteTranslations } from "@/lib/site-translations.functions";
+import {
+  cachedSiteTranslations,
+  freshSiteTranslations,
+  primeSiteTranslations,
+  siteTranslationsRevision,
+} from "@/lib/site-i18n";
 import { LOCALE_INFO, splitLocalePrefix, type Locale } from "@/lib/locales";
 import {
   mergeSettings,
@@ -34,6 +41,36 @@ import {
   getBrandNameEn,
   type SiteSettings,
 } from "../lib/settings";
+
+/**
+ * ترجمه‌های محتوای ویرایشگر برای زبان صفحه (نه فارسی). از کش کوتاه همین فرایند خوانده
+ * می‌شود تا هر ناوبری یا درخواست، دیتابیس را نخواند؛ کش برای head() صفحات هم پر می‌شود.
+ * اگر خواندن ناموفق باشد آخرین نسخه موجود (یا هیچ) برمی‌گردد و صفحه بدون آن رندر می‌شود.
+ */
+async function loadPageTranslations(
+  locale: Locale,
+): Promise<Record<string, string> | undefined> {
+  const fresh = freshSiteTranslations(locale);
+  if (fresh) return fresh;
+  const revision = siteTranslationsRevision();
+  try {
+    const translations = await fetchSiteTranslations({ data: { locale } });
+    primeSiteTranslations(locale, translations, revision);
+    return translations;
+  } catch (error) {
+    console.error("site translations load failed:", error);
+    return cachedSiteTranslations(locale);
+  }
+}
+
+interface RootLoaderData {
+  settings: SiteSettings;
+  productCatalog: Awaited<ReturnType<typeof getPublicCatalog>>;
+  solutionCatalog: Awaited<ReturnType<typeof getPublicCatalog>>;
+  locale: Locale;
+  /** ترجمه‌های محتوای ویرایشگر برای زبان صفحه؛ برای فارسی این کلید اصلاً وجود ندارد. */
+  overrides?: Record<string, string>;
+}
 
 /** اسکریپت‌های گوگل آنالیتیکس (در صورت تنظیم) + اسکریپت‌های سفارشی head از تنظیمات عمومی */
 function buildHeadScripts(
@@ -185,7 +222,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
           .locale,
       };
     },
-    loader: async ({ context, location }) => {
+    loader: async ({ context, location }): Promise<RootLoaderData> => {
       const [settings, productCatalog, solutionCatalog] = await Promise.all([
         fetchSettings().catch((error) => {
           console.error("root settings load failed, using defaults:", error);
@@ -204,7 +241,13 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       // دیکشنری در کش ماژول می‌ماند (مرورگر: src/client.tsx پیش از hydration) و در داده‌های
       // route فرستاده نمی‌شود تا داخل HTML هر صفحه تکرار نشود.
       await loadSiteMessages(locale);
-      return { settings, productCatalog, solutionCatalog, locale };
+      const data: RootLoaderData = { settings, productCatalog, solutionCatalog, locale };
+      // صفحات فارسی هیچ کلید اضافه‌ای در داده‌های route ندارند (HTML آن‌ها تغییر نمی‌کند).
+      if (locale !== "fa") {
+        const overrides = await loadPageTranslations(locale);
+        if (overrides) data.overrides = overrides;
+      }
+      return data;
     },
     head: ({ loaderData }) => {
       const settings = loaderData?.settings;
@@ -352,12 +395,19 @@ function RootShell({ children }: { children: ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
-  const { settings, locale } = Route.useLoaderData();
+  const { settings, locale, overrides } = Route.useLoaderData();
   const messages = cachedSiteMessages(locale);
+  // در مرورگر کش ترجمه‌ها از داده‌های hydrate‌شده پر می‌شود (برای head() و ناوبری‌های بعدی).
+  if (overrides) primeSiteTranslations(locale, overrides);
 
   return (
     <QueryClientProvider client={queryClient}>
-      <SiteLanguageProvider settings={settings} locale={locale} messages={messages}>
+      <SiteLanguageProvider
+        settings={settings}
+        locale={locale}
+        messages={messages}
+        overrides={overrides}
+      >
         <Toaster
           position="top-center"
           richColors

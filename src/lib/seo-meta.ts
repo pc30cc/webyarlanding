@@ -1,5 +1,5 @@
 import { siteI18n, type SiteI18n } from "./site-i18n";
-import { withLocalePrefix, type Locale } from "./locales";
+import { LOCALES, withLocalePrefix, type Locale } from "./locales";
 import { getActiveLocales, getDefaultLocale } from "./settings";
 import { hasSiteMessages } from "./site-messages";
 // ابزار مشترک برای ادغام تنظیمات عمومی سئو با override اختصاصی هر صفحه (seo_pages)
@@ -113,22 +113,30 @@ export function indexableLocales(settings: SiteSettings): Locale[] {
   return getActiveLocales(settings).filter((locale) => hasSiteMessages(locale));
 }
 
+/** canonical سفارشی نسخه‌های زبان یک مسیر (از seo_pages) */
+export type SeoCanonicals = Partial<Record<Locale, string>>;
+
 /**
  * hreflang یک مسیر: نسخه آن در همه زبان‌های قابل ایندکس به‌علاوه x-default (زبان پیش‌فرض).
- * در سایت تک‌زبانه یا با کمتر از دو زبان قابل ایندکس خالی است. `defaultCanonical` آدرس
- * canonical سفارشی نسخه زبان پیش‌فرض (seo_pages) است، اگر تنظیم شده باشد.
+ * در سایت تک‌زبانه یا با کمتر از دو زبان قابل ایندکس خالی است. `canonicals` آدرس canonical
+ * سفارشی نسخه‌های زبان (seo_pages) است؛ یک رشته یعنی canonical نسخه زبان پیش‌فرض.
  */
 export function hreflangAlternates(
   settings: SiteSettings,
   path: string,
-  defaultCanonical?: string | null,
+  canonicals?: string | SeoCanonicals | null,
+  /** زبان‌هایی که این صفحه در آن‌ها وجود دارد (مثلاً برنامه‌ای که فقط در بعضی زبان‌ها نمایش داده می‌شود) */
+  availableIn?: readonly Locale[],
 ): { hrefLang: string; href: string }[] {
   if (settings.localization?.mode !== "multi") return [];
-  const locales = indexableLocales(settings);
+  const locales = indexableLocales(settings).filter(
+    (locale) => !availableIn || availableIn.includes(locale),
+  );
   if (locales.length < 2) return [];
   const fallback = getDefaultLocale(settings);
-  const urlFor = (locale: Locale) =>
-    (locale === fallback && defaultCanonical) || localizedUrl(settings, locale, path);
+  const custom: SeoCanonicals =
+    typeof canonicals === "string" ? { [fallback]: canonicals } : (canonicals ?? {});
+  const urlFor = (locale: Locale) => custom[locale] || localizedUrl(settings, locale, path);
   const links = locales.flatMap((locale) => {
     const href = urlFor(locale);
     return href ? [{ hrefLang: locale, href }] : [];
@@ -136,6 +144,79 @@ export function hreflangAlternates(
   if (links.length < 2) return [];
   const xDefault = urlFor(locales.includes(fallback) ? fallback : (locales[0] as Locale));
   return xDefault ? [...links, { hrefLang: "x-default", href: xDefault }] : links;
+}
+
+/** زبان ذخیره‌شده یک ردیف seo_pages؛ نبودنش یعنی زبان پیش‌فرض سایت */
+interface SeoLocaleRow {
+  locale?: Locale | null | undefined;
+}
+
+/** ردیف یکتای یک زبان (null = ردیف‌های بدون زبان)؛ چند ردیف برای یک زبان مبهم است و نادیده گرفته می‌شود. */
+function onlySeoRow<T extends SeoLocaleRow>(rows: readonly T[], locale: Locale | null): T | null {
+  const found = rows.filter((row) => (row.locale ?? null) === locale);
+  return found.length === 1 ? (found[0] ?? null) : null;
+}
+
+/** ردیف زبان پیش‌فرض: ردیفی که صریحاً همان زبان را دارد، وگرنه ردیف بدون زبان (ردیف‌های قدیمی) */
+function defaultSeoRow<T extends SeoLocaleRow>(
+  rows: readonly T[],
+  defaultLocale: Locale | null,
+): T | null {
+  return (defaultLocale ? onlySeoRow(rows, defaultLocale) : null) ?? onlySeoRow(rows, null);
+}
+
+/**
+ * ردیف seo_pages مناسب یک صفحه از میان ردیف‌های همان مسیر: ردیف زبان صفحه، وگرنه ردیف زبان
+ * پیش‌فرض. روی زبان‌های دیگر، ردیف زبان پیش‌فرض فقط برای canonical در hreflang برگردانده
+ * می‌شود و buildPageMeta آن را اعمال نمی‌کند (seoOverrideFor). `pageLocale` و `defaultLocale`
+ * null یعنی تنظیمات خوانده نشده (مسیر ردیف زبان‌دار ندارد) و فقط ردیف بدون زبان معنا دارد.
+ * مثل قبل، چند ردیف برای یک مسیر و یک زبان مبهم است و هیچ‌کدام انتخاب نمی‌شود.
+ */
+export function selectSeoPageRow<T extends SeoLocaleRow>(
+  rows: readonly T[],
+  pageLocale: Locale | null,
+  defaultLocale: Locale | null,
+): T | null {
+  return (pageLocale ? onlySeoRow(rows, pageLocale) : null) ?? defaultSeoRow(rows, defaultLocale);
+}
+
+/** canonical سفارشی هر نسخه زبان یک مسیر، از همه ردیف‌های seo_pages آن مسیر (برای hreflang) */
+export function seoPageCanonicals(
+  rows: readonly (SeoLocaleRow & { canonicalUrl?: string | null })[],
+  defaultLocale: Locale,
+): SeoCanonicals {
+  const result: SeoCanonicals = {};
+  for (const locale of LOCALES) {
+    const row =
+      locale === defaultLocale ? defaultSeoRow(rows, defaultLocale) : onlySeoRow(rows, locale);
+    if (row?.canonicalUrl) result[locale] = row.canonicalUrl;
+  }
+  return result;
+}
+
+/**
+ * override صفحه (seo_pages) اگر به زبان این صفحه نوشته شده باشد؛ ردیف بدون زبان (همه
+ * ردیف‌های قدیمی) متعلق به زبان پیش‌فرض است و روی نسخه‌های دیگر زبان اعمال نمی‌شود.
+ */
+export function seoOverrideFor(
+  settings: SiteSettings,
+  locale: Locale,
+  override: SeoPageDto | null | undefined,
+): SeoPageDto | null {
+  if (!override) return null;
+  return (override.locale ?? getDefaultLocale(settings)) === locale ? override : null;
+}
+
+/** canonical سفارشی نسخه‌های زبان این مسیر برای hreflang، از خروجی getPublicSeoPage */
+function overrideCanonicals(
+  settings: SiteSettings,
+  override: SeoPageDto | null,
+): SeoCanonicals | null {
+  if (!override) return null;
+  if (override.alternateCanonicals) return override.alternateCanonicals;
+  return override.canonicalUrl
+    ? { [override.locale ?? getDefaultLocale(settings)]: override.canonicalUrl }
+    : null;
 }
 
 export function buildPageMeta(opts: {
@@ -155,6 +236,8 @@ export function buildPageMeta(opts: {
   defaultRobots?: string;
   /** لینک‌های hreflang به نسخه‌های دیگر زبان؛ برای بلاگ (فقط فارسی) false بدهید */
   alternates?: boolean;
+  /** زبان‌هایی که این صفحه در آن‌ها وجود دارد؛ پیش‌فرض: همه زبان‌های قابل ایندکس */
+  alternateLocales?: readonly Locale[] | undefined;
 }) {
   const {
     settings,
@@ -169,9 +252,9 @@ export function buildPageMeta(opts: {
   } = opts;
   const base = (settings.brand.siteUrl || "").replace(/\/$/, "");
   const i18n = opts.i18n ?? siteI18n(settings, getDefaultLocale(settings));
-  // override صفحه (seo_pages) برای زبان پیش‌فرض نوشته شده و canonical آن به آدرس همان زبان
-  // اشاره می‌کند؛ روی نسخه‌های دیگر زبان اعمال نمی‌شود.
-  const override = i18n.locale === getDefaultLocale(settings) ? storedOverride : null;
+  // override صفحه (seo_pages) فقط روی نسخه همان زبان اعمال می‌شود (canonical آن به آدرس همان
+  // زبان اشاره می‌کند)؛ ردیف‌های بدون زبان متعلق به زبان پیش‌فرض‌اند.
+  const override = seoOverrideFor(settings, i18n.locale, storedOverride);
 
   const translate = i18n.translate;
   const title = translate(override?.title || fallbackTitle);
@@ -219,11 +302,18 @@ export function buildPageMeta(opts: {
       // hreflang فقط برای صفحه قابل ایندکس؛ نسخه زبان پیش‌فرض همان canonical خودش را دارد
       ...(opts.alternates === false || /noindex/i.test(robots)
         ? []
-        : hreflangAlternates(settings, path, storedOverride?.canonicalUrl).map((link) => ({
-            rel: "alternate",
-            hrefLang: link.hrefLang,
-            href: link.href,
-          }))),
+        : hreflangAlternates(
+            settings,
+            path,
+            overrideCanonicals(settings, storedOverride),
+            opts.alternateLocales,
+          ).map(
+            (link) => ({
+              rel: "alternate",
+              hrefLang: link.hrefLang,
+              href: link.href,
+            }),
+          )),
     ],
   };
 }

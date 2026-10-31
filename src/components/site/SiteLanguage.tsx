@@ -17,25 +17,28 @@ const SiteLanguageContext = createContext<SiteLanguageValue>({ ...defaultValue, 
 
 /**
  * زبان صفحه (از آدرس) و مترجم آن برای همه اجزای سایت عمومی. `messages` دیکشنری همان
- * زبان است که loader ریشه بارگذاری می‌کند.
+ * زبان است که loader ریشه بارگذاری می‌کند و `overrides` ترجمه‌های محتوای ویرایشگر برای همان
+ * زبان (از loader ریشه؛ برای فارسی وجود ندارد).
  */
 export function SiteLanguageProvider({
   settings,
   locale,
   messages,
+  overrides,
   children,
 }: {
   settings: SiteSettings;
   locale: Locale;
   messages?: Record<string, string> | undefined;
+  overrides?: Record<string, string> | undefined;
   children: ReactNode;
 }) {
   const value = useMemo(
     () => ({
-      ...siteI18n(settings, locale, messages),
+      ...siteI18n(settings, locale, messages, overrides),
       prefix: locale === getDefaultLocale(settings) ? null : locale,
     }),
-    [settings, locale, messages],
+    [settings, locale, messages, overrides],
   );
   return <SiteLanguageContext.Provider value={value}>{children}</SiteLanguageContext.Provider>;
 }
@@ -57,6 +60,11 @@ export function useLocalizeHref(): (href: string) => string {
   const { prefix } = useContext(SiteLanguageContext);
   return (href) =>
     prefix && /^\/(?![\\/])/.test(href) ? withLocalePrefix(href, prefix) : href;
+}
+
+/** پیشوند آدرس زبان صفحه (/en، /tr، /ar)؛ null برای زبان پیش‌فرض */
+export function useSitePrefix(): Locale | null {
+  return useContext(SiteLanguageContext).prefix;
 }
 
 /** زبان صفحه: fa | en | tr | ar */

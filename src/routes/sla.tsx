@@ -15,10 +15,10 @@ import {
 import { SiteLayout } from "@/components/site/SiteLayout";
 
 export const Route = createFileRoute("/sla")({
-  loader: async () => {
+  loader: async ({ context }) => {
     const [settings, seoOverride] = await Promise.all([
       fetchSettings(),
-      getPublicSeoPage({ data: { path: "/sla" } }),
+      getPublicSeoPage({ data: { path: "/sla", locale: context.urlLocale } }),
     ]);
     return { settings, seoOverride };
   },

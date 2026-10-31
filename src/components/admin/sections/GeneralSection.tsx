@@ -59,14 +59,6 @@ export default function GeneralSection() {
       router.invalidate();
     },
     onError: () => {
-      if (data)
-        setForm((current) => ({
-          ...current,
-          localization: {
-            ...current.localization,
-            language: data.localization.language,
-          },
-        }));
       toast.error("خطا در ذخیره تنظیمات");
     },
   });
@@ -100,7 +92,7 @@ export default function GeneralSection() {
       >
         <Tabs defaultValue="brand">
           <TabsList className="h-auto flex-wrap">
-            <TabsTrigger value="language">زبان سایت</TabsTrigger>
+            <TabsTrigger value="language">زبان‌های سایت</TabsTrigger>
             <TabsTrigger value="brand">برند</TabsTrigger>
             <TabsTrigger value="auth">ورود و ثبت‌نام</TabsTrigger>
             <TabsTrigger value="social">شبکه‌های اجتماعی</TabsTrigger>
@@ -114,22 +106,25 @@ export default function GeneralSection() {
             <LanguageSection
               settings={form}
               pending={mutation.isPending}
-              onChange={(localization) =>
-                setForm((f) => ({ ...f, localization }))
-              }
-              onSwitch={(language, english) => {
+              onSave={async (languages) => {
+                // فقط زبان پیش‌فرض، حالت و زبان‌های فعال عوض می‌شوند؛ بقیه فیلدهای فرم
+                // (و بقیه localization) همان‌طور با مسیر معمول ذخیره تنظیمات نوشته می‌شوند.
                 const current = formRef.current;
-                const next = {
+                const next: SiteSettings = {
                   ...current,
-                  localization: {
-                    ...current.localization,
-                    language,
-                    english: english ?? current.localization.english,
-                  },
+                  localization: { ...current.localization, ...languages },
                 };
+                await mutation.mutateAsync(next);
                 setForm(next);
-                mutation.mutate(next);
               }}
+              onLegacyEnglishCleared={() =>
+                // سرور ترجمه‌های قدیمی انگلیسی را از تنظیمات عمومی پاک کرده است؛ فرم هم
+                // نباید آن‌ها را در ذخیره بعدی دوباره بنویسد.
+                setForm((f) => ({
+                  ...f,
+                  localization: { ...f.localization, english: {} },
+                }))
+              }
             />
           </TabsContent>
           <TabsContent value="brand" className="mt-6">

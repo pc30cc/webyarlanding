@@ -1,22 +1,12 @@
-import { useSiteTranslation } from "@/components/site/SiteLanguage";
+import { useSiteTranslation, useSitePrefix } from "@/components/site/SiteLanguage";
+import { appDownloadHref } from "@/lib/apps.functions";
 import { siApple, siGoogleplay, siAndroid } from "simple-icons";
 import { Link } from "@tanstack/react-router";
 import type { AppPlatform } from "@/lib/apps.functions";
 
-function SiIcon({
-  path,
-  className,
-}: {
-  path: string;
-  className?: string | undefined;
-}) {
+function SiIcon({ path, className }: { path: string; className?: string | undefined }) {
   return (
-    <svg
-      viewBox="0 0 24 24"
-      fill="currentColor"
-      aria-hidden
-      className={className}
-    >
+    <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden className={className}>
       <path d={path} />
     </svg>
   );
@@ -25,11 +15,7 @@ function SiIcon({
 export function AppleIcon({ className }: { className?: string | undefined }) {
   return <SiIcon path={siApple.path} className={className} />;
 }
-export function GooglePlayIcon({
-  className,
-}: {
-  className?: string | undefined;
-}) {
+export function GooglePlayIcon({ className }: { className?: string | undefined }) {
   return <SiIcon path={siGoogleplay.path} className={className} />;
 }
 export function AndroidIcon({ className }: { className?: string | undefined }) {
@@ -37,12 +23,7 @@ export function AndroidIcon({ className }: { className?: string | undefined }) {
 }
 export function WindowsIcon({ className }: { className?: string | undefined }) {
   return (
-    <svg
-      viewBox="0 0 24 24"
-      fill="currentColor"
-      aria-hidden
-      className={className}
-    >
+    <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden className={className}>
       <path d="M0 3.4 9.8 2v9.5H0zM11 1.8 24 0v11.5H11zM0 12.5h9.8V22L0 20.6zM11 12.5h13V24l-13-1.8z" />
     </svg>
   );
@@ -98,6 +79,7 @@ export function StoreBadge({
   toDetails?: boolean;
 }) {
   const translateText = useSiteTranslation();
+  const prefix = useSitePrefix();
 
   const m = PLATFORM_META[platform] ?? PLATFORM_META.ios;
   const inner = (
@@ -125,15 +107,11 @@ export function StoreBadge({
     );
   }
   if (!available) {
-    return (
-      <span className={`${base} cursor-default opacity-60 ${className ?? ""}`}>
-        {inner}
-      </span>
-    );
+    return <span className={`${base} cursor-default opacity-60 ${className ?? ""}`}>{inner}</span>;
   }
   return (
     <a
-      href={`/go/${slug}`}
+      href={appDownloadHref(slug, prefix)}
       rel="nofollow"
       className={`${base} hover:-translate-y-0.5 ${className ?? ""}`}
     >
@@ -143,10 +121,7 @@ export function StoreBadge({
 }
 
 /** کاشی آیکون پلتفرم به سبک آیکون اپ‌استور — گرادیان رنگ برند، هایلایت شیشه‌ای و درخشش (الهام از Magic UI) */
-const TILE_STYLE: Record<
-  AppPlatform,
-  { bg: string; fg: string; glow: string }
-> = {
+const TILE_STYLE: Record<AppPlatform, { bg: string; fg: string; glow: string }> = {
   ios: {
     bg: "linear-gradient(145deg,#4a4a4f 0%,#1c1c1f 55%,#050506 100%)",
     fg: "#ffffff",
@@ -200,9 +175,7 @@ export function PlatformTile({
         aria-hidden
         className="pointer-events-none absolute inset-x-0 top-0 h-1/2 bg-gradient-to-b from-white/25 to-transparent"
       />
-      <Icon
-        className={`relative drop-shadow-[0_2px_4px_rgba(0,0,0,.25)] ${iconClassName ?? ""}`}
-      />
+      <Icon className={`relative drop-shadow-[0_2px_4px_rgba(0,0,0,.25)] ${iconClassName ?? ""}`} />
     </span>
   );
 }

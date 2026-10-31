@@ -8,8 +8,12 @@ import {
   adminSaveApp,
   type AppDto,
   type AppInput,
+  type AppLocaleOverride,
   type AppStats,
 } from "@/lib/apps.functions";
+import { fetchSettings } from "@/lib/settings.functions";
+import { getActiveLocales, getDefaultLocale, type SiteSettings } from "@/lib/settings";
+import { LOCALES, LOCALE_INFO, type Locale } from "@/lib/locales";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -37,15 +41,42 @@ const empty: AppInput = {
   enabled: true,
   downloadUrlEn: "",
   enabledEn: true,
+  locales: {},
 };
+
+const NO_OVERRIDE: AppLocaleOverride = { downloadUrl: "", enabled: true };
+
+/** نسخه زبانی که مقدار واقعی دارد (لینک جدا یا خاموش) */
+const hasOverride = (entry: AppLocaleOverride | undefined) =>
+  !!entry && (!!entry.downloadUrl.trim() || !entry.enabled);
+
+/**
+ * زبان‌هایی که برای یک برنامه فیلد جدا دارند: هر زبان فعال غیرپیش‌فرض، به‌علاوه هر زبانی که از
+ * قبل مقدار ذخیره‌شده دارد (مثل نسخه انگلیسی قدیمی) تا دیده و ویرایش شود.
+ */
+function overrideLocales(
+  settings: SiteSettings | null,
+  locales: AppInput["locales"],
+): Locale[] {
+  const active = settings ? getActiveLocales(settings) : [];
+  const fallback = settings ? getDefaultLocale(settings) : "fa";
+  return LOCALES.filter(
+    (locale) =>
+      (active.includes(locale) && locale !== fallback) || hasOverride(locales?.[locale]),
+  );
+}
 
 export default function AppsSection() {
   const list = useServerFn(adminListApps);
   const save = useServerFn(adminSaveApp);
   const remove = useServerFn(adminDeleteApp);
+  const loadSettingsFn = useServerFn(fetchSettings);
+  const [settings, setSettings] = useState<SiteSettings | null>(null);
   const [apps, setApps] = useState<AppDto[]>([]);
   const [stats, setStats] = useState<AppStats | null>(null);
   const [form, setForm] = useState<AppInput | null>(null);
+  // زبان‌هایی که هنگام باز شدن فرم فیلد داشتند؛ با پاک کردن لینک، فیلدشان وسط ویرایش پنهان نشود
+  const [pinnedLocales, setPinnedLocales] = useState<Locale[]>([]);
   const [busy, setBusy] = useState(false);
 
   async function load() {
@@ -59,7 +90,20 @@ export default function AppsSection() {
   }
   useEffect(() => {
     void load();
+    loadSettingsFn()
+      .then(setSettings)
+      .catch(() => toast.error("خطا در دریافت زبان‌های سایت"));
   }, []);
+
+  const defaultLocale = settings ? getDefaultLocale(settings) : "fa";
+  const activeLocales = settings ? getActiveLocales(settings) : [];
+  const localeLabel = (locale: Locale) =>
+    LOCALE_INFO[locale].adminName +
+    (locale === defaultLocale
+      ? " (زبان پیش‌فرض)"
+      : activeLocales.includes(locale)
+        ? ""
+        : " (غیرفعال)");
 
   async function onSave() {
     if (!form) return;
@@ -86,6 +130,23 @@ export default function AppsSection() {
   const maxDay = Math.max(1, ...(stats?.daily.map((d) => d.count) ?? [1]));
   const set = <K extends keyof AppInput>(k: K, v: AppInput[K]) =>
     setForm((f) => (f ? { ...f, [k]: v } : f));
+  const openForm = (next: AppInput) => {
+    setPinnedLocales(overrideLocales(settings, next.locales));
+    setForm(next);
+  };
+  const formLocales = form
+    ? LOCALES.filter(
+        (locale) =>
+          pinnedLocales.includes(locale) ||
+          overrideLocales(settings, form.locales).includes(locale),
+      )
+    : [];
+  const setLocale = (locale: Locale, patch: Partial<AppLocaleOverride>) =>
+    setForm((f) => {
+      if (!f) return f;
+      const current = f.locales?.[locale] ?? NO_OVERRIDE;
+      return { ...f, locales: { ...f.locales, [locale]: { ...current, ...patch } } };
+    });
 
   return (
     <div className="space-y-6">
@@ -96,7 +157,7 @@ export default function AppsSection() {
             لینک دانلود هر برنامه را تنظیم کنید؛ کلیک‌ها خودکار شمرده می‌شوند.
           </p>
         </div>
-        <Button onClick={() => setForm({ ...empty, sortOrder: apps.length + 1 })} className="gap-1">
+        <Button onClick={() => openForm({ ...empty, sortOrder: apps.length + 1 })} className="gap-1">
           <Plus className="h-4 w-4" /> برنامه جدید
         </Button>
       </div>
@@ -155,9 +216,16 @@ export default function AppsSection() {
                   {!a.enabled && (
                     <span className="rounded bg-muted px-1.5 text-xs text-muted-foreground">خاموش</span>
                   )}
-                  {!a.enabledEn && (
-                    <span className="rounded bg-muted px-1.5 text-xs text-muted-foreground">خاموش در انگلیسی</span>
-                  )}
+                  {overrideLocales(settings, a.locales)
+                    .filter((locale) => a.locales?.[locale]?.enabled === false)
+                    .map((locale) => (
+                      <span
+                        key={locale}
+                        className="rounded bg-muted px-1.5 text-xs text-muted-foreground"
+                      >
+                        خاموش در {LOCALE_INFO[locale].adminName}
+                      </span>
+                    ))}
                 </div>
                 <div className="text-xs text-muted-foreground">
                   {PLATFORM_LABEL[a.platform]} · نسخه {a.version || "—"}
@@ -165,11 +233,23 @@ export default function AppsSection() {
                 <div dir="ltr" className="mt-1 truncate text-start text-xs text-muted-foreground">
                   {a.downloadUrl || "لینک تنظیم نشده"}
                 </div>
-                <div dir="ltr" className="truncate text-start text-xs text-muted-foreground">
-                  EN: {a.downloadUrlEn || "لینک انگلیسی تنظیم نشده"}
-                </div>
+                {overrideLocales(settings, a.locales).map((locale) => (
+                  <div
+                    key={locale}
+                    dir="ltr"
+                    className="truncate text-start text-xs text-muted-foreground"
+                  >
+                    {locale.toUpperCase()}:{" "}
+                    {a.locales?.[locale]?.downloadUrl || "همان لینک زبان پیش‌فرض"}
+                  </div>
+                ))}
                 <div className="mt-3 flex gap-2">
-                  <Button size="sm" variant="outline" onClick={() => setForm({ ...a })} className="gap-1">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => openForm({ ...a, locales: { ...a.locales } })}
+                    className="gap-1"
+                  >
                     <Pencil className="h-3.5 w-3.5" /> ویرایش
                   </Button>
                   <Button size="sm" variant="ghost" onClick={() => onDelete(a.id)}>
@@ -217,13 +297,33 @@ export default function AppsSection() {
               <Label>لینک دانلود (App Store / Google Play / فایل نصب)</Label>
               <Input dir="ltr" value={form.downloadUrl} onChange={(e) => set("downloadUrl", e.target.value)} placeholder="https://..." />
             </div>
-            <div className="space-y-1.5 md:col-span-2">
-              <Label>لینک دانلود سایت انگلیسی</Label>
-              <Input dir="ltr" value={form.downloadUrlEn} onChange={(e) => set("downloadUrlEn", e.target.value)} placeholder="https://..." />
-              <p className="text-xs text-muted-foreground">
-                جدا از لینک فارسی است. خالی بماند، در سایت انگلیسی «به‌زودی» نمایش داده می‌شود.
-              </p>
-            </div>
+            {formLocales.map((locale) => {
+              const entry = form.locales?.[locale] ?? NO_OVERRIDE;
+              return (
+                <div
+                  key={locale}
+                  className="space-y-2 rounded-lg border border-border p-3 md:col-span-2"
+                >
+                  <Label>لینک دانلود نسخه {localeLabel(locale)}</Label>
+                  <Input
+                    dir="ltr"
+                    value={entry.downloadUrl}
+                    onChange={(e) => setLocale(locale, { downloadUrl: e.target.value })}
+                    placeholder={form.downloadUrl || "https://..."}
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    خالی بماند، همان لینک بالا (زبان پیش‌فرض) استفاده می‌شود.
+                  </p>
+                  <div className="flex items-center gap-3">
+                    <Switch
+                      checked={entry.enabled}
+                      onCheckedChange={(v) => setLocale(locale, { enabled: v })}
+                    />
+                    <Label>نمایش در نسخه {LOCALE_INFO[locale].adminName}</Label>
+                  </div>
+                </div>
+              );
+            })}
             <div className="space-y-1.5">
               <Label>زیرعنوان</Label>
               <Input value={form.subtitle} onChange={(e) => set("subtitle", e.target.value)} />
@@ -270,11 +370,7 @@ export default function AppsSection() {
             </div>
             <div className="flex items-center gap-3 pt-6">
               <Switch checked={form.enabled} onCheckedChange={(v) => set("enabled", v)} />
-              <Label>نمایش در سایت</Label>
-            </div>
-            <div className="flex items-center gap-3">
-              <Switch checked={form.enabledEn} onCheckedChange={(v) => set("enabledEn", v)} />
-              <Label>نمایش در سایت انگلیسی</Label>
+              <Label>نمایش در سایت (همه زبان‌ها)</Label>
             </div>
             <div className="flex gap-2 md:col-span-2">
               <Button onClick={onSave} disabled={busy}>ذخیره</Button>

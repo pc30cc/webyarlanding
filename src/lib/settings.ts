@@ -201,7 +201,11 @@ export interface LocalizationSettings {
   mode?: "single" | "multi" | undefined;
   /** زبان‌های فعال در حالت چندزبانه (همیشه شامل زبان پیش‌فرض) */
   locales?: Locale[] | undefined;
-  /** English versions of editor-managed content, keyed by the original text. */
+  /**
+   * قدیمی: ترجمه انگلیسی محتوای ویرایشگر، کلیدشده با متن فارسی. ترجمه‌های هر زبان اکنون در
+   * ردیف جدای site_translations_<locale> ذخیره می‌شوند (site-translations.server.ts)؛ این مقدار
+   * فقط تا اولین ذخیره ترجمه انگلیسی خوانده می‌شود و پس از آن خالی است.
+   */
   english: Record<string, string>;
 }
 
@@ -485,8 +489,8 @@ export function mergeSettings(
     for (const locale of storedLocales) if (isLocale(locale)) enabled.add(locale);
   result.localization.locales = LOCALES.filter((locale) => enabled.has(locale));
   result.localization.english = { ...storedLocalization?.english };
-  // قالب سایت انگلیسی (Respok) حذف شده؛ مقدار قدیمی ذخیره‌شده دیگر به کلاینت فرستاده نشود
-  // و در ذخیره بعدی تنظیمات پاک شود.
+  // تنظیم قدیمی «قالب جداگانه سایت انگلیسی» حذف شده؛ مقدار ذخیره‌شده آن دیگر به کلاینت
+  // فرستاده نشود و در ذخیره بعدی تنظیمات پاک شود.
   delete (result.localization as { englishTemplate?: unknown }).englishTemplate;
   // ai.openai/ai.gemini باید عمیق ادغام شوند تا ذخیره جزئی یکی، فیلدهای دیگری را پاک نکند
   if (stored.ai?.openai) Object.assign(result.ai.openai, stored.ai.openai);

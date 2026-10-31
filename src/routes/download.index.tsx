@@ -33,11 +33,11 @@ import {
 import { ScrollReveal } from "@/components/site/animations";
 
 export const Route = createFileRoute("/download/")({
-  loader: async () => {
+  loader: async ({ context }) => {
     const [settings, seoOverride, apps] = await Promise.all([
       fetchSettings(),
-      getPublicSeoPage({ data: { path: "/download" } }),
-      getPublicApps(),
+      getPublicSeoPage({ data: { path: "/download", locale: context.urlLocale } }),
+      getPublicApps({ data: { locale: context.urlLocale } }),
     ]);
     return { settings, seoOverride, apps };
   },

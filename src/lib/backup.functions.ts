@@ -211,6 +211,7 @@ export const TABLES: TableDef[] = [
       { name: "schema_json", type: "TEXT" },
       { name: "created_at", type: "TIMESTAMP" },
       { name: "updated_at", type: "TIMESTAMP" },
+      { name: "locale", type: "VARCHAR", length: 5 },
     ],
   },
   {

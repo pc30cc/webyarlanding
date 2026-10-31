@@ -139,28 +139,34 @@ const NO_MESSAGES: Record<string, string> = {};
 
 /**
  * زبان و مترجم یک صفحه از تنظیمات و دیکشنری همان زبان. برای زبان‌های غیرفارسی نام برند
- * انگلیسی است و ترجمه‌های ویرایشگر (localization.english) فقط برای انگلیسی اعمال می‌شود.
+ * لاتین است. `overrides` ترجمه‌های محتوای ویرایشگر برای همین زبان است (ردیف
+ * site_translations_<locale>؛ loader ریشه آن را می‌فرستد). بدون آن، فقط برای انگلیسی ترجمه‌های
+ * قدیمی ذخیره‌شده در تنظیمات (localization.english) خوانده می‌شود.
  */
 export function siteI18n(
   settings: SiteSettings,
   locale: Locale,
   messages: Record<string, string> = NO_MESSAGES,
+  overrides?: Record<string, string>,
 ): SiteI18n {
-  // ترجمه‌های ویرایشگر فقط برای انگلیسی اعمال می‌شوند، پس فقط همان‌جا در کلید کش می‌آیند.
-  const english =
-    locale === "en" ? (settings.localization?.english ?? NO_MESSAGES) : NO_MESSAGES;
+  const editor =
+    locale === "fa"
+      ? NO_MESSAGES
+      : (overrides ??
+        (locale === "en" ? settings.localization?.english : undefined) ??
+        NO_MESSAGES);
   const brand = settings.brand.name;
   const brandEn = getBrandNameEn(settings);
   let byOverrides = i18nCache.get(messages);
   if (!byOverrides) i18nCache.set(messages, (byOverrides = new Map()));
-  const cacheKey = `${locale}\u0000${brand}\u0000${brandEn}\u0000${overridesKey(english)}`;
+  const cacheKey = `${locale}\u0000${brand}\u0000${brandEn}\u0000${overridesKey(editor)}`;
   const cached = byOverrides.get(cacheKey);
   if (cached) return cached;
-  const overrides = locale === "fa" ? NO_MESSAGES : { [brand]: brandEn, ...english };
+  const dictionary = locale === "fa" ? NO_MESSAGES : { [brand]: brandEn, ...editor };
   const i18n: SiteI18n = {
     locale,
     info: LOCALE_INFO[locale],
-    translate: createSiteTranslator(locale, messages, overrides),
+    translate: createSiteTranslator(locale, messages, dictionary),
   };
   // هر نسخه ذخیره‌شده از ترجمه‌ها یک کلید تازه است؛ نسخه‌های قدیمی نگه داشته نمی‌شوند.
   if (byOverrides.size >= 32) byOverrides.clear();
@@ -177,12 +183,65 @@ function overridesKey(overrides: Record<string, string>): string {
   return key;
 }
 
+/**
+ * کش ترجمه‌های محتوای ویرایشگر هر زبان در همین فرایند (سرور یا مرورگر). loader ریشه آن را پر
+ * می‌کند و head() صفحات روی سرور — که پیش از آماده شدن داده‌های route ریشه اجرا می‌شود — از
+ * آن می‌خواند. ترجمه‌ها برای همه صفحات یکی است، پس کلید فقط زبان است. با هر ذخیره مدیر
+ * (invalidateSiteTranslations) و پس از TTL کوتاه (برای چند نمونه سرور) کهنه حساب می‌شود.
+ */
+export const SITE_TRANSLATIONS_TTL_MS = 30_000;
+let translationsRevision = 0;
+const translationsCache = new Map<
+  Locale,
+  { map: Record<string, string>; at: number; revision: number }
+>();
+
+/** نسخه فعلی کش؛ پیش از خواندن ترجمه‌ها بگیرید و به primeSiteTranslations بدهید. */
+export function siteTranslationsRevision(): number {
+  return translationsRevision;
+}
+
+/** با ذخیره ترجمه‌ها همه ورودی‌های کش کهنه می‌شوند (ولی برای head() باقی می‌مانند). */
+export function invalidateSiteTranslations(): void {
+  translationsRevision++;
+}
+
+export function primeSiteTranslations(
+  locale: Locale,
+  map: Record<string, string>,
+  revision = translationsRevision,
+  now = Date.now(),
+): void {
+  if (locale === "fa") return;
+  // همان شیء دوباره (مثلاً در هر رندر RootComponent) عمر کش را تمدید نمی‌کند.
+  if (translationsCache.get(locale)?.map === map) return;
+  translationsCache.set(locale, { map, at: now, revision });
+}
+
+/** ترجمه‌های تازه (کمتر از TTL و پس از آخرین ذخیره)؛ وگرنه undefined تا دوباره خوانده شود. */
+export function freshSiteTranslations(
+  locale: Locale,
+  now = Date.now(),
+): Record<string, string> | undefined {
+  if (locale === "fa") return NO_MESSAGES;
+  const entry = translationsCache.get(locale);
+  if (!entry || entry.revision !== translationsRevision) return undefined;
+  return now - entry.at < SITE_TRANSLATIONS_TTL_MS ? entry.map : undefined;
+}
+
+/** آخرین ترجمه‌های بارگذاری‌شده یک زبان، هر قدر هم کهنه (برای head() که همگام اجرا می‌شود) */
+export function cachedSiteTranslations(locale: Locale): Record<string, string> | undefined {
+  return locale === "fa" ? undefined : translationsCache.get(locale)?.map;
+}
+
 /** Root loader data that carries the page language (see routes/__root.tsx). */
 interface RootLocaleData {
   settings: SiteSettings;
   locale: Locale;
   /** دیکشنری صریح (در تست‌ها)؛ در سایت از کش ماژول خوانده می‌شود */
   messages?: Record<string, string>;
+  /** ترجمه‌های محتوای ویرایشگر برای زبان صفحه (برای فارسی وجود ندارد) */
+  overrides?: Record<string, string>;
 }
 
 /**
@@ -202,12 +261,13 @@ export function i18nFromMatches(
       root.settings,
       root.locale,
       root.messages ?? cachedSiteMessages(root.locale),
+      root.overrides ?? cachedSiteTranslations(root.locale),
     );
   const settings = (loaderData as { settings?: SiteSettings } | undefined)?.settings;
   if (!settings) return null;
   const urlLocale = (match?.context as { urlLocale?: Locale | null } | undefined)?.urlLocale;
   const locale = resolvePageLocale(settings, urlLocale);
-  return siteI18n(settings, locale, cachedSiteMessages(locale));
+  return siteI18n(settings, locale, cachedSiteMessages(locale), cachedSiteTranslations(locale));
 }
 
 /** Translate schema text without changing identifiers, canonical URLs or dates. */

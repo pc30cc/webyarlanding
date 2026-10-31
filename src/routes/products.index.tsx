@@ -4,7 +4,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { motion } from "framer-motion";
 import { Check, ChevronLeft } from "lucide-react";
 import { fetchSettings } from "@/lib/settings.functions";
-import { getDefaultLocale, joinFa } from "@/lib/settings";
+import { joinFa } from "@/lib/settings";
 import { getPublicSeoPage } from "@/lib/seo.functions";
 import { getPublicCatalog } from "@/lib/catalog.functions";
 import {
@@ -13,6 +13,7 @@ import {
   buildBreadcrumbJsonLd,
   localizedUrl,
   safeJsonLdHtml,
+  seoOverrideFor,
 } from "@/lib/seo-meta";
 import { getIcon } from "@/lib/icon-registry";
 import { SiteLayout } from "@/components/site/SiteLayout";
@@ -23,10 +24,10 @@ import {
 } from "@/components/site/animations";
 
 export const Route = createFileRoute("/products/")({
-  loader: async () => {
+  loader: async ({ context }) => {
     const [settings, seoOverride, categories] = await Promise.all([
       fetchSettings(),
-      getPublicSeoPage({ data: { path: "/products" } }),
+      getPublicSeoPage({ data: { path: "/products", locale: context.urlLocale } }),
       getPublicCatalog({ data: { type: "product" } }),
     ]);
     return { settings, seoOverride, categories };
@@ -106,8 +107,7 @@ function ProductsPage() {
   const allProducts = categories.flatMap((c) => c.items);
 
   // schemaJson اختصاصی صفحه مثل بقیه override سئو برای زبان پیش‌فرض نوشته شده است
-  const schemaOverride =
-    i18n.locale === getDefaultLocale(settings) ? seoOverride?.schemaJson : null;
+  const schemaOverride = seoOverrideFor(settings, i18n.locale, seoOverride)?.schemaJson;
   const jsonLd = parseSchemaJson(schemaOverride) ?? [
     {
       "@context": "https://schema.org",

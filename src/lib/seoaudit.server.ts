@@ -423,7 +423,10 @@ export async function runSeoAudit(options?: { autoFix?: boolean }): Promise<SeoA
 
   // ۷) صفحات ثابت: عنوان/توضیح/کنونیکال/داده ساختاریافته
   const { data: seoRows } = await db.from("seo_pages").select("*");
-  const byPath = new Map((seoRows ?? []).map((r) => [r.path, r]));
+  // فقط ردیف‌های زبان پیش‌فرض (بدون زبان)؛ ردیف زبان‌های دیگر جدا در پنل سئو ویرایش می‌شوند
+  const byPath = new Map(
+    (seoRows ?? []).filter((r) => !r.locale).map((r) => [r.path, r]),
+  );
   const missingPages = STATIC_PAGES.filter((sp) => {
     const row = byPath.get(sp.path);
     return !row || !row.title || !row.description || !row.schema_json;
