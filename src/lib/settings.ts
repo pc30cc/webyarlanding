@@ -423,6 +423,9 @@ export function mergeSettings(
   result.localization.language =
     stored.localization?.language === "en" ? "en" : "fa";
   result.localization.english = { ...stored.localization?.english };
+  // قالب سایت انگلیسی (Respok) حذف شده؛ مقدار قدیمی ذخیره‌شده دیگر به کلاینت فرستاده نشود
+  // و در ذخیره بعدی تنظیمات پاک شود.
+  delete (result.localization as { englishTemplate?: unknown }).englishTemplate;
   // ai.openai/ai.gemini باید عمیق ادغام شوند تا ذخیره جزئی یکی، فیلدهای دیگری را پاک نکند
   if (stored.ai?.openai) Object.assign(result.ai.openai, stored.ai.openai);
   if (stored.ai?.gemini) Object.assign(result.ai.gemini, stored.ai.gemini);

@@ -17,6 +17,16 @@ describe("site language", () => {
     expect(settings.brand.name).toBe("آزمایش");
     expect(settings.localization.english).toEqual({});
   });
+  it("drops the removed English-template setting from stored settings", () => {
+    const settings = mergeSettings({
+      localization: {
+        language: "fa",
+        english: {},
+        englishTemplate: "thread",
+      } as never,
+    });
+    expect("englishTemplate" in settings.localization).toBe(false);
+  });
   it("applies English to every public path regardless of the legal-page switch", () => {
     const settings = structuredClone(DEFAULT_SETTINGS);
     settings.localization.language = "en";
