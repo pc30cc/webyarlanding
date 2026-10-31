@@ -24,10 +24,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 
 export const Route = createFileRoute("/contact")({
-  loader: async () => {
+  loader: async ({ context }) => {
     const [settings, seoOverride] = await Promise.all([
       fetchSettings(),
-      getPublicSeoPage({ data: { path: "/contact" } }),
+      getPublicSeoPage({ data: { path: "/contact", locale: context.urlLocale } }),
     ]);
     return { settings, seoOverride };
   },

@@ -9,6 +9,7 @@ import {
 } from "@tanstack/react-start/server";
 import { db, newId, nowIso, toBool } from "./db.server";
 
+// نام کوکی نشست؛ تغییرش همه کاربران واردشده را خارج می‌کند.
 export const SESSION_COOKIE = "webyar_session";
 const SESSION_DAYS = 14;
 const PBKDF2_ITERATIONS = 120_000;

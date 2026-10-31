@@ -21,10 +21,10 @@ import {
 } from "@/components/site/animations";
 
 export const Route = createFileRoute("/about")({
-  loader: async () => {
+  loader: async ({ context }) => {
     const [settings, seoOverride] = await Promise.all([
       fetchSettings(),
-      getPublicSeoPage({ data: { path: "/about" } }),
+      getPublicSeoPage({ data: { path: "/about", locale: context.urlLocale } }),
     ]);
     return { settings, seoOverride };
   },

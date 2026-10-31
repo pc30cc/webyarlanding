@@ -30,7 +30,7 @@ export const Route = createFileRoute("/tag/$slug")({
     const [settings, posts, seoOverride] = await Promise.all([
       fetchSettings(),
       listPublishedPosts({ data: { tagSlug: params.slug } }),
-      getPublicSeoPage({ data: { path: `/tag/${params.slug}` } }),
+      getPublicSeoPage({ data: { path: `/tag/${params.slug}`, locale: context.urlLocale } }),
     ]);
     // در سایت چندزبانه بلاگ فقط فارسی است (ناوبری سمت مرورگر؛ درخواست مستقیم را server.ts ریدایرکت می‌کند)
     if (!isBlogAvailable(settings, resolvePageLocale(settings, context.urlLocale)))

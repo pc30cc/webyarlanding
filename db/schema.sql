@@ -148,6 +148,29 @@ CREATE TABLE IF NOT EXISTS public.seo_pages (
   updated_at       timestamp NOT NULL DEFAULT now()
 );
 CREATE UNIQUE INDEX IF NOT EXISTS seo_pages_key_idx ON public.seo_pages(page_key);
+-- زبان ردیف سئو؛ NULL یعنی زبان پیش‌فرض سایت (همه ردیف‌های قدیمی). ردیف زبان‌های دیگر
+-- کلید «<کلید صفحه>@<زبان>» دارد تا page_key یکتا بماند.
+-- این فایل در هر بالا آمدن سرور اجرا می‌شود و ALTER TABLE حتی با IF NOT EXISTS قفل
+-- ACCESS EXCLUSIVE می‌گیرد (خواندن‌های seo_pages پشتش صف می‌کشند)؛ پس فقط وقتی ستون واقعاً
+-- نیست اجرا می‌شود. lock_timeout انتظار همان بار اول را محدود می‌کند: اگر جدول مشغول باشد،
+-- افزودن ستون به بالا آمدن بعدی می‌ماند و بقیه این فایل بی‌اثر نمی‌شود (کد بدون ستون هم کار می‌کند).
+DO $$
+DECLARE
+  previous_lock_timeout text := current_setting('lock_timeout');
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+     WHERE table_schema = 'public' AND table_name = 'seo_pages' AND column_name = 'locale'
+  ) THEN
+    BEGIN
+      PERFORM set_config('lock_timeout', '3s', true);
+      ALTER TABLE public.seo_pages ADD COLUMN IF NOT EXISTS locale varchar(5);
+      PERFORM set_config('lock_timeout', previous_lock_timeout, true);
+    EXCEPTION WHEN lock_not_available THEN
+      RAISE WARNING 'seo_pages.locale not added (table busy); retrying on next start';
+    END;
+  END IF;
+END $$;
 
 -- ============ AUTOBLOG ============
 CREATE TABLE IF NOT EXISTS public.autoblog_settings (

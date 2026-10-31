@@ -24,6 +24,8 @@ import { SiteLayout } from "../components/site/SiteLayout";
 import { extractScriptTags } from "../lib/seo-meta";
 import { SiteLanguageProvider } from "@/components/site/SiteLanguage";
 import { cachedSiteMessages, loadAllSiteMessages, loadSiteMessages } from "@/lib/site-messages";
+import { loadPageTranslations } from "@/lib/site-translations.functions";
+import { primeHydratedSiteTranslations } from "@/lib/site-i18n";
 import { LOCALE_INFO, splitLocalePrefix, type Locale } from "@/lib/locales";
 import {
   mergeSettings,
@@ -34,6 +36,15 @@ import {
   getBrandNameEn,
   type SiteSettings,
 } from "../lib/settings";
+
+interface RootLoaderData {
+  settings: SiteSettings;
+  productCatalog: Awaited<ReturnType<typeof getPublicCatalog>>;
+  solutionCatalog: Awaited<ReturnType<typeof getPublicCatalog>>;
+  locale: Locale;
+  /** ترجمه‌های محتوای ویرایشگر برای زبان صفحه؛ برای فارسی این کلید اصلاً وجود ندارد. */
+  overrides?: Record<string, string>;
+}
 
 /** اسکریپت‌های گوگل آنالیتیکس (در صورت تنظیم) + اسکریپت‌های سفارشی head از تنظیمات عمومی */
 function buildHeadScripts(
@@ -185,7 +196,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
           .locale,
       };
     },
-    loader: async ({ context, location }) => {
+    loader: async ({ context, location }): Promise<RootLoaderData> => {
       const [settings, productCatalog, solutionCatalog] = await Promise.all([
         fetchSettings().catch((error) => {
           console.error("root settings load failed, using defaults:", error);
@@ -204,7 +215,17 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       // دیکشنری در کش ماژول می‌ماند (مرورگر: src/client.tsx پیش از hydration) و در داده‌های
       // route فرستاده نمی‌شود تا داخل HTML هر صفحه تکرار نشود.
       await loadSiteMessages(locale);
-      return { settings, productCatalog, solutionCatalog, locale };
+      const data: RootLoaderData = { settings, productCatalog, solutionCatalog, locale };
+      // صفحات فارسی هیچ کلید اضافه‌ای در داده‌های route ندارند (HTML آن‌ها تغییر نمی‌کند)؛
+      // انگلیسیِ بدون ردیف ترجمه هم ندارد، چون ترجمه‌هایش همان localization.english تنظیمات است.
+      if (locale !== "fa") {
+        const overrides = await loadPageTranslations(locale);
+        // نقشه خالی (ترکی/عربی بدون ترجمه) فرستاده نمی‌شود؛ برای انگلیسی نقشه خالی یعنی ردیف
+        // ترجمه هست و جای localization.english قدیمی را می‌گیرد، پس همان فرستاده می‌شود
+        if (overrides && (locale === "en" || Object.keys(overrides).length > 0))
+          data.overrides = overrides;
+      }
+      return data;
     },
     head: ({ loaderData }) => {
       const settings = loaderData?.settings;
@@ -352,12 +373,20 @@ function RootShell({ children }: { children: ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
-  const { settings, locale } = Route.useLoaderData();
+  const { settings, locale, overrides } = Route.useLoaderData();
   const messages = cachedSiteMessages(locale);
+  // فقط در مرورگر: کش ترجمه‌ها از داده‌های hydrate‌شده پر می‌شود (برای head() و ناوبری‌های
+  // بعدی). روی سرور loader کش را پر کرده و رندر نباید نسخه قدیمی‌تری را تازه حساب کند.
+  primeHydratedSiteTranslations(locale, overrides);
 
   return (
     <QueryClientProvider client={queryClient}>
-      <SiteLanguageProvider settings={settings} locale={locale} messages={messages}>
+      <SiteLanguageProvider
+        settings={settings}
+        locale={locale}
+        messages={messages}
+        overrides={overrides}
+      >
         <Toaster
           position="top-center"
           richColors

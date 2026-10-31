@@ -13,11 +13,13 @@ import { SiteLayout } from "@/components/site/SiteLayout";
 import { ScrollReveal } from "@/components/site/animations";
 
 export const Route = createFileRoute("/products/$slug")({
-  loader: async ({ params }) => {
+  loader: async ({ params, context }) => {
     const [settings, result, seoOverride] = await Promise.all([
       fetchSettings(),
       getPublicCatalogItem({ data: { type: "product", slug: params.slug } }),
-      getPublicSeoPage({ data: { path: `/products/${params.slug}` } }),
+      getPublicSeoPage({
+        data: { path: `/products/${params.slug}`, locale: context.urlLocale },
+      }),
     ]);
     if (!result) throw notFound();
     return { settings, ...result, seoOverride };

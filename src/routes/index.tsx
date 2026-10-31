@@ -33,7 +33,12 @@ import { fetchSettings } from "@/lib/settings.functions";
 import { getDefaultLocale, joinFa, mergeSettings } from "@/lib/settings";
 import { LOCALE_INFO } from "@/lib/locales";
 import { getPublicSeoPage } from "@/lib/seo.functions";
-import { buildPageMeta, parseSchemaJson, safeJsonLdHtml } from "@/lib/seo-meta";
+import {
+  buildPageMeta,
+  parseSchemaJson,
+  safeJsonLdHtml,
+  seoOverrideFor,
+} from "@/lib/seo-meta";
 import { SiteLayout } from "@/components/site/SiteLayout";
 import {
   ScrollReveal,
@@ -70,17 +75,17 @@ import {
 } from "simple-icons";
 
 export const Route = createFileRoute("/")({
-  loader: async () => {
+  loader: async ({ context }) => {
     const [settings, seoOverride, apps] = await Promise.all([
       fetchSettings().catch((error) => {
         console.error("home settings load failed, using defaults:", error);
         return mergeSettings({});
       }),
-      getPublicSeoPage({ data: { path: "/" } }).catch((error) => {
+      getPublicSeoPage({ data: { path: "/", locale: context.urlLocale } }).catch((error) => {
         console.error("home SEO load failed, using defaults:", error);
         return null;
       }),
-      getPublicApps().catch((error) => {
+      getPublicApps({ data: { locale: context.urlLocale } }).catch((error) => {
         console.error("home apps load failed, using empty list:", error);
         return [];
       }),
@@ -548,8 +553,7 @@ function IndexPage() {
     },
   ];
   // schema اختصاصی صفحه (seo_pages) برای زبان پیش‌فرض نوشته شده است
-  const schemaOverride =
-    i18n.locale === getDefaultLocale(settings) ? seoOverride?.schemaJson : null;
+  const schemaOverride = seoOverrideFor(settings, i18n.locale, seoOverride)?.schemaJson;
   const jsonLd = parseSchemaJson(schemaOverride) ?? defaultJsonLd;
 
   return (

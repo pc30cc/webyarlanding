@@ -572,6 +572,7 @@ export type Database = {
           created_at: string
           description: string | null
           id: string
+          locale: string | null
           og_image: string | null
           page_key: string
           path: string
@@ -585,6 +586,7 @@ export type Database = {
           created_at?: string
           description?: string | null
           id: string
+          locale?: string | null
           og_image?: string | null
           page_key: string
           path?: string
@@ -598,6 +600,7 @@ export type Database = {
           created_at?: string
           description?: string | null
           id?: string
+          locale?: string | null
           og_image?: string | null
           page_key?: string
           path?: string

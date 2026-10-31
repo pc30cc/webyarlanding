@@ -45,7 +45,7 @@ export const Route = createFileRoute("/blog/")({
         data: { page: deps.page, categorySlug: deps.category, search: deps.q },
       }),
       listCategories(),
-      getPublicSeoPage({ data: { path: "/blog" } }),
+      getPublicSeoPage({ data: { path: "/blog", locale: context.urlLocale } }),
     ]);
     // در سایت چندزبانه بلاگ فقط فارسی است (ناوبری سمت مرورگر؛ درخواست مستقیم را server.ts ریدایرکت می‌کند)
     if (!isBlogAvailable(settings, resolvePageLocale(settings, context.urlLocale)))

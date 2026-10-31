@@ -1,9 +1,33 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
+import { isLocale, type Locale } from "./locales";
 
 export type AppPlatform = "ios" | "android" | "windows" | "mac";
 
+/**
+ * لینک دانلود و نمایش یک برنامه در یک زبان (جز زبان پایه جدول apps). لینک خالی یعنی همان لینک
+ * زبان پیش‌فرض؛ خاموش یعنی برنامه در آن زبان نمایش داده نمی‌شود.
+ */
+export interface AppLocaleOverride {
+  downloadUrl: string;
+  enabled: boolean;
+  /**
+   * نسخه انگلیسی قدیمی (فقط از ردیف apps_en، پیش از پنل زبان‌ها) با همان معنای قبلی: لینک خالی
+   * یعنی برنامه در آن زبان لینک ندارد («به‌زودی») و نمایش فقط به همین کلید بسته است، نه به
+   * apps.enabled. پنل این علامت را تا وقتی فیلدهای انگلیسی دست نخورده‌اند پس می‌فرستد و ذخیره
+   * نسخه قدیمی را همان‌طور نگه می‌دارد؛ نسخه en بدون این علامت یعنی تبدیل به قاعده جدید.
+   */
+  legacy?: boolean;
+}
+
+export type AppLocaleOverrides = Partial<Record<Locale, AppLocaleOverride>>;
+
 export interface AppDto {
+  /**
+   * زبان‌هایی که برنامه در آن‌ها نمایش داده می‌شود (فقط در getPublicApp و فقط در سایتی که بیش از
+   * یک زبان دارد؛ در سایت تک‌زبانه این فیلد نیست تا داده صفحه مثل قبل بماند)
+   */
+  visibleLocales?: Locale[] | undefined;
   id: string;
   slug: string;
   platform: AppPlatform;
@@ -20,10 +44,12 @@ export interface AppDto {
   downloadUrl: string;
   sortOrder: number;
   enabled: boolean;
-  /** لینک دانلود سایت انگلیسی؛ جدا از لینک سایت فارسی */
+  /** لینک دانلود نسخه انگلیسی (همان locales.en؛ برای سازگاری با نسخه‌های قبلی) */
   downloadUrlEn: string;
-  /** نمایش در سایت انگلیسی */
+  /** نمایش در نسخه انگلیسی (همان locales.en) */
   enabledEn: boolean;
+  /** لینک و نمایش هر زبان — فقط در پنل مدیریت؛ هرگز به صفحات عمومی فرستاده نمی‌شود */
+  locales?: AppLocaleOverrides;
 }
 
 export interface AppStats {
@@ -51,30 +77,82 @@ const appSchema = z.object({
   enabled: z.boolean().optional().default(true),
   downloadUrlEn: z.string().optional().default(""),
   enabledEn: z.boolean().optional().default(true),
+  /**
+   * لینک و نمایش هر زبان. اگر فرستاده شود جای همه زبان‌های این برنامه می‌نشیند (en هم)، جز
+   * نسخه انگلیسی قدیمی (apps_en) که با علامت legacy (یا بدون کلید en) دست نخورده می‌ماند؛
+   * کلید زبان ناشناخته نادیده گرفته می‌شود.
+   */
+  locales: z
+    .record(
+      z.string(),
+      z.object({
+        downloadUrl: z.string().trim().max(2000, "لینک طولانی است").optional().default(""),
+        enabled: z.boolean().optional().default(true),
+        legacy: z.boolean().optional(),
+      }),
+    )
+    .optional()
+    .transform((value): AppLocaleOverrides | undefined => {
+      if (!value) return undefined;
+      const result: AppLocaleOverrides = {};
+      for (const [locale, { legacy, ...entry }] of Object.entries(value)) {
+        if (!isLocale(locale)) continue;
+        // فقط نسخه انگلیسی نسخه قدیمی دارد
+        result[locale] = legacy && locale === "en" ? { ...entry, legacy } : entry;
+      }
+      return result;
+    }),
 });
 export type AppInput = z.infer<typeof appSchema>;
 
+/** زبان صفحه برای توابع عمومی برنامه‌ها؛ خالی، ناشناخته یا نامعتبر = زبان پیش‌فرض سایت */
+const publicLocaleSchema = z
+  .unknown()
+  .optional()
+  .transform((value): Locale | null => (isLocale(value) ? value : null));
+
 /** نسخه عمومی بدون لینک مستقیم (کلیک‌ها باید از /go عبور کنند) */
 function publicShape(a: AppDto): AppDto {
-  return { ...a, downloadUrl: a.downloadUrl ? "1" : "", downloadUrlEn: "" };
+  const { locales: _locales, ...app } = a;
+  return { ...app, downloadUrl: app.downloadUrl ? "1" : "", downloadUrlEn: "" };
 }
 
-export const getPublicApps = createServerFn({ method: "GET" }).handler(async () => {
-  try {
-    const { fetchPublicApps } = await import("./apps.server");
-    return (await fetchPublicApps()).map(publicShape);
-  } catch (e) {
-    console.error("getPublicApps failed:", e);
-    return [] as AppDto[];
-  }
-});
+/**
+ * آدرس /go یک برنامه. /go پیشوند زبان نمی‌گیرد، پس صفحات زبان غیرپیش‌فرض زبانشان را با
+ * ?l= می‌فرستند تا لینک فروشگاه همان زبان انتخاب شود. `prefix` همان پیشوند آدرس صفحه است
+ * (null برای زبان پیش‌فرض، که آدرسش مثل قبل بدون پارامتر می‌ماند).
+ */
+export function appDownloadHref(slug: string, prefix: Locale | null | undefined): string {
+  const href = `/go/${slug}`;
+  return prefix ? `${href}?l=${prefix}` : href;
+}
+
+/**
+ * برنامه‌های قابل نمایش در یک زبان. `locale` زبان آدرس صفحه است (context.urlLocale؛
+ * خالی = زبان پیش‌فرض سایت).
+ */
+export const getPublicApps = createServerFn({ method: "GET" })
+  .inputValidator((input: unknown) =>
+    z.object({ locale: publicLocaleSchema }).optional().parse(input),
+  )
+  .handler(async ({ data }) => {
+    try {
+      const { fetchPublicApps } = await import("./apps.server");
+      return (await fetchPublicApps(data?.locale ?? null)).map(publicShape);
+    } catch (e) {
+      console.error("getPublicApps failed:", e);
+      return [] as AppDto[];
+    }
+  });
 
 export const getPublicApp = createServerFn({ method: "GET" })
-  .inputValidator((input: unknown) => z.object({ slug: z.string() }).parse(input))
+  .inputValidator((input: unknown) =>
+    z.object({ slug: z.string(), locale: publicLocaleSchema }).parse(input),
+  )
   .handler(async ({ data }) => {
     try {
       const { fetchPublicApp } = await import("./apps.server");
-      const a = await fetchPublicApp(data.slug);
+      const a = await fetchPublicApp(data.slug, data.locale);
       return a ? publicShape(a) : null;
     } catch (e) {
       console.error("getPublicApp failed:", e);

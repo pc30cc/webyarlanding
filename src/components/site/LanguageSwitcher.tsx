@@ -16,17 +16,42 @@ interface LanguageOption {
   href: string;
 }
 
+const visibleLocalesOf = (value: unknown): readonly Locale[] | undefined =>
+  value && typeof value === "object" && !Array.isArray(value)
+    ? ((value as { visibleLocales?: unknown }).visibleLocales as Locale[] | undefined)
+    : undefined;
+
+/**
+ * زبان‌هایی که صفحه فعلی در آن‌ها وجود دارد، اگر loader صفحه آن را اعلام کرده باشد: visibleLocales
+ * در داده صفحه یا یکی از اشیای آن (مثل app در /download/<slug>، که فقط در سایت چندزبانه هست).
+ * بدون آن undefined، یعنی صفحه در همه زبان‌ها هست.
+ */
+function pageVisibleLocales(
+  matches: ReadonlyArray<{ loaderData?: unknown }> | undefined,
+): readonly Locale[] | undefined {
+  const data = matches?.at(-1)?.loaderData;
+  if (!data || typeof data !== "object") return undefined;
+  return [data, ...Object.values(data)].map(visibleLocalesOf).find(Array.isArray);
+}
+
+/** صفحه بالاتر همان بخش (/download/<slug> ← /download) */
+const parentPath = (path: string) => path.replace(/\/[^/]*\/?$/, "") || "/";
+
 /**
  * آدرس همین صفحه در زبان‌های فعال سایت. بلاگ فقط فارسی است، پس از صفحه بلاگ به صفحه
- * اصلی زبان‌های دیگر می‌رود. در سایت تک‌زبانه خالی است.
+ * اصلی زبان‌های دیگر می‌رود. صفحه‌ای که در یک زبان وجود ندارد (مثل برنامه‌ای که در آن زبان
+ * پنهان است) به صفحه بالاتر همان بخش در آن زبان می‌رود، نه به ۴۰۴. در سایت تک‌زبانه خالی است.
  */
 function useLanguageOptions(settings: SiteSettings): LanguageOption[] {
   const location = useRouterState({ select: (state) => state.location });
+  const visible = useRouterState({ select: (state) => pageVisibleLocales(state.matches) });
   if (settings.localization?.mode !== "multi") return [];
   const locales = getActiveLocales(settings);
   if (locales.length < 2) return [];
   return locales.map((locale) => {
-    const path = isBlogPath(location.pathname) && locale !== "fa" ? "/" : location.pathname;
+    let path = location.pathname;
+    if (isBlogPath(path) && locale !== "fa") path = "/";
+    else if (visible && !visible.includes(locale)) path = parentPath(path);
     const search = path === location.pathname ? (location.searchStr ?? "") : "";
     return { locale, href: withLocalePrefix(path, localePrefix(settings, locale)) + search };
   });

@@ -22,10 +22,10 @@ import {
 } from "@/lib/settings";
 
 export const Route = createFileRoute("/terms")({
-  loader: async () => {
+  loader: async ({ context }) => {
     const [settings, seoOverride] = await Promise.all([
       fetchSettings(),
-      getPublicSeoPage({ data: { path: "/terms" } }),
+      getPublicSeoPage({ data: { path: "/terms", locale: context.urlLocale } }),
     ]);
     return { settings, seoOverride };
   },
