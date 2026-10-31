@@ -1,6 +1,3 @@
-import { RespokNotFoundSwitch } from "@/components/respok/RespokNotFound";
-import { RespokPage } from "@/components/respok/RespokPage";
-import { getSiteLanguage } from "@/lib/site-i18n";
 import { localizeStructuredData } from "@/lib/site-i18n";
 import { useSiteTranslation } from "@/components/site/SiteLanguage";
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
@@ -40,7 +37,7 @@ export const Route = createFileRoute("/products/$slug")({
   component: ProductDetailPage,
 });
 
-function PersianProductDetailPage() {
+function ProductDetailPage() {
   const translateText = useSiteTranslation();
 
   const { settings, item, categoryTitle, related } = Route.useLoaderData();
@@ -229,25 +226,15 @@ function PersianProductDetailPage() {
   );
 }
 
-/** English site: the active Respok template; Persian site: the page above. */
-function ProductDetailPage() {
-  const data = Route.useLoaderData();
-  if (getSiteLanguage(data.settings) === "en")
-    return <RespokPage page="catalogItem" data={{ ...data, kind: "product" }} />;
-  return <PersianProductDetailPage />;
-}
-
 function ProductNotFound() {
   return (
-    <RespokNotFoundSwitch kind="product">
-      <div className="container-page flex min-h-[50vh] flex-col items-center justify-center gap-4 py-24 text-center">
-        <h1 className="text-2xl font-extrabold text-foreground">
-          محصول یافت نشد
-        </h1>
-        <Link to="/products" className="text-sm text-brand hover:underline">
-          بازگشت به محصولات
-        </Link>
-      </div>
-    </RespokNotFoundSwitch>
+    <div className="container-page flex min-h-[50vh] flex-col items-center justify-center gap-4 py-24 text-center">
+      <h1 className="text-2xl font-extrabold text-foreground">
+        محصول یافت نشد
+      </h1>
+      <Link to="/products" className="text-sm text-brand hover:underline">
+        بازگشت به محصولات
+      </Link>
+    </div>
   );
 }

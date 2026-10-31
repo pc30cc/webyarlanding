@@ -4,9 +4,7 @@ import type { SiteSettings } from "./settings";
 /** تنظیمات عمومی سایت — برای رندر سرور و کلاینت */
 export const fetchSettings = createServerFn({ method: "GET" }).handler(async (): Promise<SiteSettings> => {
   const { loadSettings } = await import("./settings.server");
-  const { brandSafe } = await import("./brand-scrub");
-  // Public settings reach the browser; on respok.app they carry no trace of the Persian brand.
-  return brandSafe(await loadSettings());
+  return await loadSettings();
 });
 
 /** ذخیره تنظیمات — فقط مدیر */

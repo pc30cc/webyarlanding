@@ -1,5 +1,3 @@
-import { RespokPage } from "@/components/respok/RespokPage";
-import { getSiteLanguage } from "@/lib/site-i18n";
 import { localizeStructuredData } from "@/lib/site-i18n";
 import { useSiteTranslation } from "@/components/site/SiteLanguage";
 import { createFileRoute, Link } from "@tanstack/react-router";
@@ -72,7 +70,7 @@ function mentionsAny(
   );
 }
 
-function PersianSolutionsPage() {
+function SolutionsPage() {
   const translateText = useSiteTranslation();
 
   const {
@@ -248,12 +246,4 @@ function PersianSolutionsPage() {
       </div>
     </SiteLayout>
   );
-}
-
-/** English site: the active Respok template; Persian site: the page above. */
-function SolutionsPage() {
-  const data = Route.useLoaderData();
-  if (getSiteLanguage(data.settings) === "en")
-    return <RespokPage page="catalogIndex" data={{ ...data, kind: "solution" }} />;
-  return <PersianSolutionsPage />;
 }

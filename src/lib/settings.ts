@@ -1,6 +1,5 @@
 // تنظیمات چندزبانه سایت — ساختار مشترک بین کلاینت و سرور.
 // در دیتابیس به صورت key/value متنی ذخیره می‌شود تا انتقال به MySQL ساده باشد.
-import { LEGACY_BRAND_EN } from "./brand-scrub";
 
 export interface BrandSettings {
   name: string;
@@ -194,16 +193,10 @@ export interface SearchConsoleSettings {
   lastReport: string;
 }
 
-/** The two English (Respok) site templates, one per brand-kit logo direction. */
-export type EnglishTemplate = "open" | "thread";
-export const ENGLISH_TEMPLATES: readonly EnglishTemplate[] = ["open", "thread"];
-
 export interface LocalizationSettings {
   language: "fa" | "en";
   /** English versions of editor-managed content, keyed by the original text. */
   english: Record<string, string>;
-  /** Design of the English site: "open" (bubble + dot) or "thread" (message pills). */
-  englishTemplate?: EnglishTemplate | undefined;
 }
 
 export interface SiteSettings {
@@ -393,32 +386,10 @@ export function isEnglishChrome(
   return LEGAL_EN_PATHS.includes(clean);
 }
 
-/** قالب سایت انگلیسی (Respok)؛ مقدار نامعتبر یا خالی یعنی قالب پیش‌فرض Open. */
-export function getEnglishTemplate(settings: SiteSettings): EnglishTemplate {
-  return settings.localization?.englishTemplate === "thread" ? "thread" : "open";
-}
-
 /** نام برند برای صفحات انگلیسی؛ اگر تنظیم نشده باشد به Webyar برمی‌گردد. */
 export function getBrandNameEn(settings: SiteSettings): string {
   const en = settings.brand.nameEn?.trim();
-  return en && en.length > 0 ? en : LEGACY_BRAND_EN;
-}
-
-/**
- * نام برند سایت انگلیسی. نسخه انگلیسی این سایت با برند Respok منتشر می‌شود؛ مقدار
- * پیش‌فرض قدیمی «Webyar» (یا خالی) به Respok نگاشت می‌شود و هر نام دیگری که مدیر وارد کند
- * همان استفاده می‌شود.
- */
-export function getRespokBrandName(settings: SiteSettings): string {
-  const en = settings.brand.nameEn?.trim();
-  return en && en.toLowerCase() !== LEGACY_BRAND_EN.toLowerCase() ? en : "Respok";
-}
-
-/** نام برند برای متن انگلیسی: Respok در سایت انگلیسی، nameEn در صفحات حقوقی انگلیسیِ سایت فارسی. */
-export function getEnglishBrandName(settings: SiteSettings): string {
-  return settings.localization?.language === "en"
-    ? getRespokBrandName(settings)
-    : getBrandNameEn(settings);
+  return en && en.length > 0 ? en : "Webyar";
 }
 
 export function getPublicTagline(settings: SiteSettings): string {
@@ -452,9 +423,6 @@ export function mergeSettings(
   result.localization.language =
     stored.localization?.language === "en" ? "en" : "fa";
   result.localization.english = { ...stored.localization?.english };
-  if (stored.localization?.englishTemplate === "thread")
-    result.localization.englishTemplate = "thread";
-  else delete result.localization.englishTemplate;
   // ai.openai/ai.gemini باید عمیق ادغام شوند تا ذخیره جزئی یکی، فیلدهای دیگری را پاک نکند
   if (stored.ai?.openai) Object.assign(result.ai.openai, stored.ai.openai);
   if (stored.ai?.gemini) Object.assign(result.ai.gemini, stored.ai.gemini);

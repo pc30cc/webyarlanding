@@ -26,12 +26,9 @@ import { getSiteLanguage } from "@/lib/site-i18n";
 import {
   mergeSettings,
   isEnglishChrome,
-  getEnglishBrandName,
-  getEnglishTemplate,
+  getBrandNameEn,
   type SiteSettings,
 } from "../lib/settings";
-import { loadRespokTemplate } from "@/components/respok/registry";
-import { RespokPage } from "@/components/respok/RespokPage";
 
 /** اسکریپت‌های گوگل آنالیتیکس (در صورت تنظیم) + اسکریپت‌های سفارشی head از تنظیمات عمومی */
 function buildHeadScripts(
@@ -125,9 +122,6 @@ function NotFoundComponent() {
     </div>
   );
 
-  if (settings && getSiteLanguage(settings) === "en") {
-    return <RespokPage page="notFound" data={{ settings, kind: "page" }} />;
-  }
   if (settings) {
     return <SiteLayout settings={settings}>{content}</SiteLayout>;
   }
@@ -184,20 +178,12 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         getPublicCatalog({ data: { type: "product" } }).catch(() => []),
         getPublicCatalog({ data: { type: "solution" } }).catch(() => []),
       ]);
-      // English site: load the active Respok template before rendering so the server
-      // HTML is complete and client navigation never waits on the template chunk.
-      if (getSiteLanguage(settings) === "en")
-        await loadRespokTemplate(getEnglishTemplate(settings)).catch((error) =>
-          console.error("english template load failed:", error),
-        );
       return { settings, productCatalog, solutionCatalog };
     },
     head: ({ loaderData }) => {
       const settings = loaderData?.settings;
       const base = (settings?.brand.siteUrl || "").replace(/\/$/, "");
       const englishSite = !!settings && getSiteLanguage(settings) === "en";
-      // Respok brand assets for the active English template (public/respok/<template>/).
-      const respok = settings && englishSite ? `/respok/${getEnglishTemplate(settings)}` : "";
       const twitterHandle = settings?.seo.twitterHandle
         ? settings.seo.twitterHandle.startsWith("@")
           ? settings.seo.twitterHandle
@@ -211,12 +197,12 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
             content:
               "width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover, interactive-widget=resizes-content",
           },
-          { name: "theme-color", content: englishSite ? "#16142B" : "#12141f" },
+          { name: "theme-color", content: "#12141f" },
           {
             name: "author",
             content:
               settings && getSiteLanguage(settings) === "en"
-                ? getEnglishBrandName(settings)
+                ? getBrandNameEn(settings)
                 : settings?.brand.name || "وب‌یار",
           },
           { property: "og:type", content: "website" },
@@ -231,16 +217,12 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
             property: "og:site_name",
             content:
               settings && getSiteLanguage(settings) === "en"
-                ? getEnglishBrandName(settings)
+                ? getBrandNameEn(settings)
                 : settings?.brand.name || "وب‌یار",
           },
           {
             property: "og:image",
-            content: respok
-              ? `${base}${respok}/og-image.png`
-              : base
-                ? `${base}/og-image.png?v=2`
-                : "/og-image.png?v=2",
+            content: base ? `${base}/og-image.png?v=2` : "/og-image.png?v=2",
           },
           { name: "twitter:card", content: "summary_large_image" },
           ...(twitterHandle
@@ -262,7 +244,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
             ? [
                 {
                   rel: "preload",
-                  href: "/fonts/Figtree-Latin-Variable.woff2",
+                  href: "/fonts/Inter-Latin-Variable.woff2",
                   as: "font",
                   type: "font/woff2",
                   crossOrigin: "anonymous" as const,
@@ -288,42 +270,22 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
             rel: "stylesheet",
             href: appCss,
           },
-          ...(respok
-            ? [
-                {
-                  rel: "icon",
-                  href: `${respok}/favicon.svg`,
-                  type: "image/svg+xml",
-                },
-                {
-                  rel: "icon",
-                  href: `${respok}/favicon-32x32.png`,
-                  type: "image/png",
-                  sizes: "32x32",
-                },
-                {
-                  rel: "apple-touch-icon",
-                  href: `${respok}/apple-touch-icon.png`,
-                },
-              ]
-            : [
-                // آیکون‌ها از کیت برند وب‌یار (public/)
-                { rel: "icon", href: "/favicon.ico", sizes: "48x48" },
-                { rel: "icon", href: "/favicon.svg", type: "image/svg+xml" },
-                {
-                  rel: "icon",
-                  href: "/favicon-32x32.png",
-                  type: "image/png",
-                  sizes: "32x32",
-                },
-                { rel: "apple-touch-icon", href: "/apple-touch-icon.png?v=2" },
-                {
-                  rel: "mask-icon",
-                  href: "/safari-pinned-tab.svg",
-                  color: "#0B7D6C",
-                },
-                { rel: "manifest", href: "/site.webmanifest" },
-              ]),
+          // آیکون‌ها از کیت برند وب‌یار (public/)
+          { rel: "icon", href: "/favicon.ico", sizes: "48x48" },
+          { rel: "icon", href: "/favicon.svg", type: "image/svg+xml" },
+          {
+            rel: "icon",
+            href: "/favicon-32x32.png",
+            type: "image/png",
+            sizes: "32x32",
+          },
+          { rel: "apple-touch-icon", href: "/apple-touch-icon.png?v=2" },
+          {
+            rel: "mask-icon",
+            href: "/safari-pinned-tab.svg",
+            color: "#0B7D6C",
+          },
+          { rel: "manifest", href: "/site.webmanifest" },
         ],
         scripts: buildHeadScripts(settings),
       };

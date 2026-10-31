@@ -1,5 +1,4 @@
 import { createServerFn } from "@tanstack/react-start";
-import { brandSafe } from "./brand-scrub";
 import { z } from "zod";
 
 export type AppPlatform = "ios" | "android" | "windows" | "mac";
@@ -21,7 +20,7 @@ export interface AppDto {
   downloadUrl: string;
   sortOrder: number;
   enabled: boolean;
-  /** لینک دانلود سایت انگلیسی (Respok)؛ جدا از لینک سایت فارسی */
+  /** لینک دانلود سایت انگلیسی؛ جدا از لینک سایت فارسی */
   downloadUrlEn: string;
   /** نمایش در سایت انگلیسی */
   enabledEn: boolean;
@@ -63,7 +62,7 @@ function publicShape(a: AppDto): AppDto {
 export const getPublicApps = createServerFn({ method: "GET" }).handler(async () => {
   try {
     const { fetchPublicApps } = await import("./apps.server");
-    return brandSafe((await fetchPublicApps()).map(publicShape));
+    return (await fetchPublicApps()).map(publicShape);
   } catch (e) {
     console.error("getPublicApps failed:", e);
     return [] as AppDto[];
@@ -76,7 +75,7 @@ export const getPublicApp = createServerFn({ method: "GET" })
     try {
       const { fetchPublicApp } = await import("./apps.server");
       const a = await fetchPublicApp(data.slug);
-      return a ? brandSafe(publicShape(a)) : null;
+      return a ? publicShape(a) : null;
     } catch (e) {
       console.error("getPublicApp failed:", e);
       return null;

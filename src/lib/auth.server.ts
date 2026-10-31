@@ -8,9 +8,8 @@ import {
   getRequestIP,
 } from "@tanstack/react-start/server";
 import { db, newId, nowIso, toBool } from "./db.server";
-import { RESPOK_BUILD } from "./brand-scrub";
 
-export const SESSION_COOKIE = RESPOK_BUILD ? "respok_session" : "webyar_session";
+export const SESSION_COOKIE = "webyar_session";
 const SESSION_DAYS = 14;
 const PBKDF2_ITERATIONS = 120_000;
 
