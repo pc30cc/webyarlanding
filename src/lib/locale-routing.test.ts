@@ -105,13 +105,23 @@ describe("blog and legal pages per language", () => {
     expect(persianBlogPath(site("en", "multi", ["en", "fa"]), "/blog/x")).toBe("/fa/blog/x");
   });
 
-  it("shows English legal text for languages without their own", () => {
+  it("shows each language's own legal text", () => {
     const multi = site("fa", "multi", ["fa", "en", "tr", "ar"]);
-    expect(pageContentLocale(multi, "tr", "/privacy")).toBe("en");
-    expect(pageContentLocale(multi, "ar", "/terms/")).toBe("en");
+    expect(pageContentLocale(multi, "tr", "/privacy")).toBe("tr");
+    expect(pageContentLocale(multi, "ar", "/terms/")).toBe("ar");
+    expect(pageContentLocale(multi, "ar", "/help")).toBe("ar");
     expect(pageContentLocale(multi, "ar", "/about")).toBe("ar");
     expect(pageContentLocale(multi, "fa", "/privacy")).toBe("fa");
     expect(pageContentLocale(site("fa", "single", ["fa"]), "fa", "/privacy")).toBe("en");
+  });
+
+  it("shows English legal text for a language without its own", () => {
+    // همه زبان‌های فعلی متن حقوقی دارند؛ زبانی تازه که هنوز متن ندارد انگلیسی می‌گیرد، نه فارسی
+    const future = "de" as Locale;
+    const multi = site("fa", "multi", ["fa", "en", "tr", "ar"]);
+    for (const path of ["/privacy", "/terms/", "/help"])
+      expect(pageContentLocale(multi, future, path)).toBe("en");
+    expect(pageContentLocale(multi, future, "/about")).toBe(future);
   });
 
   it("tolerates a malformed stored language list", () => {

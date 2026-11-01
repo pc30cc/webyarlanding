@@ -6,6 +6,10 @@ import { SiteLanguageProvider } from "./SiteLanguage";
 import { DEFAULT_SETTINGS } from "@/lib/settings";
 import type { Locale } from "@/lib/locales";
 import englishMessages from "@/lib/site-translations.en.json";
+import turkishMessages from "@/lib/site-translations.tr.json";
+import arabicMessages from "@/lib/site-translations.ar.json";
+import { LEGAL_AR } from "@/lib/legal-ar";
+import { LEGAL_TR } from "@/lib/legal-tr";
 
 const state = vi.hoisted(() => ({
   data: {} as Record<string, unknown>,
@@ -155,8 +159,13 @@ function renderRoute(
     updatedAt: "2026-10-04T00:00:00Z",
     coverImage: "",
   };
-  // دیکشنری همان زبان، مثل loader ریشه (فقط انگلیسی دیکشنری داخلی دارد)
-  const messages: Record<string, string> = language === "en" ? englishMessages : {};
+  // دیکشنری همان زبان، مثل loader ریشه
+  const dictionaries: Partial<Record<Locale, Record<string, string>>> = {
+    en: englishMessages,
+    tr: turkishMessages,
+    ar: arabicMessages,
+  };
+  const messages: Record<string, string> = dictionaries[language] ?? {};
   state.pathname = path;
   state.data["root"] = {
     settings,
@@ -257,16 +266,105 @@ describe("public pages in other languages", () => {
     for (const entry of routes) {
       it("uses the " + locale + " direction for " + entry[0], () => {
         const { container } = renderRoute(entry, locale);
-        // صفحات حقوقی تا آماده شدن متن ترکی/عربی متن انگلیسی (چپ‌به‌راست) دارند
-        const legal = ["/help", "/terms", "/privacy"].includes(entry[0]);
-        expect(container.querySelector(".site-theme")?.getAttribute("dir")).toBe(
-          legal ? "ltr" : dir,
-        );
-        expect(container.querySelector(".site-theme")?.getAttribute("lang")).toBe(
-          legal ? "en" : locale,
-        );
+        // صفحات حقوقی هم متن همان زبان را دارند
+        expect(container.querySelector(".site-theme")?.getAttribute("dir")).toBe(dir);
+        expect(container.querySelector(".site-theme")?.getAttribute("lang")).toBe(locale);
       });
     }
+  }
+});
+
+describe("legal pages in Turkish and Arabic", () => {
+  const route = (path: string) => routes.find(([p]) => p === path)!;
+  const email = DEFAULT_SETTINGS.brand.email || "support@webyar.ai";
+  const cases = [
+    ["tr", "ltr", LEGAL_TR],
+    ["ar", "rtl", LEGAL_AR],
+  ] as const;
+  const pages = [
+    ["/privacy", "privacyTitle", "privacyMetaTitle"],
+    ["/terms", "termsTitle", "termsMetaTitle"],
+    ["/help", "helpTitle", "helpMetaTitle"],
+  ] as const;
+
+  for (const [locale, dir, pack] of cases) {
+    for (const [path, titleKey, metaTitleKey] of pages) {
+      it(`renders the ${locale} pack text on ${path}`, () => {
+        const { container } = renderRoute(route(path), locale);
+        const shell = container.querySelector(".site-theme");
+        expect(shell?.getAttribute("dir")).toBe(dir);
+        expect(shell?.getAttribute("lang")).toBe(locale);
+        // محتوای صفحه هم جهت همان زبان را دارد
+        const article = container.querySelector(`[dir="${dir}"] h1`);
+        expect(article?.textContent).toBe(pack[titleKey]);
+        expect(container.querySelector("h1")?.textContent).toBe(pack[titleKey]);
+        const text = container.textContent ?? "";
+        // نه متن انگلیسی، نه فارسی
+        expect(text).not.toMatch(/Privacy Policy|Terms of Use|Support & Help Center/);
+        expect(text).not.toMatch(/سیاست حریم خصوصی|قوانین استفاده|پشتیبانی و مرکز راهنما/);
+
+        // عنوان سربرگ (head) هم از همان بسته می‌آید
+        const root = state.data["root"] as { settings: typeof DEFAULT_SETTINGS };
+        const settings = root.settings;
+        const head = (
+          route(path)[1].options as unknown as {
+            head: (ctx: unknown) => { meta: { title?: string }[] };
+          }
+        ).head({
+          loaderData: { settings, seoOverride: null },
+          matches: [{ routeId: "__root__", loaderData: state.data["root"] }],
+          match: {},
+        });
+        expect(head.meta[0]).toEqual({ title: pack[metaTitleKey] });
+        expect(head.meta).toContainEqual({ name: "robots", content: "index,follow" });
+      });
+    }
+
+    it(`puts spaces around the email link in ${locale} help sentences`, () => {
+      const { container } = renderRoute(route("/help"), locale);
+      const links = [...container.querySelectorAll(`a[href^="mailto:${email}"]`)];
+      const sentences: [string, string][] = [
+        [pack.deletionBefore, pack.deletionAfter],
+        [pack.stuckBefore, pack.stuckAfter],
+      ];
+      for (const [before, after] of sentences) {
+        expect(before).toMatch(/\s$/);
+        expect(after).toMatch(/^\s/);
+        const link = links.find((a) => a.parentElement?.textContent?.startsWith(before.trim()));
+        expect(link?.textContent).toBe(email);
+        expect(link?.getAttribute("dir")).toBe("ltr");
+        // در متن نهایی ایمیل از دو طرف با فاصله جدا شده است
+        expect(link?.parentElement?.textContent).toBe(before + email + after);
+        expect(link?.parentElement?.textContent).toContain(` ${email} `);
+      }
+      // موضوع ایمیل حذف حساب به زبان همان صفحه است
+      expect(
+        links.some(
+          (a) =>
+            a.getAttribute("href") ===
+            `mailto:${email}?subject=${encodeURIComponent(pack.deletionSubject)}`,
+        ),
+      ).toBe(true);
+    });
+
+    it(`puts spaces around the email in ${locale} privacy and terms sections`, () => {
+      for (const path of ["/privacy", "/terms"]) {
+        const { container } = renderRoute(route(path), locale);
+        const blocks = [...container.querySelectorAll("p, li")]
+          .map((node) => node.textContent ?? "")
+          .filter((text) => text.includes(email));
+        expect(blocks.length).toBeGreaterThan(0);
+        // ایمیل به کلمه‌های کناری نچسبیده است (فاصله پیش از آن؛ پس از آن فاصله، نقطه یا پایان متن)
+        for (const text of blocks) {
+          let start = text.indexOf(email);
+          while (start !== -1) {
+            expect(text[start - 1] ?? " ").toMatch(/\s/);
+            expect(text[start + email.length] ?? " ").toMatch(/[\s.]/);
+            start = text.indexOf(email, start + email.length);
+          }
+        }
+      }
+    });
   }
 });
 
