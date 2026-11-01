@@ -693,3 +693,23 @@ html[lang="tr"],
   font-family: "InterWeb", "IRANSansWeb", system-ui, sans-serif;
   font-optical-sizing: auto;
 }
+
+/*
+ * همه پاراگراف‌های سایت عمومی و وبلاگ تراز دوطرفه (justify) هستند. این قاعده بیرون از
+ * لایه‌های Tailwind است تا بر کلاس‌های text-* اولویت داشته باشد. در پاراگراف‌هایی که
+ * وسط‌چین بودند خط آخر (یا تنها خط) همچنان وسط‌چین می‌ماند تا طراحی به‌هم نریزد.
+ */
+.site-theme p {
+  text-align: justify;
+  text-justify: inter-word;
+}
+.site-theme p.text-center,
+.site-theme .text-center p {
+  text-align-last: center;
+}
+@media (min-width: 1024px) {
+  .site-theme p.lg\:text-start,
+  .site-theme .lg\:text-start p {
+    text-align-last: auto;
+  }
+}
