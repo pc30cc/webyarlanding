@@ -226,6 +226,8 @@ describe("custom canonical validation", () => {
     ).toEqual([
       { hrefLang: "fa", href: "https://webyar.ai/about" },
       { hrefLang: "en", href: "https://webyar.ai/en/about" },
+      { hrefLang: "tr", href: "https://webyar.ai/tr/about" },
+      { hrefLang: "ar", href: "https://webyar.ai/ar/about" },
       { hrefLang: "x-default", href: "https://webyar.ai/about" },
     ]);
     // صفحه: canonical خود صفحه مثل قبل همان مقدار ذخیره‌شده است، ولی hreflang آدرس معتبر می‌گیرد
@@ -245,6 +247,8 @@ describe("custom canonical validation", () => {
     expect(meta.links.filter((link) => link.rel === "alternate").map((link) => link.href)).toEqual([
       "https://webyar.ai/about",
       "https://webyar.ai/en/about",
+      "https://webyar.ai/tr/about",
+      "https://webyar.ai/ar/about",
       "https://webyar.ai/about",
     ]);
   });
@@ -290,13 +294,17 @@ describe("per-language noindex", () => {
     expect(en).toMatchObject({ id: "en", noindexLocales: ["en"] });
     // صفحه فارسی ایندکس می‌شود ولی به نسخه noindex انگلیسی لینک نمی‌دهد
     expect(robots(meta(fa, "fa"))).toEqual({ name: "robots", content: "index,follow" });
-    expect(alternates(meta(fa, "fa"))).toEqual([]);
+    expect(
+      alternates(meta(fa, "fa")).map((link) => ("hrefLang" in link ? link.hrefLang : "")),
+    ).toEqual(["fa", "tr", "ar", "x-default"]);
     expect(robots(meta(en, "en"))).toEqual({ name: "robots", content: "noindex,follow" });
     expect(alternates(meta(en, "en"))).toEqual([]);
     // بدون ردیف noindex همان hreflang دوطرفه
     expect(alternates(meta(null, "fa")).map((link) => link.href)).toEqual([
       "https://webyar.ai/help",
       "https://webyar.ai/en/help",
+      "https://webyar.ai/tr/help",
+      "https://webyar.ai/ar/help",
       "https://webyar.ai/help",
     ]);
   });
@@ -308,7 +316,16 @@ describe("per-language noindex", () => {
     // مسیر بدون ردیف زبان‌دار: مثل قبل یک کوئری، بدون تنظیمات و بدون فیلد اضافه
     expect(fake.loadSettings).not.toHaveBeenCalled();
     expect(en && "noindexLocales" in en).toBe(false);
-    expect(alternates(meta(en, "en"))).toEqual([]);
+    // نسخه انگلیسی به نسخه noindex فارسی لینک نمی‌دهد؛ x-default هم به زبان پیش‌فرض نمی‌رود
+    expect(alternates(meta(en, "en")).map((link) => link.href)).toEqual([
+      "https://webyar.ai/en/help",
+      "https://webyar.ai/tr/help",
+      "https://webyar.ai/ar/help",
+      "https://webyar.ai/en/help",
+    ]);
+    expect(
+      alternates(meta(en, "en")).map((link) => ("hrefLang" in link ? link.hrefLang : "")),
+    ).not.toContain("fa");
     expect(robots(meta(en, "en"))).toEqual({ name: "robots", content: "index,follow" });
     expect(robots(meta(en, "fa"))).toEqual({ name: "robots", content: "noindex" });
   });
@@ -323,10 +340,11 @@ describe("per-language noindex", () => {
     expect(alternates(meta(legacy, "fa"))).toEqual([
       { rel: "alternate", hrefLang: "fa", href: "https://webyar.ai/help" },
       { rel: "alternate", hrefLang: "en", href: "https://webyar.ai/en/help" },
+      { rel: "alternate", hrefLang: "ar", href: "https://webyar.ai/ar/help" },
       { rel: "alternate", hrefLang: "x-default", href: "https://webyar.ai/help" },
     ]);
-    // نسخه فارسی (پیش‌فرض) noindex: فقط نسخه انگلیسی می‌ماند و hreflang ندارد
-    expect(alternates(meta({ ...legacy, noindexLocales: ["fa"] }, "en"))).toEqual([]);
+    // فقط یک نسخه ایندکس‌پذیر بماند، hreflang ندارد
+    expect(alternates(meta({ ...legacy, noindexLocales: ["fa", "tr", "ar"] }, "en"))).toEqual([]);
   });
 });
 
@@ -387,6 +405,8 @@ describe("buildPageMeta override by language", () => {
     const expected = [
       { rel: "alternate", hrefLang: "fa", href: "https://webyar.ai/about-us" },
       { rel: "alternate", hrefLang: "en", href: "https://webyar.ai/en/about-us" },
+      { rel: "alternate", hrefLang: "tr", href: "https://webyar.ai/tr/about" },
+      { rel: "alternate", hrefLang: "ar", href: "https://webyar.ai/ar/about" },
       { rel: "alternate", hrefLang: "x-default", href: "https://webyar.ai/about-us" },
     ];
     expect(page(en, "en").links.filter((link) => link.rel === "alternate")).toEqual(expected);
@@ -523,6 +543,8 @@ describe("getPublicSeoPage", () => {
     expect(alternates(faMeta)).toEqual([
       { rel: "alternate", hrefLang: "fa", href: "https://webyar.ai/about" },
       { rel: "alternate", hrefLang: "en", href: "https://webyar.ai/en/about-us" },
+      { rel: "alternate", hrefLang: "tr", href: "https://webyar.ai/tr/about" },
+      { rel: "alternate", hrefLang: "ar", href: "https://webyar.ai/ar/about" },
       { rel: "alternate", hrefLang: "x-default", href: "https://webyar.ai/about" },
     ]);
     expect(alternates(enMeta)).toEqual(alternates(faMeta));

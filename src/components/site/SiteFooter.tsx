@@ -146,7 +146,9 @@ export function SiteFooter({
                 to="/help"
                 className="block transition-colors hover:text-foreground"
               >
-                {translateText(english ? t.support : "Support")}
+                {translateText(
+                  english ? t.support : locale === "tr" || locale === "ar" ? "پشتیبانی" : "Support",
+                )}
               </Link>
             </nav>
           </div>

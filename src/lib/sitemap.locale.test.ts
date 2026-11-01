@@ -19,6 +19,16 @@ const fake = vi.hoisted(() => ({
   apps: {} as Record<string, { slug: string }[]>,
 }));
 
+// همه زبان‌ها الان دیکشنری دارند؛ برای پوشش «زبان بدون دیکشنری» دیکشنری یک زبان پنهان می‌شود
+const dictionaries = vi.hoisted(() => ({ missing: new Set<string>() }));
+vi.mock("@/lib/site-messages", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/lib/site-messages")>();
+  return {
+    ...actual,
+    hasSiteMessages: (locale: Locale) =>
+      !dictionaries.missing.has(locale) && actual.hasSiteMessages(locale),
+  };
+});
 vi.mock("@tanstack/react-router", () => ({
   createFileRoute: () => (options: unknown) => ({ options }),
 }));
@@ -105,6 +115,7 @@ beforeEach(() => {
   fake.tags = [];
   fake.products = [];
   fake.apps = {};
+  dictionaries.missing.clear();
 });
 
 describe("sitemap custom canonicals", () => {
@@ -194,17 +205,54 @@ describe("sitemap per-language noindex", () => {
     const { entries } = await sitemap();
     expect(locs(entries)).toContain("https://webyar.ai/help");
     expect(locs(entries)).not.toContain("https://webyar.ai/en/help");
-    // فقط یک نسخه قابل ایندکس می‌ماند: hreflang ندارد
-    expect(entry(entries, "https://webyar.ai/help")?.alternates).toEqual({});
+    // نسخه noindex از hreflang بقیه نسخه‌ها هم حذف می‌شود
+    expect(entry(entries, "https://webyar.ai/help")?.alternates).toEqual({
+      fa: "https://webyar.ai/help",
+      tr: "https://webyar.ai/tr/help",
+      "x-default": "https://webyar.ai/help",
+    });
     expect(locs(entries)).not.toContain("https://webyar.ai/about");
     expect(locs(entries)).toContain("https://webyar.ai/en/about");
-    expect(entry(entries, "https://webyar.ai/en/about")?.alternates).toEqual({});
+    expect(entry(entries, "https://webyar.ai/en/about")?.alternates).toEqual({
+      en: "https://webyar.ai/en/about",
+      tr: "https://webyar.ai/tr/about",
+      "x-default": "https://webyar.ai/en/about",
+    });
     expect(entry(entries, "https://webyar.ai/en/pricing")?.alternates).toEqual({
       fa: "https://webyar.ai/pricing",
       en: "https://webyar.ai/en/pricing",
+      tr: "https://webyar.ai/tr/pricing",
       "x-default": "https://webyar.ai/pricing",
     });
     expect(fake.selects).toEqual(["seo_pages:path, locale, canonical_url, robots"]);
+    // فقط یک نسخه قابل ایندکس بماند: hreflang ندارد
+    fake.settings = site("multi", ["fa", "en"]);
+    expect(entry((await sitemap()).entries, "https://webyar.ai/help")?.alternates).toEqual({});
+  });
+});
+
+describe("sitemap languages without a UI dictionary", () => {
+  it("lists translated languages and leaves out a language without a dictionary", async () => {
+    fake.settings = site("multi", ["fa", "en", "tr", "ar"]);
+    let { entries } = await sitemap();
+    expect(entry(entries, "https://webyar.ai/tr/pricing")?.alternates).toEqual({
+      fa: "https://webyar.ai/pricing",
+      en: "https://webyar.ai/en/pricing",
+      tr: "https://webyar.ai/tr/pricing",
+      ar: "https://webyar.ai/ar/pricing",
+      "x-default": "https://webyar.ai/pricing",
+    });
+    // زبان بدون دیکشنری noindex است: نه آدرس خودش در سایت‌مپ می‌آید نه در hreflang بقیه
+    dictionaries.missing.add("ar");
+    ({ entries } = await sitemap());
+    expect(locs(entries).some((loc) => loc.startsWith("https://webyar.ai/ar"))).toBe(false);
+    expect(locs(entries)).toContain("https://webyar.ai/tr/pricing");
+    expect(entry(entries, "https://webyar.ai/pricing")?.alternates).toEqual({
+      fa: "https://webyar.ai/pricing",
+      en: "https://webyar.ai/en/pricing",
+      tr: "https://webyar.ai/tr/pricing",
+      "x-default": "https://webyar.ai/pricing",
+    });
   });
 });
 

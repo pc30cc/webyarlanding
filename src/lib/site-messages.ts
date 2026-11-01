@@ -6,6 +6,8 @@ type Messages = Record<string, string>;
 
 const LOADERS: Partial<Record<Locale, () => Promise<Messages>>> = {
   en: () => import("./site-translations.en.json").then((m) => m.default as Messages),
+  tr: () => import("./site-translations.tr.json").then((m) => m.default as Messages),
+  ar: () => import("./site-translations.ar.json").then((m) => m.default as Messages),
 };
 
 const EMPTY: Messages = {};

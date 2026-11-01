@@ -43,6 +43,16 @@ vi.mock("@/lib/catalog.functions", () => ({
 }));
 vi.mock("@/lib/apps.functions", () => ({ adminListApps: vi.fn() }));
 vi.mock("@/lib/seo.functions", () => ({ listSeoPages: vi.fn() }));
+// همه زبان‌ها الان دیکشنری دارند؛ برای پوشش «زبان بدون دیکشنری» دیکشنری یک زبان پنهان می‌شود
+const dictionaries = vi.hoisted(() => ({ missing: new Set<string>() }));
+vi.mock("@/lib/site-messages", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/lib/site-messages")>();
+  return {
+    ...actual,
+    hasSiteMessages: (locale: "fa" | "en" | "tr" | "ar") =>
+      !dictionaries.missing.has(locale) && actual.hasSiteMessages(locale),
+  };
+});
 vi.mock("sonner", () => ({
   toast: { error: mocks.error, success: mocks.success },
 }));
@@ -52,6 +62,7 @@ const ARABIC_TEXT = "نص عربي";
 
 afterEach(cleanup);
 beforeEach(() => {
+  dictionaries.missing.clear();
   mocks.content = [];
   mocks.stored = {
     translations: { en: {}, tr: {}, ar: {} },
@@ -169,7 +180,22 @@ describe("languages hub", () => {
     expect(bare(intro)).not.toMatch(/\/[a-z]/);
   });
 
+  it("shows Turkish and Arabic with their UI dictionary and no warning", () => {
+    mount();
+    fireEvent.click(screen.getByRole("radio", { name: /چندزبانه/ }));
+    fireEvent.click(screen.getByRole("checkbox", { name: "ترکی" }));
+    fireEvent.click(screen.getByRole("checkbox", { name: "عربی" }));
+    expect(warnings()).not.toContain("noindex");
+    const table = screen.getByRole("table", { name: "وضعیت زبان‌ها" });
+    for (const name of ["ترکی", "عربی", "انگلیسی"]) {
+      const row = within(table).getByText(name).closest("tr")!;
+      expect(row.textContent).toContain("دارد");
+      expect(row.textContent).not.toContain("ندارد");
+    }
+  });
+
   it("warns about languages without a UI dictionary and shows their status", () => {
+    dictionaries.missing.add("tr");
     mount();
     fireEvent.click(screen.getByRole("radio", { name: /چندزبانه/ }));
     fireEvent.click(screen.getByRole("checkbox", { name: "ترکی" }));
@@ -306,14 +332,18 @@ describe("per-language content translations", () => {
 
   it("treats Arabic names spelled like the Persian source as translated", () => {
     // «سارا» و «واتساب» در عربی همان املا را دارند؛ ترجمه‌نشده شمرده نمی‌شوند
-    mocks.content = [[{ title: "سارا" }, { title: "واتساب" }, { title: "پشتیبانی" }]];
+    mocks.content = [
+      [{ title: "سارا" }, { title: "واتساب" }, { title: "پیگیری ویژه" }, { title: "پشتیبانی" }],
+    ];
     mount(multi("ar"));
     const field = (source: string) =>
       screen.getByRole("textbox", { name: "ترجمه عربی: " + source }) as HTMLTextAreaElement;
     expect(field("سارا").value).toBe("سارا");
     expect(field("واتساب").value).toBe("واتساب");
     // حرف مخصوص فارسی یعنی هنوز ترجمه عربی ندارد
-    expect(field("پشتیبانی").value).toBe("");
+    expect(field("پیگیری ویژه").value).toBe("");
+    // متنی که در دیکشنری داخلی عربی هست ترجمه همان دیکشنری را نشان می‌دهد
+    expect(field("پشتیبانی").value).toBe("الدعم");
   });
 
   it("keeps the saved translations on provider failure", async () => {

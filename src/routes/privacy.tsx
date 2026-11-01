@@ -3,6 +3,7 @@ import { i18nFromMatches, localizeStructuredData } from "@/lib/site-i18n";
 import { useSiteI18n } from "@/components/site/SiteLanguage";
 import { LOCALE_INFO } from "@/lib/locales";
 import { createFileRoute } from "@tanstack/react-router";
+import { legalPack } from "@/lib/legal-packs";
 import { motion } from "framer-motion";
 import { fetchSettings } from "@/lib/settings.functions";
 import { getPublicSeoPage } from "@/lib/seo.functions";
@@ -37,15 +38,26 @@ export const Route = createFileRoute("/privacy")({
       i18n?.locale ?? getDefaultLocale(loaderData.settings),
       "/privacy",
     );
+    const pack = legalPack(
+      pageContentLocale(
+        loaderData.settings,
+        i18n?.locale ?? getDefaultLocale(loaderData.settings),
+        "/privacy",
+      ),
+    );
     return buildPageMeta({
       i18n,
       settings: loaderData.settings,
       path: "/privacy",
       override: loaderData.seoOverride,
-      fallbackTitle: english
+      fallbackTitle: pack
+        ? pack.privacyMetaTitle
+        : english
         ? "Privacy Policy | Webyar"
         : "سیاست حریم خصوصی | وب‌یار",
-      fallbackDescription: english
+      fallbackDescription: pack
+        ? pack.privacyMetaDescription
+        : english
         ? "How Webyar collects, uses, stores, protects and deletes personal data, and how you can exercise your privacy rights."
         : "وب‌یار چگونه اطلاعات شخصی را جمع‌آوری، استفاده، ذخیره، محافظت و حذف می‌کند و چطور می‌توانید حقوق حریم خصوصی خود را اعمال کنید.",
     });
@@ -156,16 +168,17 @@ function PrivacyPage() {
   // زبان محتوای صفحه (در سایت فارسی این صفحه ممکن است انگلیسی نمایش داده شود)
   const contentLocale = pageContentLocale(settings, i18n.locale, "/privacy");
   const english = contentLocale === "en";
+  const pack = legalPack(contentLocale);
   const dir = LOCALE_INFO[contentLocale].dir;
   const base = (settings.brand.siteUrl || "").replace(/\/$/, "");
   const brandEn = getBrandNameEn(settings);
-  const brand = english ? brandEn : settings.brand.name || brandEn;
+  const brand = english || pack ? brandEn : settings.brand.name || brandEn;
   const email = settings.brand.email || "support@webyar.ai";
   const jsonLd = [
     {
       "@context": "https://schema.org",
       "@type": "WebPage",
-      name: english ? "Privacy Policy" : "سیاست حریم خصوصی",
+      name: pack ? pack.privacyTitle : english ? "Privacy Policy" : "سیاست حریم خصوصی",
       url: localizedUrl(settings, i18n.locale, "/privacy"),
       isPartOf: {
         "@type": "WebSite",
@@ -174,14 +187,16 @@ function PrivacyPage() {
       },
     },
     buildBreadcrumbJsonLd(i18n, settings, [
-      { name: english ? "Home" : "خانه", path: "/" },
+      { name: pack ? pack.home : english ? "Home" : "خانه", path: "/" },
       {
-        name: english ? "Privacy Policy" : "سیاست حریم خصوصی",
+        name: pack ? pack.privacyTitle : english ? "Privacy Policy" : "سیاست حریم خصوصی",
         path: "/privacy",
       },
     ]),
   ];
-  const items = english
+  const items = pack
+    ? pack.privacySections(brand, email, settings.brand.address || "")
+    : english
     ? privacySectionsEn(brand, email, settings.brand.address || "")
     : sectionsFa(brand, email, settings.brand.address || "");
   return (
@@ -201,10 +216,12 @@ function PrivacyPage() {
           animate={{ opacity: 1, y: 0 }}
         >
           <h1 className="mb-2 text-3xl font-extrabold text-foreground sm:text-4xl">
-            {english ? "Privacy Policy" : "سیاست حریم خصوصی"}
+            {pack ? pack.privacyTitle : english ? "Privacy Policy" : "سیاست حریم خصوصی"}
           </h1>
           <p className="mb-10 text-sm text-muted-foreground">
-            {english
+            {pack
+              ? pack.effectiveLine(pack.effectiveDate, brand)
+              : english
               ? `Effective date: ${LEGAL_EFFECTIVE_DATE_EN} · ${brand}`
               : `تاریخ اجرا: ${EFFECTIVE_DATE_FA} · ${brand}`}
           </p>

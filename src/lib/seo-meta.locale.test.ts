@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   buildBreadcrumbJsonLd,
   buildPageMeta,
@@ -11,6 +11,19 @@ import { DEFAULT_SETTINGS, type SiteSettings } from "./settings";
 import { i18nFromMatches, siteI18n } from "./site-i18n";
 import type { Locale } from "./locales";
 import englishMessages from "./site-translations.en.json";
+
+// همه زبان‌ها الان دیکشنری دارند؛ برای پوشش مسیر «زبان بدون دیکشنری» دیکشنری یک زبان را در
+// تست‌های مربوط پنهان می‌کنیم.
+const dictionaries = vi.hoisted(() => ({ missing: new Set<string>() }));
+vi.mock("./site-messages", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("./site-messages")>();
+  return {
+    ...actual,
+    hasSiteMessages: (locale: Locale) =>
+      !dictionaries.missing.has(locale) && actual.hasSiteMessages(locale),
+  };
+});
+afterEach(() => dictionaries.missing.clear());
 
 /** سایت فارسی با نسخه‌های انگلیسی، ترکی و عربی */
 function multiSite(language: Locale = "fa"): SiteSettings {
@@ -102,6 +115,8 @@ describe("page meta per locale", () => {
         { rel: "canonical", href: "https://webyar.ai/about" },
         { rel: "alternate", hrefLang: "fa", href: "https://webyar.ai/about" },
         { rel: "alternate", hrefLang: "en", href: "https://webyar.ai/en/about" },
+        { rel: "alternate", hrefLang: "tr", href: "https://webyar.ai/tr/about" },
+        { rel: "alternate", hrefLang: "ar", href: "https://webyar.ai/ar/about" },
         { rel: "alternate", hrefLang: "x-default", href: "https://webyar.ai/about" },
       ],
     });
@@ -165,14 +180,33 @@ describe("page meta per locale", () => {
       expect(canonicalOf(other)).toEqual([
         { rel: "canonical", href: `https://webyar.ai/${locale}/about` },
       ]);
-      // ترکی و عربی هنوز دیکشنری ندارند و تا آماده شدن ترجمه ایندکس نمی‌شوند
-      expect(other.meta).toContainEqual({
-        name: "robots",
-        content: locale === "en" ? "index,follow" : "noindex,follow",
-      });
+      // robots سفارشی زبان پیش‌فرض به نسخه‌های دیگر سرایت نمی‌کند
+      expect(other.meta).toContainEqual({ name: "robots", content: "index,follow" });
       expect(other.meta[0]).not.toEqual({ title: override.title });
     }
     expect(meta(settings, "en", page).meta[0]).toEqual({ title: "About us | Webyar" });
+  });
+
+  it("keeps a language without a UI dictionary out of the index", () => {
+    dictionaries.missing.add("ar");
+    const settings = multiSite();
+    const ar = meta(settings, "ar");
+    // متن فارسی نشان می‌دهد؛ تا ترجمه آماده نشده ایندکس نمی‌شود و hreflang ندارد
+    expect(ar.meta).toContainEqual({ name: "robots", content: "noindex,follow" });
+    expect(ar.links.filter((link) => link.rel === "alternate")).toEqual([]);
+    expect(canonicalOf(ar)).toEqual([{ rel: "canonical", href: "https://webyar.ai/ar/about" }]);
+    // حتی override زبان پیش‌فرض با index هم آن را ایندکس نمی‌کند
+    const page = { ...aboutPage, override: { ...override, robots: "index,follow" } };
+    expect(meta(settings, "ar", page).meta).toContainEqual({
+      name: "robots",
+      content: "noindex,follow",
+    });
+    for (const locale of ["fa", "en", "tr"] as const) {
+      expect(meta(settings, locale).meta).toContainEqual({
+        name: "robots",
+        content: "index,follow",
+      });
+    }
   });
 
   it("omits canonical links without a site URL", () => {
@@ -242,14 +276,28 @@ describe("hreflang alternates", () => {
   });
 
   it("lists translated languages and x-default, from every language version", () => {
-    // ترکی و عربی دیکشنری ندارند و noindex هستند، پس در hreflang نمی‌آیند
     const expected = [
       { rel: "alternate", hrefLang: "fa", href: "https://webyar.ai/about" },
       { rel: "alternate", hrefLang: "en", href: "https://webyar.ai/en/about" },
+      { rel: "alternate", hrefLang: "tr", href: "https://webyar.ai/tr/about" },
+      { rel: "alternate", hrefLang: "ar", href: "https://webyar.ai/ar/about" },
+      { rel: "alternate", hrefLang: "x-default", href: "https://webyar.ai/about" },
+    ];
+    for (const locale of ["fa", "en", "tr", "ar"] as const)
+      expect(alternates(meta(multiSite(), locale))).toEqual(expected);
+  });
+
+  it("leaves languages without a UI dictionary out of hreflang", () => {
+    // زبان بدون دیکشنری noindex است، پس در hreflang نمی‌آید و خودش هم hreflang ندارد
+    dictionaries.missing.add("tr");
+    const expected = [
+      { rel: "alternate", hrefLang: "fa", href: "https://webyar.ai/about" },
+      { rel: "alternate", hrefLang: "en", href: "https://webyar.ai/en/about" },
+      { rel: "alternate", hrefLang: "ar", href: "https://webyar.ai/ar/about" },
       { rel: "alternate", hrefLang: "x-default", href: "https://webyar.ai/about" },
     ];
     expect(alternates(meta(multiSite(), "fa"))).toEqual(expected);
-    expect(alternates(meta(multiSite(), "en"))).toEqual(expected);
+    expect(alternates(meta(multiSite(), "ar"))).toEqual(expected);
     expect(alternates(meta(multiSite(), "tr"))).toEqual([]);
   });
 
@@ -257,6 +305,8 @@ describe("hreflang alternates", () => {
     expect(hreflangAlternates(multiSite("en"), "/")).toEqual([
       { hrefLang: "fa", href: "https://webyar.ai/fa" },
       { hrefLang: "en", href: "https://webyar.ai/" },
+      { hrefLang: "tr", href: "https://webyar.ai/tr" },
+      { hrefLang: "ar", href: "https://webyar.ai/ar" },
       { hrefLang: "x-default", href: "https://webyar.ai/" },
     ]);
   });

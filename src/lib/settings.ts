@@ -382,8 +382,8 @@ export function joinFa(
  * خاموش است و متن ذخیره‌شده به همان موضوع اشاره دارد، یک متن عمومی جایگزینش می‌شود؛ به‌محض
  * روشن‌شدن دوباره همان تگ‌لاین اصلی برمی‌گردد.
  */
-/** زبان‌هایی که متن صفحات حقوقی/پشتیبانی خودشان را دارند (src/lib/legal-en.ts و صفحات فارسی) */
-const LEGAL_TEXT_LOCALES: readonly Locale[] = ["fa", "en"];
+/** زبان‌هایی که متن صفحات حقوقی/پشتیبانی خودشان را دارند (صفحات فارسی، legal-en.ts و legal-packs.ts) */
+const LEGAL_TEXT_LOCALES: readonly Locale[] = ["fa", "en", "tr", "ar"];
 
 /** مسیرهای حقوقی/پشتیبانی که می‌توانند کاملاً انگلیسی نمایش داده شوند. */
 export const LEGAL_EN_PATHS = ["/privacy", "/terms", "/help"];
