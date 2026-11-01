@@ -3,6 +3,7 @@ import { i18nFromMatches, localizeStructuredData } from "@/lib/site-i18n";
 import { useSiteI18n } from "@/components/site/SiteLanguage";
 import { LOCALE_INFO } from "@/lib/locales";
 import { createFileRoute } from "@tanstack/react-router";
+import { legalPack } from "@/lib/legal-packs";
 import { motion } from "framer-motion";
 import { fetchSettings } from "@/lib/settings.functions";
 import { getPublicSeoPage } from "@/lib/seo.functions";
@@ -37,15 +38,26 @@ export const Route = createFileRoute("/terms")({
       i18n?.locale ?? getDefaultLocale(loaderData.settings),
       "/terms",
     );
+    const pack = legalPack(
+      pageContentLocale(
+        loaderData.settings,
+        i18n?.locale ?? getDefaultLocale(loaderData.settings),
+        "/terms",
+      ),
+    );
     return buildPageMeta({
       i18n,
       settings: loaderData.settings,
       path: "/terms",
       override: loaderData.seoOverride,
-      fallbackTitle: english
+      fallbackTitle: pack
+        ? pack.termsMetaTitle
+        : english
         ? "Terms of Use | Webyar"
         : "قوانین و شرایط استفاده | وب‌یار",
-      fallbackDescription: english
+      fallbackDescription: pack
+        ? pack.termsMetaDescription
+        : english
         ? "The terms and conditions that govern your use of the Webyar website, mobile apps and services, including subscriptions, acceptable use and liability."
         : "شرایط و قوانین استفاده از وب‌سایت، اپلیکیشن‌ها و سرویس‌های وب‌یار، شامل اشتراک‌ها، استفاده مجاز و مسئولیت‌ها.",
     });
@@ -151,16 +163,17 @@ function TermsPage() {
   // زبان محتوای صفحه (در سایت فارسی این صفحه ممکن است انگلیسی نمایش داده شود)
   const contentLocale = pageContentLocale(settings, i18n.locale, "/terms");
   const english = contentLocale === "en";
+  const pack = legalPack(contentLocale);
   const dir = LOCALE_INFO[contentLocale].dir;
   const base = (settings.brand.siteUrl || "").replace(/\/$/, "");
   const brandEn = getBrandNameEn(settings);
-  const brand = english ? brandEn : settings.brand.name || brandEn;
+  const brand = english || pack ? brandEn : settings.brand.name || brandEn;
   const email = settings.brand.email || "support@webyar.ai";
   const jsonLd = [
     {
       "@context": "https://schema.org",
       "@type": "WebPage",
-      name: english ? "Terms of Use" : "قوانین و شرایط استفاده",
+      name: pack ? pack.termsTitle : english ? "Terms of Use" : "قوانین و شرایط استفاده",
       url: localizedUrl(settings, i18n.locale, "/terms"),
       isPartOf: {
         "@type": "WebSite",
@@ -169,14 +182,17 @@ function TermsPage() {
       },
     },
     buildBreadcrumbJsonLd(i18n, settings, [
-      { name: english ? "Home" : "خانه", path: "/" },
+      { name: pack ? pack.home : english ? "Home" : "خانه", path: "/" },
       {
-        name: english ? "Terms of Use" : "قوانین و شرایط استفاده",
+        name: pack ? pack.termsTitle : english ? "Terms of Use" : "قوانین و شرایط استفاده",
         path: "/terms",
       },
     ]),
   ];
-  const items = english ? termsSectionsEn(brand, email) : sectionsFa(brand, email);
+  const items = pack
+    ? pack.termsSections(brand, email)
+    : english
+      ? termsSectionsEn(brand, email) : sectionsFa(brand, email);
   return (
     <SiteLayout settings={settings}>
       <script
@@ -194,10 +210,12 @@ function TermsPage() {
           animate={{ opacity: 1, y: 0 }}
         >
           <h1 className="mb-2 text-3xl font-extrabold text-foreground sm:text-4xl">
-            {english ? "Terms of Use" : "قوانین و شرایط استفاده"}
+            {pack ? pack.termsTitle : english ? "Terms of Use" : "قوانین و شرایط استفاده"}
           </h1>
           <p className="mb-10 text-sm text-muted-foreground">
-            {english
+            {pack
+              ? pack.effectiveLine(pack.effectiveDate, brand)
+              : english
               ? `Effective date: ${LEGAL_EFFECTIVE_DATE_EN} · ${brand}`
               : `تاریخ اجرا: ${EFFECTIVE_DATE_FA} · ${brand}`}
           </p>

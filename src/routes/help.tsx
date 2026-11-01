@@ -37,15 +37,26 @@ export const Route = createFileRoute("/help")({
       i18n?.locale ?? getDefaultLocale(loaderData.settings),
       "/help",
     );
+    const pack = legalPack(
+      pageContentLocale(
+        loaderData.settings,
+        i18n?.locale ?? getDefaultLocale(loaderData.settings),
+        "/help",
+      ),
+    );
     return buildPageMeta({
       i18n,
       settings: loaderData.settings,
       path: "/help",
       override: loaderData.seoOverride,
-      fallbackTitle: english
+      fallbackTitle: pack
+        ? pack.helpMetaTitle
+        : english
         ? "Support & Help Center | Webyar"
         : "پشتیبانی و راهنما | وب‌یار",
-      fallbackDescription: english
+      fallbackDescription: pack
+        ? pack.helpMetaDescription
+        : english
         ? "Get help with Webyar: contact support by email, report a problem, request account deletion and read answers to common questions."
         : "راهنمای وب‌یار: تماس با پشتیبانی از طریق ایمیل، گزارش مشکل، درخواست حذف حساب و پاسخ پرسش‌های پرتکرار.",
     });
@@ -86,12 +97,13 @@ function HelpPage() {
   // زبان محتوای صفحه (در سایت فارسی این صفحه ممکن است انگلیسی نمایش داده شود)
   const contentLocale = pageContentLocale(settings, i18n.locale, "/help");
   const english = contentLocale === "en";
+  const pack = legalPack(contentLocale);
   const dir = LOCALE_INFO[contentLocale].dir;
   const brandEn = getBrandNameEn(settings);
-  const brand = english ? brandEn : settings.brand.name || brandEn;
+  const brand = english || pack ? brandEn : settings.brand.name || brandEn;
   const email = settings.brand.email || "support@webyar.ai";
   const phone = settings.brand.phone;
-  const faqs = english ? HELP_FAQS_EN : FAQS_FA;
+  const faqs = pack ? pack.faqs : english ? HELP_FAQS_EN : FAQS_FA;
 
   const jsonLd = [
     {
@@ -106,7 +118,10 @@ function HelpPage() {
     {
       "@context": "https://schema.org",
       "@type": "ContactPage",
-      name: english ? `${brand} Support` : `پشتیبانی ${brand}`,
+      name: pack
+        ? pack.supportName(brand)
+        : english
+          ? `${brand} Support` : `پشتیبانی ${brand}`,
       url: localizedUrl(settings, i18n.locale, "/help"),
       mainEntity: {
         "@type": "Organization",
@@ -124,8 +139,8 @@ function HelpPage() {
       },
     },
     buildBreadcrumbJsonLd(i18n, settings, [
-      { name: english ? "Home" : "خانه", path: "/" },
-      { name: english ? "Support" : "پشتیبانی", path: "/help" },
+      { name: pack ? pack.home : english ? "Home" : "خانه", path: "/" },
+      { name: pack ? pack.supportCrumb : english ? "Support" : "پشتیبانی", path: "/help" },
     ]),
   ];
 
@@ -146,10 +161,12 @@ function HelpPage() {
           animate={{ opacity: 1, y: 0 }}
         >
           <h1 className="mb-3 text-3xl font-extrabold text-foreground sm:text-4xl">
-            {english ? "Support & Help Center" : "پشتیبانی و مرکز راهنما"}
+            {pack ? pack.helpTitle : english ? "Support & Help Center" : "پشتیبانی و مرکز راهنما"}
           </h1>
           <p className="mb-10 text-sm leading-7 text-muted-foreground">
-            {english
+            {pack
+              ? pack.helpIntro(brand)
+              : english
               ? `Need help with ${brand}? Our support team answers every message. Use the contact details below for technical issues, billing questions, privacy requests or account deletion.`
               : `برای استفاده از ${brand} کمک لازم دارید؟ تیم پشتیبانی به همه پیام‌ها پاسخ می‌دهد. برای مشکلات فنی، پرسش‌های مالی، درخواست‌های حریم خصوصی یا حذف حساب از راه‌های تماس زیر استفاده کنید.`}
           </p>
@@ -159,7 +176,7 @@ function HelpPage() {
           <div className="rounded-xl border border-border bg-card p-5 shadow-card">
             <Mail className="mb-3 h-5 w-5 text-primary" />
             <div className="text-sm font-semibold text-foreground">
-              {english ? "Support email" : "ایمیل پشتیبانی"}
+              {pack ? pack.supportEmail : english ? "Support email" : "ایمیل پشتیبانی"}
             </div>
             <a
               href={`mailto:${email}`}
@@ -169,7 +186,9 @@ function HelpPage() {
               {email}
             </a>
             <p className="mt-2 text-xs leading-6 text-muted-foreground">
-              {english
+              {pack
+                ? pack.supportEmailNote
+                : english
                 ? "Primary support channel for all users, including App Store reviewers."
                 : "کانال اصلی پشتیبانی برای همه کاربران."}
             </p>
@@ -177,22 +196,24 @@ function HelpPage() {
           <div className="rounded-xl border border-border bg-card p-5 shadow-card">
             <Clock className="mb-3 h-5 w-5 text-primary" />
             <div className="text-sm font-semibold text-foreground">
-              {english ? "Response time" : "زمان پاسخ‌گویی"}
+              {pack ? pack.responseTime : english ? "Response time" : "زمان پاسخ‌گویی"}
             </div>
             <p className="mt-1 text-sm text-muted-foreground">
-              {english
+              {pack
+                ? pack.responseTimeValue
+                : english
                 ? "Within 1 business day (Saturday to Thursday)."
                 : "حداکثر یک روز کاری (شنبه تا پنجشنبه)."}
             </p>
             {phone ? (
               <p className="mt-2 text-xs text-muted-foreground">
-                {english ? "Phone: " : "تلفن: "}
+                {pack ? pack.phoneLabel : english ? "Phone: " : "تلفن: "}
                 {phone}
               </p>
             ) : null}
             {settings.brand.address ? (
               <p className="mt-2 text-xs text-muted-foreground">
-                {english ? "Address: " : "نشانی: "}
+                {pack ? pack.addressLabel : english ? "Address: " : "نشانی: "}
                 {settings.brand.address}
               </p>
             ) : null}
@@ -200,10 +221,23 @@ function HelpPage() {
           <div className="rounded-xl border border-border bg-card p-5 shadow-card">
             <Trash2 className="mb-3 h-5 w-5 text-primary" />
             <div className="text-sm font-semibold text-foreground">
-              {english ? "Account deletion" : "حذف حساب کاربری"}
+              {pack ? pack.accountDeletion : english ? "Account deletion" : "حذف حساب کاربری"}
             </div>
             <p className="mt-1 text-sm leading-6 text-muted-foreground">
-              {english ? (
+              {pack ? (
+                <>
+                  {pack.deletionBefore}
+                  <a
+                    href={`mailto:${email}?subject=${encodeURIComponent(pack.deletionSubject)}`}
+                    dir="ltr"
+                    className="text-primary underline underline-offset-4"
+                  >
+                    {email}
+                  </a>
+                  {pack.deletionAfter}
+                </>
+
+              ) : english ? (
                 <>
                   Email{" "}
                   <a
@@ -233,20 +267,20 @@ function HelpPage() {
           <div className="rounded-xl border border-border bg-card p-5 shadow-card">
             <LifeBuoy className="mb-3 h-5 w-5 text-primary" />
             <div className="text-sm font-semibold text-foreground">
-              {english ? "Policies" : "قوانین و سیاست‌ها"}
+              {pack ? pack.policies : english ? "Policies" : "قوانین و سیاست‌ها"}
             </div>
             <p className="mt-1 space-x-3 text-sm text-muted-foreground">
               <Link
                 to="/privacy"
                 className="text-primary underline underline-offset-4"
               >
-                {english ? "Privacy Policy" : "سیاست حریم خصوصی"}
+                {pack ? pack.privacyLink : english ? "Privacy Policy" : "سیاست حریم خصوصی"}
               </Link>
               <Link
                 to="/terms"
                 className="text-primary underline underline-offset-4"
               >
-                {english ? "Terms of Use" : "قوانین استفاده"}
+                {pack ? pack.termsLink : english ? "Terms of Use" : "قوانین استفاده"}
               </Link>
             </p>
           </div>
@@ -254,7 +288,7 @@ function HelpPage() {
 
         <section>
           <h2 className="mb-5 text-xl font-bold text-foreground">
-            {english ? "Frequently asked questions" : "پرسش‌های پرتکرار"}
+            {pack ? pack.faqTitle : english ? "Frequently asked questions" : "پرسش‌های پرتکرار"}
           </h2>
           <div className="space-y-6">
             {faqs.map((f, i) => (
@@ -274,7 +308,20 @@ function HelpPage() {
         </section>
 
         <p className="mt-12 text-sm leading-7 text-muted-foreground">
-          {english ? (
+          {pack ? (
+            <>
+              {pack.stuckBefore}
+              <a
+                href={`mailto:${email}`}
+                dir="ltr"
+                className="text-primary underline underline-offset-4"
+              >
+                {email}
+              </a>
+              {pack.stuckAfter}
+            </>
+
+          ) : english ? (
             <>
               Still stuck? Write to{" "}
               <a
