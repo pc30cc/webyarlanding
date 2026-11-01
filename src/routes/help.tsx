@@ -3,6 +3,7 @@ import { i18nFromMatches, localizeStructuredData } from "@/lib/site-i18n";
 import { useSiteI18n } from "@/components/site/SiteLanguage";
 import { LOCALE_INFO } from "@/lib/locales";
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { legalPack } from "@/lib/legal-packs";
 import { motion } from "framer-motion";
 import { Mail, LifeBuoy, Clock, Trash2 } from "lucide-react";
 import { fetchSettings } from "@/lib/settings.functions";
