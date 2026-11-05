@@ -95,6 +95,7 @@ export default function GeneralSection() {
             <TabsTrigger value="language">زبان‌های سایت</TabsTrigger>
             <TabsTrigger value="brand">برند</TabsTrigger>
             <TabsTrigger value="auth">ورود و ثبت‌نام</TabsTrigger>
+            <TabsTrigger value="pricing">قیمت‌ها و پلن‌ها</TabsTrigger>
             <TabsTrigger value="social">شبکه‌های اجتماعی</TabsTrigger>
             <TabsTrigger value="ai">هوش مصنوعی</TabsTrigger>
             <TabsTrigger value="media">ذخیره‌سازی رسانه</TabsTrigger>
@@ -536,8 +537,11 @@ export default function GeneralSection() {
                 </Field>
               </div>
             </section>
+          </TabsContent>
 
-            <section className="mt-8 flex flex-col gap-4 rounded-xl border border-border bg-card p-4">
+          <TabsContent value="pricing" className="mt-6">
+            <section className="flex flex-col gap-4 rounded-xl border border-border bg-card p-4">
+              <h2 className="text-base font-semibold text-foreground">قیمت‌ها و پلن‌ها</h2>
               <div className="flex items-center justify-between">
                 <div className="flex flex-col gap-0.5">
                   <Label>همگام‌سازی پلن‌ها با اپلیکیشن</Label>
