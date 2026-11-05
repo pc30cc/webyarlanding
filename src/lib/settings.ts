@@ -67,6 +67,11 @@ export interface PlansSettings {
   apiUrl: string;
   /** نمایش کلید ماهانه/سالانه و قیمت‌های سالانه در صفحه قیمت‌گذاری */
   showYearly?: boolean;
+  /**
+   * بازدیدکننده‌ای که IP او ایرانی نیست، قیمت‌ها را حتی در نسخه فارسی به دلار می‌بیند
+   * (کشور از هدر کلادفلر). خاموش یعنی قیمت فقط بر اساس زبان صفحه است.
+   */
+  usdForForeignVisitors?: boolean;
 }
 
 export interface ChatWidgetSettings {

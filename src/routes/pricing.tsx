@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { fetchSettings } from "@/lib/settings.functions";
 import { fetchPublicPlans } from "@/lib/plans.functions";
+import { getVisitorForeign } from "@/lib/visitor-geo.functions";
 import type { PublicPlan } from "@/lib/plans";
 import { useCurrentPlanSlug } from "@/lib/useCurrentPlan";
 import { getPublicSeoPage } from "@/lib/seo.functions";
@@ -33,6 +34,10 @@ export const Route = createFileRoute("/pricing")({
       getPublicSeoPage({ data: { path: "/pricing", locale: context.urlLocale } }),
       fetchPublicPlans(),
     ]);
+    // قیمت دلاری برای بازدیدکننده خارج از ایران (فقط وقتی گزینه‌اش روشن است؛ در غیر این
+    // صورت داده‌های صفحه دقیقاً مثل قبل است)
+    if (settings.plans?.usdForForeignVisitors === true && (await getVisitorForeign()))
+      return { settings, seoOverride, remotePlans, visitorUsd: true as const };
     return { settings, seoOverride, remotePlans };
   },
   head: ({ loaderData, matches, match }) => {
@@ -70,9 +75,9 @@ interface DisplayPlan {
  * پلن‌های پیش‌فرض وقتی API پلن‌ها در دسترس نیست. قیمت‌های پیش‌فرض تومانی‌اند؛ زبان‌های
  * دیگر که قیمت دلاری نشان می‌دهند، به‌جای قیمت قدیمی «تماس بگیرید» می‌بینند.
  */
-function getPlans(period: "monthly" | "yearly", locale: Locale): DisplayPlan[] {
+function getPlans(period: "monthly" | "yearly", usd: boolean): DisplayPlan[] {
   const plans = defaultPlans(period);
-  if (LOCALE_INFO[locale].currency === "IRT") return plans;
+  if (!usd) return plans;
   return plans.map((plan) =>
     plan.price === "رایگان"
       ? plan
@@ -219,9 +224,11 @@ function mapRemotePlans(
   remote: PublicPlan[],
   period: "monthly" | "yearly",
   locale: Locale,
+  usd: boolean,
 ): DisplayPlan[] {
   const english = locale === "en";
-  const usd = LOCALE_INFO[locale].currency === "USD";
+  // قیمت دلاری در صفحه فارسی (بازدیدکننده خارج از ایران) با ارقام و جداکننده لاتین
+  const usdLocale: Locale = LOCALE_INFO[locale].currency === "USD" ? locale : "en";
   return remote.map((plan, index) => {
     // null یعنی قیمت اعلام نشده (تماس بگیرید)؛ نباید به ۰ (رایگان) تبدیل شود.
     const yearlyTotal = usd ? plan.usdYearly : plan.yearly;
@@ -233,7 +240,7 @@ function mapRemotePlans(
           : Math.round(amount / 12)
         : amount;
     const isFree = plan.isFree || perMonth === 0;
-    const format = (value: number) => (usd ? formatUsd(value, locale) : faNumber.format(value));
+    const format = (value: number) => (usd ? formatUsd(value, usdLocale) : faNumber.format(value));
     return {
       note:
         period === "yearly" && !isFree && yearlyTotal
@@ -328,7 +335,8 @@ function PricingPage() {
   const translateText = useSiteTranslation();
   const localizeHref = useLocalizeHref();
 
-  const { settings, remotePlans } = Route.useLoaderData();
+  const loaderData = Route.useLoaderData();
+  const { settings, remotePlans } = loaderData;
   const i18n = useSiteI18n();
   const [period, setPeriod] = useState<"monthly" | "yearly">("monthly");
   // نمایش همه امکانات برای همه پلن‌ها به‌صورت هم‌زمان تا ارتفاع کارت‌ها هماهنگ بماند
@@ -338,9 +346,12 @@ function PricingPage() {
   const activePeriod = showYearly ? period : "monthly";
   const callEnabled = settings.videoCall.enabled;
   const aiEnabled = settings.aiMarketing.enabled;
+  const usd =
+    LOCALE_INFO[i18n.locale].currency === "USD" ||
+    ("visitorUsd" in loaderData && loaderData.visitorUsd === true);
   const rawPlans = remotePlans
-    ? mapRemotePlans(remotePlans.plans, activePeriod, i18n.locale)
-    : getPlans(activePeriod, i18n.locale);
+    ? mapRemotePlans(remotePlans.plans, activePeriod, i18n.locale, usd)
+    : getPlans(activePeriod, usd);
   const plans = stripMentions(rawPlans, { call: callEnabled, ai: aiEnabled });
   const currentIndex = currentSlug
     ? plans.findIndex((p) => p.slug === currentSlug)
@@ -375,7 +386,7 @@ function PricingPage() {
             plan.price === "رایگان" ? "0" : toAsciiNumber(plan.price);
           const offer =
             plan.offer ??
-            (fallback && LOCALE_INFO[i18n.locale].currency === "IRT"
+            (fallback && !usd
               ? { price: Number(fallback) * 10, currency: "IRR" as const }
               : undefined);
           if (!offer) return null;
