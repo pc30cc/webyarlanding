@@ -55,6 +55,7 @@ vi.mock("@/lib/catalog.functions", () => ({
   getPublicCatalog: vi.fn(),
   getPublicCatalogItem: vi.fn(),
 }));
+vi.mock("@/lib/visitor-geo.functions", () => ({ getVisitorForeign: vi.fn() }));
 vi.mock("@/lib/plans.functions", () => ({
   getPublicPlans: vi.fn(),
   fetchPublicPlans: vi.fn(),

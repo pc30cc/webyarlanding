@@ -574,6 +574,24 @@ export default function GeneralSection() {
                   }
                 />
               </div>
+              <div className="flex items-center justify-between">
+                <div className="flex flex-col gap-0.5">
+                  <Label>قیمت دلاری برای بازدیدکننده خارج از ایران</Label>
+                  <span className="text-xs text-muted-foreground">
+                    روشن یعنی کسی که با IP غیرایرانی وارد سایت شود، قیمت‌ها را حتی در نسخه فارسی به
+                    دلار می‌بیند. موتورهای جستجو همیشه قیمت تومانی را می‌بینند.
+                  </span>
+                </div>
+                <Switch
+                  checked={form.plans.usdForForeignVisitors === true}
+                  onCheckedChange={(v) =>
+                    setForm((f) => ({
+                      ...f,
+                      plans: { ...f.plans, usdForForeignVisitors: v },
+                    }))
+                  }
+                />
+              </div>
               <Field label="آدرس API پلن‌ها">
                 <Input
                   dir="ltr"
