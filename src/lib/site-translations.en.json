@@ -554,6 +554,7 @@
   "کد امنیتی نامعتبر است": "Invalid security code",
   "پاسخ کد امنیتی را وارد کنید": "Enter the security code answer",
   "کد امنیتی وارد شده صحیح نیست یا منقضی شده است. لطفاً دوباره تلاش کنید.": "The security code is incorrect or has expired. Please try again.",
+  "تعداد پیام‌های ارسالی بیش از حد مجاز است. لطفاً کمی بعد دوباره تلاش کنید.": "Too many messages have been sent. Please try again a little later.",
   "پلن": "Plan",
   "گفتگوی زنده": "Live chat",
   "تماس صوتی و تصویری": "Voice and video calls",

@@ -1,6 +1,7 @@
 // آمار بازدید سایت — فقط سمت سرور.
 import { getRequest } from "@tanstack/react-start/server";
 import { db, newId, nowIso } from "./db.server";
+import { requestCloudflareCountry } from "./request-ip.server";
 
 const ONLINE_WINDOW_MINUTES = 3;
 
@@ -11,14 +12,14 @@ interface CloudflareRequestCf {
 }
 
 /**
- * موقعیت جغرافیایی بازدیدکننده — از شیء cf که کلادفلر روی هر درخواست ورودی
- * می‌گذارد (سایت روی کلادفلر ورکرز دیپلوی می‌شود)، با بازگشت به هدر استاندارد
- * CF-IPCountry اگر شیء cf در دسترس نبود.
+ * موقعیت جغرافیایی بازدیدکننده — از شیء cf (فقط وقتی سایت روی Cloudflare Workers اجرا شود)، وگرنه
+ * از هدر CF-IPCountry، آن هم فقط وقتی درخواست واقعاً از کلادفلر آمده است (client-ip.server.ts)؛
+ * کسی که مستقیم به سرور وصل شود نمی‌تواند کشورش را با این هدر انتخاب کند.
  */
 function getVisitorGeo(): { country: string; city: string } {
   try {
     const request = getRequest() as Request & { cf?: CloudflareRequestCf };
-    const country = request.cf?.country || request.headers.get("cf-ipcountry") || "";
+    const country = request.cf?.country || requestCloudflareCountry() || "";
     const city = request.cf?.city || request.cf?.region || "";
     return { country, city };
   } catch {

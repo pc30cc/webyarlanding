@@ -1,13 +1,8 @@
 // احراز هویت اختصاصی WEBYAR (کاربران، نشست‌ها و کوکی در دیتابیس خود سایت).
 // رمز عبور با PBKDF2-SHA256 هش می‌شود و نشست‌ها در جدول user_sessions نگهداری می‌شوند.
-import {
-  getCookie,
-  setCookie,
-  deleteCookie,
-  getRequestHeader,
-  getRequestIP,
-} from "@tanstack/react-start/server";
+import { getCookie, setCookie, deleteCookie, getRequestHeader } from "@tanstack/react-start/server";
 import { db, newId, nowIso, toBool } from "./db.server";
+import { requestClientIp } from "./request-ip.server";
 
 // نام کوکی نشست؛ تغییرش همه کاربران واردشده را خارج می‌کند.
 export const SESSION_COOKIE = "webyar_session";
@@ -77,8 +72,9 @@ export async function sha256Hex(value: string): Promise<string> {
     .join("");
 }
 
+/** آی‌پی بازدیدکننده (پشت Traefik و کلادفلر؛ قاعده‌اش در client-ip.server.ts). */
 export function clientIp(): string {
-  return getRequestIP({ xForwardedFor: true }) ?? "";
+  return requestClientIp();
 }
 
 export function clientUserAgent(): string {
@@ -94,40 +90,72 @@ export async function logLoginAttempt(
     id: newId(),
     email: email.slice(0, 190),
     success: success ? 1 : 0,
-    reason: reason?.slice(0, 190) ?? null,
+    // هر تلاش ناموفق دلیل دارد: شمارش خطا ردیف‌های بی‌دلیل (NULL) را نمی‌بیند.
+    reason: reason?.slice(0, 190) ?? (success ? null : "ورود ناموفق"),
     ip_address: clientIp(),
     user_agent: clientUserAgent(),
   });
 }
 
 const LOGIN_RATE_LIMIT_WINDOW_MINUTES = 15;
-const LOGIN_RATE_LIMIT_MAX_PER_EMAIL = 8;
-const LOGIN_RATE_LIMIT_MAX_PER_IP = 20;
+/** خطای یک ایمیل از یک آی‌پی */
+export const LOGIN_RATE_LIMIT_MAX_PER_EMAIL_IP = 8;
+/** خطای یک آی‌پی روی همه ایمیل‌ها */
+export const LOGIN_RATE_LIMIT_MAX_PER_IP = 20;
+/** خطای یک ایمیل از همه آی‌پی‌ها (حدس توزیع‌شده رمز) */
+export const LOGIN_RATE_LIMIT_MAX_PER_EMAIL = 50;
+/**
+ * دلیل ثبت‌شده برای تلاشی که به‌خاطر محدودیت رد شد. این ردیف‌ها در شمارش خطا حساب نمی‌شوند،
+ * وگرنه هر تلاش در زمان قفل، قفل را تمدید می‌کرد و کسی که ایمیل مدیر را می‌داند ورود او را
+ * برای همیشه می‌بست.
+ */
+export const LOGIN_RATE_LIMITED_REASON = "محدودیت تعداد تلاش (rate limit)";
 
-/** بررسی محدودیت تعداد تلاش ناموفق ورود (بر اساس ایمیل و آی‌پی) — جلوگیری از حمله brute-force */
+/**
+ * بررسی محدودیت تعداد تلاش ناموفق ورود — جلوگیری از حمله brute-force. قفل اصلی روی «همین ایمیل از
+ * همین آی‌پی» است، پس مهاجم از آی‌پی خودش نمی‌تواند ورود مدیر از جای دیگر را ببندد. سقف هر آی‌پی
+ * جلوی امتحان ایمیل‌های زیاد را می‌گیرد و سقف بالاتر هر ایمیل جلوی حدس رمز از آی‌پی‌های زیاد را.
+ */
 export async function isLoginRateLimited(email: string): Promise<boolean> {
   const since = new Date(Date.now() - LOGIN_RATE_LIMIT_WINDOW_MINUTES * 60_000).toISOString();
   const ip = clientIp();
-  const [byEmail, byIp] = await Promise.all([
+  const failures = () =>
     db
       .from("login_attempts")
       .select("id", { count: "exact", head: true })
-      .eq("email", email.slice(0, 190))
       .eq("success", 0)
-      .gte("created_at", since),
-    ip
-      ? db
-          .from("login_attempts")
-          .select("id", { count: "exact", head: true })
-          .eq("ip_address", ip)
-          .eq("success", 0)
-          .gte("created_at", since)
-      : Promise.resolve({ count: 0 }),
+      .neq("reason", LOGIN_RATE_LIMITED_REASON)
+      .gte("created_at", since);
+  const address = email.slice(0, 190);
+  const [byEmailIp, byIp, byEmail] = await Promise.all([
+    failures().eq("email", address).eq("ip_address", ip),
+    ip ? failures().eq("ip_address", ip) : Promise.resolve({ count: 0 }),
+    failures().eq("email", address),
   ]);
   return (
-    (byEmail.count ?? 0) >= LOGIN_RATE_LIMIT_MAX_PER_EMAIL ||
-    (byIp.count ?? 0) >= LOGIN_RATE_LIMIT_MAX_PER_IP
+    (byEmailIp.count ?? 0) >= LOGIN_RATE_LIMIT_MAX_PER_EMAIL_IP ||
+    (byIp.count ?? 0) >= LOGIN_RATE_LIMIT_MAX_PER_IP ||
+    (byEmail.count ?? 0) >= LOGIN_RATE_LIMIT_MAX_PER_EMAIL
   );
+}
+
+let dummyHash: Promise<string> | null = null;
+
+/**
+ * وقتی ایمیل وجود ندارد هم یک PBKDF2 کامل اجرا می‌کند تا از زمان پاسخ نشود فهمید ایمیلی ثبت شده
+ * است یا نه.
+ */
+export async function burnPasswordCheck(password: string): Promise<void> {
+  dummyHash ??= hashPassword(crypto.randomUUID());
+  await verifyPassword(password, await dummyHash);
+}
+
+/** همه نشست‌های دیگر این کاربر را می‌بندد (بعد از تغییر رمز)؛ نشست همین درخواست می‌ماند. */
+export async function endOtherSessions(userId: string): Promise<void> {
+  const token = getCookie(SESSION_COOKIE);
+  let query = db.from("user_sessions").delete().eq("user_id", userId);
+  if (token) query = query.neq("token_hash", await sha256Hex(token));
+  await query;
 }
 
 /** ساخت نشست جدید و ست کردن کوکی */

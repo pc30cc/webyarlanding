@@ -23,7 +23,8 @@ export const loginAdmin = createServerFn({ method: "POST" })
     const email = data.email.trim().toLowerCase();
 
     if (await auth.isLoginRateLimited(email)) {
-      await auth.logLoginAttempt(email, false, "محدودیت تعداد تلاش (rate limit)");
+      // ثبت می‌شود تا در فهرست ورودها دیده شود، ولی در شمارش خطا حساب نمی‌شود (قفل را تمدید نمی‌کند).
+      await auth.logLoginAttempt(email, false, auth.LOGIN_RATE_LIMITED_REASON);
       return {
         ok: false,
         error: "تعداد تلاش‌های ناموفق بیش از حد مجاز است. لطفاً چند دقیقه دیگر دوباره تلاش کنید.",
@@ -37,6 +38,8 @@ export const loginAdmin = createServerFn({ method: "POST" })
       .maybeSingle();
 
     if (!user || !toBool(user.is_active)) {
+      // همان زمان پاسخ رمز نادرست، تا معلوم نشود این ایمیل ثبت شده است یا نه.
+      await auth.burnPasswordCheck(data.password);
       await auth.logLoginAttempt(email, false, "کاربر یافت نشد یا غیرفعال است");
       return { ok: false, error: "ایمیل یا رمز عبور نادرست است" };
     }
@@ -103,5 +106,7 @@ export const changeAdminPassword = createServerFn({ method: "POST" })
       .from("users")
       .update({ password_hash: hash, updated_at: new Date().toISOString() })
       .eq("id", user.id);
+    // نشست‌های دیگر (مثلاً دستگاهی که رمز قبلی رویش لو رفته) با رمز جدید بسته می‌شوند.
+    await auth.endOtherSessions(user.id);
     return { ok: true };
   });
