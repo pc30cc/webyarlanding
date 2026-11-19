@@ -101,7 +101,10 @@ const appSchema = z.object({
         result[locale] = legacy && locale === "en" ? { ...entry, legacy } : entry;
       }
       return result;
-    }),
+    })
+    // zod 4 keeps a key optional only when its outermost schema is optional (a transform that
+    // can return undefined no longer is), and callers may leave `locales` out.
+    .optional(),
 });
 export type AppInput = z.infer<typeof appSchema>;
 

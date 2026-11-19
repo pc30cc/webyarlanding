@@ -20,10 +20,12 @@ jobs:
         run: |
           npm install --save-exact @tanstack/react-start@1.168.61 @tanstack/react-router@1.170.42 @tanstack/router-plugin@1.168.43
           npm install zod@^4.6.6
+          # Within the declared ranges only (fast-uri, nanoid, source-map-js); never --force.
+          npm audit fix || true
           git config user.name "github-actions[bot]"
           git config user.email "41898900+github-actions[bot]@users.noreply.github.com"
           git add package.json package-lock.json
-          git diff --cached --quiet || git commit -m "Lockfile: TanStack Start 1.168.61, React Router 1.170.42, router-plugin 1.168.43, zod 4"
+          git diff --cached --quiet || git commit -m "Lockfile: TanStack Start 1.168.61, React Router 1.170.42, router-plugin 1.168.43, zod 4, npm audit fix"
           git push
       - name: Install (lockfile)
         run: npm ci --include=dev
