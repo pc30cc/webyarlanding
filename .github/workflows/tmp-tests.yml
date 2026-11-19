@@ -1,0 +1,28 @@
+# Temporary: runs the test suite once for the security PR. Not meant to be merged.
+name: tmp-tests
+on: push
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Install
+        run: npm ci --include=dev
+      - name: Typecheck
+        if: ${{ !cancelled() }}
+        run: npx tsc --noEmit -p tsconfig.json
+      - name: Lint (files of the security PR)
+        if: ${{ !cancelled() }}
+        run: |
+          files=$(ls src/lib/{client-ip.server,request-ip.server,rate-limit.server,contact-limit.server,captcha.server,contact.functions,auth.functions,auth.server,analytics.server,visitor-geo.functions,client-ip.server.test,captcha.server.test,auth.server.ratelimit.test}.ts 2>/dev/null || true)
+          npx eslint $files
+      - name: Tests
+        if: ${{ !cancelled() }}
+        run: npx vitest run
+      - name: Build
+        if: ${{ !cancelled() }}
+        run: npm run build
