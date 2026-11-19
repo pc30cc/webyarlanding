@@ -55,8 +55,12 @@ describe("client IP behind Traefik and Cloudflare", () => {
 
 describe("visitor country", () => {
   it("is read from cf-ipcountry only behind Cloudflare", () => {
-    expect(resolveCloudflareCountry(facts("10.0.1.5", "162.158.1.1", "81.12.3.4", "de"))).toBe("DE");
-    expect(resolveCloudflareCountry(facts("10.0.1.5", "93.184.216.34", undefined, "DE"))).toBeNull();
+    expect(resolveCloudflareCountry(facts("10.0.1.5", "162.158.1.1", "81.12.3.4", "de"))).toBe(
+      "DE",
+    );
+    expect(
+      resolveCloudflareCountry(facts("10.0.1.5", "93.184.216.34", undefined, "DE")),
+    ).toBeNull();
     expect(resolveCloudflareCountry(facts("93.184.216.34", undefined, undefined, "DE"))).toBeNull();
   });
 

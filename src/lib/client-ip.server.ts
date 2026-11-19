@@ -20,12 +20,28 @@ import { BlockList, isIP } from "node:net";
  * فهرستی از IP و CIDR با کاما یا فاصله؛ «default» یعنی همین فهرست و «off» یعنی هیچ‌کدام.
  */
 export const CLOUDFLARE_IP_RANGES: readonly string[] = [
-  "173.245.48.0/20", "103.21.244.0/22", "103.22.200.0/22", "103.31.4.0/22",
-  "141.101.64.0/18", "108.162.192.0/18", "190.93.240.0/20", "188.114.96.0/20",
-  "197.234.240.0/22", "198.41.128.0/17", "162.158.0.0/15", "104.16.0.0/13",
-  "104.24.0.0/14", "172.64.0.0/13", "131.0.72.0/22",
-  "2400:cb00::/32", "2606:4700::/32", "2803:f800::/32", "2405:b500::/32",
-  "2405:8100::/32", "2a06:98c0::/29", "2c0f:f248::/32",
+  "173.245.48.0/20",
+  "103.21.244.0/22",
+  "103.22.200.0/22",
+  "103.31.4.0/22",
+  "141.101.64.0/18",
+  "108.162.192.0/18",
+  "190.93.240.0/20",
+  "188.114.96.0/20",
+  "197.234.240.0/22",
+  "198.41.128.0/17",
+  "162.158.0.0/15",
+  "104.16.0.0/13",
+  "104.24.0.0/14",
+  "172.64.0.0/13",
+  "131.0.72.0/22",
+  "2400:cb00::/32",
+  "2606:4700::/32",
+  "2803:f800::/32",
+  "2405:b500::/32",
+  "2405:8100::/32",
+  "2a06:98c0::/29",
+  "2c0f:f248::/32",
 ];
 
 /** هشت گروه ۱۶ بیتی یک آدرس IPv6 (هر شکل نوشتن، با دنباله IPv4 نقطه‌دار)، یا null. */
@@ -39,7 +55,12 @@ function ipv6Groups(ip: string): number[] | null {
   }
   const [head, tail] = text.split("::");
   const part = (x: string | undefined) =>
-    x ? x.split(":").filter(Boolean).map((h) => parseInt(h, 16)) : [];
+    x
+      ? x
+          .split(":")
+          .filter(Boolean)
+          .map((h) => parseInt(h, 16))
+      : [];
   const a = part(head);
   const b = tail === undefined ? [] : part(tail);
   const fill = 8 - a.length - b.length;
@@ -108,7 +129,8 @@ function cloudflareRanges(): BlockList {
       return true;
     }
     const prefix = Number(bits);
-    if (!/^\d{1,3}$/.test(bits) || prefix < 1 || prefix > (type === "ipv4" ? 32 : 128)) return false;
+    if (!/^\d{1,3}$/.test(bits) || prefix < 1 || prefix > (type === "ipv4" ? 32 : 128))
+      return false;
     list.addSubnet(ip, prefix, type);
     return true;
   };

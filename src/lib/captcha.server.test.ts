@@ -66,7 +66,9 @@ describe("math captcha", () => {
     const answer = String(answerOf(question));
     const parts = decode(token);
     parts[2] = String(Number(parts[2]) - 1000);
-    expect(await verifyCaptcha(Buffer.from(parts.join(".")).toString("base64"), answer)).toBe(false);
+    expect(await verifyCaptcha(Buffer.from(parts.join(".")).toString("base64"), answer)).toBe(
+      false,
+    );
     expect(await verifyCaptcha(token, answer)).toBe(true);
   });
 

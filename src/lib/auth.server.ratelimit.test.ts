@@ -11,7 +11,7 @@ interface Query {
 
 const state = vi.hoisted(() => ({
   queries: [] as Query[],
-  count: (_q: Query) => 0,
+  count: (_q: Query): number => 0,
   cookie: undefined as string | undefined,
   ip: "81.12.3.4",
 }));
@@ -50,7 +50,12 @@ vi.mock("./db.server", () => {
     };
     return b;
   };
-  return { db: { from }, newId: () => "id", nowIso: () => new Date().toISOString(), toBool: Boolean };
+  return {
+    db: { from },
+    newId: () => "id",
+    nowIso: () => new Date().toISOString(),
+    toBool: Boolean,
+  };
 });
 
 import * as auth from "./auth.server";

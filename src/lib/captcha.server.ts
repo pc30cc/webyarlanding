@@ -137,7 +137,8 @@ export async function verifyCaptcha(token: string, userAnswerRaw: string): Promi
 
     const secret = await loadCaptchaSecret();
     // اصالت توکن پیش از ذخیره nonce: توکن ساختگی جایی در حافظه نمی‌گیرد.
-    if (!sameHex(tag, await hmacHex(secret, `${TOKEN_VERSION}.token.${nonce}.${exp}`))) return false;
+    if (!sameHex(tag, await hmacHex(secret, `${TOKEN_VERSION}.token.${nonce}.${exp}`)))
+      return false;
     if (!consumeNonce(nonce, exp, now)) return false;
 
     const normalized = normalizeDigits(userAnswerRaw);
