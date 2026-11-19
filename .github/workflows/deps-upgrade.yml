@@ -1,0 +1,55 @@
+# Temporary (removed before merge): npm cannot reach the registry from the session that
+# prepared this PR, so the install runs here and the lockfile is committed back.
+name: deps-upgrade
+on: push
+permissions:
+  contents: write
+jobs:
+  upgrade-and-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Upgrade TanStack Start (GHSA-qx66-fv34-fjm8), seroval and zod (GHSA-mrhx-c7xc-m3w5)
+        if: contains(github.event.head_commit.message, '[deps-upgrade]')
+        run: |
+          npm install --save-exact @tanstack/react-start@1.169.5 @tanstack/react-router@1.170.46 @tanstack/router-plugin@1.169.0
+          npm install zod@^4.6.6
+          git config user.name "github-actions[bot]"
+          git config user.email "41898900+github-actions[bot]@users.noreply.github.com"
+          git add package.json package-lock.json
+          git diff --cached --quiet || git commit -m "Lockfile: TanStack Start 1.169.5, React Router 1.170.46, router-plugin 1.169.0, zod 4"
+          git push
+      - name: Install (lockfile)
+        run: npm ci --include=dev
+      - name: Versions that carry the fixes
+        run: |
+          npm ls seroval zod @tanstack/start-server-core @tanstack/react-start --all | grep -E "seroval@|zod@|start-server-core@|react-start@" | sort -u
+          node -e '
+            const v = (p) => require(p + "/package.json").version;
+            const ge = (a, b) => { const x = a.split(".").map(Number), y = b.split(".").map(Number); for (let i = 0; i < 3; i++) if (x[i] !== y[i]) return x[i] > y[i]; return true; };
+            const checks = [["seroval", "1.6.10"], ["@tanstack/start-server-core", "1.169.39"], ["@tanstack/react-start", "1.168.60"], ["zod", "4.6.6"]];
+            let bad = 0;
+            for (const [p, min] of checks) { const have = v(p); console.log(p, have, ge(have, min) ? "ok" : "TOO OLD, need " + min); if (!ge(have, min)) bad++; }
+            process.exit(bad ? 1 : 0);
+          '
+      - name: npm audit (runtime dependencies)
+        if: ${{ !cancelled() }}
+        run: npm audit --omit=dev || true
+      - name: Typecheck
+        if: ${{ !cancelled() }}
+        run: npx tsc --noEmit -p tsconfig.json
+      - name: Lint
+        if: ${{ !cancelled() }}
+        run: npm run lint
+      - name: Tests
+        if: ${{ !cancelled() }}
+        run: npx vitest run
+      - name: Build
+        if: ${{ !cancelled() }}
+        run: npm run build
