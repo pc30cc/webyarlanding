@@ -18,10 +18,18 @@ export const submitContactMessage = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) => contactSchema.parse(input))
   .handler(async ({ data }): Promise<{ ok: boolean }> => {
     const { verifyCaptcha } = await import("./captcha.server");
+    const { contactLimiter } = await import("./contact-limit.server");
+    const { requestClientIp } = await import("./request-ip.server");
+    // سؤال ریاضی را یک ربات هم می‌تواند حل کند؛ سقف پیام از هر آی‌پی جلوی سیل پیام را می‌گیرد.
+    const ipKey = requestClientIp() || "unknown";
+    if (contactLimiter.isLimited(ipKey)) {
+      throw new Error("تعداد پیام‌های ارسالی بیش از حد مجاز است. لطفاً کمی بعد دوباره تلاش کنید.");
+    }
     const captchaOk = await verifyCaptcha(data.captchaToken, data.captchaAnswer);
     if (!captchaOk) {
       throw new Error("کد امنیتی وارد شده صحیح نیست یا منقضی شده است. لطفاً دوباره تلاش کنید.");
     }
+    contactLimiter.record(ipKey);
 
     const { db, newId, nowIso } = await import("./db.server");
     await db.from("contact_messages").insert({
