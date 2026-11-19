@@ -10,6 +10,7 @@ import {
   Scripts,
   redirect,
 } from "@tanstack/react-router";
+import type { ErrorComponentProps } from "@tanstack/react-router";
 import { motion } from "framer-motion";
 import { Compass, ChevronLeft } from "lucide-react";
 import type { ReactNode } from "react";
@@ -143,7 +144,8 @@ function NotFoundComponent() {
   return <div className="bg-background">{content}</div>;
 }
 
-function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
+// What was thrown arrives as `unknown` (router-core 1.171.2x and later); it is only logged here.
+function ErrorComponent({ error, reset }: ErrorComponentProps) {
   console.error(error);
   const router = useRouter();
 
@@ -180,7 +182,9 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
 
 export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()({
   // پیشوند زبان آدرس عمومی (پیش از rewrite روتر؛ src/router.tsx)
-  beforeLoad: async ({ location }) => {
+  // An explicit return type: the loader reads context.urlLocale, and without it TypeScript's
+  // inference of this route's context loops through the router's registered types.
+  beforeLoad: async ({ location }): Promise<{ urlLocale: Locale | null }> => {
     // روی سرور head() صفحات دیکشنری را از کش می‌خواند (site-i18n: i18nFromMatches)
     if (typeof window === "undefined") await loadAllSiteMessages();
     return {
